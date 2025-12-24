@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/scene.dart';
 import '../models/message.dart';
-import '../models/scene.dart';
-import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../services/api_service.dart';
@@ -22,6 +20,19 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final List<Message> _messages = [];
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
   @override
   void initState() {
     super.initState();
