@@ -117,13 +117,8 @@ class _ChatScreenState extends State<ChatScreen> {
              );
              _messages[lastUserMsgIndex] = updatedMsg;
              
-             // Update history persistence
-             // For MVP, we can just reload or update directly. 
-             // Since we use separate list instances, we must update the service list too.
-             // Simplest: The service returns a reference. We should use that reference directly instead of copying.
-             // But ListView wants a list.
-             // Let's manually update service for now because finding index in service list is tricky without ID map.
-             // Actually, simplest is to use the SAME LIST INSTANCE.
+             // Update in ChatHistoryService to persist feedback
+             ChatHistoryService().updateMessage(sceneKey, lastUserMsgIndex, updatedMsg);
            }
         }
         
@@ -171,6 +166,46 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0, 
         iconTheme: const IconThemeData(color: Colors.black),
         titleTextStyle: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Clear Conversation'),
+                  content: const Text('Are you sure you want to clear this conversation and start over?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        setState(() {
+                          _messages.clear();
+                          // Re-add initial message
+                          final initialMsg = Message(
+                            id: 'init',
+                            content: widget.scene.initialMessage,
+                            isUser: false,
+                            timestamp: DateTime.now(),
+                          );
+                          _messages.add(initialMsg);
+                        });
+                        // Clear from service
+                        final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                        ChatHistoryService().clearHistory(sceneKey);
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

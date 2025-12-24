@@ -70,7 +70,7 @@ class _ChatBubbleState extends State<ChatBubble> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            SelectableText(
               message.content,
               style: const TextStyle(fontSize: 16),
             ),
@@ -101,7 +101,7 @@ class _ChatBubbleState extends State<ChatBubble> {
             if (_showTranslation && message.translation != null) ...[
                const SizedBox(height: 6),
                const Divider(height: 12),
-               Text(
+               SelectableText(
                  message.translation!,
                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                ),

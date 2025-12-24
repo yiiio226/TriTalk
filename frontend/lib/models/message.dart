@@ -14,6 +14,30 @@ class Message {
     this.translation,
     this.feedback,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'content': content,
+      'isUser': isUser,
+      'timestamp': timestamp.toIso8601String(),
+      'translation': translation,
+      'feedback': feedback?.toJson(),
+    };
+  }
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    return Message(
+      id: json['id'],
+      content: json['content'],
+      isUser: json['isUser'],
+      timestamp: DateTime.parse(json['timestamp']),
+      translation: json['translation'],
+      feedback: json['feedback'] != null 
+          ? ReviewFeedback.fromJson(json['feedback']) 
+          : null,
+    );
+  }
 }
 
 class ReviewFeedback {
@@ -30,6 +54,16 @@ class ReviewFeedback {
     required this.explanation,
     required this.exampleAnswer,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'is_perfect': isPerfect,
+      'corrected_text': correctedText,
+      'native_expression': nativeExpression,
+      'explanation': explanation,
+      'example_answer': exampleAnswer,
+    };
+  }
 
   factory ReviewFeedback.fromJson(Map<String, dynamic> json) {
     return ReviewFeedback(

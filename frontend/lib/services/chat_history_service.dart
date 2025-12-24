@@ -21,8 +21,14 @@ class ChatHistoryService {
       _histories[sceneKey] = [];
     }
     _histories[sceneKey]!.add(message);
-    // Since we return the reference list in getMessages, direct addition to that list works too,
-    // but this method is good for encapsulation if we change implementation later.
+  }
+
+  void updateMessage(String sceneKey, int index, Message message) {
+    if (_histories.containsKey(sceneKey) && 
+        index >= 0 && 
+        index < _histories[sceneKey]!.length) {
+      _histories[sceneKey]![index] = message;
+    }
   }
   
   void clearHistory(String sceneKey) {

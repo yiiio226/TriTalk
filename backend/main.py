@@ -55,22 +55,36 @@ def parse_json(content: str):
 @app.post("/chat/send", response_model=ChatResponse)
 async def chat_send(request: ChatRequest):
     # Construct messages with context
-    system_prompt = f"""You are a helpful language learning partner. Key Scenario Context: {request.scene_context}.
+    system_prompt = f"""You are roleplaying in a language learning scenario. Key Scenario Context: {request.scene_context}.
     
-    Analyze the user's message rigorously for grammar, naturalness, and appropriateness.
+    CRITICAL RULES:
+    1. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
+    2. Respond naturally as your character would in this real-world situation.
+    3. Keep responses conversational and realistic for the scenario.
     
-    You MUST return your response in valid JSON format with the following structure:
+    Analyze the user's message for grammar, naturalness, and appropriateness.
+    
+    IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR OWN message. These are NOT your (AI character's) responses.
+    
+    Example:
+    - User says: "I want coffee"
+    - native_expression: "I'd like a coffee, please" (more polite way for USER to say it)
+    - example_answer: "Could I get a coffee?" (alternative way for USER to say it)
+    - reply: "Sure! What size would you like?" (this is YOUR response as the AI character)
+    
+    You MUST return your response in valid JSON format:
     {{
-        "reply": "Your conversational reply to the user (keep it natural)",
+        "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
         "analysis": {{
-            "is_perfect": boolean, // true if the sentence is grammatically correct and sounds natural to a native speaker.
-            "corrected_text": "The grammatically correct version (if needed, otherwise same as original)",
-            "native_expression": "A more natural/idiomatic way a native speaker would say this (even if original is correct)",
-            "explanation": "Explanation of the error and correction in Chinese (Simplified Chinese). If perfect, compliment in Chinese.",
-            "example_answer": "An alternative way the USER (learner) could express the same idea. This should be a DIFFERENT way to say what the user wanted to say, NOT your (AI's) response. For example, if user said 'I want coffee', you might suggest 'Could I have a coffee, please?' or 'I'd like to order a coffee.'"
+            "is_perfect": boolean,
+            "corrected_text": "Grammatically correct version of what the USER said",
+            "native_expression": "More natural/idiomatic way for the USER to express their message (NOT your AI response)",
+            "explanation": "Explanation in Chinese (Simplified). If perfect, compliment in Chinese.",
+            "example_answer": "Alternative way for the USER to express the same idea (NOT your AI response)"
         }}
     }}
     """
+
 
     messages = [
         {"role": "system", "content": system_prompt},
