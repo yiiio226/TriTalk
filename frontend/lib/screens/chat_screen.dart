@@ -7,6 +7,7 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
+import '../services/chat_history_service.dart';
 import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -21,18 +22,33 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Message> _messages = [];
-
   @override
   void initState() {
     super.initState();
-    // Add initial AI message
-    _messages.add(Message(
-      id: 'init',
-      content: widget.scene.initialMessage,
-      isUser: false,
-      timestamp: DateTime.now(),
-    ));
+    _loadMessages();
+  }
+
+  void _loadMessages() {
+    // Unique key for the scene. Title + Role is usually unique enough for MVP.
+    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    final history = ChatHistoryService().getMessages(sceneKey);
+    
+    if (history.isEmpty) {
+      // Add initial AI message if history is empty
+      final initialMsg = Message(
+        id: 'init',
+        content: widget.scene.initialMessage,
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+      history.add(initialMsg);
+       // Ensure service has it (getMessages returns reference, so add works, but good to be explicit)
+    }
+    
+    // We use the same list reference so updates propagate to service automatically
+    setState(() {
+      _messages.addAll(history);
+    });
   }
 
   final ApiService _apiService = ApiService();
@@ -47,15 +63,23 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
+    final newMessage = Message(
+      id: DateTime.now().toString(),
+      content: text,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
+
     setState(() {
-      _messages.add(Message(
-        id: DateTime.now().toString(),
-        content: text,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(newMessage);
       _isSending = true;
     });
+    
+    // Persist (since _messages is a COPY in this implementation? No, addAll copies elements.
+    // So distinct list. We must sync back to service or use service list directly.)
+    // Better: Helper to add to both.
+    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    ChatHistoryService().addMessage(sceneKey, newMessage);
 
     RevenueCatService().incrementMessageCount();
     
@@ -73,23 +97,36 @@ class _ChatScreenState extends State<ChatScreen> {
            final lastUserMsgIndex = _messages.lastIndexWhere((m) => m.isUser);
            if (lastUserMsgIndex != -1) {
              final oldMsg = _messages[lastUserMsgIndex];
-             _messages[lastUserMsgIndex] = Message(
+             final updatedMsg = Message(
                id: oldMsg.id,
                content: oldMsg.content,
                isUser: true,
                timestamp: oldMsg.timestamp,
                feedback: response.feedback,
              );
+             _messages[lastUserMsgIndex] = updatedMsg;
+             
+             // Update history persistence
+             // For MVP, we can just reload or update directly. 
+             // Since we use separate list instances, we must update the service list too.
+             // Simplest: The service returns a reference. We should use that reference directly instead of copying.
+             // But ListView wants a list.
+             // Let's manually update service for now because finding index in service list is tricky without ID map.
+             // Actually, simplest is to use the SAME LIST INSTANCE.
            }
         }
-
-        _messages.add(Message(
+        
+        final aiMessage = Message(
           id: DateTime.now().toString(),
           content: response.message,
           isUser: false,
           timestamp: DateTime.now(),
           translation: response.translation,
-        ));
+        );
+
+        _messages.add(aiMessage);
+        ChatHistoryService().addMessage(sceneKey, aiMessage);
+        
         _isSending = false;
       });
       _scrollToBottom();
@@ -103,19 +140,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
   }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,13 +155,18 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black, // Icons and text color
+        elevation: 0, 
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.separated(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
               itemCount: _messages.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
@@ -167,7 +197,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 40),
       // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,

@@ -55,6 +55,11 @@ class FeedbackSheet extends StatelessWidget {
              _buildSection('Native Expression', feedback.nativeExpression, isNative: true),
              const SizedBox(height: 16),
           ],
+
+          if (feedback.exampleAnswer.isNotEmpty) ...[
+             _buildSection('Possible Answer', feedback.exampleAnswer, isNative: true),
+             const SizedBox(height: 16),
+          ],
           
           Container(
             padding: const EdgeInsets.all(12),

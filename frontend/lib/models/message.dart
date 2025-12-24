@@ -21,12 +21,14 @@ class ReviewFeedback {
   final String correctedText;
   final String nativeExpression;
   final String explanation;
+  final String exampleAnswer;
 
   ReviewFeedback({
     required this.isPerfect,
     required this.correctedText,
     required this.nativeExpression,
     required this.explanation,
+    required this.exampleAnswer,
   });
 
   factory ReviewFeedback.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class ReviewFeedback {
       correctedText: json['corrected_text'] ?? '',
       nativeExpression: json['native_expression'] ?? '',
       explanation: json['explanation'] ?? '',
+      exampleAnswer: json['example_answer'] ?? '',
     );
   }
 }
