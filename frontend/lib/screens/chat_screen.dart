@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/scene.dart';
 import '../models/message.dart';
+import '../models/scene.dart';
+import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
+import '../widgets/feedback_sheet.dart';
+import '../services/api_service.dart';
+import '../services/revenue_cat_service.dart';
+import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final Scene scene;
@@ -29,9 +35,17 @@ class _ChatScreenState extends State<ChatScreen> {
     ));
   }
 
-  void _sendMessage() {
+  final ApiService _apiService = ApiService();
+  bool _isSending = false;
+
+  void _sendMessage() async {
     final text = _textController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _isSending) return;
+
+    if (!RevenueCatService().canSendMessage()) {
+      _showLimitDialog();
+      return;
+    }
 
     setState(() {
       _messages.add(Message(
@@ -40,24 +54,54 @@ class _ChatScreenState extends State<ChatScreen> {
         isUser: true,
         timestamp: DateTime.now(),
       ));
+      _isSending = true;
     });
+
+    RevenueCatService().incrementMessageCount();
+    
     _textController.clear();
     _scrollToBottom();
 
-    // Mock AI reply
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(Message(
-            id: DateTime.now().toString(),
-            content: "That's interesting! Tell me more.", // Mock reply
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
-        });
-        _scrollToBottom();
-      }
-    });
+    try {
+      final response = await _apiService.sendMessage(text, widget.scene.description);
+      
+      if (!mounted) return;
+
+      setState(() {
+        // Update the last user message with feedback if any
+        if (response.feedback != null) {
+           final lastUserMsgIndex = _messages.lastIndexWhere((m) => m.isUser);
+           if (lastUserMsgIndex != -1) {
+             final oldMsg = _messages[lastUserMsgIndex];
+             _messages[lastUserMsgIndex] = Message(
+               id: oldMsg.id,
+               content: oldMsg.content,
+               isUser: true,
+               timestamp: oldMsg.timestamp,
+               feedback: response.feedback,
+             );
+           }
+        }
+
+        _messages.add(Message(
+          id: DateTime.now().toString(),
+          content: response.message,
+          isUser: false,
+          timestamp: DateTime.now(),
+          translation: response.translation,
+        ));
+        _isSending = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+      setState(() {
+        _isSending = false;
+      });
+    }
   }
 
   void _scrollToBottom() {
@@ -99,7 +143,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 final msg = _messages[index];
                 return Align(
                   alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: ChatBubble(message: msg),
+                  child: ChatBubble(
+                    message: msg,
+                    onTap: () {
+                      if (msg.feedback != null) {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (context) => FeedbackSheet(message: msg),
+                        );
+                      }
+                    },
+                  ),
                 );
               },
             ),
@@ -113,6 +168,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.all(8.0),
+      // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -127,8 +183,38 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.lightbulb_outline),
-            onPressed: () {
-              // TODO: Hint functionality
+            onPressed: () async {
+              // Show loading or hints
+              try {
+                final hints = await _apiService.getHints(widget.scene.description);
+                if (!mounted) return;
+                
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Suggestions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          ...hints.hints.map((hint) => ListTile(
+                            title: Text(hint),
+                            onTap: () {
+                              _textController.text = hint;
+                              Navigator.pop(context);
+                            },
+                          )).toList(),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to get hints: $e')));
+              }
             },
           ),
           Expanded(
@@ -146,6 +232,34 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.send, color: Colors.blue),
             onPressed: _sendMessage,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Daily Limit Reached'),
+        content: const Text(
+          'You have reached your daily limit of 10 free messages. Upgrade to Pro for unlimited access.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PaywallScreen()),
+              );
+            },
+            child: const Text('Upgrade'),
           ),
         ],
       ),

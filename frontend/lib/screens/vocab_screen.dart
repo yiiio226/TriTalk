@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+import '../services/vocab_service.dart';
+
+class VocabScreen extends StatelessWidget {
+  const VocabScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Using AnimatedBuilder to listen to ChangeNotifier for MVP simplicity
+    return Scaffold(
+      appBar: AppBar(title: const Text('Vocabulary')),
+      body: AnimatedBuilder(
+        animation: VocabService(),
+        builder: (context, child) {
+          final items = VocabService().items;
+          if (items.isEmpty) {
+            return const Center(child: Text('No vocabulary saved yet.'));
+          }
+          return ListView.builder(
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return ListTile(
+                leading: const Icon(Icons.bookmark, color: Colors.amber),
+                title: Text(item.phrase),
+                subtitle: Text(item.translation),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () {
+                     VocabService().remove(item.phrase);
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}

@@ -4,7 +4,7 @@ class Message {
   final bool isUser;
   final DateTime timestamp;
   final String? translation; // For C-04
-  final Feedback? feedback;  // For F-01
+  final ReviewFeedback? feedback;  // For F-01
 
   Message({
     required this.id,
@@ -16,14 +16,22 @@ class Message {
   });
 }
 
-class Feedback {
+class ReviewFeedback {
   final List<int> highlightIndices;
   final String optimizedText;
   final String reason;
 
-  Feedback({
+  ReviewFeedback({
     required this.highlightIndices,
     required this.optimizedText,
     required this.reason,
   });
+
+  factory ReviewFeedback.fromJson(Map<String, dynamic> json) {
+    return ReviewFeedback(
+      highlightIndices: List<int>.from(json['highlight_indices']),
+      optimizedText: json['optimized_text'],
+      reason: json['explanation'],
+    );
+  }
 }

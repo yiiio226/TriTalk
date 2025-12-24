@@ -3,6 +3,7 @@ import '../data/mock_scenes.dart';
 import '../widgets/scene_card.dart';
 import '../widgets/custom_scene_dialog.dart';
 import 'chat_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -14,6 +15,17 @@ class HomeScreen extends StatelessWidget {
         title: const Text('SpeakScene'),
         centerTitle: false,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
