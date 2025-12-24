@@ -34,6 +34,7 @@ class ReviewFeedback(BaseModel):
     corrected_text: str
     native_expression: str
     explanation: str # In Chinese
+    example_answer: str = "" # How the AI would answer if it were the user
 
 class ChatResponse(BaseModel):
     message: str
@@ -65,7 +66,8 @@ async def chat_send(request: ChatRequest):
             "is_perfect": boolean, // true if the sentence is grammatically correct and sounds natural to a native speaker.
             "corrected_text": "The grammatically correct version (if needed, otherwise same as original)",
             "native_expression": "A more natural/idiomatic way a native speaker would say this (even if original is correct)",
-            "explanation": "Explanation of the error and correction in Chinese (Simplified Chinese). If perfect, compliment in Chinese."
+            "explanation": "Explanation of the error and correction in Chinese (Simplified Chinese). If perfect, compliment in Chinese.",
+            "example_answer": "How YOU (as an English Native Speaker) would answer the previous AI message in this context. Be creative and natural."
         }}
     }}
     """
@@ -94,7 +96,8 @@ async def chat_send(request: ChatRequest):
             is_perfect=analysis_data.get("is_perfect", False),
             corrected_text=analysis_data.get("corrected_text", request.message),
             native_expression=analysis_data.get("native_expression", ""),
-            explanation=analysis_data.get("explanation", "")
+            explanation=analysis_data.get("explanation", ""),
+            example_answer=analysis_data.get("example_answer", "")
         )
 
         return ChatResponse(
