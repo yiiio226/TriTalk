@@ -67,7 +67,7 @@ async def chat_send(request: ChatRequest):
             "corrected_text": "The grammatically correct version (if needed, otherwise same as original)",
             "native_expression": "A more natural/idiomatic way a native speaker would say this (even if original is correct)",
             "explanation": "Explanation of the error and correction in Chinese (Simplified Chinese). If perfect, compliment in Chinese.",
-            "example_answer": "How YOU (as an English Native Speaker) would answer the previous AI message in this context. Be creative and natural."
+            "example_answer": "An alternative way the USER (learner) could express the same idea. This should be a DIFFERENT way to say what the user wanted to say, NOT your (AI's) response. For example, if user said 'I want coffee', you might suggest 'Could I have a coffee, please?' or 'I'd like to order a coffee.'"
         }}
     }}
     """
