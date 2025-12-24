@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 
 void main() {
-  runApp(const SpeakSceneApp());
+  runApp(const TriTalkApp());
 }
 
-class SpeakSceneApp extends StatelessWidget {
-  const SpeakSceneApp({super.key});
+class TriTalkApp extends StatelessWidget {
+  const TriTalkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SpeakScene',
+      title: 'TriTalk',
       theme: ThemeData(
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.grey[50],

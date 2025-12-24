@@ -17,21 +17,24 @@ class Message {
 }
 
 class ReviewFeedback {
-  final List<int> highlightIndices;
-  final String optimizedText;
-  final String reason;
+  final bool isPerfect;
+  final String correctedText;
+  final String nativeExpression;
+  final String explanation;
 
   ReviewFeedback({
-    required this.highlightIndices,
-    required this.optimizedText,
-    required this.reason,
+    required this.isPerfect,
+    required this.correctedText,
+    required this.nativeExpression,
+    required this.explanation,
   });
 
   factory ReviewFeedback.fromJson(Map<String, dynamic> json) {
     return ReviewFeedback(
-      highlightIndices: List<int>.from(json['highlight_indices']),
-      optimizedText: json['optimized_text'],
-      reason: json['explanation'],
+      isPerfect: json['is_perfect'] ?? false,
+      correctedText: json['corrected_text'] ?? '',
+      nativeExpression: json['native_expression'] ?? '',
+      explanation: json['explanation'] ?? '',
     );
   }
 }

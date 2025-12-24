@@ -25,11 +25,14 @@ class FeedbackSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_fix_high, color: Colors.orange),
+              Icon(
+                feedback.isPerfect ? Icons.star : Icons.auto_fix_high, 
+                color: feedback.isPerfect ? Colors.amber : Colors.orange
+              ),
               const SizedBox(width: 8),
-              const Text(
-                'Feedback',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                feedback.isPerfect ? 'Perfect!' : 'Feedback',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               IconButton(
@@ -40,10 +43,18 @@ class FeedbackSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           
-          _buildSection('Your Sentence', message.content, isError: true),
+          _buildSection('Your Sentence', message.content, isError: !feedback.isPerfect),
           const SizedBox(height: 16),
-          _buildSection('Optimized', feedback.optimizedText, isSuccess: true),
-          const SizedBox(height: 16),
+          
+          if (!feedback.isPerfect) ...[
+            _buildSection('Corrected', feedback.correctedText, isSuccess: true),
+            const SizedBox(height: 16),
+          ],
+          
+          if (feedback.nativeExpression.isNotEmpty) ...[
+             _buildSection('Native Expression', feedback.nativeExpression, isNative: true),
+             const SizedBox(height: 16),
+          ],
           
           Container(
             padding: const EdgeInsets.all(12),
@@ -58,7 +69,7 @@ class FeedbackSheet extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    feedback.reason,
+                    feedback.explanation,
                     style: TextStyle(color: Colors.blue[900]),
                   ),
                 ),
@@ -69,10 +80,15 @@ class FeedbackSheet extends StatelessWidget {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
+              // Save mostly interesting things, like the native expression or corrected text
+              final textToSave = feedback.nativeExpression.isNotEmpty 
+                  ? feedback.nativeExpression 
+                  : feedback.correctedText;
+                  
               VocabService().add(
-                feedback.optimizedText,
-                "Optimized Expression", // Placeholder translation or definition
-                "Feedback",
+                textToSave,
+                "Smart Feedback", 
+                "Correction",
               );
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -85,16 +101,17 @@ class FeedbackSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
-          const SizedBox(height: 16), // SafeArea padding basically
+          const SizedBox(height: 16), 
         ],
       ),
     );
   }
 
-  Widget _buildSection(String label, String text, {bool isError = false, bool isSuccess = false}) {
+  Widget _buildSection(String label, String text, {bool isError = false, bool isSuccess = false, bool isNative = false}) {
     Color? textColor;
     if (isError) textColor = Colors.red[700];
     if (isSuccess) textColor = Colors.green[700];
+    if (isNative) textColor = Colors.purple[700];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,8 +129,9 @@ class FeedbackSheet extends StatelessWidget {
           text,
           style: TextStyle(
             fontSize: 16,
-            color: textColor,
-            fontWeight: isSuccess ? FontWeight.w500 : FontWeight.normal,
+            color: textColor ?? Colors.black87,
+            fontWeight: (isSuccess || isNative) ? FontWeight.w600 : FontWeight.normal,
+            fontStyle: isNative ? FontStyle.italic : FontStyle.normal,
           ),
         ),
       ],

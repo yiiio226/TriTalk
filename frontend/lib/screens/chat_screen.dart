@@ -184,9 +184,15 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.lightbulb_outline),
             onPressed: () async {
+              // Prepare history
+              final history = _messages.map((m) => {
+                'role': m.isUser ? 'user' : 'assistant',
+                'content': m.content,
+              }).toList();
+
               // Show loading or hints
               try {
-                final hints = await _apiService.getHints(widget.scene.description);
+                final hints = await _apiService.getHints(widget.scene.description, history);
                 if (!mounted) return;
                 
                 showModalBottomSheet(

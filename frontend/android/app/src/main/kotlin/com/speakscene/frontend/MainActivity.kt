@@ -1,4 +1,4 @@
-package com.speakscene.frontend
+package com.TriSpeak.frontend
 
 import io.flutter.embedding.android.FlutterActivity
 

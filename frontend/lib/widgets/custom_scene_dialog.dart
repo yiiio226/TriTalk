@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import '../models/scene.dart';
+import '../services/api_service.dart';
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({Key? key}) : super(key: key);
 
@@ -26,92 +27,119 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
       _isLoading = true;
     });
 
-    // TODO: Call API to generate scene
-    await Future.delayed(const Duration(seconds: 2)); // Mock delay
+    // Call API to generate scene
+    try {
+      final generatedScene = await ApiService().generateScene(
+        _scenarioController.text.trim(), 
+        _selectedTone
+      );
 
-    if (!mounted) return;
+      final newScene = Scene(
+        id: DateTime.now().toString(),
+        title: generatedScene.title,
+        description: generatedScene.description,
+        aiRole: generatedScene.aiRole,
+        userRole: generatedScene.userRole,
+        category: 'Custom',
+        difficulty: _selectedTone, 
+        initialMessage: generatedScene.initialMessage,
+        goal: generatedScene.goal,
+        emoji: generatedScene.emoji,
+        color: 0xFF9C27B0, // Purple for custom
+        iconPath: "", 
+      );
+      
+      if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-    });
+      setState(() {
+        _isLoading = false;
+      });
 
-    Navigator.of(context).pop(); // Close dialog for now
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Scene Generation Mock Success!')),
-    );
+      Navigator.of(context).pop(newScene);
+
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to generate scene: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Create Custom Scene',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _scenarioController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Scenario Description',
-                hintText: 'e.g., I want to return a defective product to a store...',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text('AI Persona Style', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+
             Row(
               children: [
-                Expanded(
-                  child: _buildOptionChip('Casual', _selectedTone, (val) {
-                    setState(() => _selectedTone = val);
-                  }),
-                ),
+                const Icon(Icons.auto_awesome, color: Colors.blue),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: _buildOptionChip('Formal', _selectedTone, (val) {
-                    setState(() => _selectedTone = val);
-                  }),
+                const Text(
+                  'Create Your Own Scenario',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildOptionChip('Brief', _selectedLength, (val) {
-                    setState(() => _selectedLength = val);
-                  }),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildOptionChip('Detailed', _selectedLength, (val) {
-                    setState(() => _selectedLength = val);
-                  }),
-                ),
-              ],
+            Text(
+              'Describe a situation you want to practice. AI will create a roleplay scenario for you.',
+              style: TextStyle(color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _generateScene,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blue),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Start Chat'),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextField(
+                controller: _scenarioController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Example: I need to return a defective product, but the store clerk is being difficult...',
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _generateScene,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Generate Scenario',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+              ),
             ),
           ],
         ),

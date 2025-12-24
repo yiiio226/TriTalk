@@ -17,5 +17,14 @@ class Scene {
     required this.userRole,
     required this.initialMessage,
     required this.category,
+    required this.difficulty,
+    required this.goal,
+    required this.iconPath,
+    required this.color,
   });
+
+  final String difficulty; // Easy, Medium, Hard
+  final String goal;
+  final String iconPath;
+  final int color; // Hex value for custom styling if needed, or we can resolve from difficulty
 }
