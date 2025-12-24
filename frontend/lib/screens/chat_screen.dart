@@ -167,7 +167,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 40),
       // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,
