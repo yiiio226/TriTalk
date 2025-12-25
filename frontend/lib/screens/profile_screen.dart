@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'vocab_screen.dart';
 import 'history_screen.dart';
+import 'paywall_screen.dart';
 import '../services/preferences_service.dart';
 import '../data/language_constants.dart';
 
@@ -292,8 +293,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.star_border,
                     iconColor: Colors.purple,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text('Paywall coming in Module 5')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PaywallScreen(),
+                        ),
                       );
                     },
                   ),
