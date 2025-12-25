@@ -55,7 +55,9 @@ async function callOpenRouter(
     });
 
     if (!response.ok) {
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('OpenRouter API Response:', errorText);
+        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -73,6 +75,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     1. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
     2. Respond naturally as your character would in this real-world situation.
     3. Keep responses conversational and realistic for the scenario.
+    4. YOU MUST ALWAYS RESPOND IN ENGLISH. Your "reply" field must be in English only.
     
     Analyze the user's message for grammar, naturalness, and appropriateness.
     
@@ -82,11 +85,11 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     - User says: "I want coffee"
     - native_expression: "I'd like a coffee, please" (more polite way for USER to say it)
     - example_answer: "Could I get a coffee?" (alternative way for USER to say it)
-    - reply: "Sure! What size would you like?" (this is YOUR response as the AI character)
+    - reply: "Sure! What size would you like?" (this is YOUR response as the AI character, IN ENGLISH)
     
     You MUST return your response in valid JSON format:
     {
-        "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
+        "reply": "Your in-character conversational reply IN ENGLISH (stay in role, never mention practice/learning)",
         "analysis": {
             "is_perfect": boolean,
             "corrected_text": "Grammatically correct version of what the USER said",
@@ -126,7 +129,10 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     } catch (error) {
         console.error('Error in /chat/send:', error);
         return new Response(
-            JSON.stringify({ message: "Sorry, I'm having trouble connecting to the AI right now." }),
+            JSON.stringify({
+                message: "Sorry, I'm having trouble connecting to the AI right now.",
+                debug_error: String(error)
+            }),
             { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
         );
     }

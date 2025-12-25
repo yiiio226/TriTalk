@@ -164,44 +164,78 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              showDialog(
+              showModalBottomSheet(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Clear Conversation'),
-                  content: const Text('Are you sure you want to clear this conversation and start over?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
-                        
-                        // Clear from service first
-                        ChatHistoryService().clearHistory(sceneKey);
-                        
-                        // Get new list reference from service
-                        final newHistory = ChatHistoryService().getMessages(sceneKey);
-                        
-                        // Add initial message to the new list
-                        final initialMsg = Message(
-                          id: 'init',
-                          content: widget.scene.initialMessage,
-                          isUser: false,
-                          timestamp: DateTime.now(),
-                        );
-                        newHistory.add(initialMsg);
-                        
-                        // Update _messages to reference the new list
-                        setState(() {
-                          _messages = newHistory;
-                        });
-                      },
-                      child: const Text('Clear'),
-                    ),
-                  ],
+                backgroundColor: Colors.transparent,
+                builder: (context) => Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Clear Conversation',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Are you sure you want to clear this conversation and start over?',
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                              
+                              // Clear from service first
+                              ChatHistoryService().clearHistory(sceneKey);
+                              
+                              // Get new list reference from service
+                              final newHistory = ChatHistoryService().getMessages(sceneKey);
+                              
+                              // Add initial message to the new list
+                              final initialMsg = Message(
+                                id: 'init',
+                                content: widget.scene.initialMessage,
+                                isUser: false,
+                                timestamp: DateTime.now(),
+                              );
+                              newHistory.add(initialMsg);
+                              
+                              // Update _messages to reference the new list
+                              setState(() {
+                                _messages = newHistory;
+                              });
+                            },
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(fontSize: 16, color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               );
             },
