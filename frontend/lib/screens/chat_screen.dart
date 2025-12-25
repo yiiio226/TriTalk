@@ -20,7 +20,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Message> _messages = [];
+  List<Message> _messages = [];
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -53,12 +53,11 @@ class _ChatScreenState extends State<ChatScreen> {
         timestamp: DateTime.now(),
       );
       history.add(initialMsg);
-       // Ensure service has it (getMessages returns reference, so add works, but good to be explicit)
     }
     
-    // We use the same list reference so updates propagate to service automatically
+    // Use the same list reference so updates propagate to service automatically
     setState(() {
-      _messages.addAll(history);
+      _messages = history;
     });
   }
 
@@ -86,11 +85,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _isSending = true;
     });
     
-    // Persist (since _messages is a COPY in this implementation? No, addAll copies elements.
-    // So distinct list. We must sync back to service or use service list directly.)
-    // Better: Helper to add to both.
+    // No need to call addMessage - _messages is the same list as in the service
     final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
-    ChatHistoryService().addMessage(sceneKey, newMessage);
 
     RevenueCatService().incrementMessageCount();
     
@@ -116,9 +112,7 @@ class _ChatScreenState extends State<ChatScreen> {
                feedback: response.feedback,
              );
              _messages[lastUserMsgIndex] = updatedMsg;
-             
-             // Update in ChatHistoryService to persist feedback
-             ChatHistoryService().updateMessage(sceneKey, lastUserMsgIndex, updatedMsg);
+             // No need to call updateMessage - we're using the same list reference
            }
         }
         
@@ -131,7 +125,7 @@ class _ChatScreenState extends State<ChatScreen> {
         );
 
         _messages.add(aiMessage);
-        ChatHistoryService().addMessage(sceneKey, aiMessage);
+        // No need to call addMessage - _messages is the same list as in the service
         
         _isSending = false;
       });
@@ -183,20 +177,27 @@ class _ChatScreenState extends State<ChatScreen> {
                     TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        setState(() {
-                          _messages.clear();
-                          // Re-add initial message
-                          final initialMsg = Message(
-                            id: 'init',
-                            content: widget.scene.initialMessage,
-                            isUser: false,
-                            timestamp: DateTime.now(),
-                          );
-                          _messages.add(initialMsg);
-                        });
-                        // Clear from service
                         final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                        
+                        // Clear from service first
                         ChatHistoryService().clearHistory(sceneKey);
+                        
+                        // Get new list reference from service
+                        final newHistory = ChatHistoryService().getMessages(sceneKey);
+                        
+                        // Add initial message to the new list
+                        final initialMsg = Message(
+                          id: 'init',
+                          content: widget.scene.initialMessage,
+                          isUser: false,
+                          timestamp: DateTime.now(),
+                        );
+                        newHistory.add(initialMsg);
+                        
+                        // Update _messages to reference the new list
+                        setState(() {
+                          _messages = newHistory;
+                        });
                       },
                       child: const Text('Clear'),
                     ),
