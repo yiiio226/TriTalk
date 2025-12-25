@@ -53,37 +53,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showLanguageDialog(
       String title, String currentLanguage, Function(String) onSelect) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(title),
-        children: LanguageConstants.supportedLanguages.map((lang) {
-          return SimpleDialogOption(
-            onPressed: () {
-              onSelect(lang);
-              Navigator.pop(context);
-            },
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  lang,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight:
-                        lang == currentLanguage ? FontWeight.bold : FontWeight.normal,
-                    color: lang == currentLanguage
-                        ? Colors.blue
-                        : const Color(0xFF1A1A1A),
-                  ),
-                ),
-                if (lang == currentLanguage)
-                  const Icon(Icons.check, color: Colors.blue, size: 20),
-              ],
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          );
-        }).toList(),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: LanguageConstants.supportedLanguages.map((lang) {
+                  final isSelected = lang == currentLanguage;
+                  return InkWell(
+                    onTap: () {
+                      onSelect(lang);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey.shade100,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            lang,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? Colors.blue
+                                  : const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(Icons.check, color: Colors.blue, size: 24),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
