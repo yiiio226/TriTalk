@@ -49,7 +49,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
     final history = ChatHistoryService().getMessages(sceneKey);
     
-    if (history.isEmpty) {
+    bool isNewConversation = history.isEmpty;
+    
+    if (isNewConversation) {
       // Check target language
       final prefs = PreferencesService();
       final targetLang = await prefs.getTargetLanguage();
@@ -77,6 +79,24 @@ class _ChatScreenState extends State<ChatScreen> {
         isAnimated: true, // Enable typewriter effect for initial message
       );
       history.add(initialMsg);
+    } else {
+      // Reset animation flags for existing messages to prevent re-animation
+      for (int i = 0; i < history.length; i++) {
+        final msg = history[i];
+        if (msg.isAnimated || msg.isLoading) {
+          history[i] = Message(
+            id: msg.id,
+            content: msg.content,
+            isUser: msg.isUser,
+            timestamp: msg.timestamp,
+            translation: msg.translation,
+            feedback: msg.feedback,
+            analysis: msg.analysis,
+            isAnimated: false,
+            isLoading: false,
+          );
+        }
+      }
     }
     
     // Use the same list reference so updates propagate to service automatically
