@@ -4,6 +4,8 @@ export interface ChatRequest {
     message: string;
     history?: Array<{ role: string; content: string }>;
     scene_context: string;
+    native_language?: string;
+    target_language?: string;
 }
 
 export interface ReviewFeedback {
@@ -24,6 +26,7 @@ export interface HintRequest {
     message?: string;
     history?: Array<{ role: string; content: string }>;
     scene_context: string;
+    target_language?: string;
 }
 
 export interface HintResponse {
@@ -50,6 +53,7 @@ export interface VocabularyItem {
 
 export interface AnalyzeRequest {
     message: string;
+    native_language?: string;
 }
 
 export interface AnalyzeResponse {
@@ -80,4 +84,13 @@ export interface PolishRequest {
 
 export interface PolishResponse {
     polished_text: string;
+}
+
+export interface TranslateRequest {
+    text: string;
+    target_language: string;
+}
+
+export interface TranslateResponse {
+    translation: string;
 }
