@@ -10,8 +10,14 @@ enum Environment {
 
 class ApiService {
   // ==================== 环境配置 ====================
-  // 修改这里来切换环境
-  static const Environment currentEnvironment = Environment.production;
+  // 自动环境切换:
+  // - 开发时: flutter run (默认使用 localDev)
+  // - 生产时: flutter run --dart-define=USE_PROD=true
+  //          flutter build apk --dart-define=USE_PROD=true
+  static const Environment currentEnvironment = 
+      bool.fromEnvironment('USE_PROD', defaultValue: false)
+          ? Environment.production
+          : Environment.localDev;
   // =================================================
   
   // 本地开发 URL (Cloudflare Workers 开发服务器)

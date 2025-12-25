@@ -288,13 +288,12 @@ class _ChatScreenState extends State<ChatScreen> {
       // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, -2),
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey[200]!,
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: Row(
         children: [
@@ -314,23 +313,85 @@ class _ChatScreenState extends State<ChatScreen> {
                 
                 showModalBottomSheet(
                   context: context,
+                  isScrollControlled: true,
                   builder: (context) {
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Suggestions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          ...hints.hints.map((hint) => ListTile(
-                            title: Text(hint),
-                            onTap: () {
-                              _textController.text = hint;
-                              Navigator.pop(context);
-                            },
-                          )).toList(),
-                        ],
+                    final screenHeight = MediaQuery.of(context).size.height;
+                    
+                    return ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: screenHeight * 0.9,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Header (fixed at top)
+                            Row(
+                              children: [
+                                const Icon(Icons.lightbulb_outline, color: Colors.orange),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Suggestions',
+                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Navigator.pop(context),
+                                )
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Scrollable content
+                            Flexible(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: hints.hints.map((hint) => Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          _textController.text = hint;
+                                          Navigator.pop(context);
+                                        },
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange[50],
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.orange[200]!, width: 1),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  hint,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.orange[900],
+                                                  ),
+                                                ),
+                                              ),
+                                              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.orange[400]),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )).toList(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
