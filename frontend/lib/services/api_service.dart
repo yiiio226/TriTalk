@@ -22,7 +22,7 @@ class ApiService {
   // =================================================
   
   // 本地开发 URL (Cloudflare Workers 开发服务器)
-  static const String _localDevUrl = 'http://192.168.1.8:8787';
+  static const String _localDevUrl = 'http://192.168.1.5:8787';
   
   // 生产环境 URL (已部署的 Cloudflare Workers)
   static const String _productionUrl = 'https://tritalk-backend.tristart226.workers.dev';
