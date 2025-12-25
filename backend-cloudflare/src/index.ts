@@ -1,0 +1,280 @@
+import {
+    ChatRequest,
+    ChatResponse,
+    HintRequest,
+    HintResponse,
+    SceneGenerationRequest,
+    SceneGenerationResponse,
+    ReviewFeedback,
+    Env,
+} from './types';
+
+// Helper to create CORS headers
+function corsHeaders() {
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+    };
+}
+
+// Helper to parse JSON from LLM response (handles markdown wrapping)
+function parseJSON(content: string): any {
+    let cleaned = content.trim();
+    if (cleaned.startsWith('```json')) {
+        cleaned = cleaned.slice(7);
+    } else if (cleaned.startsWith('```')) {
+        cleaned = cleaned.slice(3);
+    }
+    if (cleaned.endsWith('```')) {
+        cleaned = cleaned.slice(0, -3);
+    }
+    return JSON.parse(cleaned.trim());
+}
+
+// Call OpenRouter API
+async function callOpenRouter(
+    apiKey: string,
+    model: string,
+    messages: Array<{ role: string; content: string }>,
+    jsonMode: boolean = true
+): Promise<any> {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://tritalk.app',
+            'X-Title': 'TriTalk',
+        },
+        body: JSON.stringify({
+            model,
+            messages,
+            ...(jsonMode && { response_format: { type: 'json_object' } }),
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+// Handle /chat/send endpoint
+async function handleChatSend(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: ChatRequest = await request.json();
+
+        const systemPrompt = `You are roleplaying in a language learning scenario. Key Scenario Context: ${body.scene_context}.
+    
+    CRITICAL RULES:
+    1. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
+    2. Respond naturally as your character would in this real-world situation.
+    3. Keep responses conversational and realistic for the scenario.
+    
+    Analyze the user's message for grammar, naturalness, and appropriateness.
+    
+    IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR OWN message. These are NOT your (AI character's) responses.
+    
+    Example:
+    - User says: "I want coffee"
+    - native_expression: "I'd like a coffee, please" (more polite way for USER to say it)
+    - example_answer: "Could I get a coffee?" (alternative way for USER to say it)
+    - reply: "Sure! What size would you like?" (this is YOUR response as the AI character)
+    
+    You MUST return your response in valid JSON format:
+    {
+        "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
+        "analysis": {
+            "is_perfect": boolean,
+            "corrected_text": "Grammatically correct version of what the USER said",
+            "native_expression": "More natural/idiomatic way for the USER to express their message (NOT your AI response)",
+            "explanation": "Explanation in Chinese (Simplified). If perfect, compliment in Chinese.",
+            "example_answer": "Alternative way for the USER to express the same idea (NOT your AI response)"
+        }
+    }`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: body.message },
+        ];
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        const replyText = data.reply || '';
+        const analysisData = data.analysis || {};
+
+        const feedback: ReviewFeedback = {
+            is_perfect: analysisData.is_perfect || false,
+            corrected_text: analysisData.corrected_text || body.message,
+            native_expression: analysisData.native_expression || '',
+            explanation: analysisData.explanation || '',
+            example_answer: analysisData.example_answer || '',
+        };
+
+        const response: ChatResponse = {
+            message: replyText,
+            review_feedback: feedback,
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /chat/send:', error);
+        return new Response(
+            JSON.stringify({ message: "Sorry, I'm having trouble connecting to the AI right now." }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
+// Handle /chat/hint endpoint
+async function handleChatHint(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: HintRequest = await request.json();
+
+        const hintPrompt = `You are a helpful conversation tutor.
+    Key Scenario Context: ${body.scene_context}.
+    
+    Based on the conversation history, suggest 3 natural, diverse, and appropriate short responses for the user (learner) to say next.
+    
+    Guidelines:
+    1. Keep them short (1 sentence).
+    2. Vary the intent (e.g., one agreement, one question, one alternative).
+    3. Output JSON format only: { "hints": ["Hint 1", "Hint 2", "Hint 3"] }`;
+
+        const messages = [{ role: 'system', content: hintPrompt }];
+
+        // Add recent history (last 5 messages)
+        if (body.history && body.history.length > 0) {
+            messages.push(...body.history.slice(-5));
+        }
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        let hints = data.hints || [];
+        if (hints.length === 0) {
+            hints = ['Yes, please.', 'No, thank you.', 'Could you repeat that?'];
+        }
+
+        const response: HintResponse = { hints };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /chat/hint:', error);
+        return new Response(
+            JSON.stringify({ hints: ['Could you help me?', "I don't understand.", 'Please continue.'] }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
+// Handle /scene/generate endpoint
+async function handleSceneGenerate(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: SceneGenerationRequest = await request.json();
+
+        const prompt = `Act as a creative educational scenario designer.
+    User Request: "${body.description}"
+    Tone: ${body.tone || 'Casual'}
+    
+    Create a roleplay scenario for learning English.
+    Output JSON ONLY with these fields:
+    - title: Short, catchy title (e.g. "Coffee Shop Chat")
+    - ai_role: Who you (AI) will play (e.g. "Barista")
+    - user_role: Who the user will play (e.g. "Customer")
+    - goal: The user's objective (e.g. "Order a latte with oat milk")
+    - description: A brief context setting (e.g. "You are at a busy cafe in London...")
+    - initial_message: The first thing the AI says to start the conversation.
+    - emoji: A single relevant emoji char.`;
+
+        const messages = [{ role: 'user', content: prompt }];
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        let data = parseJSON(content);
+
+        // Handle list response (some models return [{}])
+        if (Array.isArray(data) && data.length > 0) {
+            data = data[0];
+        }
+
+        const response: SceneGenerationResponse = {
+            title: data.title || 'Custom Scene',
+            ai_role: data.ai_role || 'Assistant',
+            user_role: data.user_role || 'Learner',
+            goal: data.goal || 'Practice English',
+            description: data.description || body.description,
+            initial_message: data.initial_message || 'Hello! Ready to practice?',
+            emoji: data.emoji || '✨',
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /scene/generate:', error);
+        const body: SceneGenerationRequest = await request.json();
+        return new Response(
+            JSON.stringify({
+                title: 'Custom Scene',
+                ai_role: 'Assistant',
+                user_role: 'User',
+                goal: 'Practice conversation',
+                description: body.description,
+                initial_message: "Hi! Let's start practicing.",
+                emoji: '📝',
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
+// Main worker handler
+export default {
+    async fetch(request: Request, env: Env): Promise<Response> {
+        const url = new URL(request.url);
+
+        // Handle CORS preflight
+        if (request.method === 'OPTIONS') {
+            return new Response(null, { headers: corsHeaders() });
+        }
+
+        // Route requests
+        if (url.pathname === '/' && request.method === 'GET') {
+            return new Response(JSON.stringify({ message: 'TriTalk Backend Running on Cloudflare Workers' }), {
+                headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            });
+        }
+
+        if (url.pathname === '/health' && request.method === 'GET') {
+            return new Response(JSON.stringify({ status: 'ok' }), {
+                headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            });
+        }
+
+        if (url.pathname === '/chat/send' && request.method === 'POST') {
+            return handleChatSend(request, env);
+        }
+
+        if (url.pathname === '/chat/hint' && request.method === 'POST') {
+            return handleChatHint(request, env);
+        }
+
+        if (url.pathname === '/scene/generate' && request.method === 'POST') {
+            return handleSceneGenerate(request, env);
+        }
+
+        // 404 for unknown routes
+        return new Response(JSON.stringify({ error: 'Not Found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    },
+};

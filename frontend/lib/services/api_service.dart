@@ -2,10 +2,35 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/message.dart';
 
+// 环境枚举
+enum Environment {
+  localDev,    // 本地开发环境 (Wrangler dev server)
+  production,  // 生产环境 (已部署的 Cloudflare Workers)
+}
+
 class ApiService {
-  // Use 127.0.0.1 for iOS Simulator, 10.0.2.2 for Android Emulator
-  // For Physical device, use your machine's local IP
-  static const String baseUrl = 'http://192.168.1.5:8000'; 
+  // ==================== 环境配置 ====================
+  // 修改这里来切换环境
+  static const Environment currentEnvironment = Environment.production;
+  // =================================================
+  
+  // 本地开发 URL (Cloudflare Workers 开发服务器)
+  static const String _localDevUrl = 'http://192.168.1.5:8787';
+  
+  // 生产环境 URL (已部署的 Cloudflare Workers)
+  static const String _productionUrl = 'https://tritalk-backend.tristart226.workers.dev';
+  
+  // 根据当前环境自动选择 URL
+  static String get baseUrl {
+    switch (currentEnvironment) {
+      case Environment.localDev:
+        print('🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl');
+        return _localDevUrl;
+      case Environment.production:
+        print('🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl');
+        return _productionUrl;
+    }
+  } 
 
   Future<ChatResponse> sendMessage(String text, String sceneContext) async {
     try {
