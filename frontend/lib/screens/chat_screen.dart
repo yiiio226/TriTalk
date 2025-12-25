@@ -88,10 +88,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final ApiService _apiService = ApiService();
   bool _isSending = false;
+  // Error handling state
+  String? _failedMessage;
+  bool _showErrorBanner = false;
 
   void _sendMessage() async {
     final text = _textController.text.trim();
     if (text.isEmpty || _isSending) return;
+
+    // Reset error state on new attempt
+    setState(() {
+      _showErrorBanner = false;
+    });
 
     if (!RevenueCatService().canSendMessage()) {
       _showLimitDialog();
@@ -157,12 +165,21 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
       setState(() {
+        // Remove the failed message so user can retry
+        _messages.removeWhere((m) => m.id == newMessage.id);
+        
         _isSending = false;
+        _failedMessage = text;
+        _showErrorBanner = true;
       });
+    }
+  }
+
+  void _retryLastMessage() {
+    if (_failedMessage != null) {
+      _textController.text = _failedMessage!;
+      _sendMessage();
     }
   }
   
@@ -284,7 +301,36 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+          if (_showErrorBanner) _buildErrorBanner(),
           _buildInputArea(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner() {
+    return Container(
+      width: double.infinity,
+      color: Colors.red.shade50,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Failed to send message',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+          TextButton(
+            onPressed: _retryLastMessage,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(50, 30),
+            ),
+            child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
