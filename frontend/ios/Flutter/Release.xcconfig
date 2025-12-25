@@ -1,1 +1,4 @@
 #include "Generated.xcconfig"
+
+// DART_DEFINES base64 encoded "USE_PROD=true"
+DART_DEFINES = VVNFX1BST0Q9dHJ1ZQ==
