@@ -301,6 +301,34 @@ async def analyze_message(request: AnalyzeRequest):
             overall_summary="Could not analyze message at this time."
         )
 
+class TranslateRequest(BaseModel):
+    text: str
+    target_language: str
+
+class TranslateResponse(BaseModel):
+    translation: str
+
+@app.post("/common/translate", response_model=TranslateResponse)
+async def translate_text(request: TranslateRequest):
+    prompt = f"""Translate the following text to {request.target_language}.
+    Text: "{request.text}"
+    
+    Output JSON ONLY: {{ "translation": "..." }}
+    """
+    
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = completion.choices[0].message.content
+        data = parse_json(content)
+        return TranslateResponse(translation=data.get("translation", request.text))
+    except Exception as e:
+        print(f"Error translating text: {e}")
+        return TranslateResponse(translation=request.text)
+
 @app.get("/")
 def read_root():
     return {"message": "TriTalk Backend Running"}

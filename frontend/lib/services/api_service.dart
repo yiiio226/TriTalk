@@ -120,6 +120,28 @@ class ApiService {
     }
   }
 
+  Future<String> translateText(String text, String targetLanguage) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/common/translate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'text': text,
+          'target_language': targetLanguage,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['translation'];
+      } else {
+        throw Exception('Failed to translate text: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error translating text: $e');
+    }
+  }
+
   Future<MessageAnalysis> analyzeMessage(String message) async {
     try {
       final prefs = PreferencesService();

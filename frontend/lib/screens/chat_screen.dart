@@ -8,6 +8,7 @@ import '../widgets/hints_sheet.dart';
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
+import '../services/preferences_service.dart'; // Added
 import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -43,16 +44,34 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadMessages();
   }
 
-  void _loadMessages() {
+  Future<void> _loadMessages() async {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
     final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
     final history = ChatHistoryService().getMessages(sceneKey);
     
     if (history.isEmpty) {
+      // Check target language
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
+      
+      String initialContent = widget.scene.initialMessage;
+      
+      // If target language is not English, translate the initial message
+      if (targetLang != 'English') {
+        try {
+          initialContent = await _apiService.translateText(
+            widget.scene.initialMessage, 
+            targetLang
+          );
+        } catch (e) {
+          print("Translation failed, falling back to original: $e");
+        }
+      }
+
       // Add initial AI message if history is empty
       final initialMsg = Message(
         id: 'init',
-        content: widget.scene.initialMessage,
+        content: initialContent,
         isUser: false,
         timestamp: DateTime.now(),
       );
@@ -60,9 +79,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     
     // Use the same list reference so updates propagate to service automatically
-    setState(() {
-      _messages = history;
-    });
+    if (mounted) {
+      setState(() {
+        _messages = history;
+      });
+    }
   }
 
   final ApiService _apiService = ApiService();
@@ -210,25 +231,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               Navigator.pop(context);
                               final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
                               
-                              // Clear from service first
+                              // Clear from service
                               ChatHistoryService().clearHistory(sceneKey);
                               
-                              // Get new list reference from service
-                              final newHistory = ChatHistoryService().getMessages(sceneKey);
-                              
-                              // Add initial message to the new list
-                              final initialMsg = Message(
-                                id: 'init',
-                                content: widget.scene.initialMessage,
-                                isUser: false,
-                                timestamp: DateTime.now(),
-                              );
-                              newHistory.add(initialMsg);
-                              
-                              // Update _messages to reference the new list
-                              setState(() {
-                                _messages = newHistory;
-                              });
+                              // Reload to re-initialize (and translate) the initial message
+                              _loadMessages();
                             },
                             child: const Text(
                               'Clear',
