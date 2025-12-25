@@ -95,6 +95,26 @@ class ApiService {
       throw Exception('Error generating scene: $e');
     }
   }
+
+  Future<MessageAnalysis> analyzeMessage(String message) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/chat/analyze'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return MessageAnalysis.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('Failed to analyze message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error analyzing message: $e');
+    }
+  }
 }
 
 class ChatResponse {

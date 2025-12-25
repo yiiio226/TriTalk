@@ -3,6 +3,7 @@ import '../models/scene.dart';
 import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
+import '../widgets/analysis_sheet.dart';
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
@@ -21,6 +22,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<Message> _messages = [];
+  bool _isAnalyzing = false;
+  String? _analyzingMessageId;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -263,6 +266,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           isScrollControlled: true,
                           builder: (context) => FeedbackSheet(message: msg),
                         );
+                      } else if (!msg.isUser) {
+                        // AI message - show analysis
+                        _handleAnalyze(msg);
                       }
                     },
                   ),
@@ -381,5 +387,82 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  void _handleAnalyze(Message message) async {
+    // If analysis already exists, show it directly
+    if (message.analysis != null) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => AnalysisSheet(
+          message: message,
+          analysis: message.analysis,
+        ),
+      );
+      return;
+    }
+
+    // Show loading sheet
+    setState(() {
+      _isAnalyzing = true;
+      _analyzingMessageId = message.id;
+    });
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      builder: (context) => AnalysisSheet(
+        message: message,
+        isLoading: true,
+      ),
+    );
+
+    try {
+      final analysis = await _apiService.analyzeMessage(message.content);
+      
+      if (!mounted) return;
+
+      // Update message with analysis
+      final messageIndex = _messages.indexWhere((m) => m.id == message.id);
+      if (messageIndex != -1) {
+        final updatedMessage = Message(
+          id: message.id,
+          content: message.content,
+          isUser: message.isUser,
+          timestamp: message.timestamp,
+          translation: message.translation,
+          feedback: message.feedback,
+          analysis: analysis,
+        );
+        setState(() {
+          _messages[messageIndex] = updatedMessage;
+          _isAnalyzing = false;
+          _analyzingMessageId = null;
+        });
+
+        // Close loading sheet and show result
+        Navigator.pop(context);
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => AnalysisSheet(
+            message: updatedMessage,
+            analysis: analysis,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isAnalyzing = false;
+        _analyzingMessageId = null;
+      });
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to analyze: $e')),
+      );
+    }
   }
 }
