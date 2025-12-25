@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/scene.dart';
 import '../services/api_service.dart';
+import 'top_toast.dart';
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({Key? key}) : super(key: key);
 
@@ -63,9 +64,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to generate scene: $e')),
-      );
+      showTopToast(context, 'Failed to generate scene: $e', isError: true);
     }
   }
 
@@ -85,14 +84,13 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         _scenarioController.text = polished;
         _isPolishing = false;
       });
+      showTopToast(context, 'Scenario polished successfully');
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isPolishing = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to polish scenario: $e')),
-      );
+      showTopToast(context, 'Failed to polish scenario: $e', isError: true);
     }
   }
 
