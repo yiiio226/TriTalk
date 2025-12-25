@@ -1,9 +1,139 @@
 import 'package:flutter/material.dart';
 import 'vocab_screen.dart';
 import 'history_screen.dart';
+import '../services/preferences_service.dart';
+import '../data/language_constants.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _nativeLanguage = LanguageConstants.defaultNativeLanguage;
+  String _targetLanguage = LanguageConstants.defaultTargetLanguage;
+  final PreferencesService _prefs = PreferencesService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final native = await _prefs.getNativeLanguage();
+    final target = await _prefs.getTargetLanguage();
+    if (mounted) {
+      setState(() {
+        _nativeLanguage = native;
+        _targetLanguage = target;
+      });
+    }
+  }
+
+  Future<void> _updateNativeLanguage(String language) async {
+    await _prefs.setNativeLanguage(language);
+    if (mounted) {
+      setState(() {
+        _nativeLanguage = language;
+      });
+    }
+  }
+
+  Future<void> _updateTargetLanguage(String language) async {
+    await _prefs.setTargetLanguage(language);
+    if (mounted) {
+      setState(() {
+        _targetLanguage = language;
+      });
+    }
+  }
+
+  void _showLanguageDialog(
+      String title, String currentLanguage, Function(String) onSelect) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: LanguageConstants.supportedLanguages.map((lang) {
+                  final isSelected = lang == currentLanguage;
+                  return InkWell(
+                    onTap: () {
+                      onSelect(lang);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey.shade100,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            lang,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? Colors.blue
+                                  : const Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          if (isSelected)
+                            const Icon(Icons.check, color: Colors.blue, size: 24),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +217,48 @@ class ProfileScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
+                  Text(
+                    'Language Settings',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildMenuCard(
+                    context,
+                    title: 'Native Language',
+                    subtitle: _nativeLanguage,
+                    icon: Icons.language,
+                    iconColor: Colors.teal,
+                    onTap: () {
+                      _showLanguageDialog(
+                          'Select Native Language', _nativeLanguage, _updateNativeLanguage);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildMenuCard(
+                    context,
+                    title: 'Learning Language',
+                    subtitle: _targetLanguage,
+                    icon: Icons.school,
+                    iconColor: Colors.indigo,
+                    onTap: () {
+                      _showLanguageDialog('Select Learning Language', _targetLanguage,
+                          _updateTargetLanguage);
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Tools',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   _buildMenuCard(
                     context,
                     title: 'Vocabulary Notebook',
@@ -192,6 +364,7 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
+                            fontWeight: FontWeight.w500, // Make subtitle slightly more visible
                           ),
                         ),
                       ],

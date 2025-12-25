@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/message.dart';
+import 'preferences_service.dart';
 
 // 环境枚举
 enum Environment {
@@ -21,7 +22,7 @@ class ApiService {
   // =================================================
   
   // 本地开发 URL (Cloudflare Workers 开发服务器)
-  static const String _localDevUrl = 'http://192.168.1.5:8787';
+  static const String _localDevUrl = 'http://192.168.1.8:8787';
   
   // 生产环境 URL (已部署的 Cloudflare Workers)
   static const String _productionUrl = 'https://tritalk-backend.tristart226.workers.dev';
@@ -40,6 +41,10 @@ class ApiService {
 
   Future<ChatResponse> sendMessage(String text, String sceneContext) async {
     try {
+      final prefs = PreferencesService();
+      final nativeLang = await prefs.getNativeLanguage();
+      final targetLang = await prefs.getTargetLanguage();
+
       final response = await http.post(
         Uri.parse('$baseUrl/chat/send'),
         headers: {'Content-Type': 'application/json'},
@@ -47,6 +52,8 @@ class ApiService {
           'message': text,
           'history': [], // TODO: Pass actual history
           'scene_context': sceneContext,
+          'native_language': nativeLang,
+          'target_language': targetLang,
         }),
       );
 
@@ -62,6 +69,10 @@ class ApiService {
 
   Future<HintResponse> getHints(String sceneContext, List<Map<String, String>> history) async {
     try {
+      final prefs = PreferencesService();
+      final nativeLang = await prefs.getNativeLanguage();
+      final targetLang = await prefs.getTargetLanguage();
+
       final response = await http.post(
         Uri.parse('$baseUrl/chat/hint'),
         headers: {'Content-Type': 'application/json'},
@@ -69,6 +80,8 @@ class ApiService {
           'message': '', // Not needed for hint request strictly but used in model
           'history': history,
           'scene_context': sceneContext,
+          'native_language': nativeLang,
+          'target_language': targetLang,
         }),
       );
 
@@ -81,8 +94,13 @@ class ApiService {
       throw Exception('Error getting hints: $e');
     }
   }
+  
   Future<SceneGenerationResponse> generateScene(String description, String tone) async {
     try {
+      // Scene generation might mostly depend on target language for the content,
+      // but we pass it anyway if the backend uses it.
+      // Currently backend doesn't explicitly look for it in generate_scene but it's good practice.
+      
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
         headers: {'Content-Type': 'application/json'},
@@ -102,13 +120,39 @@ class ApiService {
     }
   }
 
+  Future<String> translateText(String text, String targetLanguage) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/common/translate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'text': text,
+          'target_language': targetLanguage,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['translation'];
+      } else {
+        throw Exception('Failed to translate text: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error translating text: $e');
+    }
+  }
+
   Future<MessageAnalysis> analyzeMessage(String message) async {
     try {
+      final prefs = PreferencesService();
+      final nativeLang = await prefs.getNativeLanguage();
+
       final response = await http.post(
         Uri.parse('$baseUrl/chat/analyze'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'message': message,
+          'native_language': nativeLang,
         }),
       );
 

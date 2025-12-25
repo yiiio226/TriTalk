@@ -4,9 +4,11 @@ import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/analysis_sheet.dart';
+import '../widgets/hints_sheet.dart';
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
+import '../services/preferences_service.dart'; // Added
 import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -42,16 +44,34 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadMessages();
   }
 
-  void _loadMessages() {
+  Future<void> _loadMessages() async {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
     final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
     final history = ChatHistoryService().getMessages(sceneKey);
     
     if (history.isEmpty) {
+      // Check target language
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
+      
+      String initialContent = widget.scene.initialMessage;
+      
+      // If target language is not English, translate the initial message
+      if (targetLang != 'English') {
+        try {
+          initialContent = await _apiService.translateText(
+            widget.scene.initialMessage, 
+            targetLang
+          );
+        } catch (e) {
+          print("Translation failed, falling back to original: $e");
+        }
+      }
+
       // Add initial AI message if history is empty
       final initialMsg = Message(
         id: 'init',
-        content: widget.scene.initialMessage,
+        content: initialContent,
         isUser: false,
         timestamp: DateTime.now(),
       );
@@ -59,9 +79,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     
     // Use the same list reference so updates propagate to service automatically
-    setState(() {
-      _messages = history;
-    });
+    if (mounted) {
+      setState(() {
+        _messages = history;
+      });
+    }
   }
 
   final ApiService _apiService = ApiService();
@@ -209,25 +231,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               Navigator.pop(context);
                               final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
                               
-                              // Clear from service first
+                              // Clear from service
                               ChatHistoryService().clearHistory(sceneKey);
                               
-                              // Get new list reference from service
-                              final newHistory = ChatHistoryService().getMessages(sceneKey);
-                              
-                              // Add initial message to the new list
-                              final initialMsg = Message(
-                                id: 'init',
-                                content: widget.scene.initialMessage,
-                                isUser: false,
-                                timestamp: DateTime.now(),
-                              );
-                              newHistory.add(initialMsg);
-                              
-                              // Update _messages to reference the new list
-                              setState(() {
-                                _messages = newHistory;
-                              });
+                              // Reload to re-initialize (and translate) the initial message
+                              _loadMessages();
                             },
                             child: const Text(
                               'Clear',
@@ -299,106 +307,24 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.lightbulb_outline),
-            onPressed: () async {
+            onPressed: () {
               // Prepare history
-              final history = _messages.map((m) => {
+              final history = _messages.map((m) => <String, String>{
                 'role': m.isUser ? 'user' : 'assistant',
                 'content': m.content,
               }).toList();
 
-              // Show loading or hints
-              try {
-                final hints = await _apiService.getHints(widget.scene.description, history);
-                if (!mounted) return;
-                
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) {
-                    final screenHeight = MediaQuery.of(context).size.height;
-                    
-                    return ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: screenHeight * 0.9,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Header (fixed at top)
-                            Row(
-                              children: [
-                                const Icon(Icons.lightbulb_outline, color: Colors.orange),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Suggestions',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  icon: const Icon(Icons.close),
-                                  onPressed: () => Navigator.pop(context),
-                                )
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Scrollable content
-                            Flexible(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: hints.hints.map((hint) => Container(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () {
-                                          _textController.text = hint;
-                                          Navigator.pop(context);
-                                        },
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange[50],
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.orange[200]!, width: 1),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  hint,
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.orange[900],
-                                                  ),
-                                                ),
-                                              ),
-                                              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.orange[400]),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  )).toList(),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (context) => HintsSheet(
+                  sceneDescription: widget.scene.description,
+                  history: history,
+                  onHintSelected: (hint) {
+                    _textController.text = hint;
                   },
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to get hints: $e')));
-              }
+                ),
+              );
             },
           ),
           Expanded(
