@@ -77,10 +77,10 @@ async def chat_send(request: ChatRequest):
         "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
         "analysis": {{
             "is_perfect": boolean,
-            "corrected_text": "Grammatically correct version of what the USER said",
-            "native_expression": "More natural/idiomatic way for the USER to express their message (NOT your AI response)",
+            "corrected_text": "Grammatically correct version of what the USER said (in English)",
+            "native_expression": "More natural/idiomatic way for the USER to express their message in English (NOT your AI response, MUST be in English only)",
             "explanation": "Explanation in Chinese (Simplified). If perfect, compliment in Chinese.",
-            "example_answer": "Alternative way for the USER to express the same idea (NOT your AI response)"
+            "example_answer": "Alternative way for the USER to express the same idea in English (NOT your AI response, MUST be in English only)"
         }}
     }}
     """

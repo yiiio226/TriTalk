@@ -4,6 +4,7 @@ import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/analysis_sheet.dart';
+import '../widgets/hints_sheet.dart';
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
@@ -299,106 +300,24 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.lightbulb_outline),
-            onPressed: () async {
+            onPressed: () {
               // Prepare history
-              final history = _messages.map((m) => {
+              final history = _messages.map((m) => <String, String>{
                 'role': m.isUser ? 'user' : 'assistant',
                 'content': m.content,
               }).toList();
 
-              // Show loading or hints
-              try {
-                final hints = await _apiService.getHints(widget.scene.description, history);
-                if (!mounted) return;
-                
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) {
-                    final screenHeight = MediaQuery.of(context).size.height;
-                    
-                    return ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: screenHeight * 0.9,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Header (fixed at top)
-                            Row(
-                              children: [
-                                const Icon(Icons.lightbulb_outline, color: Colors.orange),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Suggestions',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  icon: const Icon(Icons.close),
-                                  onPressed: () => Navigator.pop(context),
-                                )
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Scrollable content
-                            Flexible(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: hints.hints.map((hint) => Container(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () {
-                                          _textController.text = hint;
-                                          Navigator.pop(context);
-                                        },
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange[50],
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.orange[200]!, width: 1),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  hint,
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.orange[900],
-                                                  ),
-                                                ),
-                                              ),
-                                              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.orange[400]),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  )).toList(),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (context) => HintsSheet(
+                  sceneDescription: widget.scene.description,
+                  history: history,
+                  onHintSelected: (hint) {
+                    _textController.text = hint;
                   },
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to get hints: $e')));
-              }
+                ),
+              );
             },
           ),
           Expanded(
