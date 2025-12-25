@@ -74,6 +74,7 @@ class _ChatScreenState extends State<ChatScreen> {
         content: initialContent,
         isUser: false,
         timestamp: DateTime.now(),
+        isAnimated: true, // Enable typewriter effect for initial message
       );
       history.add(initialMsg);
     }
@@ -116,6 +117,15 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add(newMessage);
       _isSending = true;
+      
+      // Add temporary loading message
+      _messages.add(Message(
+        id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+        content: '',
+        isUser: false,
+        timestamp: DateTime.now(),
+        isLoading: true,
+      ));
     });
     
     // No need to call addMessage - _messages is the same list as in the service
@@ -149,18 +159,22 @@ class _ChatScreenState extends State<ChatScreen> {
            }
         }
         
+        _isSending = false;
+        
+        // Remove loading message
+        _messages.removeWhere((m) => m.isLoading);
+        
         final aiMessage = Message(
           id: DateTime.now().toString(),
           content: response.message,
           isUser: false,
           timestamp: DateTime.now(),
           translation: response.translation,
+          isAnimated: true, // Enable typewriter effect
         );
 
         _messages.add(aiMessage);
         // No need to call addMessage - _messages is the same list as in the service
-        
-        _isSending = false;
       });
       _scrollToBottom();
     } catch (e) {
@@ -168,6 +182,9 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         // Remove the failed message so user can retry
         _messages.removeWhere((m) => m.id == newMessage.id);
+        
+        // Remove loading message
+        _messages.removeWhere((m) => m.isLoading);
         
         _isSending = false;
         _failedMessage = text;
