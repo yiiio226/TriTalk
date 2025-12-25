@@ -82,7 +82,7 @@ async def chat_send(request: ChatRequest):
             "is_perfect": boolean,
             "corrected_text": "Grammatically correct version of what the USER said (in {request.target_language})",
             "native_expression": "More natural/idiomatic way for the USER to express their message in {request.target_language} (NOT your AI response, MUST be in {request.target_language} only)",
-            "explanation": "Explanation in {request.native_language}. If perfect, compliment in {request.native_language}.",
+            "explanation": "Explanation in {request.native_language}. If perfect, compliment in {request.native_language}. DO NOT include Pinyin.",
             "example_answer": "Alternative way for the USER to express the same idea in {request.target_language} (NOT your AI response, MUST be in {request.target_language} only)"
         }}
     }}
