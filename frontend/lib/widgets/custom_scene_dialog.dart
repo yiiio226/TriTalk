@@ -90,7 +90,8 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
       setState(() {
         _isPolishing = false;
       });
-      showTopToast(context, 'Failed to polish scenario: $e', isError: true);
+      final errorMessage = e.toString().replaceAll('Exception: ', '');
+      showTopToast(context, 'Failed to polish scenario: $errorMessage', isError: true);
     }
   }
 
