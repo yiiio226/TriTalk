@@ -73,3 +73,11 @@ export interface Env {
     OPENROUTER_API_KEY: string;
     OPENROUTER_MODEL: string;
 }
+
+export interface PolishRequest {
+    description: string;
+}
+
+export interface PolishResponse {
+    polished_text: string;
+}

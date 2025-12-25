@@ -121,6 +121,27 @@ class ApiService {
       throw Exception('Error analyzing message: $e');
     }
   }
+
+  Future<String> polishScenario(String description) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/scene/polish'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'description': description,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['polished_text'];
+      } else {
+        throw Exception('Failed to polish scenario: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error polishing scenario: $e');
+    }
+  }
 }
 
 class ChatResponse {

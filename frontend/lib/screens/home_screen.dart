@@ -27,6 +27,39 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await showModalBottomSheet<Scene>(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: const CustomSceneDialog(),
+            ),
+          );
+
+          if (result != null) {
+            setState(() {
+              _scenes.add(result);
+            });
+            // Navigate to configuration screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ScenarioConfigurationScreen(scene: result),
+              ),
+            );
+          }
+        },
+        backgroundColor: Colors.black,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -91,75 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _scenes.length + 1, // +1 for the button
-                separatorBuilder: (context, index) => const SizedBox(height: 20),
+                itemCount: _scenes.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 20),
                 itemBuilder: (context, index) {
-                  if (index == _scenes.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: InkWell(
-                        onTap: () async {
-                          final result = await showModalBottomSheet<Scene>(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) => Padding(
-                              padding: EdgeInsets.only(
-                                bottom: MediaQuery.of(context).viewInsets.bottom,
-                              ),
-                              child: const CustomSceneDialog(),
-                            ),
-                          );
-                          
-                          if (result != null) {
-                            setState(() {
-                              _scenes.add(result);
-                            });
-                            // Navigate to configuration screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ScenarioConfigurationScreen(scene: result),
-                              ),
-                            );
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FA), // Slight grey background
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.grey.withOpacity(0.3),
-                              style: BorderStyle.none, 
-                            ),
-                          ),
-                          child: CustomPaint(
-                            painter: _DashedBorderPainter(color: Colors.black12, strokeWidth: 1.5, gap: 5),
-                            child: const Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add, color: Colors.black87),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Create Custom Scenario',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  
                   final scene = _scenes[index];
                   return SceneCard(
                     scene: scene,
@@ -182,51 +150,5 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double gap;
 
-  _DashedBorderPainter({this.color = Colors.black, this.strokeWidth = 1.0, this.gap = 5.0});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final Path path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        const Radius.circular(16),
-      ));
-
-    final Path dashedPath = _dashPath(path, dashArray: CircularIntervalList<double>([gap, gap]));
-    canvas.drawPath(dashedPath, paint);
-  }
-
-  Path _dashPath(Path source, {required CircularIntervalList<double> dashArray}) {
-    // Return solid path for now as fallback
-    return source;
-  }
-
-  @override
-  bool shouldRepaint(_DashedBorderPainter oldDelegate) {
-    return oldDelegate.color != color ||
-        oldDelegate.strokeWidth != strokeWidth ||
-        oldDelegate.gap != gap;
-  }
-}
-
-// Helper for dash array if I were to implement it fully, but let's simplify.
-class CircularIntervalList<T> {
-  final List<T> _vals;
-  int _idx = 0;
-  CircularIntervalList(this._vals);
-  T get next {
-    if (_idx >= _vals.length) _idx = 0;
-    return _vals[_idx++];
-  }
-}
 

@@ -13,6 +13,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
   String _selectedTone = 'Casual'; // Formal, Casual
   String _selectedLength = 'Brief'; // Brief, Detailed
   bool _isLoading = false;
+  bool _isPolishing = false;
 
   @override
   void dispose() {
@@ -68,6 +69,33 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     }
   }
 
+  void _polishDescription() async {
+    final text = _scenarioController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _isPolishing = true;
+    });
+
+    try {
+      final polished = await ApiService().polishScenario(text);
+      if (!mounted) return;
+      
+      setState(() {
+        _scenarioController.text = polished;
+        _isPolishing = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isPolishing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to polish scenario: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -105,17 +133,59 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
                 borderRadius: BorderRadius.circular(12),
+                color: Colors.grey[50],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: TextField(
-                controller: _scenarioController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Example: I need to return a defective product, but the store clerk is being difficult...',
-                  border: InputBorder.none,
-                ),
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  TextField(
+                    controller: _scenarioController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'Example: I need to return a defective product, but the store clerk is being difficult...',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.fromLTRB(16, 16, 40, 16),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: InkWell(
+                      onTap: _isPolishing ? null : _polishDescription,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: _isPolishing
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.auto_awesome,
+                                size: 18,
+                                color: Colors.blue,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
