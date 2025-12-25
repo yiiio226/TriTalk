@@ -26,6 +26,8 @@ class ChatRequest(BaseModel):
     message: str
     history: List[dict] = []
     scene_context: str = ""
+    native_language: str = "Chinese (Simplified)"
+    target_language: str = "English"
 
 import json
 
@@ -33,8 +35,8 @@ class ReviewFeedback(BaseModel):
     is_perfect: bool
     corrected_text: str
     native_expression: str
-    explanation: str # In Chinese
-    example_answer: str = "" # How the AI would answer if it were the user
+    explanation: str 
+    example_answer: str = "" 
 
 class ChatResponse(BaseModel):
     message: str
@@ -61,15 +63,16 @@ async def chat_send(request: ChatRequest):
     1. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
     2. Respond naturally as your character would in this real-world situation.
     3. Keep responses conversational and realistic for the scenario.
+    4. Your goal is to help the user practice {request.target_language}.
     
     Analyze the user's message for grammar, naturalness, and appropriateness.
     
     IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR OWN message. These are NOT your (AI character's) responses.
     
-    Example:
+    Example (assuming Native={request.native_language}, Target={request.target_language}):
     - User says: "I want coffee"
-    - native_expression: "I'd like a coffee, please" (more polite way for USER to say it)
-    - example_answer: "Could I get a coffee?" (alternative way for USER to say it)
+    - native_expression: "I'd like a coffee, please" (more polite way for USER to say it in {request.target_language})
+    - example_answer: "Could I get a coffee?" (alternative way for USER to say it in {request.target_language})
     - reply: "Sure! What size would you like?" (this is YOUR response as the AI character)
     
     You MUST return your response in valid JSON format:
@@ -77,10 +80,10 @@ async def chat_send(request: ChatRequest):
         "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
         "analysis": {{
             "is_perfect": boolean,
-            "corrected_text": "Grammatically correct version of what the USER said (in English)",
-            "native_expression": "More natural/idiomatic way for the USER to express their message in English (NOT your AI response, MUST be in English only)",
-            "explanation": "Explanation in Chinese (Simplified). If perfect, compliment in Chinese.",
-            "example_answer": "Alternative way for the USER to express the same idea in English (NOT your AI response, MUST be in English only)"
+            "corrected_text": "Grammatically correct version of what the USER said (in {request.target_language})",
+            "native_expression": "More natural/idiomatic way for the USER to express their message in {request.target_language} (NOT your AI response, MUST be in {request.target_language} only)",
+            "explanation": "Explanation in {request.native_language}. If perfect, compliment in {request.native_language}.",
+            "example_answer": "Alternative way for the USER to express the same idea in {request.target_language} (NOT your AI response, MUST be in {request.target_language} only)"
         }}
     }}
     """
@@ -107,11 +110,11 @@ async def chat_send(request: ChatRequest):
         analysis_data = data.get("analysis", {})
         
         feedback = ReviewFeedback(
-            is_perfect=analysis_data.get("is_perfect", False),
-            corrected_text=analysis_data.get("corrected_text", request.message),
-            native_expression=analysis_data.get("native_expression", ""),
-            explanation=analysis_data.get("explanation", ""),
-            example_answer=analysis_data.get("example_answer", "")
+            is_perfect=analysis_data.get("is_perfect") or False,
+            corrected_text=analysis_data.get("corrected_text") or request.message,
+            native_expression=analysis_data.get("native_expression") or "",
+            explanation=analysis_data.get("explanation") or "",
+            example_answer=analysis_data.get("example_answer") or ""
         )
 
         return ChatResponse(
@@ -126,10 +129,10 @@ async def chat_send(request: ChatRequest):
 @app.post("/chat/hint", response_model=HintResponse)
 async def get_hints(request: ChatRequest):
     # Construct context for hints
-    hint_prompt = f"""You are a helpful conversation tutor.
+    hint_prompt = f"""You are a helpful conversation tutor teaching {request.target_language}.
     Key Scenario Context: {request.scene_context}.
     
-    Based on the conversation history, suggest 3 natural, diverse, and appropriate short responses for the user (learner) to say next.
+    Based on the conversation history, suggest 3 natural, diverse, and appropriate short responses for the user (learner) to say next in {request.target_language}.
     
     Guidelines:
     1. Keep them short (1 sentence).
@@ -168,6 +171,10 @@ async def get_hints(request: ChatRequest):
 class SceneGenerationRequest(BaseModel):
     description: str
     tone: str = "Casual"
+    # Although not strictly required by the prompt structure below, passing languages could be useful for titles/descriptions
+    # For now, we'll assume the user wants the scenario content in the target language but description might be flexible.
+    # We will stick to the plan which implies the generated scene is primarily about the setting.
+    # Let's keep it simple for now, as SceneGenerationRequest is separate from ChatRequest.
 
 class SceneGenerationResponse(BaseModel):
     title: str
@@ -180,7 +187,7 @@ class SceneGenerationResponse(BaseModel):
 
 @app.post("/scene/generate", response_model=SceneGenerationResponse)
 async def generate_scene(request: SceneGenerationRequest):
-    prompt = f"""Act as a creative educational scenario designer.
+    prompt = f"""Act as a creative educational scenario designer for English learning.
     User Request: "{request.description}"
     Tone: {request.tone}
     
@@ -227,6 +234,71 @@ async def generate_scene(request: SceneGenerationRequest):
             description=request.description,
             initial_message="Hi! Let's start expecting.",
             emoji="📝"
+        )
+
+class AnalyzeRequest(BaseModel):
+    message: str
+    native_language: str = "Chinese (Simplified)"
+
+class GrammarPoint(BaseModel):
+    structure: str
+    explanation: str
+    example: str
+
+class VocabularyItem(BaseModel):
+    word: str
+    definition: str
+    example: str
+    level: str = None
+
+class MessageAnalysisResponse(BaseModel):
+    grammar_points: List[GrammarPoint]
+    vocabulary: List[VocabularyItem]
+    sentence_structure: str
+    overall_summary: str
+
+@app.post("/chat/analyze", response_model=MessageAnalysisResponse)
+async def analyze_message(request: AnalyzeRequest):
+    prompt = f"""Act as a language tutor. Analyze this sentence: "{request.message}"
+    
+    Provide a detailed breakdown in {request.native_language}:
+    1. Grammar points used.
+    2. Key vocabulary with definitions.
+    3. Sentence structure explanation.
+    4. Overall summary of the meaning and nuance.
+    
+    Output JSON ONLY:
+    {{
+        "grammar_points": [{{"structure": "...", "explanation": "...", "example": "..."}}],
+        "vocabulary": [{{"word": "...", "definition": "...", "example": "...", "level": "A1/B2/etc"}}],
+        "sentence_structure": "...",
+        "overall_summary": "..."
+    }}
+    """
+    
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = completion.choices[0].message.content
+        data = parse_json(content)
+        
+        return MessageAnalysisResponse(
+            grammar_points=[GrammarPoint(**g) for g in data.get("grammar_points", [])],
+            vocabulary=[VocabularyItem(**v) for v in data.get("vocabulary", [])],
+            sentence_structure=data.get("sentence_structure", ""),
+            overall_summary=data.get("overall_summary", "")
+        )
+    except Exception as e:
+        print(f"Error analyzing message: {e}")
+        # Return empty/error response
+        return MessageAnalysisResponse(
+            grammar_points=[],
+            vocabulary=[],
+            sentence_structure="Analysis unavailable",
+            overall_summary="Could not analyze message at this time."
         )
 
 @app.get("/")
