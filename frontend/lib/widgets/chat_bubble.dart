@@ -98,6 +98,29 @@ class _ChatBubbleState extends State<ChatBubble> {
                  ],
                ),
             ],
+            // Analysis icon for AI messages
+            if (!isUser) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    size: 14,
+                    color: Colors.purple[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Analyze",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple[700],
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (_showTranslation && message.translation != null) ...[
                const SizedBox(height: 6),
                const Divider(height: 12),

@@ -5,6 +5,7 @@ class Message {
   final DateTime timestamp;
   final String? translation; // For C-04
   final ReviewFeedback? feedback;  // For F-01
+  final MessageAnalysis? analysis; // For AI message analysis
 
   Message({
     required this.id,
@@ -13,6 +14,7 @@ class Message {
     required this.timestamp,
     this.translation,
     this.feedback,
+    this.analysis,
   });
 
   Map<String, dynamic> toJson() {
@@ -23,6 +25,7 @@ class Message {
       'timestamp': timestamp.toIso8601String(),
       'translation': translation,
       'feedback': feedback?.toJson(),
+      'analysis': analysis?.toJson(),
     };
   }
 
@@ -35,6 +38,9 @@ class Message {
       translation: json['translation'],
       feedback: json['feedback'] != null 
           ? ReviewFeedback.fromJson(json['feedback']) 
+          : null,
+      analysis: json['analysis'] != null
+          ? MessageAnalysis.fromJson(json['analysis'])
           : null,
     );
   }
@@ -72,6 +78,104 @@ class ReviewFeedback {
       nativeExpression: json['native_expression'] ?? '',
       explanation: json['explanation'] ?? '',
       exampleAnswer: json['example_answer'] ?? '',
+    );
+  }
+}
+
+class GrammarPoint {
+  final String structure;
+  final String explanation;
+  final String example;
+
+  GrammarPoint({
+    required this.structure,
+    required this.explanation,
+    required this.example,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'structure': structure,
+      'explanation': explanation,
+      'example': example,
+    };
+  }
+
+  factory GrammarPoint.fromJson(Map<String, dynamic> json) {
+    return GrammarPoint(
+      structure: json['structure'] ?? '',
+      explanation: json['explanation'] ?? '',
+      example: json['example'] ?? '',
+    );
+  }
+}
+
+class VocabularyItem {
+  final String word;
+  final String definition;
+  final String example;
+  final String? level;
+
+  VocabularyItem({
+    required this.word,
+    required this.definition,
+    required this.example,
+    this.level,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'word': word,
+      'definition': definition,
+      'example': example,
+      'level': level,
+    };
+  }
+
+  factory VocabularyItem.fromJson(Map<String, dynamic> json) {
+    return VocabularyItem(
+      word: json['word'] ?? '',
+      definition: json['definition'] ?? '',
+      example: json['example'] ?? '',
+      level: json['level'],
+    );
+  }
+}
+
+class MessageAnalysis {
+  final List<GrammarPoint> grammarPoints;
+  final List<VocabularyItem> vocabulary;
+  final String sentenceStructure;
+  final String overallSummary;
+
+  MessageAnalysis({
+    required this.grammarPoints,
+    required this.vocabulary,
+    required this.sentenceStructure,
+    required this.overallSummary,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'grammar_points': grammarPoints.map((g) => g.toJson()).toList(),
+      'vocabulary': vocabulary.map((v) => v.toJson()).toList(),
+      'sentence_structure': sentenceStructure,
+      'overall_summary': overallSummary,
+    };
+  }
+
+  factory MessageAnalysis.fromJson(Map<String, dynamic> json) {
+    return MessageAnalysis(
+      grammarPoints: (json['grammar_points'] as List<dynamic>?)
+              ?.map((g) => GrammarPoint.fromJson(g))
+              .toList() ??
+          [],
+      vocabulary: (json['vocabulary'] as List<dynamic>?)
+              ?.map((v) => VocabularyItem.fromJson(v))
+              .toList() ??
+          [],
+      sentenceStructure: json['sentence_structure'] ?? '',
+      overallSummary: json['overall_summary'] ?? '',
     );
   }
 }

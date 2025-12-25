@@ -5,6 +5,8 @@ import {
     HintResponse,
     SceneGenerationRequest,
     SceneGenerationResponse,
+    AnalyzeRequest,
+    AnalyzeResponse,
     ReviewFeedback,
     Env,
 } from './types';
@@ -182,6 +184,71 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
     }
 }
 
+// Handle /chat/analyze endpoint
+async function handleChatAnalyze(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: AnalyzeRequest = await request.json();
+
+        const analyzePrompt = `You are an expert English language teacher. Analyze the following English sentence in detail.
+
+Sentence: "${body.message}"
+
+Provide a comprehensive analysis including:
+1. Grammar points: Identify key grammatical structures used (e.g., present perfect, passive voice, conditionals)
+2. Vocabulary: List important or interesting words with definitions and example sentences
+3. Sentence structure: Explain the overall structure (e.g., "Subject + Verb + Object + Prepositional Phrase")
+4. Overall summary: Brief explanation in Chinese (Simplified) about what makes this sentence effective or interesting
+
+Return your analysis in JSON format:
+{
+    "grammar_points": [
+        {
+            "structure": "Grammar structure name",
+            "explanation": "Explanation in Chinese (Simplified)",
+            "example": "Another example sentence using this structure"
+        }
+    ],
+    "vocabulary": [
+        {
+            "word": "word or phrase",
+            "definition": "Definition in Chinese (Simplified)",
+            "example": "Example sentence using this word",
+            "level": "beginner/intermediate/advanced"
+        }
+    ],
+    "sentence_structure": "Description of sentence structure",
+    "overall_summary": "Overall analysis in Chinese (Simplified)"
+}`;
+
+        const messages = [{ role: 'user', content: analyzePrompt }];
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        const response: AnalyzeResponse = {
+            grammar_points: data.grammar_points || [],
+            vocabulary: data.vocabulary || [],
+            sentence_structure: data.sentence_structure || '',
+            overall_summary: data.overall_summary || '',
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /chat/analyze:', error);
+        return new Response(
+            JSON.stringify({
+                grammar_points: [],
+                vocabulary: [],
+                sentence_structure: 'Analysis unavailable',
+                overall_summary: '分析暂时不可用,请稍后再试。',
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
 // Handle /scene/generate endpoint
 async function handleSceneGenerate(request: Request, env: Env): Promise<Response> {
     try {
@@ -271,6 +338,10 @@ export default {
 
         if (url.pathname === '/chat/hint' && request.method === 'POST') {
             return handleChatHint(request, env);
+        }
+
+        if (url.pathname === '/chat/analyze' && request.method === 'POST') {
+            return handleChatAnalyze(request, env);
         }
 
         if (url.pathname === '/scene/generate' && request.method === 'POST') {

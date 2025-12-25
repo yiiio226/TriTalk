@@ -35,6 +35,30 @@ export interface SceneGenerationRequest {
     tone?: string;
 }
 
+export interface GrammarPoint {
+    structure: string;
+    explanation: string;
+    example: string;
+}
+
+export interface VocabularyItem {
+    word: string;
+    definition: string;
+    example: string;
+    level?: string;
+}
+
+export interface AnalyzeRequest {
+    message: string;
+}
+
+export interface AnalyzeResponse {
+    grammar_points: GrammarPoint[];
+    vocabulary: VocabularyItem[];
+    sentence_structure: string;
+    overall_summary: string;
+}
+
 export interface SceneGenerationResponse {
     title: string;
     ai_role: string;
