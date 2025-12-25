@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:math';
 import '../models/message.dart';
 
 class ChatBubble extends StatefulWidget {
@@ -11,8 +13,74 @@ class ChatBubble extends StatefulWidget {
   State<ChatBubble> createState() => _ChatBubbleState();
 }
 
-class _ChatBubbleState extends State<ChatBubble> {
+class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateMixin {
   bool _showTranslation = false;
+  
+  // Typewriter state
+  String _displayedText = "";
+  Timer? _typewriterTimer;
+  int _currentIndex = 0;
+  
+  // Loading state
+  late AnimationController _loadingController;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Setup loading controller
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat();
+    
+    // Setup typewriter if needed
+    if (widget.message.isAnimated && !widget.message.isLoading) {
+      _startTypewriter();
+    } else {
+      _displayedText = widget.message.content;
+    }
+  }
+  
+  @override
+  void didUpdateWidget(ChatBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Handle text changes or animation toggle
+    if (widget.message.content != oldWidget.message.content) {
+      if (widget.message.isAnimated) {
+        _currentIndex = 0;
+        _displayedText = "";
+        _startTypewriter();
+      } else {
+        _displayedText = widget.message.content;
+      }
+    }
+  }
+  
+  void _startTypewriter() {
+    _typewriterTimer?.cancel();
+    
+    _typewriterTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (_currentIndex < widget.message.content.length) {
+        if (mounted) {
+          setState(() {
+            _currentIndex++;
+            _displayedText = widget.message.content.substring(0, _currentIndex);
+          });
+        }
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _typewriterTimer?.cancel();
+    _loadingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +138,12 @@ class _ChatBubbleState extends State<ChatBubble> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SelectableText(
-              message.content,
-              style: const TextStyle(fontSize: 16),
-            ),
+            widget.message.isLoading
+                ? _buildLoadingIndicator()
+                : SelectableText(
+                    _displayedText,
+                    style: const TextStyle(fontSize: 16),
+                  ),
             if (hasFeedback) ...[
                const SizedBox(height: 4),
                Row(
@@ -131,6 +201,37 @@ class _ChatBubbleState extends State<ChatBubble> {
             ]
           ],
         ),
+      ),
+    );
+  }
+  Widget _buildLoadingIndicator() {
+    return SizedBox(
+      width: 40,
+      height: 20,
+      child: AnimatedBuilder(
+        animation: _loadingController,
+        builder: (context, child) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index) {
+              return Transform.translate(
+                offset: Offset(
+                  0, 
+                  -4 * sin(0.5 + 0.5 * DateTime.now().millisecondsSinceEpoch / 200 + index)
+                ), // Bouncing effect
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }
