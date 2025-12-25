@@ -288,13 +288,12 @@ class _ChatScreenState extends State<ChatScreen> {
       // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, -2),
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey[200]!,
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: Row(
         children: [
