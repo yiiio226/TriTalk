@@ -1,4 +1,4 @@
-cimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/scene.dart';
 import '../services/api_service.dart';
 class CustomSceneDialog extends StatefulWidget {
