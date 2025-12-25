@@ -10,6 +10,8 @@ import {
     ReviewFeedback,
     PolishRequest,
     PolishResponse,
+    TranslateRequest,
+    TranslateResponse,
     Env,
 } from './types';
 
@@ -72,6 +74,8 @@ async function callOpenRouter(
 async function handleChatSend(request: Request, env: Env): Promise<Response> {
     try {
         const body: ChatRequest = await request.json();
+        const nativeLang = body.native_language || 'Chinese (Simplified)';
+        const targetLang = body.target_language || 'English';
 
         const systemPrompt = `You are roleplaying in a language learning scenario. Key Scenario Context: ${body.scene_context}.
     
@@ -79,27 +83,27 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     1. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
     2. Respond naturally as your character would in this real-world situation.
     3. Keep responses conversational and realistic for the scenario.
-    4. YOU MUST ALWAYS RESPOND IN ENGLISH. Your "reply" field must be in English only.
+    4. Your goal is to help the user practice ${targetLang}.
     
     Analyze the user's message for grammar, naturalness, and appropriateness.
     
     IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR OWN message. These are NOT your (AI character's) responses.
     
-    Example:
+    Example (assuming Native=${nativeLang}, Target=${targetLang}):
     - User says: "I want coffee"
-    - native_expression: "I'd like a coffee, please" (more polite way for USER to say it)
-    - example_answer: "Could I get a coffee?" (alternative way for USER to say it)
-    - reply: "Sure! What size would you like?" (this is YOUR response as the AI character, IN ENGLISH)
+    - native_expression: "I'd like a coffee, please" (more polite way for USER to say it in ${targetLang})
+    - example_answer: "Could I get a coffee?" (alternative way for USER to say it in ${targetLang})
+    - reply: "Sure! What size would you like?" (this is YOUR response as the AI character)
     
     You MUST return your response in valid JSON format:
     {
-        "reply": "Your in-character conversational reply IN ENGLISH (stay in role, never mention practice/learning)",
+        "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
         "analysis": {
             "is_perfect": boolean,
-            "corrected_text": "Grammatically correct version of what the USER said",
-            "native_expression": "More natural/idiomatic way for the USER to express their message (NOT your AI response)",
-            "explanation": "Explanation in Chinese (Simplified). If perfect, compliment in Chinese.",
-            "example_answer": "Alternative way for the USER to express the same idea (NOT your AI response)"
+            "corrected_text": "Grammatically correct version of what the USER said (in ${targetLang})",
+            "native_expression": "More natural/idiomatic way for the USER to express their message in ${targetLang} (NOT your AI response, MUST be in ${targetLang} only)",
+            "explanation": "Explanation in ${nativeLang}. If perfect, compliment in ${nativeLang}. DO NOT include Pinyin.",
+            "example_answer": "Alternative way for the USER to express the same idea in ${targetLang} (NOT your AI response, MUST be in ${targetLang} only)"
         }
     }`;
 
@@ -146,11 +150,12 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
 async function handleChatHint(request: Request, env: Env): Promise<Response> {
     try {
         const body: HintRequest = await request.json();
+        const targetLang = body.target_language || 'English';
 
-        const hintPrompt = `You are a helpful conversation tutor.
+        const hintPrompt = `You are a helpful conversation tutor teaching ${targetLang}.
     Key Scenario Context: ${body.scene_context}.
     
-    Based on the conversation history, suggest 3 natural, diverse, and appropriate short responses for the user (learner) to say next.
+    Based on the conversation history, suggest 3 natural, diverse, and appropriate short responses for the user (learner) to say next in ${targetLang}.
     
     Guidelines:
     1. Keep them short (1 sentence).
@@ -190,37 +195,23 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
 async function handleChatAnalyze(request: Request, env: Env): Promise<Response> {
     try {
         const body: AnalyzeRequest = await request.json();
+        const nativeLang = body.native_language || 'Chinese (Simplified)';
 
-        const analyzePrompt = `You are an expert English language teacher. Analyze the following English sentence in detail.
-
-Sentence: "${body.message}"
-
-Provide a comprehensive analysis including:
-1. Grammar points: Identify key grammatical structures used (e.g., present perfect, passive voice, conditionals)
-2. Vocabulary: List important or interesting words with definitions and example sentences
-3. Sentence structure: Explain the overall structure (e.g., "Subject + Verb + Object + Prepositional Phrase")
-4. Overall summary: Brief explanation in Chinese (Simplified) about what makes this sentence effective or interesting
-
-Return your analysis in JSON format:
-{
-    "grammar_points": [
-        {
-            "structure": "Grammar structure name",
-            "explanation": "Explanation in Chinese (Simplified)",
-            "example": "Another example sentence using this structure"
-        }
-    ],
-    "vocabulary": [
-        {
-            "word": "word or phrase",
-            "definition": "Definition in Chinese (Simplified)",
-            "example": "Example sentence using this word",
-            "level": "beginner/intermediate/advanced"
-        }
-    ],
-    "sentence_structure": "Description of sentence structure",
-    "overall_summary": "Overall analysis in Chinese (Simplified)"
-}`;
+        const analyzePrompt = `Act as a language tutor. Analyze this sentence: "${body.message}"
+    
+    Provide a detailed breakdown in ${nativeLang}:
+    1. Grammar points used.
+    2. Key vocabulary with definitions.
+    3. Sentence structure explanation.
+    4. Overall summary of the meaning and nuance.
+    
+    Output JSON ONLY:
+    {
+        "grammar_points": [{"structure": "...", "explanation": "...", "example": "..."}],
+        "vocabulary": [{"word": "...", "definition": "...", "example": "...", "level": "A1/B2/etc"}],
+        "sentence_structure": "...",
+        "overall_summary": "..."
+    }`;
 
         const messages = [{ role: 'user', content: analyzePrompt }];
 
@@ -347,6 +338,38 @@ async function handleScenePolish(request: Request, env: Env): Promise<Response> 
     }
 }
 
+// Handle /common/translate endpoint
+async function handleTranslate(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: TranslateRequest = await request.json();
+
+        const prompt = `Translate the following text to ${body.target_language}.
+    Text: "${body.text}"
+    
+    Output JSON ONLY: { "translation": "..." }`;
+
+        const messages = [{ role: 'user', content: prompt }];
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        const response: TranslateResponse = {
+            translation: data.translation || body.text,
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /common/translate:', error);
+        return new Response(
+            JSON.stringify({
+                translation: "Translation unavailable.",
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
 // Main worker handler
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -388,6 +411,10 @@ export default {
 
         if (url.pathname === '/scene/polish' && request.method === 'POST') {
             return handleScenePolish(request, env);
+        }
+
+        if (url.pathname === '/common/translate' && request.method === 'POST') {
+            return handleTranslate(request, env);
         }
 
         // 404 for unknown routes
