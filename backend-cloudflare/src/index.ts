@@ -8,6 +8,8 @@ import {
     AnalyzeRequest,
     AnalyzeResponse,
     ReviewFeedback,
+    PolishRequest,
+    PolishResponse,
     Env,
 } from './types';
 
@@ -309,6 +311,42 @@ async function handleSceneGenerate(request: Request, env: Env): Promise<Response
     }
 }
 
+
+
+// Handle /scene/polish endpoint
+async function handleScenePolish(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: PolishRequest = await request.json();
+
+        const prompt = `Refine and expand the following scenario description for an English roleplay practice session. 
+    User Input: "${body.description}"
+    
+    Make it more specific and suitable for setting up a roleplay context in a few sentences. 
+    It should describe the situation clearly so the AI knows how to roleplay.
+    Output JSON ONLY: { "polished_text": "..." }`;
+
+        const messages = [{ role: 'user', content: prompt }];
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        const response: PolishResponse = {
+            polished_text: data.polished_text || body.description,
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /scene/polish:', error);
+        return new Response(
+            JSON.stringify({
+                polished_text: "Could not polish text at this time.",
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
 // Main worker handler
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -346,6 +384,10 @@ export default {
 
         if (url.pathname === '/scene/generate' && request.method === 'POST') {
             return handleSceneGenerate(request, env);
+        }
+
+        if (url.pathname === '/scene/polish' && request.method === 'POST') {
+            return handleScenePolish(request, env);
         }
 
         // 404 for unknown routes
