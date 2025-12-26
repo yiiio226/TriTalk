@@ -150,6 +150,7 @@ class MessageAnalysis {
   final List<GrammarPoint> grammarPoints;
   final List<VocabularyItem> vocabulary;
   final String sentenceStructure;
+  final List<StructureSegment> sentenceBreakdown;
   final String overallSummary;
   final String? pragmaticAnalysis;
   final List<String> emotionTags;
@@ -159,6 +160,7 @@ class MessageAnalysis {
     required this.grammarPoints,
     required this.vocabulary,
     required this.sentenceStructure,
+    this.sentenceBreakdown = const [],
     required this.overallSummary,
     this.pragmaticAnalysis,
     this.emotionTags = const [],
@@ -170,6 +172,7 @@ class MessageAnalysis {
       'grammar_points': grammarPoints.map((g) => g.toJson()).toList(),
       'vocabulary': vocabulary.map((v) => v.toJson()).toList(),
       'sentence_structure': sentenceStructure,
+      'sentence_breakdown': sentenceBreakdown.map((s) => s.toJson()).toList(),
       'overall_summary': overallSummary,
       'pragmatic_analysis': pragmaticAnalysis,
       'emotion_tags': emotionTags,
@@ -188,6 +191,10 @@ class MessageAnalysis {
               .toList() ??
           [],
       sentenceStructure: json['sentence_structure'] ?? '',
+      sentenceBreakdown: (json['sentence_breakdown'] as List<dynamic>?)
+              ?.map((s) => StructureSegment.fromJson(s))
+              .toList() ??
+          [],
       overallSummary: json['overall_summary'] ?? '',
       pragmaticAnalysis: json['pragmatic_analysis'],
       emotionTags: (json['emotion_tags'] as List<dynamic>?)?.cast<String>() ?? [],
@@ -195,6 +202,27 @@ class MessageAnalysis {
               ?.map((i) => IdiomItem.fromJson(i))
               .toList() ??
           [],
+    );
+  }
+}
+
+class StructureSegment {
+  final String text;
+  final String tag;
+
+  StructureSegment({required this.text, required this.tag});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'tag': tag,
+    };
+  }
+
+  factory StructureSegment.fromJson(Map<String, dynamic> json) {
+    return StructureSegment(
+      text: json['text'] ?? '',
+      tag: json['tag'] ?? '',
     );
   }
 }

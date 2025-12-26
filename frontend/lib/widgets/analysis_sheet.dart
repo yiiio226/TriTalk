@@ -105,9 +105,45 @@ class AnalysisSheet extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // Sentence structure
+          // Sentence structure (Text + Visualization)
           if (analysis!.sentenceStructure.isNotEmpty) ...[
             _buildSection('Sentence Structure', analysis!.sentenceStructure),
+            if (analysis!.sentenceBreakdown.isNotEmpty) ...[
+               const SizedBox(height: 12),
+               Wrap(
+                 spacing: 8,
+                 runSpacing: 8,
+                 children: analysis!.sentenceBreakdown.map((segment) => Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                   decoration: BoxDecoration(
+                     color: Colors.blue[50],
+                     borderRadius: BorderRadius.circular(8),
+                     border: Border.all(color: Colors.blue[100]!),
+                   ),
+                   child: Column(
+                     mainAxisSize: MainAxisSize.min,
+                     children: [
+                       Text(
+                         segment.text,
+                         style: const TextStyle(
+                           fontSize: 14,
+                           fontWeight: FontWeight.bold,
+                           color: Colors.black87,
+                         ),
+                       ),
+                       Text(
+                         segment.tag,
+                         style: TextStyle(
+                           fontSize: 10,
+                           color: Colors.blue[600],
+                           fontWeight: FontWeight.w500,
+                         ),
+                       ),
+                     ],
+                   ),
+                 )).toList(),
+               ),
+            ],
             const SizedBox(height: 16),
           ],
 
@@ -141,14 +177,14 @@ class AnalysisSheet extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // L-02: Idioms & Slang
+          // L-02: Idioms & Slang (RED HIGHLIGHT)
           if (analysis!.idioms.isNotEmpty) ...[
             const Text(
-              'IDIOMS & SLANG',
+              'IDIOMS & SLANG (ALERT)',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: Colors.red,
               ),
             ),
             const SizedBox(height: 8),
@@ -156,23 +192,23 @@ class AnalysisSheet extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange[50],
+                color: Colors.red[50], // RED BACKGROUND
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange[200]!),
+                border: Border.all(color: Colors.red[200]!),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.whatshot, size: 16, color: Colors.orange[800]),
+                      Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red[800]), // WARNING ICON
                       const SizedBox(width: 6),
                       Text(
                         idiom.type.toUpperCase(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange[800],
+                          color: Colors.red[800],
                         ),
                       ),
                     ],
@@ -183,13 +219,13 @@ class AnalysisSheet extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.orange[900],
+                      color: Colors.red[900],
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     idiom.explanation,
-                    style: TextStyle(fontSize: 13, color: Colors.orange[900]),
+                    style: TextStyle(fontSize: 13, color: Colors.red[900]),
                   ),
                 ],
               ),

@@ -60,6 +60,8 @@ export interface AnalyzeResponse {
     grammar_points: GrammarPoint[];
     vocabulary: VocabularyItem[];
     sentence_structure: string;
+    sentence_breakdown?: Array<{ text: string; tag: string }>; // For visualization
+    overall_summary: string;
     overall_summary: string;
     // L-02 Context & Emotion
     pragmatic_analysis?: string; // "Why" they said it (e.g. "To be polite request")

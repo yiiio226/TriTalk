@@ -209,12 +209,14 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     5. Pragmatics: Why did the speaker say it this way? (e.g., politeness, irony).
     6. Emotion/Tone tags (e.g., Polite, Casual, Professional, Sarcastic).
     7. Identify Idioms or Slang if any.
+    8. Sentence Breakdown: Split the sentence into key segments (Subject, Verb, Clause, etc.) for visual tagging.
 
     Output JSON ONLY. All explanations, definitions, and analysis text MUST be in ${nativeLang}. DO NOT include Pinyin in any field, especially in examples.
     {
-        "grammar_points": [{"structure": "...", "explanation": "(in ${nativeLang}, NO Pinyin)...", "example": "..."}],
-        "vocabulary": [{"word": "...", "definition": "(in ${nativeLang}, NO Pinyin)...", "example": "...", "level": "A1/B2/etc"}],
+        "grammar_points": [{"structure": "...", "explanation": "(in ${nativeLang}, NO Pinyin)...", "example": "Sentence in the identified language of the message (Translation in ${nativeLang})"}],
+        "vocabulary": [{"word": "...", "definition": "(in ${nativeLang}, NO Pinyin)...", "example": "Sentence in the identified language of the message (Translation in ${nativeLang})", "level": "A1/B2/etc"}],
         "sentence_structure": "(in ${nativeLang})...",
+        "sentence_breakdown": [{"text": "segment text", "tag": "Subject/Verb/Clause/etc"}],
         "overall_summary": "(in ${nativeLang})...",
         "pragmatic_analysis": "(in ${nativeLang})...",
         "emotion_tags": ["(in ${nativeLang})..."],
@@ -230,6 +232,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
             grammar_points: data.grammar_points || [],
             vocabulary: data.vocabulary || [],
             sentence_structure: data.sentence_structure || '',
+            sentence_breakdown: data.sentence_breakdown || [],
             overall_summary: data.overall_summary || '',
             pragmatic_analysis: data.pragmatic_analysis || '',
             emotion_tags: data.emotion_tags || [],
