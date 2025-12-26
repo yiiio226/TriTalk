@@ -43,6 +43,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadMessages();
+    _textController.addListener(() {
+      setState(() {}); // Rebuild to update optimization button state
+    });
   }
 
   bool _initialLoadFailed = false; // Added for initial load error tracking
@@ -148,6 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final ApiService _apiService = ApiService();
   bool _isSending = false;
+  bool _isOptimizing = false; // Added for AI optimization loading state
   // Error handling state
   String? _failedMessage;
   bool _showErrorBanner = false;
@@ -475,6 +479,60 @@ class _ChatScreenState extends State<ChatScreen> {
               minLines: 1,
               maxLines: 4,
             ),
+
+          ),
+          // AI Optimization Button
+          IconButton(
+            icon: _isOptimizing 
+                ? const SizedBox(
+                    width: 20, 
+                    height: 20, 
+                    child: CircularProgressIndicator(strokeWidth: 2)
+                  )
+                : Icon(
+                    Icons.auto_fix_high, 
+                    color: _textController.text.trim().isNotEmpty 
+                        ? Colors.green 
+                        : Colors.grey
+                  ),
+            tooltip: 'Optimize with AI',
+            onPressed: _textController.text.trim().isEmpty || _isOptimizing
+                ? null
+                : () async {
+                    final text = _textController.text.trim();
+                    setState(() => _isOptimizing = true);
+
+                    try {
+                      // Prepare context
+                      final history = _messages
+                          .where((m) => !m.isLoading && m.content.isNotEmpty)
+                          .map((m) => <String, String>{
+                            'role': m.isUser ? 'user' : 'assistant',
+                            'content': m.content,
+                          })
+                          .toList();
+
+                      final optimizedText = await _apiService.optimizeMessage(
+                        text, 
+                        widget.scene.description, 
+                        history
+                      );
+
+                      if (mounted) {
+                        _textController.text = optimizedText;
+                        // Optional: Show a small toast/snackbar that it was optimized?
+                        showTopToast(context, "Message optimized!", isError: false);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                         showTopToast(context, "Optimization failed: $e", isError: true);
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isOptimizing = false);
+                      }
+                    }
+                  },
           ),
           IconButton(
             icon: const Icon(Icons.send, color: Colors.blue),

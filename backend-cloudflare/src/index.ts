@@ -14,6 +14,8 @@ import {
     TranslateResponse,
     ShadowRequest,
     ShadowResponse,
+    OptimizeRequest,
+    OptimizeResponse,
     Env,
 } from './types';
 
@@ -458,6 +460,52 @@ async function handleShadowAnalysis(request: Request, env: Env): Promise<Respons
     }
 }
 
+// Handle /chat/optimize endpoint
+async function handleChatOptimize(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: OptimizeRequest = await request.json();
+
+
+        const targetLang = body.target_language || 'English';
+
+        const prompt = `You are a helpful language tutor.
+    Context: The user is in a roleplay scenario described as: "${body.scene_context}".
+    Goal: Optimize the user's draft message into natural, correct ${targetLang} suitable for this context.
+    Draft: "${body.message}"
+    
+    Guidelines:
+    1. Keep the meaning close to the draft but make it sound like a native speaker.
+    2. Maintain the persona/role if apparent from context.
+    3. Output JSON ONLY: { "optimized_text": "..." }`;
+
+        const messages = [{ role: 'system', content: prompt }];
+        
+        // Add recent history for context if available
+        if (body.history && body.history.length > 0) {
+            messages.push(...body.history.slice(-5));
+        }
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        const response: OptimizeResponse = {
+            optimized_text: data.optimized_text || body.message,
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /chat/optimize:', error);
+        return new Response(
+            JSON.stringify({
+                optimized_text: "Optimization unavailable.",
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
 // Main worker handler
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -507,6 +555,10 @@ export default {
 
         if (url.pathname === '/chat/shadow' && request.method === 'POST') {
             return handleShadowAnalysis(request, env);
+        }
+
+        if (url.pathname === '/chat/optimize' && request.method === 'POST') {
+            return handleChatOptimize(request, env);
         }
 
         // 404 for unknown routes
