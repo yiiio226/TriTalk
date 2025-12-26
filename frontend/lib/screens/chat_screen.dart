@@ -288,6 +288,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent, // Prevent color change on scroll
         foregroundColor: Colors.black, // Icons and text color
         elevation: 0, 
         iconTheme: const IconThemeData(color: Colors.black),
@@ -536,7 +537,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
           ),
           IconButton(
-            icon: const Icon(Icons.send, color: Colors.blue),
+            icon: const Icon(Icons.send, color: Colors.black),
             onPressed: _sendMessage,
           ),
         ],
