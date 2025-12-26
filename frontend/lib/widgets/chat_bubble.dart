@@ -93,6 +93,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     final radius = BorderRadius.circular(16);
 
     final isPerfect = message.feedback?.isPerfect ?? false;
+    final isMagicWand = message.content.contains('🪄');
     final hasFeedback = message.feedback != null;
 
     BoxDecoration bubbleDecoration = BoxDecoration(
@@ -110,6 +111,15 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     );
 
     if (isPerfect) {
+      bubbleDecoration = bubbleDecoration.copyWith(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade50, Colors.green.shade100], // Green gradient
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.green.shade200, width: 1),
+      );
+    } else if (isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: const LinearGradient(
           colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)], // Golden/Cream gradient
@@ -154,7 +164,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                    Icon(
                      isPerfect ? Icons.star : Icons.auto_fix_high, 
                      size: 14, 
-                     color: isPerfect ? Colors.amber[700] : Colors.orange
+                     color: isPerfect ? Colors.green[700] : Colors.orange
                    ),
                    if (isPerfect) ...[
                      const SizedBox(width: 4),
@@ -163,7 +173,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                        style: TextStyle(
                          fontSize: 10, 
                          fontWeight: FontWeight.bold,
-                         color: Colors.amber[800]
+                         color: Colors.green[800]
                        )
                      ),
                    ]
