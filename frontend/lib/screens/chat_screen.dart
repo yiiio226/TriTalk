@@ -196,7 +196,16 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     try {
-      final response = await _apiService.sendMessage(text, widget.scene.description);
+      // Build conversation history (exclude loading messages and current message)
+      final history = _messages
+          .where((m) => !m.isLoading && m.content.isNotEmpty)
+          .map((m) => <String, String>{
+            'role': m.isUser ? 'user' : 'assistant',
+            'content': m.content,
+          })
+          .toList();
+
+      final response = await _apiService.sendMessage(text, widget.scene.description, history);
       
       if (!mounted) return;
 
