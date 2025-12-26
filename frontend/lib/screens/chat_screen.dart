@@ -210,7 +210,11 @@ class _ChatScreenState extends State<ChatScreen> {
           })
           .toList();
 
-      final response = await _apiService.sendMessage(text, widget.scene.description, history);
+      final response = await _apiService.sendMessage(
+        text, 
+        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+        history
+      );
       
       if (!mounted) return;
 
@@ -456,7 +460,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 context: context,
                 isScrollControlled: true,
                 builder: (context) => HintsSheet(
-                  sceneDescription: widget.scene.description,
+                  sceneDescription: 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
                   history: history,
                   onHintSelected: (hint) {
                     _textController.text = hint;
@@ -511,7 +515,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                       final optimizedText = await _apiService.optimizeMessage(
                         text, 
-                        widget.scene.description, 
+                        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
                         history
                       );
 
