@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
 import '../services/preferences_service.dart'; // Added
+import '../widgets/top_toast.dart';
 import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -44,6 +45,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadMessages();
   }
 
+  bool _initialLoadFailed = false; // Added for initial load error tracking
+
   Future<void> _loadMessages() async {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
     final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
@@ -52,6 +55,24 @@ class _ChatScreenState extends State<ChatScreen> {
     bool isNewConversation = history.isEmpty;
     
     if (isNewConversation) {
+      // Add a loading placeholder immediately
+      final loadingId = 'init_loading';
+      final loadingMsg = Message(
+        id: loadingId,
+        content: '',
+        isUser: false,
+        timestamp: DateTime.now(),
+        isLoading: true,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _messages = [loadingMsg]; // Initialize with loading message
+          _initialLoadFailed = false;
+          _showErrorBanner = false;
+        });
+      }
+
       // Check target language
       final prefs = PreferencesService();
       final targetLang = await prefs.getTargetLanguage();
@@ -66,19 +87,35 @@ class _ChatScreenState extends State<ChatScreen> {
             targetLang
           );
         } catch (e) {
-          print("Translation failed, falling back to original: $e");
+          print("Translation failed: $e");
+          if (mounted) {
+            setState(() {
+              _messages = []; // Clear loading message
+              _initialLoadFailed = true;
+              _showErrorBanner = true;
+              _failedMessage = "Initial Load Failed"; // Marker
+            });
+          }
+          return; // Exit on error
         }
       }
 
-      // Add initial AI message if history is empty
+      // Replace loading message with actual initial AI message
       final initialMsg = Message(
-        id: 'init',
+        id: 'init_${DateTime.now().millisecondsSinceEpoch}', // Unique ID to force re-render
         content: initialContent,
-        isUser: false,
+        isUser: false, 
         timestamp: DateTime.now(),
         isAnimated: true, // Enable typewriter effect for initial message
       );
+      
       history.add(initialMsg);
+      
+      if (mounted) {
+        setState(() {
+          _messages = history;
+        });
+      }
     } else {
       // Reset animation flags for existing messages to prevent re-animation
       for (int i = 0; i < history.length; i++) {
@@ -97,14 +134,16 @@ class _ChatScreenState extends State<ChatScreen> {
           );
         }
       }
+      if (mounted) {
+        setState(() {
+          _messages = history;
+        });
+      }
     }
-    
-    // Use the same list reference so updates propagate to service automatically
-    if (mounted) {
-      setState(() {
-        _messages = history;
-      });
-    }
+  }
+
+  void _retryInitialLoad() {
+      _loadMessages();
   }
 
   final ApiService _apiService = ApiService();
@@ -280,7 +319,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          TextButton(
+                            TextButton(
                             onPressed: () {
                               Navigator.pop(context);
                               final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
@@ -320,6 +359,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 return Align(
                   alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: ChatBubble(
+                    key: ValueKey(msg.id), // Force rebuild when ID changes
                     message: msg,
                     onTap: () {
                       if (msg.feedback != null) {
@@ -346,6 +386,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildErrorBanner() {
+    final isInitialLoadError = _initialLoadFailed;
+    final errorText = isInitialLoadError 
+        ? 'Network error. Failed to load conversation.'
+        : 'Failed to send message';
+        
     return Container(
       width: double.infinity,
       color: Colors.red.shade50,
@@ -354,14 +399,14 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           const Icon(Icons.error_outline, color: Colors.red, size: 20),
           const SizedBox(width: 8),
-          const Expanded(
+           Expanded(
             child: Text(
-              'Failed to send message',
-              style: TextStyle(color: Colors.red),
+              errorText,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
           TextButton(
-            onPressed: _retryLastMessage,
+            onPressed: isInitialLoadError ? _retryInitialLoad : _retryLastMessage,
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: const Size(50, 30),
@@ -530,9 +575,33 @@ class _ChatScreenState extends State<ChatScreen> {
         _analyzingMessageId = null;
       });
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to analyze: $e')),
+      
+      showTopToast(
+        context, 
+        _getFriendlyErrorMessage(e),
+        isError: true,
       );
     }
   }
-}
+
+  String _getFriendlyErrorMessage(Object error) {
+    final errorStr = error.toString();
+    if (errorStr.contains('SocketException') || 
+        errorStr.contains('Connection refused') ||
+        errorStr.contains('Network is unreachable')) {
+      return 'Network error. Please check your connection.';
+    }
+    if (errorStr.contains('500')) {
+      return 'Server error. Please try again later.';
+    }
+    if (errorStr.contains('404')) {
+      return 'Service not available.';
+    }
+    // Strip "Exception: " prefix if present for cleaner display
+    if (errorStr.startsWith('Exception: ')) {
+      return errorStr.substring(11);
+    }
+    return 'An error occurred: $errorStr';
+  }
+  }
+
