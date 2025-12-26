@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
+import 'top_toast.dart';
 
 class AnalysisSheet extends StatelessWidget {
   final Message message;
@@ -74,24 +75,31 @@ class AnalysisSheet extends StatelessWidget {
           _buildSection('Original Sentence', message.content, isHighlight: true),
           const SizedBox(height: 16),
 
-          // Overall summary
-          if (analysis!.overallSummary.isNotEmpty) ...[
+          // Overall summary with Context & Tone merged
+          if (analysis!.overallSummary.isNotEmpty && 
+              analysis!.overallSummary != 'No summary available.') ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.purple[50],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline, size: 20, color: Colors.purple),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      analysis!.overallSummary,
-                      style: TextStyle(color: Colors.purple[900]),
-                    ),
+                  // Main Summary
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.lightbulb_outline, size: 20, color: Colors.purple),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          analysis!.overallSummary,
+                          style: TextStyle(color: Colors.purple[900]),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -99,9 +107,46 @@ class AnalysisSheet extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // Sentence structure
-          if (analysis!.sentenceStructure.isNotEmpty) ...[
+          // Sentence structure (Text + Visualization)
+          if (analysis!.sentenceStructure.isNotEmpty && 
+              analysis!.sentenceStructure != 'No structure analysis available.') ...[
             _buildSection('Sentence Structure', analysis!.sentenceStructure),
+            if (analysis!.sentenceBreakdown.isNotEmpty) ...[
+               const SizedBox(height: 12),
+               Wrap(
+                 spacing: 8,
+                 runSpacing: 8,
+                 children: analysis!.sentenceBreakdown.map((segment) => Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                   decoration: BoxDecoration(
+                     color: Colors.blue[50],
+                     borderRadius: BorderRadius.circular(8),
+                     border: Border.all(color: Colors.blue[100]!),
+                   ),
+                   child: Column(
+                     mainAxisSize: MainAxisSize.min,
+                     children: [
+                       Text(
+                         segment.text,
+                         style: const TextStyle(
+                           fontSize: 14,
+                           fontWeight: FontWeight.bold,
+                           color: Colors.black87,
+                         ),
+                       ),
+                       Text(
+                         segment.tag,
+                         style: TextStyle(
+                           fontSize: 10,
+                           color: Colors.blue[600],
+                           fontWeight: FontWeight.w500,
+                         ),
+                       ),
+                     ],
+                   ),
+                 )).toList(),
+               ),
+            ],
             const SizedBox(height: 16),
           ],
 
@@ -131,7 +176,63 @@ class AnalysisSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(vocab)),
+            ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
+            const SizedBox(height: 16),
+          ],
+
+          // L-02: Idioms & Slang (RED HIGHLIGHT)
+          if (analysis!.idioms.isNotEmpty) ...[
+            const Text(
+              'IDIOMS & SLANG (ALERT)',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...analysis!.idioms.map((idiom) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red[50], // RED BACKGROUND
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red[800]), // WARNING ICON
+                      const SizedBox(width: 6),
+                      Text(
+                        idiom.type.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    idiom.text,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red[900],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    idiom.explanation,
+                    style: TextStyle(fontSize: 13, color: Colors.red[900]),
+                  ),
+                ],
+              ),
+            )),
             const SizedBox(height: 16),
           ],
 
@@ -318,7 +419,7 @@ class AnalysisSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildVocabularyItem(VocabularyItem vocab) {
+  Widget _buildVocabularyItem(BuildContext context, VocabularyItem vocab) {
     Color levelColor = Colors.blue;
     if (vocab.level == 'intermediate') {
       levelColor = Colors.orange;
@@ -365,6 +466,33 @@ class AnalysisSheet extends StatelessWidget {
                   ),
                 ),
               ],
+              const Spacer(),
+              // Save Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    VocabService().add(
+                      vocab.word,
+                      vocab.definition,
+                      "Analysis Vocabulary",
+                    );
+                    showTopToast(
+                      context,
+                      'Saved "${vocab.word}" to Vocabulary',
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),

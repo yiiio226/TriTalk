@@ -150,13 +150,21 @@ class MessageAnalysis {
   final List<GrammarPoint> grammarPoints;
   final List<VocabularyItem> vocabulary;
   final String sentenceStructure;
+  final List<StructureSegment> sentenceBreakdown;
   final String overallSummary;
+  final String? pragmaticAnalysis;
+  final List<String> emotionTags;
+  final List<IdiomItem> idioms;
 
   MessageAnalysis({
     required this.grammarPoints,
     required this.vocabulary,
     required this.sentenceStructure,
+    this.sentenceBreakdown = const [],
     required this.overallSummary,
+    this.pragmaticAnalysis,
+    this.emotionTags = const [],
+    this.idioms = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -164,7 +172,11 @@ class MessageAnalysis {
       'grammar_points': grammarPoints.map((g) => g.toJson()).toList(),
       'vocabulary': vocabulary.map((v) => v.toJson()).toList(),
       'sentence_structure': sentenceStructure,
+      'sentence_breakdown': sentenceBreakdown.map((s) => s.toJson()).toList(),
       'overall_summary': overallSummary,
+      'pragmatic_analysis': pragmaticAnalysis,
+      'emotion_tags': emotionTags,
+      'idioms_slang': idioms.map((i) => i.toJson()).toList(),
     };
   }
 
@@ -179,7 +191,90 @@ class MessageAnalysis {
               .toList() ??
           [],
       sentenceStructure: json['sentence_structure'] ?? '',
+      sentenceBreakdown: (json['sentence_breakdown'] as List<dynamic>?)
+              ?.map((s) => StructureSegment.fromJson(s))
+              .toList() ??
+          [],
       overallSummary: json['overall_summary'] ?? '',
+      pragmaticAnalysis: json['pragmatic_analysis'],
+      emotionTags: (json['emotion_tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      idioms: (json['idioms_slang'] as List<dynamic>?)
+              ?.map((i) => IdiomItem.fromJson(i))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class StructureSegment {
+  final String text;
+  final String tag;
+
+  StructureSegment({required this.text, required this.tag});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'tag': tag,
+    };
+  }
+
+  factory StructureSegment.fromJson(Map<String, dynamic> json) {
+    return StructureSegment(
+      text: json['text'] ?? '',
+      tag: json['tag'] ?? '',
+    );
+  }
+}
+
+class IdiomItem {
+  final String text;
+  final String explanation;
+  final String type;
+
+  IdiomItem({
+    required this.text,
+    required this.explanation,
+    required this.type,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'explanation': explanation,
+      'type': type,
+    };
+  }
+
+  factory IdiomItem.fromJson(Map<String, dynamic> json) {
+    return IdiomItem(
+      text: json['text'] ?? '',
+      explanation: json['explanation'] ?? '',
+      type: json['type'] ?? 'Idiom',
+    );
+  }
+}
+
+class ShadowResult {
+  final int score;
+  final int intonationScore;
+  final int pronunciationScore;
+  final String feedback;
+
+  ShadowResult({
+    required this.score,
+    required this.intonationScore,
+    required this.pronunciationScore,
+    required this.feedback,
+  });
+
+  factory ShadowResult.fromJson(Map<String, dynamic> json) {
+    final details = json['details'] ?? {};
+    return ShadowResult(
+      score: json['score'] ?? 0,
+      intonationScore: details['intonation_score'] ?? 0,
+      pronunciationScore: details['pronunciation_score'] ?? 0,
+      feedback: details['feedback'] ?? '',
     );
   }
 }

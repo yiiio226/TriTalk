@@ -60,7 +60,33 @@ export interface AnalyzeResponse {
     grammar_points: GrammarPoint[];
     vocabulary: VocabularyItem[];
     sentence_structure: string;
+    sentence_breakdown?: Array<{ text: string; tag: string }>; // For visualization
     overall_summary: string;
+    // L-02 Context & Emotion
+    pragmatic_analysis?: string; // "Why" they said it (e.g. "To be polite request")
+    emotion_tags?: string[];     // ["Polite", "Formal", "Sarcastic"]
+    // L-02 Idioms
+    idioms_slang?: Array<{
+        text: string;
+        explanation: string;
+        type: 'Idiom' | 'Slang' | 'Common Phrase';
+    }>;
+}
+
+// L-03 Shadowing
+export interface ShadowRequest {
+    target_text: string;
+    user_audio_text: string; // Simulated for now (STT result)
+    // In future: user_audio_base64: string; 
+}
+
+export interface ShadowResponse {
+    score: number; // 0-100
+    details: {
+        intonation_score: number;
+        pronunciation_score: number;
+        feedback: string; // Specific advice
+    };
 }
 
 export interface SceneGenerationResponse {
