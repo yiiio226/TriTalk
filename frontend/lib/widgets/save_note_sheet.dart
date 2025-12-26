@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/note_service.dart';
+import '../services/vocab_service.dart';
 
 class SaveNoteSheet extends StatefulWidget {
   final String originalSentence;
@@ -11,7 +11,7 @@ class SaveNoteSheet extends StatefulWidget {
 }
 
 class _SaveNoteSheetState extends State<SaveNoteSheet> {
-  final NoteService _noteService = NoteService();
+  // VocabService is a singleton, accessed directly
   late List<String> _words;
   final Set<int> _selectedWordIndices = {};
   bool _isSaving = false;
@@ -29,20 +29,21 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
     try {
       if (_selectedWordIndices.isEmpty) {
         // Save whole sentence
-        await _noteService.saveSentence(widget.originalSentence);
+        await VocabService().add(
+          widget.originalSentence,
+          "Saved Sentence", 
+          "Golden Sentence", // Tag
+        );
       } else {
         // Save selected words
-        // Sort indices to keep order
         final indices = _selectedWordIndices.toList()..sort();
-        // Just save individual words for now. 
-        // Ideally we might want to let user combine them into a phrase, 
-        // but requirement says "select words/phrases". 
-        // Let's form a phrase from contiguous selections or save multiple items.
-        // For logic simplicity: Join all selected as one "entry" if contiguous, else separate?
-        // Let's just save the joined string of selected words as a "Vocabulary/Phrase" entry.
-        
         final selectedText = indices.map((i) => _words[i]).join(' ');
-        await _noteService.saveVocabulary(selectedText, context: widget.originalSentence);
+        
+        await VocabService().add(
+          selectedText,
+          widget.originalSentence, // Use original sentence as context/translation
+          "Vocabulary", // Tag
+        );
       }
       
       if (mounted) {
