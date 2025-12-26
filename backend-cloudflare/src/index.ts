@@ -12,6 +12,8 @@ import {
     PolishResponse,
     TranslateRequest,
     TranslateResponse,
+    ShadowRequest,
+    ShadowResponse,
     Env,
 } from './types';
 
@@ -204,13 +206,19 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     2. Key vocabulary with definitions.
     3. Sentence structure explanation.
     4. Overall summary of the meaning and nuance.
-    
-    Output JSON ONLY:
+    5. Pragmatics: Why did the speaker say it this way? (e.g., politeness, irony).
+    6. Emotion/Tone tags (e.g., Polite, Casual, Professional, Sarcastic).
+    7. Identify Idioms or Slang if any.
+
+    Output JSON ONLY. All explanations, definitions, and analysis text MUST be in ${nativeLang}. DO NOT include Pinyin in any field, especially in examples.
     {
-        "grammar_points": [{"structure": "...", "explanation": "...", "example": "..."}],
-        "vocabulary": [{"word": "...", "definition": "...", "example": "...", "level": "A1/B2/etc"}],
-        "sentence_structure": "...",
-        "overall_summary": "..."
+        "grammar_points": [{"structure": "...", "explanation": "(in ${nativeLang}, NO Pinyin)...", "example": "..."}],
+        "vocabulary": [{"word": "...", "definition": "(in ${nativeLang}, NO Pinyin)...", "example": "...", "level": "A1/B2/etc"}],
+        "sentence_structure": "(in ${nativeLang})...",
+        "overall_summary": "(in ${nativeLang})...",
+        "pragmatic_analysis": "(in ${nativeLang})...",
+        "emotion_tags": ["(in ${nativeLang})..."],
+        "idioms_slang": [{"text": "...", "explanation": "(in ${nativeLang})...", "type": "Idiom/Slang"}]
     }`;
 
         const messages = [{ role: 'user', content: analyzePrompt }];
@@ -223,6 +231,9 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
             vocabulary: data.vocabulary || [],
             sentence_structure: data.sentence_structure || '',
             overall_summary: data.overall_summary || '',
+            pragmatic_analysis: data.pragmatic_analysis || '',
+            emotion_tags: data.emotion_tags || [],
+            idioms_slang: data.idioms_slang || [],
         };
 
         return new Response(JSON.stringify(response), {
@@ -370,6 +381,55 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
     }
 }
 
+// Handle /chat/shadow endpoint (Simulated for MVP)
+async function handleShadowAnalysis(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: ShadowRequest = await request.json();
+
+        // SIMULATION: Compare texts for a rough score
+        const target = body.target_text.toLowerCase().replace(/[^\w\s]/g, '');
+        const user = body.user_audio_text.toLowerCase().replace(/[^\w\s]/g, '');
+        
+        // Simple Levenshtein-like ratio or word match (Simplified for speed)
+        const targetWords = target.split(/\s+/);
+        const userWords = user.split(/\s+/);
+        const matchCount = userWords.filter(w => targetWords.includes(w)).length;
+        let score = Math.round((matchCount / Math.max(targetWords.length, 1)) * 100);
+        
+        // Cap and floor
+        score = Math.max(0, Math.min(100, score));
+
+        // Generate heuristic feedback
+        let feedback = "Good effort!";
+        if (score > 90) feedback = "Excellent! Your pronunciation is very clear.";
+        else if (score > 70) feedback = "Great job, but watch your intonation on the key words.";
+        else if (score > 50) feedback = "You're getting there. Try to mimic the stress on verbs.";
+        else feedback = "Keep practicing! Listen closely to the original audio.";
+
+        const response: ShadowResponse = {
+            score: score,
+            details: {
+                intonation_score: Math.max(0, score - 10), // Simulated variety
+                pronunciation_score: score,
+                feedback: feedback
+            }
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /chat/shadow:', error);
+        return new Response(
+            JSON.stringify({
+                score: 0,
+                details: { intonation_score: 0, pronunciation_score: 0, feedback: "Analysis failed." }
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
 // Main worker handler
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -415,6 +475,10 @@ export default {
 
         if (url.pathname === '/common/translate' && request.method === 'POST') {
             return handleTranslate(request, env);
+        }
+
+        if (url.pathname === '/chat/shadow' && request.method === 'POST') {
+            return handleShadowAnalysis(request, env);
         }
 
         // 404 for unknown routes

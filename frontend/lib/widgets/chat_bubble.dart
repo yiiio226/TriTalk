@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
 import '../models/message.dart';
+import '../widgets/shadowing_sheet.dart';
+import '../widgets/save_note_sheet.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -174,18 +176,65 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.auto_awesome,
-                    size: 14,
-                    color: Colors.purple[600],
+                  // Grammar Analysis
+                  GestureDetector(
+                    onTap: () => widget.onTap?.call(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.auto_awesome, size: 14, color: Colors.purple[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Analyze",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple[700]),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Analyze",
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.purple[700],
+                  const SizedBox(width: 12),
+
+                  // Shadowing
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (context) => ShadowingSheet(targetText: message.content),
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.mic_none, size: 14, color: Colors.blue[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Shadow",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue[700]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Save
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                         context: context,
+                         isScrollControlled: true,
+                        builder: (context) => SaveNoteSheet(originalSentence: message.content),
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bookmark_border, size: 14, color: Colors.green[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Save",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green[700]),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -74,7 +74,7 @@ class AnalysisSheet extends StatelessWidget {
           _buildSection('Original Sentence', message.content, isHighlight: true),
           const SizedBox(height: 16),
 
-          // Overall summary
+          // Overall summary with Context & Tone merged
           if (analysis!.overallSummary.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(12),
@@ -82,16 +82,22 @@ class AnalysisSheet extends StatelessWidget {
                 color: Colors.purple[50],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline, size: 20, color: Colors.purple),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      analysis!.overallSummary,
-                      style: TextStyle(color: Colors.purple[900]),
-                    ),
+                  // Main Summary
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.lightbulb_outline, size: 20, color: Colors.purple),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          analysis!.overallSummary,
+                          style: TextStyle(color: Colors.purple[900]),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -132,6 +138,62 @@ class AnalysisSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(vocab)),
+            const SizedBox(height: 16),
+          ],
+
+          // L-02: Idioms & Slang
+          if (analysis!.idioms.isNotEmpty) ...[
+            const Text(
+              'IDIOMS & SLANG',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...analysis!.idioms.map((idiom) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.whatshot, size: 16, color: Colors.orange[800]),
+                      const SizedBox(width: 6),
+                      Text(
+                        idiom.type.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    idiom.text,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange[900],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    idiom.explanation,
+                    style: TextStyle(fontSize: 13, color: Colors.orange[900]),
+                  ),
+                ],
+              ),
+            )),
             const SizedBox(height: 16),
           ],
 

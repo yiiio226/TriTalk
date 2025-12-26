@@ -186,6 +186,27 @@ class ApiService {
       throw Exception('Error polishing scenario: $e');
     }
   }
+
+  Future<ShadowResult> analyzeShadow(String targetText, String userAudioText) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/chat/shadow'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'target_text': targetText,
+          'user_audio_text': userAudioText,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return ShadowResult.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('Failed to analyze shadow: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error analyzing shadow: $e');
+    }
+  }
 }
 
 class ChatResponse {
