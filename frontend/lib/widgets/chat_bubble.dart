@@ -22,6 +22,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
   String _displayedText = "";
   Timer? _typewriterTimer;
   int _currentIndex = 0;
+  bool _isAnimationComplete = false; // Track if typewriter animation is done
   
   // Loading state
   late AnimationController _loadingController;
@@ -38,9 +39,11 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Setup typewriter if needed
     if (widget.message.isAnimated && !widget.message.isLoading) {
+      _isAnimationComplete = false; // Animation will start
       _startTypewriter();
     } else {
       _displayedText = widget.message.content;
+      _isAnimationComplete = true; // No animation, so it's "complete"
     }
   }
   
@@ -53,9 +56,11 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       if (widget.message.isAnimated) {
         _currentIndex = 0;
         _displayedText = "";
+        _isAnimationComplete = false; // Animation will restart
         _startTypewriter();
       } else {
         _displayedText = widget.message.content;
+        _isAnimationComplete = true;
       }
     }
   }
@@ -73,6 +78,12 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
         }
       } else {
         timer.cancel();
+        // Animation complete, update state to show action buttons
+        if (mounted) {
+          setState(() {
+            _isAnimationComplete = true;
+          });
+        }
       }
     });
   }
@@ -193,8 +204,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                  ],
                ),
             ],
-            // Analysis icon for AI messages (only show when not loading)
-            if (!isUser && !widget.message.isLoading) ...[
+            // Analysis icon for AI messages (only show when animation is complete)
+            if (!isUser && !widget.message.isLoading && _isAnimationComplete) ...[
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
