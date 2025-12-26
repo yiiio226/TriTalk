@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/scene.dart';
 import '../models/message.dart';
@@ -27,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Message> _messages = [];
   bool _isAnalyzing = false;
   String? _analyzingMessageId;
+  Timer? _autoScrollTimer; // Timer for continuous scrolling during animation
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -39,6 +41,20 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
   }
+
+  void _startAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+  }
   @override
   void initState() {
     super.initState();
@@ -46,6 +62,14 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.addListener(() {
       setState(() {}); // Rebuild to update optimization button state
     });
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   bool _initialLoadFailed = false; // Added for initial load error tracking
@@ -118,6 +142,7 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _messages = history;
         });
+        _scrollToBottom(); // Scroll to bottom after loading initial message
       }
     } else {
       // Reset animation flags for existing messages to prevent re-animation
@@ -140,6 +165,11 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         setState(() {
           _messages = history;
+        });
+        _scrollToBottom(); // Initial scroll
+        // Additional delayed scroll to ensure all messages are fully rendered
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) _scrollToBottom();
         });
       }
     }
@@ -199,6 +229,10 @@ class _ChatScreenState extends State<ChatScreen> {
     
     _textController.clear();
     _scrollToBottom();
+    // Additional delayed scroll to ensure loading message is visible
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) _scrollToBottom();
+    });
 
     try {
       // Build conversation history (exclude loading messages and current message)
@@ -250,6 +284,16 @@ class _ChatScreenState extends State<ChatScreen> {
         // No need to call addMessage - _messages is the same list as in the service
       });
       _scrollToBottom();
+      // Start continuous auto-scroll during typewriter animation
+      _startAutoScroll();
+      // Stop auto-scroll after animation should be complete (estimate based on content length)
+      final animationDuration = (response.message.length * 30).clamp(1000, 5000);
+      Future.delayed(Duration(milliseconds: animationDuration), () {
+        if (mounted) {
+          _stopAutoScroll();
+          _scrollToBottom(); // Final scroll to ensure everything is visible
+        }
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -288,6 +332,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent, // Prevent color change on scroll
         foregroundColor: Colors.black, // Icons and text color
         elevation: 0, 
         iconTheme: const IconThemeData(color: Colors.black),
@@ -536,7 +581,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
           ),
           IconButton(
-            icon: const Icon(Icons.send, color: Colors.blue),
+            icon: const Icon(Icons.send, color: Colors.black),
             onPressed: _sendMessage,
           ),
         ],
