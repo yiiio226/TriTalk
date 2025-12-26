@@ -8,6 +8,7 @@ class Message {
   final MessageAnalysis? analysis; // For AI message analysis
   final bool isLoading; // Transient: Loading state for pending messages
   final bool isAnimated; // Transient: Whether to animate the text appearance
+  final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
 
   Message({
     required this.id,
@@ -19,6 +20,7 @@ class Message {
     this.analysis,
     this.isLoading = false,
     this.isAnimated = false,
+    this.isFeedbackLoading = false,
   });
 
   Map<String, dynamic> toJson() {

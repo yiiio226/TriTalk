@@ -211,6 +211,37 @@ class ApiService {
       throw Exception('Error analyzing shadow: $e');
     }
   }
+
+  Future<String> optimizeMessage(
+    String draft, 
+    String sceneContext, 
+    List<Map<String, String>> history
+  ) async {
+    try {
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/chat/optimize'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': draft,
+          'scene_context': sceneContext,
+          'history': history,
+          'target_language': targetLang,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['optimized_text'];
+      } else {
+        throw Exception('Failed to optimize message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error optimizing message: $e');
+    }
+  }
 }
 
 class ChatResponse {

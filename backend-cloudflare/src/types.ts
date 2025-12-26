@@ -117,6 +117,18 @@ export interface TranslateRequest {
     target_language: string;
 }
 
+
 export interface TranslateResponse {
     translation: string;
+}
+
+export interface OptimizeRequest {
+    message: string;
+    scene_context: string;
+    history?: Array<{ role: string; content: string }>;
+    target_language?: string;
+}
+
+export interface OptimizeResponse {
+    optimized_text: string;
 }

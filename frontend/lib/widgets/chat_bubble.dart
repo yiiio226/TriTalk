@@ -94,6 +94,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
 
     final isPerfect = message.feedback?.isPerfect ?? false;
     final hasFeedback = message.feedback != null;
+    final isMagicWand = hasFeedback && !isPerfect;
 
     BoxDecoration bubbleDecoration = BoxDecoration(
       color: color,
@@ -110,6 +111,15 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     );
 
     if (isPerfect) {
+      bubbleDecoration = bubbleDecoration.copyWith(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade50, Colors.green.shade100], // Green gradient
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.green.shade200, width: 1),
+      );
+    } else if (isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: const LinearGradient(
           colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)], // Golden/Cream gradient
@@ -154,7 +164,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                    Icon(
                      isPerfect ? Icons.star : Icons.auto_fix_high, 
                      size: 14, 
-                     color: isPerfect ? Colors.amber[700] : Colors.orange
+                     color: isPerfect ? Colors.green[700] : Colors.orange
                    ),
                    if (isPerfect) ...[
                      const SizedBox(width: 4),
@@ -163,10 +173,23 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                        style: TextStyle(
                          fontSize: 10, 
                          fontWeight: FontWeight.bold,
-                         color: Colors.amber[800]
+                         color: Colors.green[800]
                        )
                      ),
                    ]
+                 ],
+               ),
+            ],
+            if (widget.message.isFeedbackLoading) ...[
+               const SizedBox(height: 4),
+               Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   SizedBox(
+                     width: 24,
+                     height: 12,
+                     child: _buildSmallLoader(),
+                   ),
                  ],
                ),
             ],
@@ -282,6 +305,30 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           );
         },
       ),
+    );
+  }
+
+  Widget _buildSmallLoader() {
+    return AnimatedBuilder(
+      animation: _loadingController,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(3, (index) {
+            return Transform.scale(
+              scale: 0.5 + 0.5 * sin(DateTime.now().millisecondsSinceEpoch / 200 + index),
+              child: Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

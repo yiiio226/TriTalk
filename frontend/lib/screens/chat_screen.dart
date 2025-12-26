@@ -43,6 +43,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadMessages();
+    _textController.addListener(() {
+      setState(() {}); // Rebuild to update optimization button state
+    });
   }
 
   bool _initialLoadFailed = false; // Added for initial load error tracking
@@ -148,6 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final ApiService _apiService = ApiService();
   bool _isSending = false;
+  bool _isOptimizing = false; // Added for AI optimization loading state
   // Error handling state
   String? _failedMessage;
   bool _showErrorBanner = false;
@@ -171,6 +175,7 @@ class _ChatScreenState extends State<ChatScreen> {
       content: text,
       isUser: true,
       timestamp: DateTime.now(),
+      isFeedbackLoading: true, // Show loading indicator for feedback
     );
 
     setState(() {
@@ -210,27 +215,23 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
 
       setState(() {
-        // Update the last user message with feedback if any
-        if (response.feedback != null) {
-           final lastUserMsgIndex = _messages.lastIndexWhere((m) => m.isUser);
-           if (lastUserMsgIndex != -1) {
-             final oldMsg = _messages[lastUserMsgIndex];
-             final updatedMsg = Message(
-               id: oldMsg.id,
-               content: oldMsg.content,
-               isUser: true,
-               timestamp: oldMsg.timestamp,
-               feedback: response.feedback,
-             );
-             _messages[lastUserMsgIndex] = updatedMsg;
-             // No need to call updateMessage - we're using the same list reference
-           }
-        }
-        
         _isSending = false;
         
         // Remove loading message
         _messages.removeWhere((m) => m.isLoading);
+        
+        // Update user message with feedback and remove loading state
+        final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
+        if (userMsgIndex != -1) {
+          _messages[userMsgIndex] = Message(
+            id: newMessage.id,
+            content: newMessage.content,
+            isUser: true,
+            timestamp: newMessage.timestamp,
+            feedback: response.feedback,
+            isFeedbackLoading: false, // Turn off loading indicator
+          );
+        }
         
         final aiMessage = Message(
           id: DateTime.now().toString(),
@@ -475,6 +476,60 @@ class _ChatScreenState extends State<ChatScreen> {
               minLines: 1,
               maxLines: 4,
             ),
+
+          ),
+          // AI Optimization Button
+          IconButton(
+            icon: _isOptimizing 
+                ? const SizedBox(
+                    width: 20, 
+                    height: 20, 
+                    child: CircularProgressIndicator(strokeWidth: 2)
+                  )
+                : Icon(
+                    Icons.auto_fix_high, 
+                    color: _textController.text.trim().isNotEmpty 
+                        ? Colors.green 
+                        : Colors.grey
+                  ),
+            tooltip: 'Optimize with AI',
+            onPressed: _textController.text.trim().isEmpty || _isOptimizing
+                ? null
+                : () async {
+                    final text = _textController.text.trim();
+                    setState(() => _isOptimizing = true);
+
+                    try {
+                      // Prepare context
+                      final history = _messages
+                          .where((m) => !m.isLoading && m.content.isNotEmpty)
+                          .map((m) => <String, String>{
+                            'role': m.isUser ? 'user' : 'assistant',
+                            'content': m.content,
+                          })
+                          .toList();
+
+                      final optimizedText = await _apiService.optimizeMessage(
+                        text, 
+                        widget.scene.description, 
+                        history
+                      );
+
+                      if (mounted) {
+                        _textController.text = optimizedText;
+                        // Optional: Show a small toast/snackbar that it was optimized?
+                        showTopToast(context, "Message optimized!", isError: false);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                         showTopToast(context, "Optimization failed: $e", isError: true);
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isOptimizing = false);
+                      }
+                    }
+                  },
           ),
           IconButton(
             icon: const Icon(Icons.send, color: Colors.blue),

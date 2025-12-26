@@ -14,6 +14,8 @@ import {
     TranslateResponse,
     ShadowRequest,
     ShadowResponse,
+    OptimizeRequest,
+    OptimizeResponse,
     Env,
 } from './types';
 
@@ -95,7 +97,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     3. Keep responses conversational and realistic for the scenario.
     4. Your goal is to help the user practice ${targetLang}.
     
-    Analyze the user's message for grammar, naturalness, and appropriateness.
+    Analyze the user's message STRICTLY for grammar, naturalness, and appropriateness.
     
     IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR OWN message. These are NOT your (AI character's) responses.
     
@@ -109,7 +111,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     {
         "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
         "analysis": {
-            "is_perfect": boolean,
+            "is_perfect": boolean, // Set to true ONLY if the message is grammatically correct, native-sounding, AND perfectly polite/appropriate for the context. If there are any minor awkwardness or improvements possible, set to false.
             "corrected_text": "Grammatically correct version of what the USER said (in ${targetLang})",
             "native_expression": "More natural/idiomatic way for the USER to express their message in ${targetLang} (NOT your AI response, MUST be in ${targetLang} only)",
             "explanation": "Explanation in ${nativeLang}. If perfect, compliment in ${nativeLang}. DO NOT include Pinyin.",
@@ -458,6 +460,52 @@ async function handleShadowAnalysis(request: Request, env: Env): Promise<Respons
     }
 }
 
+// Handle /chat/optimize endpoint
+async function handleChatOptimize(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: OptimizeRequest = await request.json();
+
+
+        const targetLang = body.target_language || 'English';
+
+        const prompt = `You are a helpful language tutor.
+    Context: The user is in a roleplay scenario described as: "${body.scene_context}".
+    Goal: Optimize the user's draft message into natural, correct ${targetLang} suitable for this context.
+    Draft: "${body.message}"
+    
+    Guidelines:
+    1. Keep the meaning close to the draft but make it sound like a native speaker.
+    2. Maintain the persona/role if apparent from context.
+    3. Output JSON ONLY: { "optimized_text": "..." }`;
+
+        const messages = [{ role: 'system', content: prompt }];
+        
+        // Add recent history for context if available
+        if (body.history && body.history.length > 0) {
+            messages.push(...body.history.slice(-5));
+        }
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        const response: OptimizeResponse = {
+            optimized_text: data.optimized_text || body.message,
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /chat/optimize:', error);
+        return new Response(
+            JSON.stringify({
+                optimized_text: "Optimization unavailable.",
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
 // Main worker handler
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -507,6 +555,10 @@ export default {
 
         if (url.pathname === '/chat/shadow' && request.method === 'POST') {
             return handleShadowAnalysis(request, env);
+        }
+
+        if (url.pathname === '/chat/optimize' && request.method === 'POST') {
+            return handleChatOptimize(request, env);
         }
 
         // 404 for unknown routes
