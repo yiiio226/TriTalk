@@ -175,6 +175,7 @@ class _ChatScreenState extends State<ChatScreen> {
       content: text,
       isUser: true,
       timestamp: DateTime.now(),
+      isFeedbackLoading: true, // Show loading indicator for feedback
     );
 
     setState(() {
@@ -214,27 +215,23 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
 
       setState(() {
-        // Update the last user message with feedback if any
-        if (response.feedback != null) {
-           final lastUserMsgIndex = _messages.lastIndexWhere((m) => m.isUser);
-           if (lastUserMsgIndex != -1) {
-             final oldMsg = _messages[lastUserMsgIndex];
-             final updatedMsg = Message(
-               id: oldMsg.id,
-               content: oldMsg.content,
-               isUser: true,
-               timestamp: oldMsg.timestamp,
-               feedback: response.feedback,
-             );
-             _messages[lastUserMsgIndex] = updatedMsg;
-             // No need to call updateMessage - we're using the same list reference
-           }
-        }
-        
         _isSending = false;
         
         // Remove loading message
         _messages.removeWhere((m) => m.isLoading);
+        
+        // Update user message with feedback and remove loading state
+        final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
+        if (userMsgIndex != -1) {
+          _messages[userMsgIndex] = Message(
+            id: newMessage.id,
+            content: newMessage.content,
+            isUser: true,
+            timestamp: newMessage.timestamp,
+            feedback: response.feedback,
+            isFeedbackLoading: false, // Turn off loading indicator
+          );
+        }
         
         final aiMessage = Message(
           id: DateTime.now().toString(),

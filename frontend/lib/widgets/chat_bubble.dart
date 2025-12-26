@@ -180,6 +180,19 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                  ],
                ),
             ],
+            if (widget.message.isFeedbackLoading) ...[
+               const SizedBox(height: 4),
+               Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   SizedBox(
+                     width: 24,
+                     height: 12,
+                     child: _buildSmallLoader(),
+                   ),
+                 ],
+               ),
+            ],
             // Analysis icon for AI messages
             if (!isUser) ...[
               const SizedBox(height: 4),
@@ -292,6 +305,30 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           );
         },
       ),
+    );
+  }
+
+  Widget _buildSmallLoader() {
+    return AnimatedBuilder(
+      animation: _loadingController,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(3, (index) {
+            return Transform.scale(
+              scale: 0.5 + 0.5 * sin(DateTime.now().millisecondsSinceEpoch / 200 + index),
+              child: Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

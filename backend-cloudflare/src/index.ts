@@ -97,7 +97,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     3. Keep responses conversational and realistic for the scenario.
     4. Your goal is to help the user practice ${targetLang}.
     
-    Analyze the user's message for grammar, naturalness, and appropriateness.
+    Analyze the user's message STRICTLY for grammar, naturalness, and appropriateness.
     
     IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR OWN message. These are NOT your (AI character's) responses.
     
@@ -111,7 +111,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     {
         "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
         "analysis": {
-            "is_perfect": boolean,
+            "is_perfect": boolean, // Set to true ONLY if the message is grammatically correct, native-sounding, AND perfectly polite/appropriate for the context. If there are any minor awkwardness or improvements possible, set to false.
             "corrected_text": "Grammatically correct version of what the USER said (in ${targetLang})",
             "native_expression": "More natural/idiomatic way for the USER to express their message in ${targetLang} (NOT your AI response, MUST be in ${targetLang} only)",
             "explanation": "Explanation in ${nativeLang}. If perfect, compliment in ${nativeLang}. DO NOT include Pinyin.",
