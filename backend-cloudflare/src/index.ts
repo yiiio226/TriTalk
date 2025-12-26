@@ -37,7 +37,15 @@ function parseJSON(content: string): any {
     if (cleaned.endsWith('```')) {
         cleaned = cleaned.slice(0, -3);
     }
-    return JSON.parse(cleaned.trim());
+    
+    const parsed = JSON.parse(cleaned.trim());
+    
+    // Handle case where LLM returns an array with a single object
+    if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0];
+    }
+    
+    return parsed;
 }
 
 // Call OpenRouter API
@@ -194,6 +202,7 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
 }
 
 // Handle /chat/analyze endpoint
+// Handle /chat/analyze endpoint
 async function handleChatAnalyze(request: Request, env: Env): Promise<Response> {
     try {
         const body: AnalyzeRequest = await request.json();
@@ -206,7 +215,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     2. Key vocabulary with definitions.
     3. Sentence structure explanation.
     4. Overall summary of the meaning and nuance.
-    5. Pragmatics: Why did the speaker say it this way? (e.g., politeness, irony).
+    5. Pragmatic Analysis: Explain *WHY* it was said this way. Identify the social logic (e.g., "Used subjunctive 'Could' to make a polite suggestion", "Short sentence indicates urgency"). Connect the grammar/words to the speaker's intent.
     6. Emotion/Tone tags (e.g., Polite, Casual, Professional, Sarcastic).
     7. Identify Idioms or Slang if any.
     8. Sentence Breakdown: Split the sentence into key segments (Subject, Verb, Clause, etc.) for visual tagging.
@@ -218,7 +227,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
         "sentence_structure": "(in ${nativeLang})...",
         "sentence_breakdown": [{"text": "segment text", "tag": "Subject/Verb/Clause/etc"}],
         "overall_summary": "(in ${nativeLang})...",
-        "pragmatic_analysis": "(in ${nativeLang})...",
+        "pragmatic_analysis": "Explanation of the social intent and why specific phrasing was chosen (in ${nativeLang})...",
         "emotion_tags": ["(in ${nativeLang})..."],
         "idioms_slang": [{"text": "...", "explanation": "(in ${nativeLang})...", "type": "Idiom/Slang"}]
     }`;
@@ -226,14 +235,21 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
         const messages = [{ role: 'user', content: analyzePrompt }];
 
         const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
+
+        let data: any = {};
+        try {
+            data = parseJSON(content);
+        } catch (e) {
+            console.error("JSON Parse Error:", e);
+            data = { overall_summary: "Error parsing analysis results.", sentence_structure: "Data format error." };
+        }
 
         const response: AnalyzeResponse = {
             grammar_points: data.grammar_points || [],
             vocabulary: data.vocabulary || [],
-            sentence_structure: data.sentence_structure || '',
+            sentence_structure: data.sentence_structure || 'No structure analysis available.',
             sentence_breakdown: data.sentence_breakdown || [],
-            overall_summary: data.overall_summary || '',
+            overall_summary: data.overall_summary || 'No summary available.',
             pragmatic_analysis: data.pragmatic_analysis || '',
             emotion_tags: data.emotion_tags || [],
             idioms_slang: data.idioms_slang || [],
@@ -248,8 +264,9 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
             JSON.stringify({
                 grammar_points: [],
                 vocabulary: [],
-                sentence_structure: 'Analysis unavailable',
-                overall_summary: '分析暂时不可用,请稍后再试。',
+                sentence_structure: 'Analysis unavailable (Server Error)',
+                overall_summary: 'Description unavailable.',
+                debug_error: String(error)
             }),
             { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
         );

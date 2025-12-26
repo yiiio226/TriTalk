@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
+import 'top_toast.dart';
 
 class AnalysisSheet extends StatelessWidget {
   final Message message;
@@ -75,7 +76,8 @@ class AnalysisSheet extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Overall summary with Context & Tone merged
-          if (analysis!.overallSummary.isNotEmpty) ...[
+          if (analysis!.overallSummary.isNotEmpty && 
+              analysis!.overallSummary != 'No summary available.') ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -106,7 +108,8 @@ class AnalysisSheet extends StatelessWidget {
           ],
 
           // Sentence structure (Text + Visualization)
-          if (analysis!.sentenceStructure.isNotEmpty) ...[
+          if (analysis!.sentenceStructure.isNotEmpty && 
+              analysis!.sentenceStructure != 'No structure analysis available.') ...[
             _buildSection('Sentence Structure', analysis!.sentenceStructure),
             if (analysis!.sentenceBreakdown.isNotEmpty) ...[
                const SizedBox(height: 12),
@@ -173,7 +176,7 @@ class AnalysisSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(vocab)),
+            ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
             const SizedBox(height: 16),
           ],
 
@@ -416,7 +419,7 @@ class AnalysisSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildVocabularyItem(VocabularyItem vocab) {
+  Widget _buildVocabularyItem(BuildContext context, VocabularyItem vocab) {
     Color levelColor = Colors.blue;
     if (vocab.level == 'intermediate') {
       levelColor = Colors.orange;
@@ -463,6 +466,33 @@ class AnalysisSheet extends StatelessWidget {
                   ),
                 ),
               ],
+              const Spacer(),
+              // Save Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    VocabService().add(
+                      vocab.word,
+                      vocab.definition,
+                      "Analysis Vocabulary",
+                    );
+                    showTopToast(
+                      context,
+                      'Saved "${vocab.word}" to Vocabulary',
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
