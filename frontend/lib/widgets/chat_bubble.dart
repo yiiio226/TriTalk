@@ -193,8 +193,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                  ],
                ),
             ],
-            // Analysis icon for AI messages
-            if (!isUser) ...[
+            // Analysis icon for AI messages (only show when not loading)
+            if (!isUser && !widget.message.isLoading) ...[
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -296,7 +296,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                   height: 6,
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: Colors.black,
                     shape: BoxShape.circle,
                   ),
                 ),
