@@ -7,3 +7,4 @@ OPENROUTER_MODEL = "google/gemini-2.5-flash"
 
 # Environment variables for local development
 # For production, use: wrangler secret put OPENROUTER_API_KEY
+# Last updated: 2025-12-26
