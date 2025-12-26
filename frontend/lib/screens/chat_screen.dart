@@ -102,7 +102,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // Replace loading message with actual initial AI message
       final initialMsg = Message(
-        id: 'init',
+        id: 'init_${DateTime.now().millisecondsSinceEpoch}', // Unique ID to force re-render
         content: initialContent,
         isUser: false, 
         timestamp: DateTime.now(),
@@ -359,6 +359,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 return Align(
                   alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: ChatBubble(
+                    key: ValueKey(msg.id), // Force rebuild when ID changes
                     message: msg,
                     onTap: () {
                       if (msg.feedback != null) {
