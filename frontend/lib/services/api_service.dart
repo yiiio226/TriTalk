@@ -39,7 +39,11 @@ class ApiService {
     }
   } 
 
-  Future<ChatResponse> sendMessage(String text, String sceneContext) async {
+  Future<ChatResponse> sendMessage(
+    String text, 
+    String sceneContext,
+    List<Map<String, String>> history,
+  ) async {
     try {
       final prefs = PreferencesService();
       final nativeLang = await prefs.getNativeLanguage();
@@ -50,7 +54,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'message': text,
-          'history': [], // TODO: Pass actual history
+          'history': history,
           'scene_context': sceneContext,
           'native_language': nativeLang,
           'target_language': targetLang,

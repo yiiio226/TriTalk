@@ -119,8 +119,16 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
 
         const messages = [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: body.message },
         ];
+
+        // Add conversation history (limit to last 10 messages to avoid token limits)
+        if (body.history && body.history.length > 0) {
+            const recentHistory = body.history.slice(-10);
+            messages.push(...recentHistory);
+        }
+
+        // Add current user message
+        messages.push({ role: 'user', content: body.message });
 
         const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
         const data = parseJSON(content);
