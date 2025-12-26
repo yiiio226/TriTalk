@@ -93,8 +93,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     final radius = BorderRadius.circular(16);
 
     final isPerfect = message.feedback?.isPerfect ?? false;
-    final isMagicWand = message.content.contains('🪄');
     final hasFeedback = message.feedback != null;
+    final isMagicWand = hasFeedback && !isPerfect;
 
     BoxDecoration bubbleDecoration = BoxDecoration(
       color: color,
