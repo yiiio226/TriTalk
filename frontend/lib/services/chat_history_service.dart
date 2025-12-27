@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
@@ -201,7 +202,7 @@ class ChatHistoryService {
           'user_id': userId,
           'scene_key': sceneKey,
           'messages': messagesJson,
-          'updated_at': DateTime.now().toIso8601String(),
+          // Let database trigger handle updated_at automatically
         },
         onConflict: 'user_id,scene_key',
       ).timeout(const Duration(seconds: 10)); // Add timeout
@@ -215,7 +216,7 @@ class ChatHistoryService {
   void addBookmark(String title, String preview, String date, String sceneKey,
       List<Message> messages) {
     final newBookmark = BookmarkedConversation(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       title: title,
       preview: preview,
       date: date,

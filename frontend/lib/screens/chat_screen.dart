@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../models/scene.dart';
 import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
@@ -25,6 +26,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final _uuid = const Uuid();
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<Message> _messages = [];
@@ -205,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final newMessage = Message(
-      id: DateTime.now().toString(),
+      id: _uuid.v4(),
       content: text,
       isUser: true,
       timestamp: DateTime.now(),
@@ -288,7 +290,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages.removeWhere((m) => m.isLoading);
         
         final aiMessage = Message(
-          id: DateTime.now().toString(),
+          id: _uuid.v4(),
           content: response.message,
           isUser: false,
           timestamp: DateTime.now(),
