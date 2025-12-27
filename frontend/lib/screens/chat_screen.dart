@@ -80,7 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadMessages() async {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
-    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    final sceneKey = widget.scene.id;
     final history = await ChatHistoryService().getMessages(sceneKey);
     
     bool isNewConversation = history.isEmpty;
@@ -214,7 +214,7 @@ class _ChatScreenState extends State<ChatScreen> {
       isFeedbackLoading: true, // Show loading indicator for feedback
     );
 
-    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    final sceneKey = widget.scene.id;
     
     setState(() {
       _messages.add(newMessage);
@@ -651,7 +651,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _bookmarkConversation() {
-    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    final sceneKey = widget.scene.id;
     final nonEmptyMessages = _messages.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
     
     if (nonEmptyMessages.isEmpty) {
@@ -715,7 +715,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                    final sceneKey = widget.scene.id;
                     ChatHistoryService().clearHistory(sceneKey);
                     _loadMessages();
                   },
@@ -771,7 +771,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                    final sceneKey = widget.scene.id;
                     ChatHistoryService().clearHistory(sceneKey);
                     // Return 'delete' signal to previous screen
                     Navigator.pop(context, 'delete');

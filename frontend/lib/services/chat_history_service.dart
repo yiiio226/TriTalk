@@ -76,14 +76,28 @@ class ChatHistoryService {
 
       if (response != null && response['messages'] != null) {
         final List<dynamic> messagesJson = response['messages'];
-        final messages = messagesJson
+        final cloudMessages = messagesJson
             .map((json) => Message.fromJson(json as Map<String, dynamic>))
             .toList();
-        _histories[sceneKey] = messages;
         
-        // Save to local storage
-        await _saveToLocal(sceneKey, messages);
+        // MERGE STRATEGY: Only update if cloud has MORE messages than local
+        // This prevents accidental data loss from empty cloud responses
+        final localMessages = _histories[sceneKey] ?? [];
+        
+        if (cloudMessages.length >= localMessages.length) {
+          _histories[sceneKey] = cloudMessages;
+          
+          // Save to local storage
+          await _saveToLocal(sceneKey, cloudMessages);
+        } else {
+          // Local has more data, keep it and push to cloud
+          debugPrint('Local has more messages (${ localMessages.length}) than cloud (${cloudMessages.length}), keeping local');
+          // Optionally: trigger a sync to cloud here to update it
+          // _syncToCloud(sceneKey); // Uncomment if you want to auto-push
+        }
       }
+      // If response is null or empty, keep local data (don't overwrite with nothing)
+      
       syncStatus.value = SyncStatus.synced;
     } catch (e) {
       print('Error loading from cloud (non-critical): $e');

@@ -416,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _bookmarkConversation(BuildContext context, Scene scene) async {
-    final sceneKey = "${scene.title}_${scene.aiRole}";
+    final sceneKey = scene.id;
     final history = await ChatHistoryService().getMessages(sceneKey);
     final nonEmptyMessages = history.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
     
@@ -480,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    final sceneKey = "${scene.title}_${scene.aiRole}";
+                    final sceneKey = scene.id;
                     ChatHistoryService().clearHistory(sceneKey);
                   },
                   child: const Text(
@@ -535,7 +535,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    final sceneKey = "${scene.title}_${scene.aiRole}";
+                    final sceneKey = scene.id;
                     ChatHistoryService().clearHistory(sceneKey);
                     
                      // Delete scene (Standard scenes will be hidden, Custom scenes deleted)
