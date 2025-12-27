@@ -131,13 +131,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   final scene = _scenes[index];
                   return SceneCard(
                     scene: scene,
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChatScreen(scene: scene),
                         ),
                       );
+
+                      if (result == 'delete') {
+                        setState(() {
+                          _scenes.remove(scene);
+                        });
+                      }
                     },
                   );
                 },

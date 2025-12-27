@@ -339,7 +339,7 @@ class _ChatScreenState extends State<ChatScreen> {
         titleTextStyle: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.more_horiz),
             onPressed: () {
               showModalBottomSheet(
                 context: context,
@@ -349,52 +349,26 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                   ),
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Clear Conversation',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      ListTile(
+                        leading: const Icon(Icons.refresh, color: Colors.blue),
+                        title: const Text('Clear Conversation'),
+                        onTap: () {
+                          Navigator.pop(context); // Close sheet
+                          _showClearConfirmation();
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Are you sure you want to clear this conversation and start over?',
-                        style: TextStyle(fontSize: 16, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                            TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
-                              
-                              // Clear from service
-                              ChatHistoryService().clearHistory(sceneKey);
-                              
-                              // Reload to re-initialize (and translate) the initial message
-                              _loadMessages();
-                            },
-                            child: const Text(
-                              'Clear',
-                              style: TextStyle(fontSize: 16, color: Colors.red),
-                            ),
-                          ),
-                        ],
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.delete_outline, color: Colors.red),
+                        title: const Text('Delete Conversation', style: TextStyle(color: Colors.red)),
+                        onTap: () {
+                          Navigator.pop(context); // Close sheet
+                          _showDeleteConfirmation();
+                        },
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -405,6 +379,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+
       body: Column(
         children: [
           Expanded(
@@ -585,6 +560,125 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: _sendMessage,
           ),
         ],
+      ),
+    );
+  }
+
+  void _showClearConfirmation() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Clear Conversation',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Are you sure you want to clear this conversation and start over?',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                    ChatHistoryService().clearHistory(sceneKey);
+                    _loadMessages();
+                  },
+                  child: const Text(
+                    'Clear',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Delete Conversation',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Are you sure you want to delete this conversation? This will also remove it from your home screen.',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+                    ChatHistoryService().clearHistory(sceneKey);
+                    // Return 'delete' signal to previous screen
+                    Navigator.pop(context, 'delete');
+                  },
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
