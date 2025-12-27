@@ -213,27 +213,14 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.add(newMessage);
       _isSending = true;
       
-      // Add temporary loading message
-      _messages.add(Message(
-        id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
-        content: '',
-        isUser: false,
-        timestamp: DateTime.now(),
-        isLoading: true,
-      ));
+      // Removed immediate loading message to wait for feedback first
     });
     
     // No need to call addMessage - _messages is the same list as in the service
-    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
-
     RevenueCatService().incrementMessageCount();
     
     _textController.clear();
     _scrollToBottom();
-    // Additional delayed scroll to ensure loading message is visible
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted) _scrollToBottom();
-    });
 
     try {
       // Build conversation history (exclude loading messages and current message)
@@ -253,24 +240,42 @@ class _ChatScreenState extends State<ChatScreen> {
       
       if (!mounted) return;
 
+      // 1. Update user message with feedback (Turns it Yellow)
+      setState(() {
+         final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
+         if (userMsgIndex != -1) {
+           _messages[userMsgIndex] = Message(
+             id: newMessage.id,
+             content: newMessage.content,
+             isUser: true,
+             timestamp: newMessage.timestamp,
+             feedback: response.feedback,
+             isFeedbackLoading: false,
+           );
+         }
+         
+         // 2. Add loading message for AI response NOW (after feedback)
+         _messages.add(Message(
+           id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+           content: '',
+           isUser: false,
+           timestamp: DateTime.now(),
+           isLoading: true,
+         ));
+      });
+      
+      _scrollToBottom();
+      
+      // 3. Simulated "thinking" delay for AI (1.5 seconds)
+      await Future.delayed(const Duration(milliseconds: 1500));
+      
+      if (!mounted) return;
+
       setState(() {
         _isSending = false;
         
         // Remove loading message
         _messages.removeWhere((m) => m.isLoading);
-        
-        // Update user message with feedback and remove loading state
-        final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
-        if (userMsgIndex != -1) {
-          _messages[userMsgIndex] = Message(
-            id: newMessage.id,
-            content: newMessage.content,
-            isUser: true,
-            timestamp: newMessage.timestamp,
-            feedback: response.feedback,
-            isFeedbackLoading: false, // Turn off loading indicator
-          );
-        }
         
         final aiMessage = Message(
           id: DateTime.now().toString(),
@@ -282,7 +287,6 @@ class _ChatScreenState extends State<ChatScreen> {
         );
 
         _messages.add(aiMessage);
-        // No need to call addMessage - _messages is the same list as in the service
       });
       _scrollToBottom();
       // Start continuous auto-scroll during typewriter animation
@@ -301,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
         // Remove the failed message so user can retry
         _messages.removeWhere((m) => m.id == newMessage.id);
         
-        // Remove loading message
+        // Remove loading message if it was added
         _messages.removeWhere((m) => m.isLoading);
         
         _isSending = false;

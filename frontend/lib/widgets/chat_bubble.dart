@@ -100,14 +100,18 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     final message = widget.message;
     final isUser = message.isUser;
     final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    // Updated colors: Pale Yellow for user, White for AI
-    final color = isUser ? const Color(0xFFFFF3CD) : Colors.white;
+    
+    final hasFeedback = message.feedback != null;
+    final isPerfect = message.feedback?.isPerfect ?? false;
+    final isMagicWand = hasFeedback && !isPerfect;
+
+    // Color logic: User messages are white until feedback received (yellow). AI messages are white.
+    final Color color = isUser 
+        ? (hasFeedback ? const Color(0xFFFFF3CD) : Colors.white)
+        : Colors.white;
+
     // Increased radius
     final radius = BorderRadius.circular(20);
-
-    final isPerfect = message.feedback?.isPerfect ?? false;
-    final hasFeedback = message.feedback != null;
-    final isMagicWand = hasFeedback && !isPerfect;
 
     BoxDecoration bubbleDecoration = BoxDecoration(
       color: color,
