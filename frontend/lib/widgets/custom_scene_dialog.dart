@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../models/scene.dart';
 import '../services/api_service.dart';
 import 'top_toast.dart';
@@ -47,7 +48,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         initialMessage: generatedScene.initialMessage,
         goal: generatedScene.goal,
         emoji: generatedScene.emoji,
-        color: 0xFF9C27B0, // Purple for custom
+        color: _generateRandomPastelColor(),
         iconPath: "", 
       );
       
@@ -232,5 +233,17 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         if (selected) onSelect(label);
       },
     );
+  }
+
+  int _generateRandomPastelColor() {
+    final random = Random();
+    // Hue: 0-360
+    final hue = random.nextDouble() * 360;
+    // Saturation: 8% - 15% (Keeping it very subtle like the defaults)
+    final saturation = 0.08 + random.nextDouble() * 0.07;
+    // Value (Brightness): 95% - 100%
+    final value = 0.95 + random.nextDouble() * 0.05;
+
+    return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor().value;
   }
 }

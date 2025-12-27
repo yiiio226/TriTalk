@@ -4,8 +4,16 @@ import '../models/scene.dart';
 class SceneCard extends StatelessWidget {
   final Scene scene;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final bool showRole;
 
-  const SceneCard({Key? key, required this.scene, required this.onTap}) : super(key: key);
+  const SceneCard({
+    Key? key,
+    required this.scene,
+    required this.onTap,
+    this.onLongPress,
+    this.showRole = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,18 +33,19 @@ class SceneCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Expanded(
-                flex: 3,
+                flex: showRole ? 2 : 3, // Smaller image area in list view
                 child: Center(
                   child: scene.iconPath.isNotEmpty
                       ? Image.asset(
                           scene.iconPath,
-                          width: 80,
-                          height: 80,
+                          width: showRole ? 60 : 80, // Smaller icon in list view
+                          height: showRole ? 60 : 80,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return _buildEmojiFallback(scene.emoji);
@@ -64,6 +73,19 @@ class SceneCard extends StatelessWidget {
                           height: 1.2,
                         ),
                       ),
+                      if (showRole) ...[
+                        const SizedBox(height: 2), // Tighter spacing
+                        Text(
+                          'With: ${scene.aiRole}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),

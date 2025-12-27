@@ -3,6 +3,8 @@ import '../models/scene.dart';
 import '../data/mock_scenes.dart';
 import '../widgets/scene_card.dart';
 import '../widgets/custom_scene_dialog.dart';
+import '../widgets/scene_options_drawer.dart';
+import '../services/chat_history_service.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'scenario_configuration_screen.dart';
@@ -16,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late List<Scene> _scenes;
+  bool _isGridView = true;
 
   @override
   void initState() {
@@ -94,27 +97,44 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[100],
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/user_avatar_female.png'),
-                          fit: BoxFit.cover,
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _isGridView = !_isGridView;
+                          });
+                        },
+                        icon: Icon(
+                          _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                          color: Colors.grey[700],
+                           size: 28,
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ProfileScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey[100],
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/user_avatar_female.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -123,9 +143,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.all(20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.75,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _isGridView ? 2 : 1,
+                  childAspectRatio: _isGridView ? 0.75 : 2.4, // Compact list view
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -134,6 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final scene = _scenes[index];
                   return SceneCard(
                     scene: scene,
+                    showRole: !_isGridView,
                     onTap: () async {
                       final result = await Navigator.push(
                         context,
@@ -148,10 +169,140 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       }
                     },
+                    onLongPress: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => SceneOptionsDrawer(
+                          onClear: () => _showClearConfirmation(context, scene),
+                          onDelete: () => _showDeleteConfirmation(context, scene),
+                          // Bookmark not implemented for home screen long press as it requires message history
+                        ),
+                      );
+                    },
                   );
                 },
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showClearConfirmation(BuildContext context, Scene scene) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Clear Conversation',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Are you sure you want to clear this conversation and start over?',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    final sceneKey = "${scene.title}_${scene.aiRole}";
+                    ChatHistoryService().clearHistory(sceneKey);
+                  },
+                  child: const Text(
+                    'Clear',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, Scene scene) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Delete Conversation',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Are you sure you want to delete this conversation? This will also remove it from your home screen.',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    final sceneKey = "${scene.title}_${scene.aiRole}";
+                    ChatHistoryService().clearHistory(sceneKey);
+                    setState(() {
+                      _scenes.remove(scene);
+                    });
+                  },
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
