@@ -64,32 +64,53 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Save to Note',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                'Quick Save',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 20),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
             'Tap words to select specific vocabulary, or save the entire sentence.',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Colors.grey, fontSize: 15),
           ),
           const SizedBox(height: 24),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 10,
+            runSpacing: 10,
             children: List.generate(_words.length, (index) {
               final isSelected = _selectedWordIndices.contains(index);
               return GestureDetector(
@@ -102,20 +123,26 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                     }
                   });
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.blue : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(20),
+                    color: isSelected ? Colors.black : Colors.white,
+                    borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: isSelected ? Colors.blue : Colors.grey.shade300,
+                      color: isSelected ? Colors.transparent : Colors.grey.shade300,
+                      width: 1.5,
                     ),
+                    boxShadow: isSelected 
+                        ? [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))] 
+                        : null,
                   ),
                   child: Text(
                     _words[index],
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -126,22 +153,25 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
           ElevatedButton(
             onPressed: _isSaving ? null : _saveSelection,
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 0), // Height controlled by minimumSize
+              minimumSize: const Size(double.infinity, 56),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
             ),
             child: _isSaving
                 ? const SizedBox(
-                    height: 20, width: 20, 
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                    height: 24, width: 24, 
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)
                   )
                 : Text(
                     _selectedWordIndices.isEmpty 
                         ? 'Save Whole Sentence' 
                         : 'Save Selected Vocabulary',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
           ),
-          const SizedBox(height: 20),
         ],
       ),
     );

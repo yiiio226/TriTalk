@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late List<Scene> _scenes;
   bool _isGridView = true;
+  bool _isDragging = false;
 
   @override
   void initState() {
@@ -31,163 +32,304 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await showModalBottomSheet<Scene>(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: const CustomSceneDialog(),
-            ),
-          );
-
-          if (result != null) {
-            setState(() {
-              _scenes.add(result);
-            });
-            // Navigate to configuration screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    ScenarioConfigurationScreen(scene: result),
-              ),
-            );
-          }
-        },
-        backgroundColor: Colors.black,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'TriTalk',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Choose a scenario to practice your English',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+      floatingActionButton: _isDragging
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                final result = await showModalBottomSheet<Scene>(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
                     ),
+                    child: const CustomSceneDialog(),
                   ),
-                  const SizedBox(width: 16),
-                  Row(
+                );
+
+                if (result != null) {
+                  setState(() {
+                    _scenes.add(result);
+                  });
+                  // Navigate to configuration screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ScenarioConfigurationScreen(scene: result),
+                    ),
+                  );
+                }
+              },
+              backgroundColor: Colors.black,
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isGridView = !_isGridView;
-                          });
-                        },
-                        icon: Icon(
-                          _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
-                          color: Colors.grey[700],
-                           size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ProfileScreen(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey[100],
-                            image: const DecorationImage(
-                              image: AssetImage('assets/images/user_avatar_female.png'),
-                              fit: BoxFit.cover,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'TriTalk',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A1A),
                             ),
                           ),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isGridView = !_isGridView;
+                                  });
+                                },
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey[100],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    _isGridView
+                                        ? Icons.view_agenda_rounded
+                                        : Icons.grid_view_rounded,
+                                    color: const Color(0xFF1A1A1A),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ProfileScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey[100],
+                                    image: const DecorationImage(
+                                      image: AssetImage(
+                                          'assets/images/user_avatar_female.png'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Choose a scenario to practice your English',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(20),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _isGridView ? 2 : 1,
-                  childAspectRatio: _isGridView ? 0.75 : 2.4, // Compact list view
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
                 ),
-                itemCount: _scenes.length,
-                itemBuilder: (context, index) {
-                  final scene = _scenes[index];
-                  return SceneCard(
-                    scene: scene,
-                    showRole: !_isGridView,
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(scene: scene),
+                const SizedBox(height: 15),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(20),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _isGridView ? 2 : 1,
+                      childAspectRatio: _isGridView
+                          ? 0.75
+                          : 2.4, // Compact list view
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    itemCount: _scenes.length,
+                    itemBuilder: (context, index) {
+                      final scene = _scenes[index];
+                      return LongPressDraggable<Scene>(
+                        data: scene,
+                        delay: const Duration(milliseconds: 300),
+                        onDragStarted: () {
+                          setState(() {
+                            _isDragging = true;
+                          });
+                        },
+                        onDragEnd: (details) {
+                          setState(() {
+                            _isDragging = false;
+                          });
+                        },
+                        onDraggableCanceled: (velocity, offset) {
+                          setState(() {
+                            _isDragging = false;
+                          });
+                        },
+                        feedback: Material(
+                          color: Colors.transparent,
+                          child: SizedBox(
+                            width: _isGridView
+                                ? (MediaQuery.of(context).size.width - 56) / 2
+                                : MediaQuery.of(context).size.width - 40,
+                            height: _isGridView
+                                ? ((MediaQuery.of(context).size.width - 56) /
+                                        2) /
+                                    0.75
+                                : (MediaQuery.of(context).size.width - 40) /
+                                    2.4,
+                            child: Opacity(
+                              opacity: 0.9,
+                              child: SceneCard(
+                                scene: scene,
+                                showRole: !_isGridView,
+                                onTap: () {},
+                                onLongPress: null,
+                              ),
+                            ),
+                          ),
                         ),
-                      );
+                        childWhenDragging: Opacity(
+                          opacity: 0.3,
+                          child: SceneCard(
+                            scene: scene,
+                            showRole: !_isGridView,
+                            onTap: () {},
+                            onLongPress: null,
+                          ),
+                        ),
+                        child: SceneCard(
+                          scene: scene,
+                          showRole: !_isGridView,
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ChatScreen(scene: scene),
+                              ),
+                            );
 
-                      if (result == 'delete') {
-                        setState(() {
-                          _scenes.remove(scene);
-                        });
-                      }
-                    },
-                    onLongPress: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => SceneOptionsDrawer(
-                          onClear: () => _showClearConfirmation(context, scene),
-                          onDelete: () => _showDeleteConfirmation(context, scene),
-                          onBookmark: () => _bookmarkConversation(context, scene),
+                            if (result == 'delete') {
+                              setState(() {
+                                _scenes.remove(scene);
+                              });
+                            }
+                          },
+                          onLongPress: null, // Disable drawer on long press
                         ),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
+            
+            // Side Action Panel
+            if (_isDragging)
+              Positioned(
+                right: 20,
+                bottom: 20,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDragTarget(
+                      icon: Icons.refresh,
+                      color: Colors.blue,
+                      label: 'Clear',
+                      onAccept: (scene) =>
+                          _showClearConfirmation(context, scene),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDragTarget(
+                      icon: Icons.bookmark_border,
+                      color: Colors.orange,
+                      label: 'Save',
+                      onAccept: (scene) =>
+                          _bookmarkConversation(context, scene),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDragTarget(
+                      icon: Icons.delete_outline,
+                      color: Colors.red,
+                      label: 'Delete',
+                      onAccept: (scene) =>
+                          _showDeleteConfirmation(context, scene),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDragTarget({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required Function(Scene) onAccept,
+  }) {
+    return DragTarget<Scene>(
+      builder: (context, candidateData, rejectedData) {
+        final isHovering = candidateData.isNotEmpty;
+        return SizedBox(
+          width: 64,
+          height: 64,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isHovering ? 64 : 56,
+              height: isHovering ? 64 : 56,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: isHovering ? Border.all(color: color, width: 2) : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: isHovering ? color : Colors.white,
+                    size: isHovering ? 28 : 24,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      onWillAccept: (scene) => true,
+      onAccept: onAccept,
     );
   }
 
