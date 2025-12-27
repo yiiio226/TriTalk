@@ -202,7 +202,7 @@ class ChatHistoryService {
           'user_id': userId,
           'scene_key': sceneKey,
           'messages': messagesJson,
-          'updated_at': DateTime.now().toIso8601String(),
+          // Let database trigger handle updated_at automatically
         },
         onConflict: 'user_id,scene_key',
       ).timeout(const Duration(seconds: 10)); // Add timeout
