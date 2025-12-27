@@ -14,7 +14,8 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Container(
+      alignment: const Alignment(0, -0.2),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

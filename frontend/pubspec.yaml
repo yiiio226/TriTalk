@@ -75,6 +75,7 @@ flutter:
   assets:
     - assets/images/
     - assets/empty_state_lemon.png
+    - assets/empty_state_pear.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

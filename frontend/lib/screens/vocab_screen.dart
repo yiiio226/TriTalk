@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/vocab_service.dart';
+import '../widgets/empty_state_widget.dart';
 
 class VocabScreen extends StatelessWidget {
   const VocabScreen({Key? key}) : super(key: key);
@@ -14,7 +15,10 @@ class VocabScreen extends StatelessWidget {
         builder: (context, child) {
           final items = VocabService().items;
           if (items.isEmpty) {
-            return const Center(child: Text('No vocabulary saved yet.'));
+            return const EmptyStateWidget(
+              message: 'No vocabulary saved yet',
+              imagePath: 'assets/empty_state_pear.png',
+            );
           }
           return ListView.builder(
             itemCount: items.length,
