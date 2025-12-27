@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/splash_screen.dart';
+import 'components/supabase_config.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
+  );
+
   runApp(const TriTalkApp());
 }
 
@@ -17,7 +26,7 @@ class TriTalkApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[50],
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import '../data/language_constants.dart';
 import 'vocab_screen.dart';
 import 'history_screen.dart';
 import 'paywall_screen.dart';
-import '../services/preferences_service.dart';
-import '../data/language_constants.dart';
+import 'splash_screen.dart'; // For logout navigation
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -13,42 +15,64 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _nativeLanguage = LanguageConstants.defaultNativeLanguage;
-  String _targetLanguage = LanguageConstants.defaultTargetLanguage;
-  final PreferencesService _prefs = PreferencesService();
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+  
+  // Local state for immediate UI updates, reflecting auth service state
+  late String _name;
+  late String _email;
+  late String _avatarUrl;
+  late String _gender;
+  late String _nativeLanguage;
+  late String _targetLanguage;
 
   @override
   void initState() {
     super.initState();
-    _loadPreferences();
+    _loadUserData();
   }
 
-  Future<void> _loadPreferences() async {
-    final native = await _prefs.getNativeLanguage();
-    final target = await _prefs.getTargetLanguage();
-    if (mounted) {
+  void _loadUserData() {
+    final user = _authService.currentUser;
+    if (user != null) {
       setState(() {
-        _nativeLanguage = native;
-        _targetLanguage = target;
+        _name = user.name;
+        _email = user.email;
+        _avatarUrl = user.avatarUrl ?? 'assets/images/user_avatar_male.png';
+        _gender = user.gender;
+        _nativeLanguage = user.nativeLanguage;
+        _targetLanguage = user.targetLanguage;
+      });
+    } else {
+      // Fallback if accessed without auth (shouldn't happen in new flow)
+       setState(() {
+        _name = 'Guest';
+        _email = 'guest@example.com';
+        _avatarUrl = 'assets/images/user_avatar_male.png';
+        _gender = 'male';
+        _nativeLanguage = LanguageConstants.defaultNativeLanguage;
+        _targetLanguage = LanguageConstants.defaultTargetLanguage;
       });
     }
   }
 
   Future<void> _updateNativeLanguage(String language) async {
-    await _prefs.setNativeLanguage(language);
-    if (mounted) {
-      setState(() {
-        _nativeLanguage = language;
-      });
-    }
+    await _userService.updateUserProfile(nativeLanguage: language);
+    _loadUserData(); // Reload to reflect changes
   }
 
   Future<void> _updateTargetLanguage(String language) async {
-    await _prefs.setTargetLanguage(language);
+    await _userService.updateUserProfile(targetLanguage: language);
+    _loadUserData();
+  }
+  
+  Future<void> _handleLogout() async {
+    await _authService.logout();
     if (mounted) {
-      setState(() {
-        _targetLanguage = language;
-      });
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const SplashScreen()),
+        (Route<dynamic> route) => false,
+      );
     }
   }
 
@@ -180,37 +204,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: Colors.grey[100],
                     ),
                     child: ClipOval(
-                      child: Transform.scale(
-                        scale: 1.25,
-                        alignment: Alignment.topCenter,
-                        child: Image.asset(
-                          'assets/images/user_avatar_female.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                      child: _avatarUrl.startsWith('assets/') 
+                        ? Image.asset(
+                            _avatarUrl,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            _avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Fallback to gender-based avatar
+                              final fallbackPath = _gender == 'female'
+                                  ? 'assets/images/user_avatar_female.png'
+                                  : 'assets/images/user_avatar_male.png';
+                              return Image.asset(fallbackPath, fit: BoxFit.cover);
+                            },
+                          ),
                     ),
                   ),
                   const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                       const Text(
-                        'User',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                         Text(
+                          _name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'user@example.com',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                        const SizedBox(height: 4),
+                        Text(
+                          _email,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -306,6 +342,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
+                  const SizedBox(height: 32),
+                  // Logout Button
+                   _buildMenuCard(
+                    context,
+                    title: 'Log Out',
+                    icon: Icons.logout,
+                    iconColor: Colors.red,
+                    onTap: _handleLogout,
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

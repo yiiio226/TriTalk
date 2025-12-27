@@ -39,14 +39,14 @@ function parseJSON(content: string): any {
     if (cleaned.endsWith('```')) {
         cleaned = cleaned.slice(0, -3);
     }
-    
+
     const parsed = JSON.parse(cleaned.trim());
-    
+
     // Handle case where LLM returns an array with a single object
     if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed[0];
     }
-    
+
     return parsed;
 }
 
@@ -438,13 +438,13 @@ async function handleShadowAnalysis(request: Request, env: Env): Promise<Respons
         // SIMULATION: Compare texts for a rough score
         const target = body.target_text.toLowerCase().replace(/[^\w\s]/g, '');
         const user = body.user_audio_text.toLowerCase().replace(/[^\w\s]/g, '');
-        
+
         // Simple Levenshtein-like ratio or word match (Simplified for speed)
         const targetWords = target.split(/\s+/);
         const userWords = user.split(/\s+/);
         const matchCount = userWords.filter(w => targetWords.includes(w)).length;
         let score = Math.round((matchCount / Math.max(targetWords.length, 1)) * 100);
-        
+
         // Cap and floor
         score = Math.max(0, Math.min(100, score));
 
@@ -498,7 +498,7 @@ async function handleChatOptimize(request: Request, env: Env): Promise<Response>
     3. Output JSON ONLY: { "optimized_text": "..." }`;
 
         const messages = [{ role: 'system', content: prompt }];
-        
+
         // Add recent history for context if available
         if (body.history && body.history.length > 0) {
             messages.push(...body.history.slice(-5));
@@ -520,6 +520,27 @@ async function handleChatOptimize(request: Request, env: Env): Promise<Response>
             JSON.stringify({
                 optimized_text: "Optimization unavailable.",
             }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+        );
+    }
+}
+
+// Handle /user/sync endpoint
+async function handleUserSync(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: any = await request.json();
+
+        // In a real application, you would valid the user data and store it in a database (D1, KV, Supabase, etc)
+        // For now, we just log it (in production logs) and return success.
+        console.log('Received user sync:', body.id, body.email);
+
+        return new Response(JSON.stringify({ status: 'success', synced_at: new Date().toISOString() }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+    } catch (error) {
+        console.error('Error in /user/sync:', error);
+        return new Response(
+            JSON.stringify({ error: 'Failed to sync user data' }),
             { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
         );
     }
@@ -550,6 +571,10 @@ export default {
 
         if (url.pathname === '/chat/send' && request.method === 'POST') {
             return handleChatSend(request, env);
+        }
+
+        if (url.pathname === '/user/sync' && request.method === 'POST') {
+            return handleUserSync(request, env);
         }
 
         if (url.pathname === '/chat/hint' && request.method === 'POST') {
