@@ -294,31 +294,37 @@ class _HomeScreenState extends State<HomeScreen> {
     return DragTarget<Scene>(
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: isHovering ? 64 : 56,
-          height: isHovering ? 64 : 56,
-          decoration: BoxDecoration(
-            color: Colors.black,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        return SizedBox(
+          width: 64,
+          height: 64,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isHovering ? 64 : 56,
+              height: isHovering ? 64 : 56,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: isHovering ? Border.all(color: color, width: 2) : null,
               ),
-            ],
-            border: isHovering ? Border.all(color: color, width: 2) : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isHovering ? color : Colors.white,
-                size: isHovering ? 28 : 24,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: isHovering ? color : Colors.white,
+                    size: isHovering ? 28 : 24,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

@@ -21,38 +21,67 @@ class AnalysisSheet extends StatelessWidget {
     
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.9,
+        maxHeight: screenHeight * 0.85,
       ),
       child: Container(
-        padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header (fixed at top)
-            Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Colors.purple),
-                const SizedBox(width: 8),
-                const Text(
-                  'Sentence Analysis',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                )
-              ],
+            // Drag Handle & Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.auto_awesome_rounded, color: Colors.purple.shade400, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Sentence Analysis',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
             
             // Scrollable content
             Flexible(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
                 child: _buildContent(context),
               ),
             ),
@@ -68,155 +97,193 @@ class AnalysisSheet extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (isLoading) ...[
-          // Skeleton screen for loading state
           _buildSkeletonLoader(),
         ] else if (analysis != null) ...[
-          // Original sentence
-          _buildSection('Original Sentence', message.content, isHighlight: true),
-          const SizedBox(height: 16),
+          // Original Sentence
+          const Text(
+            'ORIGINAL SENTENCE',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message.content,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue[700],
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 24),
 
-          // Overall summary with Context & Tone merged
+          // Summary
           if (analysis!.overallSummary.isNotEmpty && 
               analysis!.overallSummary != 'No summary available.') ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.purple[50],
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFF3E5F5), // Purple 50 equivalent
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Main Summary
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.lightbulb_outline, size: 20, color: Colors.purple),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          analysis!.overallSummary,
-                          style: TextStyle(color: Colors.purple[900]),
-                        ),
-                      ),
-                    ],
+                  Icon(Icons.lightbulb_outline_rounded, size: 22, color: Colors.purple[700]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      analysis!.overallSummary,
+                      style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           ],
 
-          // Sentence structure (Text + Visualization)
+          // Sentence Structure
           if (analysis!.sentenceStructure.isNotEmpty && 
-              analysis!.sentenceStructure != 'No structure analysis available.') ...[
-            _buildSection('Sentence Structure', analysis!.sentenceStructure),
-            if (analysis!.sentenceBreakdown.isNotEmpty) ...[
-               const SizedBox(height: 12),
-               Wrap(
-                 spacing: 8,
-                 runSpacing: 8,
-                 children: analysis!.sentenceBreakdown.map((segment) => Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                   decoration: BoxDecoration(
-                     color: Colors.blue[50],
-                     borderRadius: BorderRadius.circular(8),
-                     border: Border.all(color: Colors.blue[100]!),
-                   ),
-                   child: Column(
-                     mainAxisSize: MainAxisSize.min,
-                     children: [
-                       Text(
-                         segment.text,
-                         style: const TextStyle(
-                           fontSize: 14,
-                           fontWeight: FontWeight.bold,
-                           color: Colors.black87,
-                         ),
-                       ),
-                       Text(
-                         segment.tag,
-                         style: TextStyle(
-                           fontSize: 10,
-                           color: Colors.blue[600],
-                           fontWeight: FontWeight.w500,
-                         ),
-                       ),
-                     ],
-                   ),
-                 )).toList(),
-               ),
-            ],
+              analysis!.sentenceBreakdown.isNotEmpty) ...[
+            const Text(
+              'SENTENCE STRUCTURE',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              analysis!.sentenceStructure,
+              style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+            ),
             const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 12,
+              children: analysis!.sentenceBreakdown.map((segment) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD), // Blue 50
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade100),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      segment.text,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      segment.tag,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.blue[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              )).toList(),
+            ),
+            const SizedBox(height: 24),
           ],
 
-          // Grammar points
+          // Grammar Points
           if (analysis!.grammarPoints.isNotEmpty) ...[
             const Text(
               'GRAMMAR POINTS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
-            ...analysis!.grammarPoints.map((point) => _buildGrammarPoint(point)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            ...analysis!.grammarPoints.map((point) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9), // Green 50
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    point.structure,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[900],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    point.explanation,
+                    style: TextStyle(fontSize: 14, color: Colors.green[800], height: 1.4),
+                  ),
+                  if (point.example.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '例: ${point.example}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            )),
+            const SizedBox(height: 12),
           ],
 
           // Vocabulary
           if (analysis!.vocabulary.isNotEmpty) ...[
             const Text(
               'VOCABULARY',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
 
-          // L-02: Idioms & Slang (RED HIGHLIGHT)
+          // Idioms
           if (analysis!.idioms.isNotEmpty) ...[
             const Text(
-              'IDIOMS & SLANG (ALERT)',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
+              'IDIOMS & SLANG',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             ...analysis!.idioms.map((idiom) => Container(
               margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red[50], // RED BACKGROUND
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red[200]!),
+                color: const Color(0xFFFFEBEE), // Red 50
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade100),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red[800]), // WARNING ICON
+                      Icon(Icons.stars_rounded, size: 18, color: Colors.red[700]),
                       const SizedBox(width: 6),
                       Text(
                         idiom.type.toUpperCase(),
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Colors.red[800],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     idiom.text,
                     style: TextStyle(
@@ -228,33 +295,34 @@ class AnalysisSheet extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     idiom.explanation,
-                    style: TextStyle(fontSize: 13, color: Colors.red[900]),
+                    style: TextStyle(fontSize: 14, color: Colors.red[900], height: 1.4),
                   ),
                 ],
               ),
             )),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
 
           // Save button
-          ElevatedButton.icon(
+          const SizedBox(height: 12),
+          ElevatedButton(
             onPressed: () {
-              // Save the original sentence to vocabulary
               VocabService().add(
                 message.content,
                 "AI Message Analysis",
                 "Analyzed Sentence",
               );
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Saved to Vocabulary')),
-              );
+              showTopToast(context, "Saved to Vocabulary", isError: false);
             },
-            icon: const Icon(Icons.bookmark_border),
-            label: const Text('Save to Vocabulary'),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 56),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
             ),
+            child: const Text('Save Sentence to Vocabulary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ] else ...[
           const Center(
