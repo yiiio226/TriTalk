@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/chat_history_service.dart';
 import '../widgets/chat_bubble.dart'; 
+import '../widgets/empty_state_widget.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -35,19 +36,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-      body: _bookmarks.isEmpty 
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                   Icon(Icons.history, size: 64, color: Colors.grey[300]),
-                   const SizedBox(height: 16),
-                   Text(
-                     'No archived conversations',
-                     style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                   ),
-                ],
-              ),
+      body: _bookmarks.isEmpty
+          ? const EmptyStateWidget(
+              message: 'No archived conversations',
+              imagePath: 'assets/empty_state_lemon.png',
             )
           : ListView.separated(
               itemCount: _bookmarks.length,
