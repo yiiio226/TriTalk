@@ -199,9 +199,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildGenderOption('male', Icons.boy, 'Male'),
+              _buildGenderOption('male', 'assets/images/user_avatar_male.png', 'Male'),
               const SizedBox(width: 20),
-              _buildGenderOption('female', Icons.girl, 'Female'),
+              _buildGenderOption('female', 'assets/images/user_avatar_female.png', 'Female'),
             ],
           ),
         ],
@@ -209,7 +209,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
   
-  Widget _buildGenderOption(String value, IconData icon, String label) {
+  Widget _buildGenderOption(String value, String imagePath, String label) {
     final isSelected = _selectedGender == value;
     return GestureDetector(
       onTap: () => setState(() => _selectedGender = value),
@@ -227,7 +227,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2), // Updated to withValues
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   )
@@ -237,10 +237,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 60,
-              color: isSelected ? Colors.white : Colors.grey[400],
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[100],
+                border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
