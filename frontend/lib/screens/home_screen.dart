@@ -6,6 +6,7 @@ import '../widgets/custom_scene_dialog.dart';
 import '../widgets/scene_options_drawer.dart';
 import '../widgets/styled_drawer.dart';
 import '../services/chat_history_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/top_toast.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
@@ -135,14 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       color: Colors.grey[100],
                                     ),
                                     child: ClipOval(
-                                      child: Transform.scale(
-                                        scale: 1.25,
-                                        alignment: Alignment.topCenter,
-                                        child: Image.asset(
-                                          'assets/images/user_avatar_female.png',
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
+                                      child: _buildAvatar(),
                                     ),
                                   ),
                               ),
@@ -541,6 +535,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    final user = AuthService().currentUser;
+    final avatarUrl = user?.avatarUrl;
+    
+    // Priority: Google avatar > Gender-based avatar > Default
+    if (avatarUrl != null && avatarUrl.isNotEmpty && !avatarUrl.startsWith('assets/')) {
+      // Use Google profile picture
+      return Image.network(
+        avatarUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to gender-based avatar if network image fails
+          return _buildLocalAvatar(user?.gender);
+        },
+      );
+    } else {
+      // Use local avatar based on gender
+      return _buildLocalAvatar(user?.gender);
+    }
+  }
+
+  Widget _buildLocalAvatar(String? gender) {
+    final assetPath = gender == 'female'
+        ? 'assets/images/user_avatar_female.png'
+        : 'assets/images/user_avatar_male.png';
+    
+    return Image.asset(
+      assetPath,
+      fit: BoxFit.cover,
     );
   }
 }

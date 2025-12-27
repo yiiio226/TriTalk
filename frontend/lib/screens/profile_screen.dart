@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late String _name;
   late String _email;
   late String _avatarUrl;
+  late String _gender;
   late String _nativeLanguage;
   late String _targetLanguage;
 
@@ -38,6 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _name = user.name;
         _email = user.email;
         _avatarUrl = user.avatarUrl ?? 'assets/images/user_avatar_male.png';
+        _gender = user.gender;
         _nativeLanguage = user.nativeLanguage;
         _targetLanguage = user.targetLanguage;
       });
@@ -47,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _name = 'Guest';
         _email = 'guest@example.com';
         _avatarUrl = 'assets/images/user_avatar_male.png';
+        _gender = 'male';
         _nativeLanguage = LanguageConstants.defaultNativeLanguage;
         _targetLanguage = LanguageConstants.defaultTargetLanguage;
       });
@@ -201,16 +204,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: Colors.grey[100],
                     ),
                     child: ClipOval(
-                      child: Transform.scale(
-                        scale: 1.25,
-                        alignment: Alignment.topCenter,
-                        child: _avatarUrl.startsWith('assets/') 
-                          ? Image.asset(
-                              _avatarUrl,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.network(_avatarUrl, fit: BoxFit.cover), // Handle network images
-                      ),
+                      child: _avatarUrl.startsWith('assets/') 
+                        ? Image.asset(
+                            _avatarUrl,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            _avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Fallback to gender-based avatar
+                              final fallbackPath = _gender == 'female'
+                                  ? 'assets/images/user_avatar_female.png'
+                                  : 'assets/images/user_avatar_male.png';
+                              return Image.asset(fallbackPath, fit: BoxFit.cover);
+                            },
+                          ),
                     ),
                   ),
                   const SizedBox(width: 20),

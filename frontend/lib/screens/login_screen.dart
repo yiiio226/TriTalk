@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import 'onboarding_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -11,17 +13,59 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
+  bool _navigated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupAuthListener();
+  }
+
+  void _setupAuthListener() {
+    // Listen for auth state changes (OAuth callback)
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      if (!mounted || _navigated) return;
+      
+      final session = data.session;
+      if (session != null) {
+        // User logged in successfully
+        _navigated = true;
+        
+        // Wait a bit for profile to load
+        await Future.delayed(const Duration(milliseconds: 500));
+        await AuthService().init();
+        
+        if (!mounted) return;
+        
+        // Navigate based on whether user needs onboarding
+        if (AuthService().currentUser == null || AuthService().needsOnboarding) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      }
+    });
+  }
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
     try {
-      await AuthService().loginWithGoogle();
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      final success = await AuthService().loginWithGoogle();
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to initiate Google login. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
+      // Note: Navigation will happen automatically via auth state listener
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -36,13 +80,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleAppleLogin() async {
     setState(() => _isLoading = true);
     try {
-      await AuthService().loginWithApple();
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      final success = await AuthService().loginWithApple();
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to initiate Apple login. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
+      // Note: Navigation will happen automatically via auth state listener
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),

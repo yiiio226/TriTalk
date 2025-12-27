@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'onboarding_screen.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,6 +15,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -28,7 +31,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
     
+    _setupAuthListener();
     _checkAuthAndNavigate();
+  }
+
+  void _setupAuthListener() {
+    // Listen for auth state changes (e.g., after OAuth redirect)
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (!mounted || _navigated) return;
+      
+      final session = data.session;
+      if (session != null) {
+        _navigateBasedOnProfile();
+      }
+    });
   }
 
   Future<void> _checkAuthAndNavigate() async {
@@ -36,21 +52,39 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     await AuthService().init();
     
     // Wait for animation
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 2));
     
-    if (!mounted) return;
+    if (!mounted || _navigated) return;
 
     if (AuthService().isAuthenticated) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      _navigateBasedOnProfile();
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      _navigateTo(const LoginScreen());
     }
+  }
+
+  void _navigateBasedOnProfile() async {
+    // Wait a bit for profile to load
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    if (!mounted || _navigated) return;
+
+    // Check if user needs onboarding
+    if (AuthService().currentUser == null || AuthService().needsOnboarding) {
+      _navigateTo(const OnboardingScreen());
+    } else {
+      _navigateTo(const HomeScreen());
+    }
+  }
+
+  void _navigateTo(Widget screen) {
+    if (_navigated) return;
+    _navigated = true;
+    
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => screen),
+    );
   }
 
   @override
@@ -78,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
