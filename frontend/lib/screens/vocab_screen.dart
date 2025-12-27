@@ -13,7 +13,12 @@ class VocabScreen extends StatelessWidget {
       body: AnimatedBuilder(
         animation: VocabService(),
         builder: (context, child) {
-          final items = VocabService().items;
+          final service = VocabService();
+          if (service.isLoading && service.items.isEmpty) {
+             return const Center(child: CircularProgressIndicator());
+          }
+          
+          final items = service.items;
           if (items.isEmpty) {
             return const EmptyStateWidget(
               message: 'No vocabulary saved yet',

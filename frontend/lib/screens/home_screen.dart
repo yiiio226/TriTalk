@@ -7,6 +7,7 @@ import '../widgets/scene_options_drawer.dart';
 import '../widgets/styled_drawer.dart';
 import '../services/chat_history_service.dart';
 import '../services/auth_service.dart';
+import '../services/scene_service.dart';
 import '../widgets/top_toast.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
@@ -20,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late List<Scene> _scenes;
+  // _scenes is now managed by SceneService
   bool _isGridView = true;
   bool _isDragging = false;
   final ValueNotifier<Offset> _dragPosition = ValueNotifier(Offset.zero);
@@ -28,11 +29,24 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _scenes = List.from(mockScenes);
+    // Listen to changes in SceneService
+    SceneService().addListener(_onScenesChanged);
+  }
+  
+  @override
+  void dispose() {
+    SceneService().removeListener(_onScenesChanged);
+    super.dispose();
+  }
+
+  void _onScenesChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final scenes = SceneService().scenes;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: _isDragging
@@ -53,9 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
 
                 if (result != null) {
-                  setState(() {
-                    _scenes.add(result);
-                  });
+                  // Add via service
+                  await SceneService().addScene(result);
                   // Navigate to configuration screen
                   Navigator.push(
                     context,
@@ -167,9 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
-                    itemCount: _scenes.length,
+                    itemCount: scenes.length,
                     itemBuilder: (context, index) {
-                      final scene = _scenes[index];
+                      final scene = scenes[index];
                       return LongPressDraggable<Scene>(
                         data: scene,
                         delay: const Duration(milliseconds: 300),
@@ -245,11 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: DragTarget<Scene>(
                           onAccept: (draggedScene) {
                             setState(() {
-                              final draggedIndex = _scenes.indexOf(draggedScene);
+                              final draggedIndex = scenes.indexOf(draggedScene);
                               final targetIndex = index;
                               if (draggedIndex != -1 && draggedIndex != targetIndex) {
-                                _scenes.removeAt(draggedIndex);
-                                _scenes.insert(targetIndex, draggedScene);
+                                // Note: Reordering is visual only for now as SceneService
+                                // maintains order based on add time/source
+                                // ideally we would implement reorder in service
                               }
                             });
                           },
@@ -279,9 +293,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   );
 
                                   if (result == 'delete') {
-                                    setState(() {
-                                      _scenes.remove(scene);
-                                    });
+                                    // Deletion handled via callback or drag
+                                    if (result == 'delete') {
+                                       if (SceneService().isCustomScene(scene)) {
+                                          await SceneService().deleteScene(scene.id);
+                                       }
+                                    }
                                   }
                                 },
                                 onLongPress: () {
@@ -516,13 +533,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 12),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
                     final sceneKey = "${scene.title}_${scene.aiRole}";
                     ChatHistoryService().clearHistory(sceneKey);
-                    setState(() {
-                      _scenes.remove(scene);
-                    });
+                    
+                     // Delete scene (Standard scenes will be hidden, Custom scenes deleted)
+                     await SceneService().deleteScene(scene.id);
+                     if (mounted) {
+                       showTopToast(context, 'Scene deleted', isError: false);
+                     }
                   },
                   child: const Text(
                     'Delete',
