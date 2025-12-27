@@ -38,17 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         
         // Navigate based on whether user needs onboarding
-        print('🔍 LoginScreen: currentUser = ${AuthService().currentUser?.name}');
-        print('🔍 LoginScreen: needsOnboarding = ${AuthService().needsOnboarding}');
-        
         if (AuthService().currentUser == null || AuthService().needsOnboarding) {
-          print('➡️ Navigating to OnboardingScreen');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const OnboardingScreen()),
           );
         } else {
-          print('➡️ Navigating to HomeScreen');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),

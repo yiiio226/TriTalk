@@ -34,7 +34,6 @@ class AuthService {
   }
 
   Future<void> _loadUserFromSupabase(String userId) async {
-    print('🔄 Loading user from Supabase: $userId');
     try {
       final response = await Supabase.instance.client
           .from('profiles')
@@ -42,13 +41,10 @@ class AuthService {
           .eq('id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5)); // Timeout to fallback quickly
-      
-      print('📦 Supabase response: $response');
           
       if (response != null && response['gender'] != null) {
         // Profile exists with gender set - user has completed onboarding
         _profileExistsInDatabase = true;
-        print('✅ Profile exists in database with gender: ${response['gender']}');
         _currentUser = app_models.User(
           id: response['id'],
           name: response['name'] ?? '',
@@ -64,7 +60,6 @@ class AuthService {
       } else {
         // Profile doesn't exist or gender not set - needs onboarding
         _profileExistsInDatabase = false;
-        print('⚠️ Profile does not exist or gender not set');
         final authUser = Supabase.instance.client.auth.currentUser;
         if (authUser != null) {
           _currentUser = app_models.User(
@@ -79,7 +74,7 @@ class AuthService {
         }
       }
     } catch (e) {
-      print('❌ Error loading user profile: $e');
+      print('Error loading user profile: $e');
       // Fallback to local cache
       await _loadUserFromLocal();
     }
