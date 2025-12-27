@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
 import 'top_toast.dart';
+import 'styled_drawer.dart';
 
 class AnalysisSheet extends StatelessWidget {
   final Message message;
@@ -23,11 +24,8 @@ class AnalysisSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: screenHeight * 0.85,
       ),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      child: StyledDrawer(
+        padding: EdgeInsets.zero, // Padding handled inside children
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

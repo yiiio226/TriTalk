@@ -4,6 +4,7 @@ import '../data/mock_scenes.dart';
 import '../widgets/scene_card.dart';
 import '../widgets/custom_scene_dialog.dart';
 import '../widgets/scene_options_drawer.dart';
+import '../widgets/styled_drawer.dart';
 import '../services/chat_history_service.dart';
 import '../widgets/top_toast.dart';
 import 'chat_screen.dart';
@@ -21,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late List<Scene> _scenes;
   bool _isGridView = true;
   bool _isDragging = false;
+  final ValueNotifier<Offset> _dragPosition = ValueNotifier(Offset.zero);
 
   @override
   void initState() {
@@ -182,6 +184,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             _isDragging = true;
                           });
                         },
+                        onDragUpdate: (details) {
+                          _dragPosition.value = details.globalPosition;
+                        },
                         onDragEnd: (details) {
                           setState(() {
                             _isDragging = false;
@@ -192,28 +197,47 @@ class _HomeScreenState extends State<HomeScreen> {
                             _isDragging = false;
                           });
                         },
-                        feedback: Material(
-                          color: Colors.transparent,
-                          child: SizedBox(
-                            width: _isGridView
-                                ? (MediaQuery.of(context).size.width - 56) / 2
-                                : MediaQuery.of(context).size.width - 40,
-                            height: _isGridView
-                                ? ((MediaQuery.of(context).size.width - 56) /
-                                        2) /
-                                    0.75
-                                : (MediaQuery.of(context).size.width - 40) /
-                                    2.4,
-                            child: Opacity(
-                              opacity: 0.9,
-                              child: SceneCard(
-                                scene: scene,
-                                showRole: !_isGridView,
-                                onTap: () {},
-                                onLongPress: null,
+                        feedback: ValueListenableBuilder<Offset>(
+                          valueListenable: _dragPosition,
+                          builder: (context, currentPosition, child) {
+                            final screenSize = MediaQuery.of(context).size;
+                            // Target center approx: Right 52, Bottom 132
+                            final targetPos = Offset(
+                              screenSize.width - 52,
+                              screenSize.height - 132
+                            );
+                            
+                            final distance = (currentPosition - targetPos).distance;
+                            // Radius of influence ~300
+                            final scale = (distance / 300).clamp(0.4, 1.05);
+
+                            return Transform.scale(
+                              scale: scale,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: SizedBox(
+                                  width: _isGridView
+                                      ? (MediaQuery.of(context).size.width - 56) / 2
+                                      : MediaQuery.of(context).size.width - 40,
+                                  height: _isGridView
+                                      ? ((MediaQuery.of(context).size.width - 56) /
+                                              2) /
+                                          0.75
+                                      : (MediaQuery.of(context).size.width - 40) /
+                                          2.4,
+                                  child: Opacity(
+                                    opacity: 0.9,
+                                    child: SceneCard(
+                                      scene: scene,
+                                      showRole: !_isGridView,
+                                      onTap: () {},
+                                      onLongPress: null,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                         childWhenDragging: Opacity(
                           opacity: 0.3,
@@ -411,11 +435,8 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -469,11 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

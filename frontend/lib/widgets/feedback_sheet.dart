@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
+import 'styled_drawer.dart';
 
 class FeedbackSheet extends StatelessWidget {
   final Message message;
@@ -13,12 +14,8 @@ class FeedbackSheet extends StatelessWidget {
     
     final feedback = message.feedback!;
     
-    return Container(
+    return StyledDrawer(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
