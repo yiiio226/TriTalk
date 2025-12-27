@@ -178,9 +178,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.grey[100],
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/user_avatar_female.png'),
-                        fit: BoxFit.cover,
+                    ),
+                    child: ClipOval(
+                      child: Transform.scale(
+                        scale: 1.25,
+                        alignment: Alignment.topCenter,
+                        child: Image.asset(
+                          'assets/images/user_avatar_female.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),

@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
+                  barrierColor: Colors.white.withOpacity(0.5),
                   builder: (context) => Padding(
                     padding: EdgeInsets.only(
                       bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -114,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 16),
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(
@@ -124,19 +125,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   );
                                 },
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey[100],
-                                    image: const DecorationImage(
-                                      image: AssetImage(
-                                          'assets/images/user_avatar_female.png'),
-                                      fit: BoxFit.cover,
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.grey[100],
+                                    ),
+                                    child: ClipOval(
+                                      child: Transform.scale(
+                                        scale: 1.25,
+                                        alignment: Alignment.topCenter,
+                                        child: Image.asset(
+                                          'assets/images/user_avatar_female.png',
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
                               ),
                             ],
                           ),
@@ -266,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     showModalBottomSheet(
                                       context: context,
                                       backgroundColor: Colors.transparent,
+                                      barrierColor: Colors.white.withOpacity(0.5),
                                       builder: (context) => SceneOptionsDrawer(
                                         onClear: () => _showClearConfirmation(context, scene),
                                         onDelete: () => _showDeleteConfirmation(context, scene),

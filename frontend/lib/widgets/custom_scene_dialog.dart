@@ -101,9 +101,16 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.6,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -196,13 +203,15 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
               ),
               const SizedBox(height: 24),
               SizedBox(
-                height: 50,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _generateScene,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.black, // Black background
+                    foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(27), // Rounded pill shape
                     ),
                   ),
                   child: _isLoading
@@ -213,7 +222,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                         )
                       : const Text(
                           'Generate Scenario',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),
