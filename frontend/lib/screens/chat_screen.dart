@@ -79,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _loadMessages() async {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
     final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
-    final history = ChatHistoryService().getMessages(sceneKey);
+    final history = await ChatHistoryService().getMessages(sceneKey);
     
     bool isNewConversation = history.isEmpty;
     
@@ -138,12 +138,14 @@ class _ChatScreenState extends State<ChatScreen> {
         isAnimated: true, // Enable typewriter effect for initial message
       );
       
-      history.add(initialMsg);
-      
       if (mounted) {
         setState(() {
-          _messages = history;
+          _messages = [...history, initialMsg];
         });
+        
+        // Sync entire message list to cloud
+        ChatHistoryService().syncMessages(sceneKey, _messages);
+        
         _scrollToBottom(); // Scroll to bottom after loading initial message
       }
     } else {
@@ -210,14 +212,16 @@ class _ChatScreenState extends State<ChatScreen> {
       isFeedbackLoading: true, // Show loading indicator for feedback
     );
 
+    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    
     setState(() {
       _messages.add(newMessage);
       _isSending = true;
-      
-      // Removed immediate loading message to wait for feedback first
     });
     
-    // No need to call addMessage - _messages is the same list as in the service
+    // Sync entire message list to cloud (don't await to not block UI)
+    ChatHistoryService().syncMessages(sceneKey, _messages);
+    
     RevenueCatService().incrementMessageCount();
     
     _textController.clear();
@@ -242,28 +246,33 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
 
       // 1. Update user message with feedback (Turns it Yellow)
-      setState(() {
-         final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
-         if (userMsgIndex != -1) {
-           _messages[userMsgIndex] = Message(
-             id: newMessage.id,
-             content: newMessage.content,
-             isUser: true,
-             timestamp: newMessage.timestamp,
-             feedback: response.feedback,
-             isFeedbackLoading: false,
-           );
-         }
-         
-         // 2. Add loading message for AI response NOW (after feedback)
-         _messages.add(Message(
-           id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
-           content: '',
-           isUser: false,
-           timestamp: DateTime.now(),
-           isLoading: true,
-         ));
-      });
+      final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
+      if (userMsgIndex != -1) {
+        final updatedMessage = Message(
+          id: newMessage.id,
+          content: newMessage.content,
+          isUser: true,
+          timestamp: newMessage.timestamp,
+          feedback: response.feedback,
+          isFeedbackLoading: false,
+        );
+        
+        setState(() {
+          _messages[userMsgIndex] = updatedMessage;
+          
+          // 2. Add loading message for AI response NOW (after feedback)
+          _messages.add(Message(
+            id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+            content: '',
+            isUser: false,
+            timestamp: DateTime.now(),
+            isLoading: true,
+          ));
+        });
+        
+        // Sync entire message list to cloud
+        ChatHistoryService().syncMessages(sceneKey, _messages);
+      }
       
       _scrollToBottom();
       
@@ -289,6 +298,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
         _messages.add(aiMessage);
       });
+      
+      // Sync entire message list to cloud
+      ChatHistoryService().syncMessages(sceneKey, _messages);
       _scrollToBottom();
       // Start continuous auto-scroll during typewriter animation
       _startAutoScroll();
@@ -347,13 +359,45 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        centerTitle: false,
+        titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(widget.scene.title, style: const TextStyle(fontSize: 16)),
-            Text(
-              'Talking to ${widget.scene.aiRole}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(widget.scene.title, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    ValueListenableBuilder<SyncStatus>(
+                      valueListenable: ChatHistoryService().syncStatus,
+                      builder: (context, status, child) {
+                        switch (status) {
+                          case SyncStatus.syncing:
+                            return const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                              ),
+                            );
+                          case SyncStatus.synced:
+                            return const Icon(Icons.check_circle_rounded, color: Colors.green, size: 16);
+                          case SyncStatus.offline:
+                            return Icon(Icons.circle_outlined, color: Colors.grey[400], size: 16);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  'Talking to ${widget.scene.aiRole}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                ),
+              ],
             ),
           ],
         ),

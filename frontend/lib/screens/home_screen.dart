@@ -398,9 +398,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _bookmarkConversation(BuildContext context, Scene scene) {
+  void _bookmarkConversation(BuildContext context, Scene scene) async {
     final sceneKey = "${scene.title}_${scene.aiRole}";
-    final history = ChatHistoryService().getMessages(sceneKey);
+    final history = await ChatHistoryService().getMessages(sceneKey);
     final nonEmptyMessages = history.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
     
     if (nonEmptyMessages.isEmpty) {
