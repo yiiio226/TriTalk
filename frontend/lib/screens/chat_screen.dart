@@ -359,13 +359,45 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        centerTitle: false,
+        titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(widget.scene.title, style: const TextStyle(fontSize: 16)),
-            Text(
-              'Talking to ${widget.scene.aiRole}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(widget.scene.title, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    ValueListenableBuilder<SyncStatus>(
+                      valueListenable: ChatHistoryService().syncStatus,
+                      builder: (context, status, child) {
+                        switch (status) {
+                          case SyncStatus.syncing:
+                            return const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                              ),
+                            );
+                          case SyncStatus.synced:
+                            return const Icon(Icons.check_circle_rounded, color: Colors.green, size: 16);
+                          case SyncStatus.offline:
+                            return Icon(Icons.circle_outlined, color: Colors.grey[400], size: 16);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  'Talking to ${widget.scene.aiRole}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                ),
+              ],
             ),
           ],
         ),

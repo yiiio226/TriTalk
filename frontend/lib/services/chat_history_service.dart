@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
+
+enum SyncStatus { synced, syncing, offline }
 
 class ChatHistoryService {
   static final ChatHistoryService _instance = ChatHistoryService._internal();
@@ -9,6 +12,9 @@ class ChatHistoryService {
   ChatHistoryService._internal();
 
   final _supabase = Supabase.instance.client;
+
+  // Sync status notifier
+  final syncStatus = ValueNotifier<SyncStatus>(SyncStatus.synced);
 
   // Local cache
   final Map<String, List<Message>> _histories = {};
@@ -52,8 +58,12 @@ class ChatHistoryService {
   // Load from cloud (background operation)
   Future<void> _loadFromCloud(String sceneKey) async {
     try {
+      syncStatus.value = SyncStatus.syncing;
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        syncStatus.value = SyncStatus.synced;
+        return;
+      }
 
       final response = await _supabase
           .from('chat_history')
@@ -73,13 +83,14 @@ class ChatHistoryService {
         // Save to local storage
         await _saveToLocal(sceneKey, messages);
       }
+      syncStatus.value = SyncStatus.synced;
     } catch (e) {
       print('Error loading from cloud (non-critical): $e');
-      // Don't throw - offline mode is OK
+      syncStatus.value = SyncStatus.offline;
     }
   }
 
-  // Sync entire message list (local first, then cloud)
+  // Sync entire message list to cloud (recommended method)
   Future<void> syncMessages(String sceneKey, List<Message> messages) async {
     // Update cache
     _histories[sceneKey] = List.from(messages);
@@ -87,9 +98,13 @@ class ChatHistoryService {
     // Save to local storage immediately (always succeeds)
     await _saveToLocal(sceneKey, messages);
     
-    // Try to sync to cloud in background (don't block on failure)
-    _syncToCloud(sceneKey).catchError((e) {
+    // Sync to cloud
+    syncStatus.value = SyncStatus.syncing;
+    _syncToCloud(sceneKey).then((_) {
+      syncStatus.value = SyncStatus.synced;
+    }).catchError((e) {
       print('Background cloud sync failed (non-critical): $e');
+      syncStatus.value = SyncStatus.offline;
     });
   }
 
@@ -113,7 +128,14 @@ class ChatHistoryService {
     
     _histories[sceneKey]!.add(message);
     await _saveToLocal(sceneKey, _histories[sceneKey]!);
-    _syncToCloud(sceneKey).catchError((e) => print('Sync failed: $e'));
+    
+    syncStatus.value = SyncStatus.syncing;
+    _syncToCloud(sceneKey).then((_) {
+      syncStatus.value = SyncStatus.synced;
+    }).catchError((e) {
+      print('Sync failed: $e');
+      syncStatus.value = SyncStatus.offline;
+    });
   }
 
   // Update message (deprecated - use syncMessages)
@@ -123,7 +145,14 @@ class ChatHistoryService {
         index < _histories[sceneKey]!.length) {
       _histories[sceneKey]![index] = message;
       await _saveToLocal(sceneKey, _histories[sceneKey]!);
-      _syncToCloud(sceneKey).catchError((e) => print('Sync failed: $e'));
+      
+      syncStatus.value = SyncStatus.syncing;
+      _syncToCloud(sceneKey).then((_) {
+        syncStatus.value = SyncStatus.synced;
+      }).catchError((e) {
+        print('Sync failed: $e');
+        syncStatus.value = SyncStatus.offline;
+      });
     }
   }
 
@@ -139,7 +168,8 @@ class ChatHistoryService {
       print('Error clearing local storage: $e');
     }
     
-    // Try to clear from cloud (don't block on failure)
+    // Try to clear from cloud
+    syncStatus.value = SyncStatus.syncing;
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
@@ -150,8 +180,10 @@ class ChatHistoryService {
             .eq('scene_key', sceneKey)
             .timeout(const Duration(seconds: 5));
       }
+      syncStatus.value = SyncStatus.synced;
     } catch (e) {
       print('Error clearing from cloud (non-critical): $e');
+      syncStatus.value = SyncStatus.offline;
     }
   }
 
