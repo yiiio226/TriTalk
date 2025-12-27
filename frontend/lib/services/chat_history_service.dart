@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
@@ -215,7 +216,7 @@ class ChatHistoryService {
   void addBookmark(String title, String preview, String date, String sceneKey,
       List<Message> messages) {
     final newBookmark = BookmarkedConversation(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       title: title,
       preview: preview,
       date: date,
