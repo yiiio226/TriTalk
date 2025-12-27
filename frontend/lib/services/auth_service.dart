@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart' as app_models;
 
 class AuthService {
@@ -7,6 +9,7 @@ class AuthService {
   AuthService._internal();
 
   app_models.User? _currentUser;
+  bool _profileExistsInDatabase = false; // Track if user has completed onboarding
   
   app_models.User? get currentUser => _currentUser;
   bool get isAuthenticated => Supabase.instance.client.auth.currentUser != null;
@@ -19,6 +22,7 @@ class AuthService {
         _loadUserFromSupabase(session.user.id);
       } else {
         _currentUser = null;
+        _profileExistsInDatabase = false;
       }
     });
 
@@ -30,15 +34,21 @@ class AuthService {
   }
 
   Future<void> _loadUserFromSupabase(String userId) async {
+    print('🔄 Loading user from Supabase: $userId');
     try {
       final response = await Supabase.instance.client
           .from('profiles')
           .select()
           .eq('id', userId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5)); // Timeout to fallback quickly
+      
+      print('📦 Supabase response: $response');
           
-      if (response != null) {
-        // Map DB fields to User model
+      if (response != null && response['gender'] != null) {
+        // Profile exists with gender set - user has completed onboarding
+        _profileExistsInDatabase = true;
+        print('✅ Profile exists in database with gender: ${response['gender']}');
         _currentUser = app_models.User(
           id: response['id'],
           name: response['name'] ?? '',
@@ -48,8 +58,13 @@ class AuthService {
           nativeLanguage: response['native_lang'] ?? 'Chinese (Simplified)',
           targetLanguage: response['target_lang'] ?? 'English',
         );
+        
+        // Cache user data locally
+        await _saveUserToLocal(_currentUser!, true);
       } else {
-        // Profile doesn't exist yet (first login) - create basic user object
+        // Profile doesn't exist or gender not set - needs onboarding
+        _profileExistsInDatabase = false;
+        print('⚠️ Profile does not exist or gender not set');
         final authUser = Supabase.instance.client.auth.currentUser;
         if (authUser != null) {
           _currentUser = app_models.User(
@@ -64,7 +79,51 @@ class AuthService {
         }
       }
     } catch (e) {
-      print('Error loading user profile: $e');
+      print('❌ Error loading user profile: $e');
+      // Fallback to local cache
+      await _loadUserFromLocal();
+    }
+  }
+
+  Future<void> _saveUserToLocal(app_models.User user, bool profileExists) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = {
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'avatarUrl': user.avatarUrl,
+        'gender': user.gender,
+        'nativeLanguage': user.nativeLanguage,
+        'targetLanguage': user.targetLanguage,
+        'profileExists': profileExists, // Save this flag too
+      };
+      await prefs.setString('cached_user_profile', json.encode(userJson));
+    } catch (e) {
+      print('Error caching user profile: $e');
+    }
+  }
+
+  Future<void> _loadUserFromLocal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userString = prefs.getString('cached_user_profile');
+      if (userString != null) {
+        final Map<String, dynamic> userMap = json.decode(userString);
+        _currentUser = app_models.User(
+          id: userMap['id'],
+          name: userMap['name'],
+          email: userMap['email'],
+          avatarUrl: userMap['avatarUrl'],
+          gender: userMap['gender'],
+          nativeLanguage: userMap['nativeLanguage'],
+          targetLanguage: userMap['targetLanguage'],
+        );
+        _profileExistsInDatabase = userMap['profileExists'] ?? false;
+        print('Loaded user from local cache (profileExists: $_profileExistsInDatabase)');
+      }
+    } catch (e) {
+      print('Error loading cached user profile: $e');
     }
   }
 
@@ -99,14 +158,12 @@ class AuthService {
   Future<void> logout() async {
     await Supabase.instance.client.auth.signOut();
     _currentUser = null;
+    _profileExistsInDatabase = false;
   }
 
-  // Check if user needs onboarding (no profile data yet)
+  // Check if user needs onboarding (profile doesn't exist in database)
   bool get needsOnboarding {
     if (_currentUser == null) return false;
-    // Check if gender/languages are still defaults (meaning they haven't completed onboarding)
-    return _currentUser!.gender == 'male' && 
-           _currentUser!.nativeLanguage == 'Chinese (Simplified)' &&
-           _currentUser!.targetLanguage == 'English';
+    return !_profileExistsInDatabase;
   }
 }

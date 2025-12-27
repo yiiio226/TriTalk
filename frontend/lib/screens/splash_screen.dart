@@ -64,8 +64,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateBasedOnProfile() async {
-    // Wait a bit for profile to load
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Wait for profile to load with retry logic
+    int attempts = 0;
+    while (attempts < 10 && AuthService().currentUser == null) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      attempts++;
+    }
     
     if (!mounted || _navigated) return;
 
