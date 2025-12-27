@@ -206,7 +206,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
             ],
             // Analysis icon for AI messages (only show when animation is complete)
             if (!isUser && !widget.message.isLoading && _isAnimationComplete) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -273,6 +273,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                   ),
                 ],
               ),
+              const SizedBox(height: 6),
             ],
             if (_showTranslation && message.translation != null) ...[
                const SizedBox(height: 6),
