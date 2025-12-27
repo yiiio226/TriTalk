@@ -361,6 +361,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           _showClearConfirmation();
                         },
                       ),
+                      ListTile(
+                        leading: const Icon(Icons.bookmark_border, color: Colors.orange),
+                        title: const Text('Bookmark Conversation'),
+                        onTap: () {
+                          Navigator.pop(context); // Close sheet
+                          _bookmarkConversation();
+                        },
+                      ),
                       const Divider(),
                       ListTile(
                         leading: const Icon(Icons.delete_outline, color: Colors.red),
@@ -562,6 +570,33 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  void _bookmarkConversation() {
+    final sceneKey = "${widget.scene.title}_${widget.scene.aiRole}";
+    final nonEmptyMessages = _messages.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
+    
+    if (nonEmptyMessages.isEmpty) {
+      showTopToast(context, "No messages to bookmark", isError: true);
+      return;
+    }
+
+    final lastMessage = nonEmptyMessages.last.content;
+    final preview = lastMessage.length > 50 ? '${lastMessage.substring(0, 50)}...' : lastMessage;
+    
+    // Format date: "Today", "Yesterday", or "MM-dd"
+    final now = DateTime.now();
+    final dateStr = "${now.month}/${now.day}"; // Simple format for now
+
+    ChatHistoryService().addBookmark(
+      widget.scene.title, 
+      preview, 
+      dateStr, 
+      sceneKey, 
+      nonEmptyMessages
+    );
+
+    showTopToast(context, "Conversation bookmarked!", isError: false);
   }
 
   void _showClearConfirmation() {
