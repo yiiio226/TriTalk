@@ -322,6 +322,26 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 64, // Added width for custom leading
+        leading: Center(
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[100],
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Color(0xFF1A1A1A),
+                size: 24,
+              ),
+            ),
+          ),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -333,25 +353,40 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent, // Prevent color change on scroll
-        foregroundColor: Colors.black, // Icons and text color
+        surfaceTintColor: Colors.transparent, 
+        foregroundColor: Colors.black,
         elevation: 0, 
-        iconTheme: const IconThemeData(color: Colors.black),
         titleTextStyle: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_horiz),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: Colors.transparent,
-                builder: (context) => SceneOptionsDrawer(
-                  onClear: _showClearConfirmation,
-                  onBookmark: _bookmarkConversation,
-                  onDelete: _showDeleteConfirmation,
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => SceneOptionsDrawer(
+                    onClear: _showClearConfirmation,
+                    onBookmark: _bookmarkConversation,
+                    onDelete: _showDeleteConfirmation,
+                  ),
+                );
+              },
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[100],
                 ),
-              );
-            },
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.more_horiz_rounded,
+                  color: Color(0xFF1A1A1A),
+                  size: 24,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -369,7 +404,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 return Align(
                   alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: ChatBubble(
-                    key: ValueKey(msg.id), // Force rebuild when ID changes
+                    key: ValueKey(msg.id),
                     message: msg,
                     onTap: () {
                       if (msg.feedback != null) {
@@ -379,7 +414,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           builder: (context) => FeedbackSheet(message: msg),
                         );
                       } else if (!msg.isUser) {
-                        // AI message - show analysis
                         _handleAnalyze(msg);
                       }
                     },
@@ -431,7 +465,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 40),
-      // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -444,9 +477,8 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.lightbulb_outline),
+            icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
             onPressed: () {
-              // Prepare history
               final history = _messages.map((m) => <String, String>{
                 'role': m.isUser ? 'user' : 'assistant',
                 'content': m.content,
@@ -466,74 +498,96 @@ class _ChatScreenState extends State<ChatScreen> {
             },
           ),
           Expanded(
-            child: TextField(
-              controller: _textController,
-              decoration: const InputDecoration(
-                hintText: 'Type a message...',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(24),
               ),
-              minLines: 1,
-              maxLines: 4,
-            ),
-
-          ),
-          // AI Optimization Button
-          IconButton(
-            icon: _isOptimizing 
-                ? const SizedBox(
-                    width: 20, 
-                    height: 20, 
-                    child: CircularProgressIndicator(strokeWidth: 2)
-                  )
-                : Icon(
-                    Icons.auto_fix_high, 
-                    color: _textController.text.trim().isNotEmpty 
-                        ? Colors.green 
-                        : Colors.grey
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        isDense: true,
+                      ),
+                      minLines: 1,
+                      maxLines: 4,
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ),
-            tooltip: 'Optimize with AI',
-            onPressed: _textController.text.trim().isEmpty || _isOptimizing
-                ? null
-                : () async {
-                    final text = _textController.text.trim();
-                    setState(() => _isOptimizing = true);
+                  // AI Optimization Button inside input container
+                  IconButton(
+                    iconSize: 20,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
+                    padding: EdgeInsets.zero,
+                    icon: _isOptimizing 
+                        ? const SizedBox(
+                            width: 16, 
+                            height: 16, 
+                            child: CircularProgressIndicator(strokeWidth: 2)
+                          )
+                        : Icon(
+                            Icons.auto_fix_high, 
+                            color: _textController.text.trim().isNotEmpty 
+                                ? Colors.green 
+                                : Colors.grey[400]
+                          ),
+                    tooltip: 'Optimize with AI',
+                    onPressed: _textController.text.trim().isEmpty || _isOptimizing
+                        ? null
+                        : () async {
+                            final text = _textController.text.trim();
+                            setState(() => _isOptimizing = true);
 
-                    try {
-                      // Prepare context
-                      final history = _messages
-                          .where((m) => !m.isLoading && m.content.isNotEmpty)
-                          .map((m) => <String, String>{
-                            'role': m.isUser ? 'user' : 'assistant',
-                            'content': m.content,
-                          })
-                          .toList();
+                            try {
+                              final history = _messages
+                                  .where((m) => !m.isLoading && m.content.isNotEmpty)
+                                  .map((m) => <String, String>{
+                                    'role': m.isUser ? 'user' : 'assistant',
+                                    'content': m.content,
+                                  })
+                                  .toList();
 
-                      final optimizedText = await _apiService.optimizeMessage(
-                        text, 
-                        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-                        history
-                      );
+                              final optimizedText = await _apiService.optimizeMessage(
+                                text, 
+                                'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+                                history
+                              );
 
-                      if (mounted) {
-                        _textController.text = optimizedText;
-                        // Optional: Show a small toast/snackbar that it was optimized?
-                        showTopToast(context, "Message optimized!", isError: false);
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                         showTopToast(context, "Optimization failed: $e", isError: true);
-                      }
-                    } finally {
-                      if (mounted) {
-                        setState(() => _isOptimizing = false);
-                      }
-                    }
-                  },
+                              if (mounted) {
+                                _textController.text = optimizedText;
+                                showTopToast(context, "Message optimized!", isError: false);
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                 showTopToast(context, "Optimization failed: $e", isError: true);
+                              }
+                            } finally {
+                              if (mounted) {
+                                setState(() => _isOptimizing = false);
+                              }
+                            }
+                          },
+                  ),
+                ],
+              ),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send, color: Colors.black),
-            onPressed: _sendMessage,
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+              onPressed: _sendMessage,
+            ),
           ),
         ],
       ),

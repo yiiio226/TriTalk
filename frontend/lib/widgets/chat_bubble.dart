@@ -100,8 +100,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     final message = widget.message;
     final isUser = message.isUser;
     final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final color = isUser ? Colors.blue[100] : Colors.white;
-    final radius = BorderRadius.circular(16);
+    // Updated colors: Pale Yellow for user, White for AI
+    final color = isUser ? const Color(0xFFFFF3CD) : Colors.white;
+    // Increased radius
+    final radius = BorderRadius.circular(20);
 
     final isPerfect = message.feedback?.isPerfect ?? false;
     final hasFeedback = message.feedback != null;
@@ -124,7 +126,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     if (isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.green.shade100], // Green gradient
+          colors: [Colors.green.shade50, Colors.green.shade100], 
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -133,7 +135,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     } else if (isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)], // Golden/Cream gradient
+          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)], 
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -155,9 +157,9 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
         widget.onTap?.call();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: bubbleDecoration,
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -165,16 +167,16 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                 ? _buildLoadingIndicator()
                 : SelectableText(
                     _displayedText,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16, height: 1.4),
                   ),
             if (hasFeedback) ...[
-               const SizedBox(height: 4),
+               const SizedBox(height: 6),
                Row(
                  mainAxisSize: MainAxisSize.min,
                  children: [
                    Icon(
-                     isPerfect ? Icons.star : Icons.auto_fix_high, 
-                     size: 14, 
+                     isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
+                     size: 16, 
                      color: isPerfect ? Colors.green[700] : Colors.orange
                    ),
                    if (isPerfect) ...[
@@ -182,7 +184,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                      Text(
                        "Perfect!", 
                        style: TextStyle(
-                         fontSize: 10, 
+                         fontSize: 12, 
                          fontWeight: FontWeight.bold,
                          color: Colors.green[800]
                        )
@@ -207,25 +209,32 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
             // Analysis icon for AI messages (only show when animation is complete)
             if (!isUser && !widget.message.isLoading && _isAnimationComplete) ...[
               const SizedBox(height: 12),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   // Grammar Analysis
                   GestureDetector(
                     onTap: () => widget.onTap?.call(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.auto_awesome, size: 14, color: Colors.purple[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Analyze",
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple[700]),
-                        ),
-                      ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome_rounded, size: 14, color: Colors.purple[700]),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Analyze",
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.purple[700]),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
 
                   // Shadowing
                   GestureDetector(
@@ -236,19 +245,25 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                         builder: (context) => ShadowingSheet(targetText: message.content),
                       );
                     },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.mic_none, size: 14, color: Colors.blue[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Shadow",
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue[700]),
-                        ),
-                      ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.mic_none_rounded, size: 14, color: Colors.blue[700]),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Shadow",
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue[700]),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
 
                   // Save
                   GestureDetector(
@@ -259,25 +274,33 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                         builder: (context) => SaveNoteSheet(originalSentence: message.content),
                       );
                     },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.bookmark_border, size: 14, color: Colors.green[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Save",
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green[700]),
-                        ),
-                      ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bookmark_border_rounded, size: 14, color: Colors.green[700]),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Save",
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green[700]),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
             ],
             if (_showTranslation && message.translation != null) ...[
-               const SizedBox(height: 6),
-               const Divider(height: 12),
+               const SizedBox(height: 8),
+               const Divider(height: 1),
+               const SizedBox(height: 8),
                SelectableText(
                  message.translation!,
                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
