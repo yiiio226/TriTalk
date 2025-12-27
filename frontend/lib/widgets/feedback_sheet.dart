@@ -80,27 +80,38 @@ class FeedbackSheet extends StatelessWidget {
           ),
           
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              // Save mostly interesting things, like the native expression or corrected text
-              final textToSave = feedback.nativeExpression.isNotEmpty 
-                  ? feedback.nativeExpression 
-                  : feedback.correctedText;
-                  
-              VocabService().add(
-                textToSave,
-                "Smart Feedback", 
-                "Correction",
-              );
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Saved to Vocabulary')),
-              );
-            },
-            icon: const Icon(Icons.bookmark_border),
-            label: const Text('Save to Vocabulary'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+          SizedBox(
+            height: 54,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                // Save mostly interesting things, like the native expression or corrected text
+                final textToSave = feedback.nativeExpression.isNotEmpty 
+                    ? feedback.nativeExpression 
+                    : feedback.correctedText;
+                    
+                VocabService().add(
+                  textToSave,
+                  "Smart Feedback", 
+                  "Correction",
+                );
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Saved to Vocabulary')),
+                );
+              },
+              icon: const Icon(Icons.bookmark_border),
+              label: const Text(
+                'Save to Vocabulary', 
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(27),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16), 
