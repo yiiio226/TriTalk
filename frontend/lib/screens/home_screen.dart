@@ -109,11 +109,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.grey[100],
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: Colors.black87,
-                        size: 24,
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/user_avatar_female.png'),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),

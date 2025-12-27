@@ -178,11 +178,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.grey[100],
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.black87,
-                      size: 40,
+                      image: const DecorationImage(
+                        image: AssetImage('assets/images/user_avatar_female.png'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 20),
