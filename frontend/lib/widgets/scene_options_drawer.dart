@@ -22,7 +22,7 @@ class SceneOptionsDrawer extends StatelessWidget {
         children: [
           if (onClear != null)
             ListTile(
-              leading: const Icon(Icons.refresh, color: Colors.blue),
+              leading: const Icon(Icons.refresh, color: Colors.black),
               title: const Text('Clear Conversation'),
               onTap: () {
                 Navigator.pop(context);
@@ -31,7 +31,7 @@ class SceneOptionsDrawer extends StatelessWidget {
             ),
           if (onBookmark != null)
             ListTile(
-              leading: const Icon(Icons.bookmark_border, color: Colors.orange),
+              leading: const Icon(Icons.bookmark_border, color: Colors.black),
               title: const Text('Bookmark Conversation'),
               onTap: () {
                 Navigator.pop(context);

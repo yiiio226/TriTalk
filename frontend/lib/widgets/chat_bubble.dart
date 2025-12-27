@@ -223,17 +223,17 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2F1), // Scene 1 Color
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.auto_awesome_rounded, size: 14, color: Colors.teal[700]),
+                          const Icon(Icons.auto_awesome_rounded, size: 14, color: Colors.black),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             "Analyze",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal[700]),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
                       ),
@@ -252,17 +252,17 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF8E1), // Scene 2 Color
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.mic_none_rounded, size: 14, color: Colors.orange[900]),
+                          const Icon(Icons.mic_none_rounded, size: 14, color: Colors.black),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             "Shadow",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange[900]),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
                       ),
@@ -281,17 +281,17 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEE), // Scene 3 Color
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.bookmark_border_rounded, size: 14, color: Colors.red[700]),
+                          const Icon(Icons.bookmark_border_rounded, size: 14, color: Colors.black),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             "Save",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red[700]),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
                       ),
