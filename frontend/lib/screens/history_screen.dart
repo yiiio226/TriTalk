@@ -1,46 +1,106 @@
 import 'package:flutter/material.dart';
+import '../services/chat_history_service.dart';
+import '../widgets/chat_bubble.dart'; 
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Mock history data
-    final List<Map<String, dynamic>> mockHistory = [
-      {
-        'title': 'Rent an Apartment',
-        'date': 'Yesterday',
-        'preview': 'Would it be possible to check in early?',
-      },
-      {
-        'title': 'Ordering Coffee',
-        'date': '2 days ago',
-        'preview': 'I would like a large latte with oat milk.',
-      },
-      {
-        'title': 'Work Email',
-        'date': 'Last Week',
-        'preview': 'I am writing to inform you that...',
-      },
-    ];
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
 
+class _HistoryScreenState extends State<HistoryScreen> {
+  List<BookmarkedConversation> _bookmarks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookmarks();
+  }
+
+  void _loadBookmarks() {
+    setState(() {
+      _bookmarks = ChatHistoryService().getBookmarks();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat History')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Chat History'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: _bookmarks.isEmpty 
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Icon(Icons.history, size: 64, color: Colors.grey[300]),
+                   const SizedBox(height: 16),
+                   Text(
+                     'No archived conversations',
+                     style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                   ),
+                ],
+              ),
+            )
+          : ListView.separated(
+              itemCount: _bookmarks.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final item = _bookmarks[index];
+                return ListTile(
+                  title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(item.preview, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  trailing: Text(item.date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ArchivedChatScreen(bookmark: item),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+    );
+  }
+}
+
+class ArchivedChatScreen extends StatelessWidget {
+  final BookmarkedConversation bookmark;
+
+  const ArchivedChatScreen({Key? key, required this.bookmark}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(bookmark.title),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      backgroundColor: Colors.white,
       body: ListView.separated(
-        itemCount: mockHistory.length,
-        separatorBuilder: (_, __) => const Divider(),
+        padding: const EdgeInsets.all(16),
+        itemCount: bookmark.messages.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final item = mockHistory[index];
-          return ListTile(
-            title: Text(item['title']),
-            subtitle: Text(item['preview'], maxLines: 1, overflow: TextOverflow.ellipsis),
-            trailing: Text(item['date'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
-            onTap: () {
-               // Mock navigation to past chat
-               ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('Opening past chat... (Mock)')),
-               );
-            },
+          final msg = bookmark.messages[index];
+          return Align(
+            alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+            child: ChatBubble(
+              key: ValueKey(msg.id),
+              message: msg,
+            ),
           );
         },
       ),
