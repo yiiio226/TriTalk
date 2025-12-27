@@ -86,16 +86,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Row(
                         children: [
-                          IconButton(
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
                                 _isGridView = !_isGridView;
                               });
                             },
-                            icon: Icon(
-                              _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
-                              color: Colors.grey[700],
-                               size: 28,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey[100],
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                _isGridView ? Icons.view_agenda_rounded : Icons.grid_view_rounded,
+                                color: const Color(0xFF1A1A1A),
+                                size: 24,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
