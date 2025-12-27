@@ -11,6 +11,7 @@ import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
 import '../services/preferences_service.dart'; // Added
 import '../widgets/top_toast.dart';
+import '../widgets/scene_options_drawer.dart';
 import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -344,43 +345,10 @@ class _ChatScreenState extends State<ChatScreen> {
               showModalBottomSheet(
                 context: context,
                 backgroundColor: Colors.transparent,
-                builder: (context) => Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.refresh, color: Colors.blue),
-                        title: const Text('Clear Conversation'),
-                        onTap: () {
-                          Navigator.pop(context); // Close sheet
-                          _showClearConfirmation();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.bookmark_border, color: Colors.orange),
-                        title: const Text('Bookmark Conversation'),
-                        onTap: () {
-                          Navigator.pop(context); // Close sheet
-                          _bookmarkConversation();
-                        },
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.delete_outline, color: Colors.red),
-                        title: const Text('Delete Conversation', style: TextStyle(color: Colors.red)),
-                        onTap: () {
-                          Navigator.pop(context); // Close sheet
-                          _showDeleteConfirmation();
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                builder: (context) => SceneOptionsDrawer(
+                  onClear: _showClearConfirmation,
+                  onBookmark: _bookmarkConversation,
+                  onDelete: _showDeleteConfirmation,
                 ),
               );
             },

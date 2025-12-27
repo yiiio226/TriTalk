@@ -4,111 +4,103 @@ import '../models/scene.dart';
 class SceneCard extends StatelessWidget {
   final Scene scene;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final bool showRole;
 
-  const SceneCard({Key? key, required this.scene, required this.onTap}) : super(key: key);
+  const SceneCard({
+    Key? key,
+    required this.scene,
+    required this.onTap,
+    this.onLongPress,
+    this.showRole = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        color: Color(scene.color).withOpacity(0.6), // Use scene color
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                scene.iconPath.isNotEmpty
-                    ? Image.asset(
-                        scene.iconPath,
-                        width: 48,
-                        height: 48,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback to emoji if asset fails to load
-                          return _buildEmojiFallback(scene.emoji);
-                        },
-                      )
-                    : _buildEmojiFallback(scene.emoji),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getDifficultyColor(scene.difficulty).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    scene.difficulty,
-                    style: TextStyle(
-                      color: _getDifficultyColor(scene.difficulty),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: showRole ? 2 : 3, // Smaller image area in list view
+                child: Center(
+                  child: scene.iconPath.isNotEmpty
+                      ? Image.asset(
+                          scene.iconPath,
+                          width: showRole ? 60 : 80, // Smaller icon in list view
+                          height: showRole ? 60 : 80,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildEmojiFallback(scene.emoji);
+                          },
+                        )
+                      : _buildEmojiFallback(scene.emoji),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        scene.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A1A),
+                          height: 1.2,
+                        ),
+                      ),
+                      if (showRole) ...[
+                        const SizedBox(height: 2), // Tighter spacing
+                        Text(
+                          'With: ${scene.aiRole}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              scene.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Role: ${scene.aiRole}',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
-            ),
-            Text(
-              'Goal: ${scene.goal}',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Color _getDifficultyColor(String difficulty) {
-    switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return const Color(0xFF4CAF50); // Green
-      case 'medium':
-        return const Color(0xFFFFC107); // Amber/Yellow
-      case 'hard':
-        return const Color(0xFFE91E63); // Pink/Red
-      default:
-        return Colors.blue;
-    }
-  }
-
   Widget _buildEmojiFallback(String emoji) {
     return Text(
       emoji,
-      style: const TextStyle(fontSize: 40),
+      style: const TextStyle(fontSize: 60),
     );
   }
 }
