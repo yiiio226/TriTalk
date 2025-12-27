@@ -12,6 +12,7 @@ import '../services/chat_history_service.dart';
 import '../services/preferences_service.dart'; // Added
 import '../widgets/top_toast.dart';
 import '../widgets/scene_options_drawer.dart';
+import '../widgets/styled_drawer.dart';
 import 'paywall_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -369,6 +370,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.transparent,
+                  barrierColor: Colors.white.withOpacity(0.5),
                   builder: (context) => SceneOptionsDrawer(
                     onClear: _showClearConfirmation,
                     onBookmark: _bookmarkConversation,
@@ -415,6 +417,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          barrierColor: Colors.white.withOpacity(0.5),
                           builder: (context) => FeedbackSheet(message: msg),
                         );
                       } else if (!msg.isUser) {
@@ -491,6 +495,8 @@ class _ChatScreenState extends State<ChatScreen> {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                barrierColor: Colors.white.withOpacity(0.5),
                 builder: (context) => HintsSheet(
                   sceneDescription: 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
                   history: history,
@@ -629,11 +635,8 @@ class _ChatScreenState extends State<ChatScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -688,11 +691,8 @@ class _ChatScreenState extends State<ChatScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -778,6 +778,8 @@ class _ChatScreenState extends State<ChatScreen> {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.white.withOpacity(0.5),
         builder: (context) => AnalysisSheet(
           message: message,
           analysis: message.analysis,
@@ -796,6 +798,8 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       isScrollControlled: true,
       isDismissible: false,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withOpacity(0.5),
       builder: (context) => AnalysisSheet(
         message: message,
         isLoading: true,

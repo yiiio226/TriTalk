@@ -4,6 +4,7 @@ import '../data/mock_scenes.dart';
 import '../widgets/scene_card.dart';
 import '../widgets/custom_scene_dialog.dart';
 import '../widgets/scene_options_drawer.dart';
+import '../widgets/styled_drawer.dart';
 import '../services/chat_history_service.dart';
 import '../widgets/top_toast.dart';
 import 'chat_screen.dart';
@@ -434,11 +435,8 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -492,11 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

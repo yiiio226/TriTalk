@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'styled_drawer.dart';
 
 class HintsSheet extends StatefulWidget {
   final String sceneDescription;
@@ -74,12 +75,8 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
       constraints: BoxConstraints(
         maxHeight: screenHeight * 0.9,
       ),
-      child: Container(
+      child: StyledDrawer(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

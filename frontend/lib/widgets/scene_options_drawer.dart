@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'styled_drawer.dart';
 
 class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onClear;
@@ -14,11 +15,7 @@ class SceneOptionsDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return StyledDrawer(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
