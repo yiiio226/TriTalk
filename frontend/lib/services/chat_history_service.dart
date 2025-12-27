@@ -76,35 +76,13 @@ class ChatHistoryService {
 
       if (response != null && response['messages'] != null) {
         final List<dynamic> messagesJson = response['messages'];
-        final cloudMessages = messagesJson
+        final messages = messagesJson
             .map((json) => Message.fromJson(json as Map<String, dynamic>))
             .toList();
-            
-        // MERGE LOGIC: Combine Local + Cloud, preferring Local for same ID (to keep loading states if any)
-        // or preferring Cloud? Usually Cloud is source of truth for value, but Local has latest unsynced.
-        // Since IDs are unique UUIDs now, we can merge by ID.
+        _histories[sceneKey] = messages;
         
-        final currentMessages = _histories[sceneKey] ?? [];
-        final Map<String, Message> mergedMap = {};
-        
-        // 1. Add Cloud messages first
-        for (var m in cloudMessages) {
-          mergedMap[m.id] = m;
-        }
-        
-        // 2. Add/Override with Local messages (preserves unsynced new messages)
-        for (var m in currentMessages) {
-          mergedMap[m.id] = m;
-        }
-        
-        // 3. Convert back to list and sort by timestamp
-        final mergedList = mergedMap.values.toList()
-          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-        
-        _histories[sceneKey] = mergedList;
-        
-        // Save merged result to local storage
-        await _saveToLocal(sceneKey, mergedList);
+        // Save to local storage
+        await _saveToLocal(sceneKey, messages);
       }
       syncStatus.value = SyncStatus.synced;
     } catch (e) {
