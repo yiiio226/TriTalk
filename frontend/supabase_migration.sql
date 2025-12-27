@@ -10,7 +10,7 @@ alter table custom_scenarios add column if not exists emoji text;
 alter table custom_scenarios add column if not exists category text;
 alter table custom_scenarios add column if not exists goal text;
 alter table custom_scenarios add column if not exists color bigint;
-alter table custom_scenarios alter column color type bigint;
+alter table custom_scenarios alter column color type bigint using color::bigint;
 alter table custom_scenarios add column if not exists icon_path text;
 
 -- 3. Triggers for updated_at on vocabulary

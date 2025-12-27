@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:uuid/uuid.dart';
 import '../models/scene.dart';
 import '../services/api_service.dart';
 import 'top_toast.dart';
@@ -13,6 +14,7 @@ class CustomSceneDialog extends StatefulWidget {
 }
 
 class _CustomSceneDialogState extends State<CustomSceneDialog> {
+  final _uuid = const Uuid();
   final TextEditingController _scenarioController = TextEditingController();
   String _selectedTone = 'Casual'; // Formal, Casual
   String _selectedLength = 'Brief'; // Brief, Detailed
@@ -40,7 +42,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
       );
 
       final newScene = Scene(
-        id: DateTime.now().toString(),
+        id: _uuid.v4(),
         title: generatedScene.title,
         description: generatedScene.description,
         aiRole: generatedScene.aiRole,
