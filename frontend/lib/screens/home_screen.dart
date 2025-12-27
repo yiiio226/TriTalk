@@ -5,6 +5,7 @@ import '../widgets/scene_card.dart';
 import '../widgets/custom_scene_dialog.dart';
 import '../widgets/scene_options_drawer.dart';
 import '../services/chat_history_service.dart';
+import '../widgets/top_toast.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'scenario_configuration_screen.dart';
@@ -176,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) => SceneOptionsDrawer(
                           onClear: () => _showClearConfirmation(context, scene),
                           onDelete: () => _showDeleteConfirmation(context, scene),
-                          // Bookmark not implemented for home screen long press as it requires message history
+                          onBookmark: () => _bookmarkConversation(context, scene),
                         ),
                       );
                     },
@@ -188,6 +189,33 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  void _bookmarkConversation(BuildContext context, Scene scene) {
+    final sceneKey = "${scene.title}_${scene.aiRole}";
+    final history = ChatHistoryService().getMessages(sceneKey);
+    final nonEmptyMessages = history.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
+    
+    if (nonEmptyMessages.isEmpty) {
+      showTopToast(context, "No messages to bookmark", isError: true);
+      return;
+    }
+
+    final lastMessage = nonEmptyMessages.last.content;
+    final preview = lastMessage.length > 50 ? '${lastMessage.substring(0, 50)}...' : lastMessage;
+    
+    final now = DateTime.now();
+    final dateStr = "${now.month}/${now.day}"; 
+
+    ChatHistoryService().addBookmark(
+      scene.title, 
+      preview, 
+      dateStr, 
+      sceneKey, 
+      nonEmptyMessages
+    );
+
+    showTopToast(context, "Conversation bookmarked!", isError: false);
   }
 
   void _showClearConfirmation(BuildContext context, Scene scene) {
