@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart' as app_models;
@@ -17,6 +18,7 @@ class AuthService {
   Future<void> init() async {
     // Listen to auth state changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      print('Auth state changed: ${data.event}');
       final session = data.session;
       if (session != null) {
         _loadUserFromSupabase(session.user.id);
@@ -130,8 +132,14 @@ class AuthService {
         redirectTo: 'io.supabase.tritalk://login-callback',
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
+
       return true;
     } catch (e) {
+      if (e.toString().contains('PlatformException') && e.toString().contains('Error while launching')) {
+        // Known issue with inAppWebView on some iOS versions where it throws but still works via deep link
+        print('Suppressing launch error: $e');
+        return false; 
+      }
       print('Google login error: $e');
       return false;
     }

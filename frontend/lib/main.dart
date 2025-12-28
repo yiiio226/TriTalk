@@ -27,6 +27,9 @@ class TriTalkApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const SplashScreen(),
+      routes: {
+        '/login-callback': (context) => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      },
       debugShowCheckedModeBanner: false,
     );
   }
