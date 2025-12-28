@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart' as app_models;
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -148,9 +149,33 @@ class AuthService {
   // Apple Login via Supabase OAuth
   Future<bool> loginWithApple() async {
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-        OAuthProvider.apple,
-      );
+      if (Platform.isIOS) {
+        // Native Apple Sign In on iOS
+        final credential = await SignInWithApple.getAppleIDCredential(
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName,
+          ],
+        );
+        
+        if (credential.identityToken == null) {
+          print('Apple login error: Missing identity token');
+          return false;
+        }
+
+        // Sign in to Supabase with the ID token
+        await Supabase.instance.client.auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: credential.identityToken!,
+          accessToken: credential.authorizationCode, 
+        );
+      } else {
+        // Web/other fallback
+        await Supabase.instance.client.auth.signInWithOAuth(
+          OAuthProvider.apple,
+          redirectTo: 'io.supabase.tritalk://login-callback',
+        );
+      }
       return true;
     } catch (e) {
       print('Apple login error: $e');
