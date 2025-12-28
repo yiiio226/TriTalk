@@ -244,7 +244,7 @@ class _ChatScreenState extends State<ChatScreen> {
         text, 
         'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
         history
-      );
+      ).timeout(const Duration(seconds: 30));
       
       if (!mounted) return;
 
