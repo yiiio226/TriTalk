@@ -2,6 +2,7 @@
 
 -- 1. Vocabulary: Add missing columns
 alter table vocabulary add column if not exists tag text;
+alter table vocabulary add column if not exists scenario_id text; -- Added support for favorites per scenario
 alter table vocabulary add column if not exists updated_at timestamp with time zone default now();
 
 -- 2. Custom Scenarios: Add missing columns

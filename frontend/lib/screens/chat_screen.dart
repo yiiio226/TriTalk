@@ -7,6 +7,7 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/analysis_sheet.dart';
 import '../widgets/hints_sheet.dart';
+import '../widgets/favorites_sheet.dart'; // Added
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
@@ -421,6 +422,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     onClear: _showClearConfirmation,
                     onBookmark: _bookmarkConversation,
                     onDelete: _showDeleteConfirmation,
+                    onShowFavorites: _showFavorites, // Added
                   ),
                 );
               },
@@ -465,7 +467,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
                           barrierColor: Colors.white.withOpacity(0.5),
-                          builder: (context) => FeedbackSheet(message: msg),
+                          builder: (context) => FeedbackSheet(
+                            message: msg,
+                            sceneId: widget.scene.id, // Pass sceneId
+                          ),
                         );
                       } else if (!msg.isUser) {
                         _handleAnalyze(msg);
@@ -790,6 +795,16 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showFavorites() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => FavoritesSheet(scenarioId: widget.scene.id),
     );
   }
 
