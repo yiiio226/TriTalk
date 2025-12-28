@@ -103,13 +103,13 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
   @override
   Widget build(BuildContext context) {
     return StyledDrawer(
-      height: MediaQuery.of(context).size.height * 0.6,
+      height: MediaQuery.of(context).size.height * 0.60,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
+                minHeight: constraints.minHeight,
               ),
               child: IntrinsicHeight(
                 child: Column(
