@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/scene.dart';
 import '../data/mock_scenes.dart';
 import '../widgets/scene_card.dart';
@@ -89,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Column(
               children: [
+                // 1. Fixed Header Area
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -169,163 +171,167 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
+
+                // 2. Scrollable Content Area with Refresh
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(20),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: _isGridView ? 2 : 1,
-                      childAspectRatio: _isGridView
-                          ? 0.75
-                          : 2.4, // Compact list view
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: scenes.length,
-                    itemBuilder: (context, index) {
-                      final scene = scenes[index];
-                      return LongPressDraggable<Scene>(
-                        data: scene,
-                        delay: const Duration(milliseconds: 300),
-                        onDragStarted: () {
-                          setState(() {
-                            _isDragging = true;
-                          });
-                        },
-                        onDragUpdate: (details) {
-                          _dragPosition.value = details.globalPosition;
-                        },
-                        onDragEnd: (details) {
-                          setState(() {
-                            _isDragging = false;
-                          });
-                        },
-                        onDraggableCanceled: (velocity, offset) {
-                          setState(() {
-                            _isDragging = false;
-                          });
-                        },
-                        feedback: ValueListenableBuilder<Offset>(
-                          valueListenable: _dragPosition,
-                          builder: (context, currentPosition, child) {
-                            final screenSize = MediaQuery.of(context).size;
-                            // Target center approx: Right 52, Bottom 132
-                            final targetPos = Offset(
-                              screenSize.width - 52,
-                              screenSize.height - 132
-                            );
-                            
-                            final distance = (currentPosition - targetPos).distance;
-                            // Radius of influence ~300
-                            final scale = (distance / 300).clamp(0.4, 1.05);
-
-                            return Transform.scale(
-                              scale: scale,
-                              child: Material(
-                                color: Colors.transparent,
-                                child: SizedBox(
-                                  width: _isGridView
-                                      ? (MediaQuery.of(context).size.width - 56) / 2
-                                      : MediaQuery.of(context).size.width - 40,
-                                  height: _isGridView
-                                      ? ((MediaQuery.of(context).size.width - 56) /
-                                              2) /
-                                          0.75
-                                      : (MediaQuery.of(context).size.width - 40) /
-                                          2.4,
-                                  child: Opacity(
-                                    opacity: 0.9,
-                                    child: SceneCard(
-                                      scene: scene,
-                                      showRole: !_isGridView,
-                                      onTap: () {},
-                                      onLongPress: null,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        childWhenDragging: Opacity(
-                          opacity: 0.3,
-                          child: SceneCard(
-                            scene: scene,
-                            showRole: !_isGridView,
-                            onTap: () {},
-                            onLongPress: null,
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    slivers: [
+                      // Refresh Control inside standard scroll view (appears below header)
+                      CupertinoSliverRefreshControl(
+                        onRefresh: _onRefresh,
+                      ),
+                      
+                      SliverPadding(
+                        padding: const EdgeInsets.all(20),
+                        sliver: SliverGrid(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: _isGridView ? 2 : 1,
+                            childAspectRatio: _isGridView ? 0.75 : 2.4,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
                           ),
-                        ),
-                        child: DragTarget<Scene>(
-                          onAccept: (draggedScene) {
-                            setState(() {
-                              final draggedIndex = scenes.indexOf(draggedScene);
-                              final targetIndex = index;
-                              if (draggedIndex != -1 && draggedIndex != targetIndex) {
-                                // Note: Reordering is visual only for now as SceneService
-                                // maintains order based on add time/source
-                                // ideally we would implement reorder in service
-                              }
-                            });
-                          },
-                          builder: (context, candidateData, rejectedData) {
-                            final isHovering = candidateData.isNotEmpty;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                border: isHovering
-                                    ? Border.all(
-                                        color: Colors.black,
-                                        width: 1,
-                                      )
-                                    : null,
-                              ),
-                              child: SceneCard(
-                                scene: scene,
-                                showRole: !_isGridView,
-                                onTap: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ChatScreen(scene: scene),
-                                    ),
-                                  );
-
-                                  if (result == 'delete') {
-                                    // Deletion handled via callback or drag
-                                    if (result == 'delete') {
-                                       if (SceneService().isCustomScene(scene)) {
-                                          await SceneService().deleteScene(scene.id);
-                                       }
-                                    }
-                                  }
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final scene = scenes[index];
+                              return LongPressDraggable<Scene>(
+                                data: scene,
+                                delay: const Duration(milliseconds: 300),
+                                onDragStarted: () {
+                                  setState(() {
+                                    _isDragging = true;
+                                  });
                                 },
-                                onLongPress: () {
-                                  // Only show menu if not currently dragging
-                                  if (!_isDragging) {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      backgroundColor: Colors.transparent,
-                                      barrierColor: Colors.white.withOpacity(0.5),
-                                      builder: (context) => SceneOptionsDrawer(
-                                        onClear: () => _showClearConfirmation(context, scene),
-                                        onDelete: () => _showDeleteConfirmation(context, scene),
-                                        onBookmark: () => _bookmarkConversation(context, scene),
+                                onDragUpdate: (details) {
+                                  _dragPosition.value = details.globalPosition;
+                                },
+                                onDragEnd: (details) {
+                                  setState(() {
+                                    _isDragging = false;
+                                  });
+                                },
+                                onDraggableCanceled: (velocity, offset) {
+                                  setState(() {
+                                    _isDragging = false;
+                                  });
+                                },
+                                feedback: ValueListenableBuilder<Offset>(
+                                  valueListenable: _dragPosition,
+                                  builder: (context, currentPosition, child) {
+                                    final screenSize = MediaQuery.of(context).size;
+                                    final targetPos = Offset(
+                                      screenSize.width - 52,
+                                      screenSize.height - 132
+                                    );
+                                    
+                                    final distance = (currentPosition - targetPos).distance;
+                                    final scale = (distance / 300).clamp(0.4, 1.05);
+
+                                    return Transform.scale(
+                                      scale: scale,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: SizedBox(
+                                          width: _isGridView
+                                              ? (MediaQuery.of(context).size.width - 56) / 2
+                                              : MediaQuery.of(context).size.width - 40,
+                                          height: _isGridView
+                                              ? ((MediaQuery.of(context).size.width - 56) / 2) / 0.75
+                                              : (MediaQuery.of(context).size.width - 40) / 2.4,
+                                          child: Opacity(
+                                            opacity: 0.9,
+                                            child: SceneCard(
+                                              scene: scene,
+                                              showRole: !_isGridView,
+                                              onTap: () {},
+                                              onLongPress: null,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     );
-                                  }
-                                },
-                              ),
-                            );
-                          },
+                                  },
+                                ),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.3,
+                                  child: SceneCard(
+                                    scene: scene,
+                                    showRole: !_isGridView,
+                                    onTap: () {},
+                                    onLongPress: null,
+                                  ),
+                                ),
+                                child: DragTarget<Scene>(
+                                  onAccept: (draggedScene) {
+                                    setState(() {
+                                      // Reordering handled by service or locally if needed
+                                    });
+                                  },
+                                  builder: (context, candidateData, rejectedData) {
+                                    final isHovering = candidateData.isNotEmpty;
+                                    return AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(24),
+                                        border: isHovering
+                                            ? Border.all(
+                                                color: Colors.black,
+                                                width: 1,
+                                              )
+                                            : null,
+                                      ),
+                                      child: SceneCard(
+                                        scene: scene,
+                                        showRole: !_isGridView,
+                                        onTap: () async {
+                                          final result = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ChatScreen(scene: scene),
+                                            ),
+                                          );
+
+                                          if (result == 'delete') {
+                                             if (SceneService().isCustomScene(scene)) {
+                                                await SceneService().deleteScene(scene.id);
+                                             }
+                                          }
+                                        },
+                                        onLongPress: () {
+                                          if (!_isDragging) {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              backgroundColor: Colors.transparent,
+                                              barrierColor: Colors.white.withOpacity(0.5),
+                                              builder: (context) => SceneOptionsDrawer(
+                                                onClear: () => _showClearConfirmation(context, scene),
+                                                onDelete: () => _showDeleteConfirmation(context, scene),
+                                                onBookmark: () => _bookmarkConversation(context, scene),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            childCount: scenes.length,
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                      
+                       // Bottom Padding
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 100), // Space for FAB
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
+
             
             // Side Action Panel
             if (_isDragging)
@@ -365,6 +371,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  static Future<void> _onRefresh() async {
+     // Min wait time for better UX
+     await Future.wait([
+        SceneService().refreshScenes(),
+        Future.delayed(const Duration(milliseconds: 800)),
+     ]);
   }
 
   Widget _buildDragTarget({
