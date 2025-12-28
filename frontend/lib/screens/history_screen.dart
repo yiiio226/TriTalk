@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_history_service.dart';
 import '../widgets/chat_bubble.dart'; 
 import '../widgets/empty_state_widget.dart';
+import '../models/message.dart'; // Import Message model
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -97,6 +98,21 @@ class ArchivedChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Reset animation flags for all messages to prevent re-animation
+    final displayMessages = bookmark.messages.map((msg) {
+      return Message(
+        id: msg.id,
+        content: msg.content,
+        isUser: msg.isUser,
+        timestamp: msg.timestamp,
+        translation: msg.translation,
+        feedback: msg.feedback,
+        analysis: msg.analysis,
+        isAnimated: false, // Disable animation for archived messages
+        isLoading: false,  // Ensure no loading state
+      );
+    }).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -133,10 +149,10 @@ class ArchivedChatScreen extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
-                itemCount: bookmark.messages.length,
+                itemCount: displayMessages.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final msg = bookmark.messages[index];
+                  final msg = displayMessages[index];
                   return Align(
                     alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
                     child: ChatBubble(
