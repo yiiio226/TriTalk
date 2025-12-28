@@ -127,10 +127,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: Colors.white,
-                  size: 50,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(25),
+                  child: Image.asset(
+                    'assets/icon/icon.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -144,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Master English through immersive\nroleplay conversations.',
+                'Master languages through immersive\nroleplay conversations.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,

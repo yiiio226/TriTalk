@@ -122,10 +122,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: Colors.white,
-                  size: 60,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: Image.asset(
+                    'assets/icon/icon.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -140,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
               const SizedBox(height: 16),
               Text(
-                'Your AI English Companion',
+                'Your AI Language Companion',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
