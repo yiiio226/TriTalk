@@ -65,10 +65,30 @@ class AuthService {
         _profileExistsInDatabase = false;
         final authUser = Supabase.instance.client.auth.currentUser;
         if (authUser != null) {
+          String displayName = authUser.userMetadata?['full_name'] ?? '';
+          String displayEmail = authUser.email ?? '';
+          
+          // Check if signed in with Apple
+          final isAppleLogin = authUser.appMetadata['provider'] == 'apple';
+          
+          if (isAppleLogin) {
+            if (displayName.isEmpty || displayName == 'User') {
+              displayName = 'TriTalk Explorer';
+            }
+            if (displayEmail.isEmpty) {
+              displayEmail = 'Signed in with Apple';
+            }
+          } else {
+            // Default fallback for non-Apple users
+            if (displayName.isEmpty) {
+              displayName = authUser.email?.split('@')[0] ?? 'User';
+            }
+          }
+
           _currentUser = app_models.User(
             id: authUser.id,
-            name: authUser.userMetadata?['full_name'] ?? authUser.email?.split('@')[0] ?? 'User',
-            email: authUser.email ?? '',
+            name: displayName,
+            email: displayEmail,
             avatarUrl: authUser.userMetadata?['avatar_url'],
             gender: 'male',
             nativeLanguage: 'Chinese (Simplified)',
