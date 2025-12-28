@@ -48,10 +48,24 @@ class AuthService {
       if (response != null && response['gender'] != null) {
         // Profile exists with gender set - user has completed onboarding
         _profileExistsInDatabase = true;
+        
+        String name = response['name'] ?? '';
+        String email = Supabase.instance.client.auth.currentUser?.email ?? '';
+        
+        // Fallback for empty name
+        if (name.isEmpty || name == 'User') {
+          name = 'TriTalk Explorer';
+        }
+        
+        // Handle Apple Private Relay email or empty email
+        if (email.isEmpty || email.contains('privaterelay.appleid.com')) {
+           email = 'Signed in with Apple';
+        }
+
         _currentUser = app_models.User(
           id: response['id'],
-          name: response['name'] ?? '',
-          email: Supabase.instance.client.auth.currentUser?.email ?? '',
+          name: name,
+          email: email,
           avatarUrl: response['avatar_url'],
           gender: response['gender'] ?? 'male',
           nativeLanguage: response['native_lang'] ?? 'Chinese (Simplified)',
