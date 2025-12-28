@@ -24,7 +24,7 @@ class SceneService extends ChangeNotifier {
 
   Future<void> _init() async {
     await _loadFromLocal();
-    _syncFromCloud();
+    refreshScenes();
   }
 
   // Load custom scenes from local storage and append to mock scenes
@@ -60,8 +60,8 @@ class SceneService extends ChangeNotifier {
     }
   }
 
-  // Sync from cloud (background)
-  Future<void> _syncFromCloud() async {
+  // Sync from cloud (background) -> Public for manual refresh
+  Future<void> refreshScenes() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
