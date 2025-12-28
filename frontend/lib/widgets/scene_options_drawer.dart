@@ -4,13 +4,15 @@ import 'styled_drawer.dart';
 class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onClear;
   final VoidCallback? onDelete;
-  final VoidCallback? onBookmark;
+  final VoidCallback? onBookmark; // This is "Bookmark Conversation"
+  final VoidCallback? onShowFavorites; // New: Show Favorites List
 
   const SceneOptionsDrawer({
     Key? key,
     this.onClear,
     this.onDelete,
     this.onBookmark,
+    this.onShowFavorites,
   }) : super(key: key);
 
   @override
@@ -20,6 +22,15 @@ class SceneOptionsDrawer extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (onShowFavorites != null)
+             ListTile(
+               leading: const Icon(Icons.star_outline, color: Colors.amber),
+               title: const Text('Favorites'),
+               onTap: () {
+                 Navigator.pop(context);
+                 onShowFavorites!();
+               },
+             ),
           if (onClear != null)
             ListTile(
               leading: const Icon(Icons.refresh, color: Colors.black),
@@ -38,7 +49,7 @@ class SceneOptionsDrawer extends StatelessWidget {
                 onBookmark!();
               },
             ),
-          if (onClear != null || onBookmark != null) const Divider(),
+          if (onClear != null || onBookmark != null || onShowFavorites != null) const Divider(),
           if (onDelete != null)
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),

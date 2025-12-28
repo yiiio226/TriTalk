@@ -8,13 +8,17 @@ class AnalysisSheet extends StatelessWidget {
   final Message message;
   final MessageAnalysis? analysis;
   final bool isLoading;
+  final String? sceneId; // Added sceneId
 
   const AnalysisSheet({
     Key? key,
     required this.message,
     this.analysis,
     this.isLoading = false,
+    this.sceneId,
   }) : super(key: key);
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -197,44 +201,7 @@ class AnalysisSheet extends StatelessWidget {
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            ...analysis!.grammarPoints.map((point) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9), // Green 50
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    point.structure,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[900],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    point.explanation,
-                    style: TextStyle(fontSize: 14, color: Colors.green[800], height: 1.4),
-                  ),
-                  if (point.example.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      '例: ${point.example}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.green[700],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            )),
+            ...analysis!.grammarPoints.map((point) => _buildGrammarPoint(context, point)),
             const SizedBox(height: 12),
           ],
 
@@ -444,7 +411,7 @@ class AnalysisSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildGrammarPoint(GrammarPoint point) {
+  Widget _buildGrammarPoint(BuildContext context, GrammarPoint point) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -456,13 +423,51 @@ class AnalysisSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            point.structure,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.green[900],
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  point.structure,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[900],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Save Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    final contentToSave = "${point.explanation}\n\n例: ${point.example}";
+                    
+                    VocabService().add(
+                      point.structure,
+                      contentToSave,
+                      "Grammar Point",
+                      scenarioId: sceneId,
+                    );
+                    showTopToast(
+                      context,
+                      'Saved Grammar Point',
+                      isError: false,
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      color: Colors.green[700],
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_history_service.dart';
 import '../widgets/chat_bubble.dart'; 
 import '../widgets/empty_state_widget.dart';
+import '../widgets/history_skeleton_loader.dart';
 import '../models/message.dart'; // Import Message model
 
 class HistoryScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   List<BookmarkedConversation> _bookmarks = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -20,9 +22,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _loadBookmarks();
   }
 
-  void _loadBookmarks() {
+  Future<void> _loadBookmarks() async {
+    // Simulate network delay to show skeleton
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    if (!mounted) return;
+    
     setState(() {
       _bookmarks = ChatHistoryService().getBookmarks();
+      _isLoading = false;
     });
   }
 
@@ -58,11 +66,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 20),
             // Content
             Expanded(
-              child: _bookmarks.isEmpty
-                  ? const EmptyStateWidget(
-                      message: 'No archived conversations',
-                      imagePath: 'assets/empty_state_lemon.png',
-                    )
+              child: _isLoading 
+                  ? const HistorySkeletonLoader()
+                  : _bookmarks.isEmpty
+                      ? const EmptyStateWidget(
+                          message: 'No archived conversations',
+                          imagePath: 'assets/empty_state_lemon.png',
+                        )
                   : ListView.separated(
                       itemCount: _bookmarks.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),

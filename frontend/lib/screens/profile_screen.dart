@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../data/language_constants.dart';
 import 'vocab_screen.dart';
+import 'grammar_patterns_screen.dart';
 import 'history_screen.dart';
 import 'paywall_screen.dart';
 import 'splash_screen.dart'; // For logout navigation
@@ -310,6 +311,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const VocabScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildMenuCard(
+                    context,
+                    title: 'Sentence Patterns',
+                    icon: Icons.auto_awesome_rounded, // Consistent with AnalysisSheet
+                    iconColor: Colors.green,
+                    onTap: () {
+                      Navigator.push(
+                         context,
+                         MaterialPageRoute(builder: (context) => const GrammarPatternsScreen()),
                       );
                     },
                   ),

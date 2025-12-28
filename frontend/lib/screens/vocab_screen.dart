@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/vocab_service.dart';
 import '../widgets/empty_state_widget.dart';
+import '../widgets/vocab_skeleton_loader.dart';
 
 class VocabScreen extends StatelessWidget {
   const VocabScreen({Key? key}) : super(key: key);
@@ -43,7 +44,7 @@ class VocabScreen extends StatelessWidget {
                 builder: (context, child) {
                   final service = VocabService();
                   if (service.isLoading && service.items.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const VocabSkeletonLoader();
                   }
                   
                   final items = service.items;

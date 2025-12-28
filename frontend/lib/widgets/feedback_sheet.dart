@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
 import 'styled_drawer.dart';
+import 'top_toast.dart';
 
 class FeedbackSheet extends StatelessWidget {
   final Message message;
+  final String sceneId; // Added sceneId
 
-  const FeedbackSheet({Key? key, required this.message}) : super(key: key);
+  const FeedbackSheet({
+    Key? key, 
+    required this.message, 
+    required this.sceneId
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -44,17 +50,34 @@ class FeedbackSheet extends StatelessWidget {
           const SizedBox(height: 16),
           
           if (!feedback.isPerfect) ...[
-            _buildSection('Corrected', feedback.correctedText, isSuccess: true),
+            _buildSection(
+              'Corrected', 
+              feedback.correctedText, 
+              isSuccess: true,
+              context: context,
+            ),
             const SizedBox(height: 16),
           ],
           
           if (feedback.nativeExpression.isNotEmpty) ...[
-             _buildSection('Native Expression', feedback.nativeExpression, isNative: true),
+             _buildSection(
+               'Native Expression', 
+               feedback.nativeExpression, 
+               isNative: true,
+               context: context,
+               onSave: () => _saveToVocab(context, feedback.nativeExpression, "Native Expression"),
+             ),
              const SizedBox(height: 16),
           ],
 
           if (feedback.exampleAnswer.isNotEmpty) ...[
-             _buildSection('Possible Answer', feedback.exampleAnswer, isNative: true),
+             _buildSection(
+               'Possible Answer', 
+               feedback.exampleAnswer, 
+               isNative: true,
+               context: context,
+               onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Possible Answer"),
+             ),
              const SizedBox(height: 16),
           ],
           
@@ -89,15 +112,7 @@ class FeedbackSheet extends StatelessWidget {
                     ? feedback.nativeExpression 
                     : feedback.correctedText;
                     
-                VocabService().add(
-                  textToSave,
-                  "Smart Feedback", 
-                  "Correction",
-                );
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Saved to Vocabulary')),
-                );
+                _saveToVocab(context, textToSave, "Smart Feedback");
               },
               icon: const Icon(Icons.bookmark_border),
               label: const Text(
@@ -120,7 +135,25 @@ class FeedbackSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String label, String text, {bool isError = false, bool isSuccess = false, bool isNative = false}) {
+  void _saveToVocab(BuildContext context, String phrase, String tag) {
+    VocabService().add(
+      phrase,
+      "Smart Feedback", 
+      tag,
+      scenarioId: sceneId,
+    );
+     showTopToast(context, 'Saved to Vocabulary', isError: false);
+  }
+
+  Widget _buildSection(
+    String label, 
+    String text, {
+    bool isError = false, 
+    bool isSuccess = false, 
+    bool isNative = false,
+    BuildContext? context,
+    VoidCallback? onSave,
+  }) {
     Color? textColor;
     if (isError) textColor = Colors.red[700];
     if (isSuccess) textColor = Colors.green[700];
@@ -129,13 +162,26 @@ class FeedbackSheet extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 12, 
-            fontWeight: FontWeight.bold, 
-            color: Colors.grey[600],
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12, 
+                fontWeight: FontWeight.bold, 
+                color: Colors.grey[600],
+              ),
+            ),
+            if (onSave != null)
+              GestureDetector(
+                onTap: onSave,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
+                  child: Icon(Icons.bookmark_add_outlined, size: 20, color: Colors.grey[600]),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 4),
         Text(

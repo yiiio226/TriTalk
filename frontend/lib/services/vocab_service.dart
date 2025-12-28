@@ -7,13 +7,20 @@ class VocabItem {
   final String phrase;
   final String translation;
   final String tag;
+  final String? scenarioId; // Added scenario link
 
-  VocabItem({required this.phrase, required this.translation, required this.tag});
+  VocabItem({
+    required this.phrase, 
+    required this.translation, 
+    required this.tag,
+    this.scenarioId,
+  });
 
   Map<String, dynamic> toJson() => {
     'phrase': phrase,
     'translation': translation,
     'tag': tag,
+    'scenario_id': scenarioId,
   };
 
   factory VocabItem.fromJson(Map<String, dynamic> json) {
@@ -21,6 +28,7 @@ class VocabItem {
       phrase: json['phrase'] ?? '',
       translation: json['translation'] ?? '',
       tag: json['tag'] ?? '',
+      scenarioId: json['scenario_id'],
     );
   }
 }
@@ -77,6 +85,7 @@ class VocabService extends ChangeNotifier {
                phrase: e['word'] ?? '', 
                translation: e['translation'] ?? '', 
                tag: e['tag'] ?? '',
+               scenarioId: e['scenario_id'],
              );
         }).toList();
         
@@ -101,10 +110,19 @@ class VocabService extends ChangeNotifier {
   // No longer needed as we sync per item operation
   // Future<void> _syncToCloud() async {}
 
-  Future<void> add(String phrase, String translation, String tag) async {
-    // Avoid duplicates based on phrase
-    if (!_items.any((i) => i.phrase == phrase)) {
-      final newItem = VocabItem(phrase: phrase, translation: translation, tag: tag);
+  Future<void> add(String phrase, String translation, String tag, {String? scenarioId}) async {
+    // Avoid duplicates based on phrase AND scenarioId
+    // If scenarioId is provided, we check if there's already an item with this phrase AND this scenarioId.
+    // If scenarioId is null, we check if there's an item with this phrase and null scenarioId.
+    bool exists = _items.any((i) => i.phrase == phrase && i.scenarioId == scenarioId);
+
+    if (!exists) {
+      final newItem = VocabItem(
+        phrase: phrase, 
+        translation: translation, 
+        tag: tag,
+        scenarioId: scenarioId,
+      );
       // Add to top of list
       _items.insert(0, newItem);
       notifyListeners();
@@ -127,6 +145,7 @@ class VocabService extends ChangeNotifier {
           'word': item.phrase,
           'translation': item.translation,
           'tag': item.tag,
+          'scenario_id': item.scenarioId,
         }).timeout(const Duration(seconds: 5));
       } catch (e) {
          debugPrint('Error adding vocab to cloud: $e');
@@ -157,5 +176,9 @@ class VocabService extends ChangeNotifier {
       } catch (e) {
          debugPrint('Error removing vocab from cloud: $e');
       }
+  }
+
+  List<VocabItem> getItemsForScenario(String scenarioId) {
+    return _items.where((item) => item.scenarioId == scenarioId).toList();
   }
 }
