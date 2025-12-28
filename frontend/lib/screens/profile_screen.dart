@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../data/language_constants.dart';
-import 'vocab_screen.dart';
-import 'grammar_patterns_screen.dart';
-import 'history_screen.dart';
+import 'unified_favorites_screen.dart'; // Import UnifiedFavoritesScreen
 import 'paywall_screen.dart';
 import 'splash_screen.dart'; // For logout navigation
 
@@ -304,39 +302,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                   _buildMenuCard(
                     context,
-                    title: 'Vocabulary Notebook',
-                    icon: Icons.book,
+                    title: 'Favorites', // Unified title
+                    subtitle: 'Vocabulary, Sentences, Chat History',
+                    icon: Icons.bookmark,
                     iconColor: Colors.amber,
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const VocabScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMenuCard(
-                    context,
-                    title: 'Sentence Patterns',
-                    icon: Icons.auto_awesome_rounded, // Consistent with AnalysisSheet
-                    iconColor: Colors.green,
-                    onTap: () {
-                      Navigator.push(
-                         context,
-                         MaterialPageRoute(builder: (context) => const GrammarPatternsScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMenuCard(
-                    context,
-                    title: 'Chat History',
-                    icon: Icons.history,
-                    iconColor: Colors.blue,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                        MaterialPageRoute(builder: (context) => const UnifiedFavoritesScreen()),
                       );
                     },
                   ),

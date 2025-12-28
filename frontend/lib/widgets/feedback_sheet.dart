@@ -65,7 +65,7 @@ class FeedbackSheet extends StatelessWidget {
                feedback.nativeExpression, 
                isNative: true,
                context: context,
-               onSave: () => _saveToVocab(context, feedback.nativeExpression, "Native Expression"),
+               onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
              ),
              const SizedBox(height: 16),
           ],
@@ -76,7 +76,7 @@ class FeedbackSheet extends StatelessWidget {
                feedback.exampleAnswer, 
                isNative: true,
                context: context,
-               onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Possible Answer"),
+               onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
              ),
              const SizedBox(height: 16),
           ],
@@ -112,7 +112,7 @@ class FeedbackSheet extends StatelessWidget {
                     ? feedback.nativeExpression 
                     : feedback.correctedText;
                     
-                _saveToVocab(context, textToSave, "Smart Feedback");
+                _saveToVocab(context, textToSave, "Analyzed Sentence");
               },
               icon: const Icon(Icons.bookmark_border),
               label: const Text(
