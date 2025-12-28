@@ -478,10 +478,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 12),
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
+                  onPressed: () async {
                     final sceneKey = scene.id;
-                    ChatHistoryService().clearHistory(sceneKey);
+                    await ChatHistoryService().clearHistory(sceneKey);
+                    if (mounted) {
+                      setState(() {});
+                      showTopToast(context, 'Conversation cleared', isError: false);
+                      Navigator.pop(context);
+                    }
                   },
                   child: const Text(
                     'Clear',

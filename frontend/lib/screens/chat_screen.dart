@@ -713,11 +713,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 const SizedBox(width: 12),
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
+                  onPressed: () async {
                     final sceneKey = widget.scene.id;
-                    ChatHistoryService().clearHistory(sceneKey);
-                    _loadMessages();
+                    await ChatHistoryService().clearHistory(sceneKey);
+                    if (mounted) {
+                      _loadMessages();
+                      showTopToast(context, 'Conversation cleared', isError: false);
+                      Navigator.pop(context);
+                    }
                   },
                   child: const Text(
                     'Clear',

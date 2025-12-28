@@ -95,10 +95,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     
     CRITICAL ROLE INSTRUCTIONS:
     1. Carefully read the scenario context above. It describes TWO roles: the AI role (YOUR role) and the user role (the learner's role).
-    2. You MUST play the AI role described in the scenario. For example:
-       - If the scenario says "Talking to Helpful Stranger", YOU are the helpful stranger.
-       - If the scenario says "Ordering at a Coffee Shop", YOU are the barista/server.
-       - If the scenario says "Lost Wallet", YOU are the person being asked for help (NOT the person who lost the wallet).
+    2. You MUST play the AI role specified in "AI Role:" field. The user will play the "User Role:" field.
     3. NEVER switch roles with the user. The user is practicing their language skills by playing their assigned role.
     4. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
     5. Respond naturally as your character would in this real-world situation.
@@ -106,35 +103,49 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     7. Your goal is to help the user practice ${targetLang} by maintaining an authentic conversation.
     
     
-    CRITICAL: Analyze ONLY the user's LATEST message (the one they just sent) for grammar, naturalness, and appropriateness. DO NOT analyze messages from the conversation history.
+    === TASK 1: GENERATE YOUR ROLEPLAY REPLY ===
+    First, generate your in-character reply to the user's LATEST message.
+    - Read the conversation history to understand context
+    - Respond naturally as your character would
+    - Stay in role, never break character
+    - Your reply goes in the "reply" field
     
-    WARNING: DO NOT combine the user's latest message with previous conversation context when generating corrected_text, native_expression, or example_answer. These fields should ONLY contain alternative ways to say the user's LATEST message, NOT a combination of the user's message with your previous questions or statements.
+    === TASK 2: ANALYZE USER'S LATEST MESSAGE (SEPARATE FROM YOUR REPLY) ===
+    Second, analyze ONLY the user's LATEST message for grammar and naturalness.
     
-    IMPORTANT: Both "native_expression" and "example_answer" should show how the USER (learner) could better express THEIR LATEST message. These are NOT your (AI character's) responses, and they are NOT about previous messages in the conversation.
+    CRITICAL: The user's LATEST message will be marked with <<LATEST_USER_MESSAGE>> tags.
+    - Extract ONLY the text between <<LATEST_USER_MESSAGE>> and <</LATEST_USER_MESSAGE>>
+    - DO NOT analyze your own (assistant) messages
+    - DO NOT analyze previous user messages from history
+    - DO NOT combine the user's message with conversation history
+    - DO NOT include the marker tags in your analysis
+    
+    WARNING: The "corrected_text", "native_expression", and "example_answer" fields MUST be in ${targetLang}, NOT in ${nativeLang}. These fields should ONLY show alternative ways for the USER to express THEIR LATEST message.
     
     
     Example (assuming Native=${nativeLang}, Target=${targetLang}):
-    Conversation history: "Is everything okay?"
-    User's LATEST message: "I'm not good"
+    Conversation history: 
+      Assistant: "Is everything okay?"
+      User: "good"  ← THIS is the LATEST message to analyze
     
-    CORRECT:
-    - corrected_text: "I'm not good" or "I'm not doing well"
-    - native_expression: "I'm not feeling well"
-    - example_answer: "I'm having a rough day"
+    CORRECT Analysis:
+    - corrected_text: "Good" or "I'm good"
+    - native_expression: "I'm doing well"
+    - example_answer: "Everything's fine, thanks"
     
-    WRONG (DO NOT DO THIS):
-    - corrected_text: "Excuse me, you look worried. Is everything okay? I'm not doing well" ❌
-    - native_expression: "Excuse me, you look worried. Is everything okay? I'm not feeling well" ❌
+    WRONG Analysis (DO NOT DO THIS):
+    - corrected_text: "Is everything okay? Good" ❌
+    - native_expression: "Is everything okay? I'm doing well" ❌
     
     You MUST return your response in valid JSON format:
     {
-        "reply": "Your in-character conversational reply (stay in role, never mention practice/learning)",
+        "reply": "Your in-character conversational reply to the user's LATEST message (stay in role)",
         "analysis": {
-            "is_perfect": boolean, // Set to true ONLY if the user's LATEST message is grammatically correct, native-sounding, AND perfectly polite/appropriate for the context.
-            "corrected_text": "Grammatically correct version of the user's LATEST message (in ${targetLang})",
-            "native_expression": "More natural/idiomatic way for the USER to express their LATEST message in ${targetLang} (NOT your AI response, NOT previous messages, MUST be in ${targetLang} only)",
-            "explanation": "Explanation in ${nativeLang} about the user's LATEST message. If perfect, compliment in ${nativeLang}. DO NOT include Pinyin.",
-            "example_answer": "Alternative way for the USER to express the same idea from their LATEST message in ${targetLang} (NOT your AI response, NOT previous messages, MUST be in ${targetLang} only)"
+            "is_perfect": boolean,
+            "corrected_text": "Grammatically correct version of ONLY the user's LATEST message (in ${targetLang})",
+            "native_expression": "More natural way for the USER to express THEIR LATEST message (MUST be in ${targetLang}, NOT in ${nativeLang})",
+            "explanation": "Explanation in ${nativeLang} about the user's LATEST message. DO NOT include Pinyin.",
+            "example_answer": "Alternative way for the USER to express THEIR LATEST message (MUST be in ${targetLang}, NOT in ${nativeLang})"
         }
     }`;
 
@@ -148,21 +159,31 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
             messages.push(...recentHistory);
         }
 
-        // Add current user message
-        messages.push({ role: 'user', content: body.message });
+        // Add current user message with EXPLICIT marker to help AI identify it
+        messages.push({
+            role: 'user',
+            content: `<<LATEST_USER_MESSAGE>>${body.message}<</LATEST_USER_MESSAGE>>`
+        });
 
         const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
         const data = parseJSON(content);
 
-        const replyText = data.reply || '';
+        // Helper to sanitize text (remove invalid UTF-16 characters)
+        const sanitizeText = (text: string): string => {
+            if (!text) return '';
+            // Remove any invalid UTF-16 surrogate pairs and control characters
+            return text.replace(/[\uD800-\uDFFF]/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        };
+
+        const replyText = sanitizeText(data.reply || '');
         const analysisData = data.analysis || {};
 
         const feedback: ReviewFeedback = {
             is_perfect: analysisData.is_perfect || false,
-            corrected_text: analysisData.corrected_text || body.message,
-            native_expression: analysisData.native_expression || '',
-            explanation: analysisData.explanation || '',
-            example_answer: analysisData.example_answer || '',
+            corrected_text: sanitizeText(analysisData.corrected_text || body.message),
+            native_expression: sanitizeText(analysisData.native_expression || ''),
+            explanation: sanitizeText(analysisData.explanation || ''),
+            example_answer: sanitizeText(analysisData.example_answer || ''),
         };
 
         const response: ChatResponse = {
