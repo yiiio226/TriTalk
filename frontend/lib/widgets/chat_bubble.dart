@@ -8,8 +8,14 @@ import '../widgets/save_note_sheet.dart';
 class ChatBubble extends StatefulWidget {
   final Message message;
   final VoidCallback? onTap;
+  final String? sceneId; // Add sceneId to pass to SaveNoteSheet
 
-  const ChatBubble({Key? key, required this.message, this.onTap}) : super(key: key);
+  const ChatBubble({
+    Key? key, 
+    required this.message, 
+    this.onTap,
+    this.sceneId,
+  }) : super(key: key);
 
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
@@ -275,7 +281,12 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       showModalBottomSheet(
                          context: context,
                          isScrollControlled: true,
-                        builder: (context) => SaveNoteSheet(originalSentence: message.content),
+                         backgroundColor: Colors.transparent,
+                         barrierColor: Colors.white.withOpacity(0.5),
+                        builder: (context) => SaveNoteSheet(
+                          originalSentence: message.content,
+                          sceneId: widget.sceneId, // Pass sceneId
+                        ),
                       );
                     },
                     child: Container(

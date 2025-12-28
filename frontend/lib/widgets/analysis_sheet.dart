@@ -276,6 +276,7 @@ class AnalysisSheet extends StatelessWidget {
                 message.content,
                 "AI Message Analysis",
                 "Analyzed Sentence",
+                scenarioId: sceneId, // Link to current conversation
               );
               Navigator.pop(context);
               showTopToast(context, "Saved to Vocabulary", isError: false);
@@ -287,7 +288,7 @@ class AnalysisSheet extends StatelessWidget {
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
             ),
-            child: const Text('Save Sentence to Vocabulary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: const Text('Save Sentence', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ] else ...[
           const Center(
@@ -548,6 +549,7 @@ class AnalysisSheet extends StatelessWidget {
                       vocab.word,
                       vocab.definition,
                       "Analysis Vocabulary",
+                      scenarioId: sceneId, // Link to current conversation
                     );
                     showTopToast(
                       context,

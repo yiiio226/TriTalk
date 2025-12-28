@@ -8,19 +8,22 @@ class VocabItem {
   final String translation;
   final String tag;
   final String? scenarioId; // Added scenario link
+  final DateTime createdAt; // Added for sorting
 
   VocabItem({
     required this.phrase, 
     required this.translation, 
     required this.tag,
     this.scenarioId,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
     'phrase': phrase,
     'translation': translation,
     'tag': tag,
     'scenario_id': scenarioId,
+    'created_at': createdAt.toIso8601String(),
   };
 
   factory VocabItem.fromJson(Map<String, dynamic> json) {
@@ -29,6 +32,9 @@ class VocabItem {
       translation: json['translation'] ?? '',
       tag: json['tag'] ?? '',
       scenarioId: json['scenario_id'],
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
     );
   }
 }
@@ -56,6 +62,8 @@ class VocabService extends ChangeNotifier {
       try {
         final List<dynamic> decoded = jsonDecode(jsonString);
         _items = decoded.map((e) => VocabItem.fromJson(e)).toList();
+        // Ensure sorted by newest first
+        _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         notifyListeners();
       } catch (e) {
         debugPrint('Error loading local vocab: $e');
@@ -77,6 +85,7 @@ class VocabService extends ChangeNotifier {
           .from('vocabulary')
           .select()
           .eq('user_id', userId)
+          .order('created_at', ascending: false) // Sort by newest first
           .timeout(const Duration(seconds: 5));
 
       if (response != null && response is List) {
@@ -86,6 +95,7 @@ class VocabService extends ChangeNotifier {
                translation: e['translation'] ?? '', 
                tag: e['tag'] ?? '',
                scenarioId: e['scenario_id'],
+               createdAt: e['created_at'] != null ? DateTime.parse(e['created_at']) : null,
              );
         }).toList();
         
