@@ -82,7 +82,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     });
 
     try {
-      final polished = await ApiService().polishScenario(text);
+      final polished = await ApiService().polishScenario(text).timeout(const Duration(seconds: 30));
       if (!mounted) return;
       
       setState(() {
