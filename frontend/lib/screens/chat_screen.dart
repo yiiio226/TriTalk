@@ -887,6 +887,8 @@ class _ChatScreenState extends State<ChatScreen> {
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          barrierColor: Colors.white.withOpacity(0.5),
           builder: (context) => AnalysisSheet(
             message: updatedMessage,
             analysis: analysis,
