@@ -12,7 +12,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _navigated = false;
 
   @override
@@ -54,7 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
-    setState(() => _isLoading = true);
+    if (_isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
     try {
       final success = await AuthService().loginWithGoogle();
       if (!success && mounted) {
@@ -73,12 +75,13 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
   Future<void> _handleAppleLogin() async {
-    setState(() => _isLoading = true);
+    if (_isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
     try {
       final success = await AuthService().loginWithApple();
       if (!success && mounted) {
@@ -97,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isAppleLoading = false);
     }
   }
 
@@ -155,27 +158,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const Spacer(),
-              if (_isLoading)
-                const CircularProgressIndicator(color: Colors.black)
-              else ...[
-                _buildSocialButton(
-                  text: 'Continue with Google',
-                  icon: Icons.g_mobiledata, // Replace with asset image in real app
-                  color: Colors.white,
-                  textColor: Colors.black,
-                  borderColor: Colors.grey[300],
-                  onPressed: _handleGoogleLogin,
-                ),
-                const SizedBox(height: 16),
-                _buildSocialButton(
-                  text: 'Continue with Apple',
-                  icon: Icons.apple,
-                  color: Colors.black,
-                  textColor: Colors.white,
-                  borderColor: Colors.transparent,
-                  onPressed: _handleAppleLogin,
-                ),
-              ],
+              _buildSocialButton(
+                text: 'Continue with Google',
+                icon: Icons.g_mobiledata, // Replace with asset image in real app
+                color: Colors.white,
+                textColor: Colors.black,
+                borderColor: Colors.grey[300],
+                onPressed: _handleGoogleLogin,
+                isLoading: _isGoogleLoading,
+              ),
+              const SizedBox(height: 16),
+              _buildSocialButton(
+                text: 'Continue with Apple',
+                icon: Icons.apple,
+                color: Colors.black,
+                textColor: Colors.white,
+                borderColor: Colors.transparent,
+                onPressed: _handleAppleLogin,
+                isLoading: _isAppleLoading,
+              ),
               const SizedBox(height: 40),
               Text(
                 'By continuing, you agree to our Terms & Privacy Policy',
@@ -200,12 +201,13 @@ class _LoginScreenState extends State<LoginScreen> {
     required Color textColor,
     required Color? borderColor,
     required VoidCallback onPressed,
+    bool isLoading = false,
   }) {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? () {} : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: textColor,
@@ -220,7 +222,17 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 24),
+            if (isLoading)
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                ),
+              )
+            else
+              Icon(icon, size: 24),
             const SizedBox(width: 12),
             Text(
               text,
