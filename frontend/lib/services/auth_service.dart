@@ -164,11 +164,31 @@ class AuthService {
         }
 
         // Sign in to Supabase with the ID token
-        await Supabase.instance.client.auth.signInWithIdToken(
+        final authResponse = await Supabase.instance.client.auth.signInWithIdToken(
           provider: OAuthProvider.apple,
           idToken: credential.identityToken!,
           accessToken: credential.authorizationCode, 
         );
+
+        // Update user metadata with name if provided (Apple only provides this on first login)
+        if (credential.givenName != null || credential.familyName != null) {
+          final String fullName = [credential.givenName, credential.familyName]
+              .where((s) => s != null && s.isNotEmpty)
+              .join(' ');
+          
+          if (fullName.isNotEmpty && authResponse.user != null) {
+             try {
+                await Supabase.instance.client.auth.updateUser(
+                  UserAttributes(
+                    data: {'full_name': fullName},
+                  ),
+                );
+                print('Updated Supabase user metadata with Apple name: $fullName');
+             } catch (updateError) {
+               print('Failed to update user metadata: $updateError');
+             }
+          }
+        }
       } else {
         // Web/other fallback
         await Supabase.instance.client.auth.signInWithOAuth(
