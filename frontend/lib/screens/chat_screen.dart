@@ -847,6 +847,7 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (context) => AnalysisSheet(
           message: message,
           analysis: message.analysis,
+          sceneId: widget.scene.id,
         ),
       );
       return;
@@ -904,9 +905,10 @@ class _ChatScreenState extends State<ChatScreen> {
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           barrierColor: Colors.white.withOpacity(0.5),
-          builder: (context) => AnalysisSheet(
+            builder: (context) => AnalysisSheet(
             message: updatedMessage,
             analysis: analysis,
+            sceneId: widget.scene.id,
           ),
         );
       }
