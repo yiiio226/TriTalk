@@ -4,7 +4,9 @@ import '../widgets/empty_state_widget.dart';
 import '../widgets/vocab_skeleton_loader.dart';
 
 class VocabListWidget extends StatelessWidget {
-  const VocabListWidget({Key? key}) : super(key: key);
+  final String? sceneId;
+  
+  const VocabListWidget({Key? key, this.sceneId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +19,10 @@ class VocabListWidget extends StatelessWidget {
         }
         
         // Filter out Grammar Points AND Analyzed Sentences
+        // AND match sceneId if provided
         final items = service.items.where((i) => 
-            i.tag != 'Grammar Point' && i.tag != 'Analyzed Sentence'
+            i.tag != 'Grammar Point' && i.tag != 'Analyzed Sentence' &&
+            (sceneId == null || i.scenarioId == sceneId)
         ).toList();
 
         if (items.isEmpty) {

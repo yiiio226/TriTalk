@@ -5,7 +5,9 @@ import '../widgets/saved_sentence_list_widget.dart'; // For full sentences
 import '../widgets/chat_history_list_widget.dart';
 
 class UnifiedFavoritesScreen extends StatefulWidget {
-  const UnifiedFavoritesScreen({Key? key}) : super(key: key);
+  final String? sceneId; // Optional filter
+  
+  const UnifiedFavoritesScreen({Key? key, this.sceneId}) : super(key: key);
 
   @override
   State<UnifiedFavoritesScreen> createState() => _UnifiedFavoritesScreenState();
@@ -18,7 +20,10 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // Increased to 4
+    // If sceneId is provided (conversation-specific), show 3 tabs (no Chat)
+    // Otherwise show all 4 tabs
+    final tabCount = widget.sceneId != null ? 3 : 4;
+    _tabController = TabController(length: tabCount, vsync: this);
   }
 
   @override
@@ -75,7 +80,7 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                   indicatorWeight: 3,
                   isScrollable: true, // Allow scrolling if tabs don't fit
                   tabAlignment: TabAlignment.start, // Align tabs to the start
-                  padding: const EdgeInsets.symmetric(horizontal: 10), // Match header padding
+                  padding: const EdgeInsets.symmetric(horizontal: 20), // Increased left padding
                   labelPadding: const EdgeInsets.only(right: 24), // Add space between tabs, but not before first
                   labelStyle: const TextStyle(
                     fontSize: 16,
@@ -85,11 +90,11 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                     fontSize: 16,
                     fontWeight: FontWeight.normal,
                   ),
-                  tabs: const [
-                    Tab(text: 'Vocabulary'),
-                    Tab(text: 'Grammar'),
-                    Tab(text: 'Sentence'),
-                    Tab(text: 'Chat'),
+                  tabs: [
+                    const Tab(text: 'Vocabulary'),
+                    const Tab(text: 'Sentence'),
+                    const Tab(text: 'Grammar'),
+                    if (widget.sceneId == null) const Tab(text: 'Chat'), // Only show in global favorites
                   ],
                 ),
               ),
@@ -99,11 +104,11 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [
-                  VocabListWidget(),
-                  GrammarListWidget(),
-                  SavedSentenceListWidget(),
-                  ChatHistoryListWidget(),
+                children: [
+                  VocabListWidget(sceneId: widget.sceneId),
+                  SavedSentenceListWidget(sceneId: widget.sceneId),
+                  GrammarListWidget(sceneId: widget.sceneId),
+                  if (widget.sceneId == null) ChatHistoryListWidget(sceneId: widget.sceneId), // Only show in global favorites
                 ],
               ),
             ),

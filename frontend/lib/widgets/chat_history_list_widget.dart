@@ -5,7 +5,9 @@ import '../widgets/history_skeleton_loader.dart';
 import '../screens/archived_chat_screen.dart';
 
 class ChatHistoryListWidget extends StatefulWidget {
-  const ChatHistoryListWidget({Key? key}) : super(key: key);
+  final String? sceneId;
+
+  const ChatHistoryListWidget({Key? key, this.sceneId}) : super(key: key);
 
   @override
   State<ChatHistoryListWidget> createState() => _ChatHistoryListWidgetState();

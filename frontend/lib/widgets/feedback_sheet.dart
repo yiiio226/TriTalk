@@ -22,115 +22,89 @@ class FeedbackSheet extends StatelessWidget {
     
     return StyledDrawer(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(
-                feedback.isPerfect ? Icons.star : Icons.auto_fix_high, 
-                color: feedback.isPerfect ? Colors.amber : Colors.orange
-              ),
-              const SizedBox(width: 8),
-              Text(
-                feedback.isPerfect ? 'Perfect!' : 'Feedback',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              )
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          _buildSection('Your Sentence', message.content, isError: !feedback.isPerfect),
-          const SizedBox(height: 16),
-          
-          if (!feedback.isPerfect) ...[
-            _buildSection(
-              'Corrected', 
-              feedback.correctedText, 
-              isSuccess: true,
-              context: context,
-            ),
-            const SizedBox(height: 16),
-          ],
-          
-          if (feedback.nativeExpression.isNotEmpty) ...[
-             _buildSection(
-               'Native Expression', 
-               feedback.nativeExpression, 
-               isNative: true,
-               context: context,
-               onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
-             ),
-             const SizedBox(height: 16),
-          ],
-
-          if (feedback.exampleAnswer.isNotEmpty) ...[
-             _buildSection(
-               'Possible Answer', 
-               feedback.exampleAnswer, 
-               isNative: true,
-               context: context,
-               onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
-             ),
-             const SizedBox(height: 16),
-          ],
-          
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                const Icon(Icons.info_outline, size: 20, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    feedback.explanation,
-                    style: TextStyle(color: Colors.blue[900]),
-                  ),
+                Icon(
+                  feedback.isPerfect ? Icons.star : Icons.auto_fix_high, 
+                  color: feedback.isPerfect ? Colors.amber : Colors.orange
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  feedback.isPerfect ? 'Perfect!' : 'Feedback',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                )
               ],
             ),
-          ),
-          
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                // Save mostly interesting things, like the native expression or corrected text
-                final textToSave = feedback.nativeExpression.isNotEmpty 
-                    ? feedback.nativeExpression 
-                    : feedback.correctedText;
-                    
-                _saveToVocab(context, textToSave, "Analyzed Sentence");
-              },
-              icon: const Icon(Icons.bookmark_border),
-              label: const Text(
-                'Save to Vocabulary', 
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            const SizedBox(height: 16),
+            
+            _buildSection('Your Sentence', message.content, isError: !feedback.isPerfect),
+            const SizedBox(height: 16),
+            
+            if (!feedback.isPerfect) ...[
+              _buildSection(
+                'Corrected', 
+                feedback.correctedText, 
+                isSuccess: true,
+                context: context,
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(27),
-                ),
+              const SizedBox(height: 16),
+            ],
+            
+            if (feedback.nativeExpression.isNotEmpty) ...[
+               _buildSection(
+                 'Native Expression', 
+                 feedback.nativeExpression, 
+                 isNative: true,
+                 context: context,
+                 onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
+               ),
+               const SizedBox(height: 16),
+            ],
+
+            if (feedback.exampleAnswer.isNotEmpty) ...[
+               _buildSection(
+                 'Possible Answer', 
+                 feedback.exampleAnswer, 
+                 isNative: true,
+                 context: context,
+                 onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
+               ),
+               const SizedBox(height: 16),
+            ],
+            
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 20, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      feedback.explanation,
+                      style: TextStyle(color: Colors.blue[900]),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 16), 
-        ],
+            
+          ],
+        ),
       ),
     );
   }

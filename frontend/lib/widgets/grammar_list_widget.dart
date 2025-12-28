@@ -3,7 +3,9 @@ import '../services/vocab_service.dart';
 import '../widgets/empty_state_widget.dart';
 
 class GrammarListWidget extends StatelessWidget {
-  const GrammarListWidget({Key? key}) : super(key: key);
+  final String? sceneId;
+
+  const GrammarListWidget({Key? key, this.sceneId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +13,8 @@ class GrammarListWidget extends StatelessWidget {
       animation: VocabService(),
       builder: (context, child) {
         final items = VocabService().items
-            .where((item) => item.tag == 'Grammar Point')
+            .where((item) => item.tag == 'Grammar Point' && 
+                             (sceneId == null || item.scenarioId == sceneId))
             .toList();
 
         if (items.isEmpty) {

@@ -12,6 +12,7 @@ import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
 import '../services/preferences_service.dart'; // Added
+import 'unified_favorites_screen.dart'; // Added for scene-specific favorites
 import '../widgets/top_toast.dart';
 import '../widgets/scene_options_drawer.dart';
 import '../widgets/styled_drawer.dart';
@@ -460,6 +461,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: ChatBubble(
                     key: ValueKey(msg.id),
                     message: msg,
+                    sceneId: widget.scene.id, // Pass sceneId
                     onTap: () {
                       if (msg.feedback != null) {
                         showModalBottomSheet(
@@ -484,6 +486,17 @@ class _ChatScreenState extends State<ChatScreen> {
           if (_showErrorBanner) _buildErrorBanner(),
           _buildInputArea(),
         ],
+      ),
+    );
+  }
+
+  void _showFavorites() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UnifiedFavoritesScreen(
+          sceneId: widget.scene.id, // Pass the current sceneId for filtering
+        ),
       ),
     );
   }
@@ -795,16 +808,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  void _showFavorites() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
-      builder: (context) => FavoritesSheet(scenarioId: widget.scene.id),
     );
   }
 

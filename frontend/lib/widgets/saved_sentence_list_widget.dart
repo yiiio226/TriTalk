@@ -3,7 +3,9 @@ import '../services/vocab_service.dart';
 import '../widgets/empty_state_widget.dart';
 
 class SavedSentenceListWidget extends StatelessWidget {
-  const SavedSentenceListWidget({Key? key}) : super(key: key);
+  final String? sceneId;
+
+  const SavedSentenceListWidget({Key? key, this.sceneId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +13,8 @@ class SavedSentenceListWidget extends StatelessWidget {
       animation: VocabService(),
       builder: (context, child) {
         final items = VocabService().items
-            .where((item) => item.tag == 'Analyzed Sentence')
+            .where((item) => item.tag == 'Analyzed Sentence' &&
+                             (sceneId == null || item.scenarioId == sceneId))
             .toList();
 
         if (items.isEmpty) {
