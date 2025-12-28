@@ -41,7 +41,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 100),
           curve: Curves.easeOut,
         );
       }
@@ -68,6 +68,47 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.addListener(() {
       setState(() {}); // Rebuild to update optimization button state
     });
+    
+    // Listen to keyboard changes and scroll to bottom when keyboard appears
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.addListener(_handleScroll);
+    });
+  }
+  
+  double _previousKeyboardHeight = 0;
+  
+  void _handleScroll() {
+    // This will be called on every frame, but we only care about keyboard changes
+    // The actual keyboard detection happens in didChangeDependencies
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Detect keyboard height changes
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    
+    // If keyboard is appearing (height increased from 0 or small value)
+    if (keyboardHeight > _previousKeyboardHeight && keyboardHeight > 100) {
+      // Only scroll if user is already near the bottom (within 100 pixels)
+      if (_scrollController.hasClients) {
+        final position = _scrollController.position;
+        final isNearBottom = position.maxScrollExtent - position.pixels < 100;
+        
+        if (isNearBottom) {
+          // User is at bottom, scroll to keep latest messages visible
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted && _scrollController.hasClients) {
+              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            }
+          });
+        }
+        // If not near bottom, don't scroll - user is viewing history
+      }
+    }
+    
+    _previousKeyboardHeight = keyboardHeight;
   }
 
   @override
@@ -446,46 +487,52 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
 
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.separated(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-              itemCount: _messages.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return Align(
-                  alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: ChatBubble(
-                    key: ValueKey(msg.id),
-                    message: msg,
-                    sceneId: widget.scene.id, // Pass sceneId
-                    onTap: () {
-                      if (msg.feedback != null) {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          barrierColor: Colors.white.withOpacity(0.5),
-                          builder: (context) => FeedbackSheet(
-                            message: msg,
-                            sceneId: widget.scene.id, // Pass sceneId
-                          ),
-                        );
-                      } else if (!msg.isUser) {
-                        _handleAnalyze(msg);
-                      }
-                    },
-                  ),
-                );
-              },
+      body: GestureDetector(
+        onTap: () {
+          // Dismiss keyboard when tapping empty space
+          FocusScope.of(context).unfocus();
+        },
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                itemCount: _messages.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final msg = _messages[index];
+                  return Align(
+                    alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: ChatBubble(
+                      key: ValueKey(msg.id),
+                      message: msg,
+                      sceneId: widget.scene.id, // Pass sceneId
+                      onTap: () {
+                        if (msg.feedback != null) {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            barrierColor: Colors.white.withOpacity(0.5),
+                            builder: (context) => FeedbackSheet(
+                              message: msg,
+                              sceneId: widget.scene.id, // Pass sceneId
+                            ),
+                          );
+                        } else if (!msg.isUser) {
+                          _handleAnalyze(msg);
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          if (_showErrorBanner) _buildErrorBanner(),
-          _buildInputArea(),
-        ],
+            if (_showErrorBanner) _buildErrorBanner(),
+            _buildInputArea(),
+          ],
+        ),
       ),
     );
   }
