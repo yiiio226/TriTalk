@@ -878,6 +878,10 @@ class _ChatScreenState extends State<ChatScreen> {
           _analyzingMessageId = null;
         });
 
+        // Save analysis result to local and cloud storage
+        final sceneKey = widget.scene.id;
+        ChatHistoryService().syncMessages(sceneKey, _messages);
+
         // Close loading sheet and show result
         Navigator.pop(context);
         showModalBottomSheet(
