@@ -21,13 +21,15 @@ class FeedbackSheet extends StatelessWidget {
     final feedback = message.feedback!;
     
     return StyledDrawer(
-      padding: const EdgeInsets.all(24),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Fixed Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Row(
               children: [
                 Icon(
                   feedback.isPerfect ? Icons.star : Icons.auto_fix_high, 
@@ -45,66 +47,76 @@ class FeedbackSheet extends StatelessWidget {
                 )
               ],
             ),
-            const SizedBox(height: 16),
-            
-            _buildSection('Your Sentence', message.content, isError: !feedback.isPerfect),
-            const SizedBox(height: 16),
-            
-            if (!feedback.isPerfect) ...[
-              _buildSection(
-                'Corrected', 
-                feedback.correctedText, 
-                isSuccess: true,
-                context: context,
-              ),
-              const SizedBox(height: 16),
-            ],
-            
-            if (feedback.nativeExpression.isNotEmpty) ...[
-               _buildSection(
-                 'Native Expression', 
-                 feedback.nativeExpression, 
-                 isNative: true,
-                 context: context,
-                 onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
-               ),
-               const SizedBox(height: 16),
-            ],
-
-            if (feedback.exampleAnswer.isNotEmpty) ...[
-               _buildSection(
-                 'Possible Answer', 
-                 feedback.exampleAnswer, 
-                 isNative: true,
-                 context: context,
-                 onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
-               ),
-               const SizedBox(height: 16),
-            ],
-            
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          
+          // Scrollable Content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.info_outline, size: 20, color: Colors.blue),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      feedback.explanation,
-                      style: TextStyle(color: Colors.blue[900]),
+                  _buildSection('Your Sentence', message.content, isError: !feedback.isPerfect),
+                  const SizedBox(height: 16),
+                  
+                  if (!feedback.isPerfect) ...[
+                    _buildSection(
+                      'Corrected', 
+                      feedback.correctedText, 
+                      isSuccess: true,
+                      context: context,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  if (feedback.nativeExpression.isNotEmpty) ...[
+                     _buildSection(
+                       'Native Expression', 
+                       feedback.nativeExpression, 
+                       isNative: true,
+                       context: context,
+                       onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
+                     ),
+                     const SizedBox(height: 16),
+                  ],
+
+                  if (feedback.exampleAnswer.isNotEmpty) ...[
+                     _buildSection(
+                       'Possible Answer', 
+                       feedback.exampleAnswer, 
+                       isNative: true,
+                       context: context,
+                       onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
+                     ),
+                     const SizedBox(height: 16),
+                  ],
+                  
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline, size: 20, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            feedback.explanation,
+                            style: TextStyle(color: Colors.blue[900]),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 40), // Bottom padding
                 ],
               ),
             ),
-            
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

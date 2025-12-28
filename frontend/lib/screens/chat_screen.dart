@@ -48,6 +48,14 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _jumpToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
     _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
@@ -191,7 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
         // Sync entire message list to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
         
-        _scrollToBottom(); // Scroll to bottom after loading initial message
+        _jumpToBottom(); // Jump to bottom after loading initial message
       }
     } else {
       // Reset animation flags for existing messages to prevent re-animation
@@ -215,10 +223,10 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _messages = history;
         });
-        _scrollToBottom(); // Initial scroll
-        // Additional delayed scroll to ensure all messages are fully rendered
+        _jumpToBottom(); // Initial jump
+        // Additional delayed jump to ensure all messages are fully rendered
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) _scrollToBottom();
+          if (mounted) _jumpToBottom();
         });
       }
     }
@@ -430,7 +438,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             );
                           case SyncStatus.synced:
-                            return const Icon(Icons.check_circle_rounded, color: Colors.green, size: 16);
+                            return const Icon(Icons.circle, color: Color(0xFF34C759), size: 12);
                           case SyncStatus.offline:
                             return Icon(Icons.circle_outlined, color: Colors.grey[400], size: 16);
                         }
