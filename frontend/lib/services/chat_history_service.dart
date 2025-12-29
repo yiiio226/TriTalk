@@ -10,7 +10,9 @@ enum SyncStatus { synced, syncing, offline }
 class ChatHistoryService {
   static final ChatHistoryService _instance = ChatHistoryService._internal();
   factory ChatHistoryService() => _instance;
-  ChatHistoryService._internal();
+  ChatHistoryService._internal() {
+    _loadBookmarks();
+  }
 
   final _supabase = Supabase.instance.client;
 
@@ -237,7 +239,100 @@ class ChatHistoryService {
       sceneKey: sceneKey,
       messages: List.from(messages),
     );
-    _bookmarks.insert(0, newBookmark);
+    // Save to local
+    _saveBookmarksToLocal();
+    
+    // Sync to cloud
+    _syncBookmarkToCloud(newBookmark);
+  }
+
+  Future<void> _loadBookmarks() async {
+    // 1. Load from local storage immediately for UI
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('bookmarked_conversations');
+      if (jsonString != null) {
+        final List<dynamic> list = json.decode(jsonString);
+        final loaded = list.map((e) => BookmarkedConversation.fromJson(e)).toList();
+        _bookmarks.clear();
+        _bookmarks.addAll(loaded);
+      }
+    } catch (e) {
+      print('Error loading local bookmarks: $e');
+    }
+
+    // 2. Sync from cloud in background
+    await _loadBookmarksFromCloud();
+  }
+
+  Future<void> _saveBookmarksToLocal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = json.encode(_bookmarks.map((e) => e.toJson()).toList());
+      await prefs.setString('bookmarked_conversations', jsonString);
+    } catch (e) {
+      print('Error saving bookmarks locally: $e');
+    }
+  }
+
+  Future<void> _loadBookmarksFromCloud() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final response = await _supabase
+          .from('bookmarked_conversations')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+      
+      final cloudBookmarks = (response as List)
+          .map((e) => BookmarkedConversation.fromJson(e))
+          .toList();
+
+      // Simple merge: trust cloud if available, or just use cloud list
+      if (cloudBookmarks.isNotEmpty) {
+        _bookmarks.clear();
+        _bookmarks.addAll(cloudBookmarks);
+        _saveBookmarksToLocal(); // Update local cache
+      }
+    } catch (e) {
+      print('Error loading bookmarks from cloud: $e');
+    }
+  }
+
+  Future<void> _syncBookmarkToCloud(BookmarkedConversation bookmark) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _supabase.from('bookmarked_conversations').upsert({
+        ...bookmark.toJson(),
+        'user_id': userId,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print('Error syncing bookmark to cloud: $e');
+    }
+  }
+  
+  // Method to remove a bookmark
+  Future<void> removeBookmark(String bookmarkId) async {
+    _bookmarks.removeWhere((b) => b.id == bookmarkId);
+    _saveBookmarksToLocal();
+    
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        await _supabase
+            .from('bookmarked_conversations')
+            .delete()
+            .eq('id', bookmarkId)
+            .eq('user_id', userId);
+      }
+    } catch (e) {
+      print('Error deleting bookmark from cloud: $e');
+    }
   }
 
   List<BookmarkedConversation> getBookmarks() {
@@ -260,5 +355,28 @@ class BookmarkedConversation {
     required this.date,
     required this.sceneKey,
     required this.messages,
-  });
+  factory BookmarkedConversation.fromJson(Map<String, dynamic> json) {
+    return BookmarkedConversation(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      preview: json['preview'] as String,
+      date: json['date'] as String,
+      sceneKey: json['scene_key'] ?? json['sceneKey'] as String, // Handle both casing
+      messages: (json['messages'] as List?)
+              ?.map((m) => Message.fromJson(m as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'preview': preview,
+      'date': date,
+      'scene_key': sceneKey,
+      'messages': messages.map((m) => m.toJson()).toList(),
+    };
+  }
 }
