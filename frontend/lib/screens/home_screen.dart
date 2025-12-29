@@ -453,7 +453,9 @@ class _HomeScreenState extends State<HomeScreen> {
       nonEmptyMessages
     );
 
-    showTopToast(context, "Conversation bookmarked!", isError: false);
+    if (mounted) {
+      showTopToast(context, "Saved to Favorites", isError: false);
+    }
   }
 
   void _showClearConfirmation(BuildContext context, Scene scene) {
