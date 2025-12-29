@@ -42,31 +42,36 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
       return const HistorySkeletonLoader();
     }
     
-    if (_bookmarks.isEmpty) {
-      return const EmptyStateWidget(
-        message: 'No archived conversations',
-        imagePath: 'assets/empty_state_lemon.png',
-      );
-    }
-    
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: _bookmarks.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final item = _bookmarks[index];
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(item.preview, maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: Text(item.date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ArchivedChatScreen(bookmark: item),
-              ),
-            ).then((_) => _loadBookmarks()); // Reload on return in case of changes if any
+    return ValueListenableBuilder<List<BookmarkedConversation>>(
+      valueListenable: ChatHistoryService().bookmarksNotifier,
+      builder: (context, bookmarks, _) {
+        if (bookmarks.isEmpty) {
+          return const EmptyStateWidget(
+            message: 'No archived conversations',
+            imagePath: 'assets/empty_state_lemon.png',
+          );
+        }
+        
+        return ListView.separated(
+          padding: const EdgeInsets.all(20),
+          itemCount: bookmarks.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final item = bookmarks[index];
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(item.preview, maxLines: 1, overflow: TextOverflow.ellipsis),
+              trailing: Text(item.date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ArchivedChatScreen(bookmark: item),
+                  ),
+                );
+              },
+            );
           },
         );
       },

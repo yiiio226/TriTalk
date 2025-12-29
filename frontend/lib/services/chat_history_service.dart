@@ -22,6 +22,7 @@ class ChatHistoryService {
   // Local cache
   final Map<String, List<Message>> _histories = {};
   final List<BookmarkedConversation> _bookmarks = [];
+  final bookmarksNotifier = ValueNotifier<List<BookmarkedConversation>>([]);
 
   // Load messages for a scene (local first, then cloud)
   Future<List<Message>> getMessages(String sceneKey) async {
@@ -240,10 +241,15 @@ class ChatHistoryService {
       messages: List.from(messages),
     );
     // Save to local
+    _updateNotifier();
     _saveBookmarksToLocal();
     
     // Sync to cloud
     _syncBookmarkToCloud(newBookmark);
+  }
+
+  void _updateNotifier() {
+    bookmarksNotifier.value = List.unmodifiable(_bookmarks);
   }
 
   Future<void> _loadBookmarks() async {
@@ -256,6 +262,7 @@ class ChatHistoryService {
         final loaded = list.map((e) => BookmarkedConversation.fromJson(e)).toList();
         _bookmarks.clear();
         _bookmarks.addAll(loaded);
+        _updateNotifier();
       }
     } catch (e) {
       print('Error loading local bookmarks: $e');
@@ -294,6 +301,7 @@ class ChatHistoryService {
       if (cloudBookmarks.isNotEmpty) {
         _bookmarks.clear();
         _bookmarks.addAll(cloudBookmarks);
+        _updateNotifier();
         _saveBookmarksToLocal(); // Update local cache
       }
     } catch (e) {
@@ -319,6 +327,7 @@ class ChatHistoryService {
   // Method to remove a bookmark
   Future<void> removeBookmark(String bookmarkId) async {
     _bookmarks.removeWhere((b) => b.id == bookmarkId);
+    _updateNotifier();
     _saveBookmarksToLocal();
     
     try {
@@ -355,6 +364,8 @@ class BookmarkedConversation {
     required this.date,
     required this.sceneKey,
     required this.messages,
+  });
+
   factory BookmarkedConversation.fromJson(Map<String, dynamic> json) {
     return BookmarkedConversation(
       id: json['id'] as String,
