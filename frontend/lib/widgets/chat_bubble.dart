@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:async';
 import 'dart:math';
 import '../models/message.dart';
@@ -175,9 +176,14 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           children: [
             widget.message.isLoading
                 ? _buildLoadingIndicator()
-                : SelectableText(
-                    _displayedText,
-                    style: const TextStyle(fontSize: 16, height: 1.4),
+                : MarkdownBody(
+                    data: _displayedText,
+                    styleSheet: MarkdownStyleSheet(
+                      p: const TextStyle(fontSize: 16, height: 1.4),
+                      strong: const TextStyle(fontWeight: FontWeight.bold),
+                      em: const TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                    selectable: true, // Allow text selection
                   ),
             if (hasFeedback) ...[
                const SizedBox(height: 6),

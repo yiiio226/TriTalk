@@ -11,7 +11,8 @@ import '../widgets/favorites_sheet.dart'; // Added
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
-import '../services/preferences_service.dart'; // Added
+import '../services/preferences_service.dart';
+import '../services/auth_service.dart'; // Added // Added
 import 'unified_favorites_screen.dart'; // Added for scene-specific favorites
 import '../widgets/top_toast.dart';
 import '../widgets/scene_options_drawer.dart';
@@ -160,6 +161,36 @@ class _ChatScreenState extends State<ChatScreen> {
       final targetLang = await prefs.getTargetLanguage();
       
       String initialContent = widget.scene.initialMessage;
+
+      // Handle name substitution for placeholders like [Client's Name...]
+      try {
+        String displayName = widget.scene.userRole;
+        final genericRoles = ['User', 'Client', 'Student', 'Me', 'You', 'Guest'];
+        
+        // Helper to check if role is generic (case-insensitive)
+        bool isGeneric(String role) => genericRoles.any((r) => r.toLowerCase() == role.toLowerCase());
+        
+        if (isGeneric(displayName)) {
+             final authUser = AuthService().currentUser;
+             if (authUser != null && authUser.name.isNotEmpty && authUser.name != 'User' && authUser.name != 'TriTalk Explorer') {
+                 displayName = authUser.name;
+             }
+        }
+        
+        // Remove "User" or generic fallback if no name found, or keep role if it's "Client" and no auth name?
+        // Requirement: "If no name, use user name." If user name not available, stick to role?
+        // If authUser.name is empty/generic, we might still want to replace placeholder with "User" or just remove brackets.
+        // Let's stick to using displayName which is now either the specific role or the auth name.
+        
+        // Replace regex [.*?(Name|Client|User).*?] with displayName
+        // Matches things like [Client's Name], [Client's Name - optional], [Insert Name]
+        initialContent = initialContent.replaceAll(
+          RegExp(r'\[.*?(?:Name|Client|User).*?\]', caseSensitive: false), 
+          displayName
+        );
+      } catch (e) {
+        print("Error substituting name: $e");
+      }
       
       // If target language is not English, translate the initial message
       if (targetLang != 'English') {
@@ -430,10 +461,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         switch (status) {
                           case SyncStatus.syncing:
                             return const SizedBox(
-                              width: 14,
-                              height: 14,
+                              width: 10,
+                              height: 10,
                               child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                                strokeWidth: 1,
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
                               ),
                             );
