@@ -17,6 +17,10 @@ class AuthService {
   bool get isAuthenticated => Supabase.instance.client.auth.currentUser != null;
 
   Future<void> init() async {
+    // First, load from local cache for fast startup
+    // This ensures we have _profileExistsInDatabase set correctly before navigation
+    await _loadUserFromLocal();
+
     // Listen to auth state changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       print('Auth state changed: ${data.event}');
@@ -75,8 +79,13 @@ class AuthService {
         // Cache user data locally
         await _saveUserToLocal(_currentUser!, true);
       } else {
-        // Profile doesn't exist or gender not set - needs onboarding
-        _profileExistsInDatabase = false;
+        // Profile doesn't exist or gender not set in database
+        // Only set to false if we don't have cached confirmation from a previous successful load
+        // This prevents incorrectly showing onboarding when there's a temporary database issue
+        if (!_profileExistsInDatabase) {
+          // _profileExistsInDatabase is already false, keep it that way
+        }
+        // If _profileExistsInDatabase is true from cache, keep it true
         final authUser = Supabase.instance.client.auth.currentUser;
         if (authUser != null) {
           String displayName = authUser.userMetadata?['full_name'] ?? '';
@@ -112,8 +121,8 @@ class AuthService {
       }
     } catch (e) {
       print('Error loading user profile: $e');
-      // Fallback to local cache
-      await _loadUserFromLocal();
+      // Local cache already loaded in init(), just log the error
+      // The cached _profileExistsInDatabase value will be used for navigation
     }
   }
 

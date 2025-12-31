@@ -191,4 +191,8 @@ class VocabService extends ChangeNotifier {
   List<VocabItem> getItemsForScenario(String scenarioId) {
     return _items.where((item) => item.scenarioId == scenarioId).toList();
   }
+
+  bool exists(String phrase, {String? scenarioId}) {
+    return _items.any((i) => i.phrase == phrase && i.scenarioId == scenarioId);
+  }
 }

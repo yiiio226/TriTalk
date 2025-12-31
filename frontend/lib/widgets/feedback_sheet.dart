@@ -4,9 +4,9 @@ import '../services/vocab_service.dart';
 import 'styled_drawer.dart';
 import 'top_toast.dart';
 
-class FeedbackSheet extends StatelessWidget {
+class FeedbackSheet extends StatefulWidget {
   final Message message;
-  final String sceneId; // Added sceneId
+  final String sceneId;
 
   const FeedbackSheet({
     Key? key, 
@@ -15,10 +15,40 @@ class FeedbackSheet extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    if (message.feedback == null) return const SizedBox.shrink();
+  State<FeedbackSheet> createState() => _FeedbackSheetState();
+}
+
+class _FeedbackSheetState extends State<FeedbackSheet> {
+  final Set<String> _savedItems = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeSavedStates();
+  }
+
+  void _initializeSavedStates() {
+    final vocabService = VocabService();
+    final feedback = widget.message.feedback;
     
-    final feedback = message.feedback!;
+    if (feedback != null) {
+      if (feedback.nativeExpression.isNotEmpty && 
+          vocabService.exists(feedback.nativeExpression, scenarioId: widget.sceneId)) {
+        _savedItems.add(feedback.nativeExpression);
+      }
+      
+      if (feedback.exampleAnswer.isNotEmpty && 
+          vocabService.exists(feedback.exampleAnswer, scenarioId: widget.sceneId)) {
+        _savedItems.add(feedback.exampleAnswer);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.message.feedback == null) return const SizedBox.shrink();
+    
+    final feedback = widget.message.feedback!;
     
     return StyledDrawer(
       padding: EdgeInsets.zero,
@@ -56,7 +86,7 @@ class FeedbackSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSection('Your Sentence', message.content, isError: !feedback.isPerfect),
+                  _buildSection('Your Sentence', widget.message.content, isError: !feedback.isPerfect),
                   const SizedBox(height: 16),
                   
                   if (!feedback.isPerfect) ...[
@@ -75,6 +105,7 @@ class FeedbackSheet extends StatelessWidget {
                        feedback.nativeExpression, 
                        isNative: true,
                        context: context,
+                       isSaved: _savedItems.contains(feedback.nativeExpression),
                        onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
                      ),
                      const SizedBox(height: 16),
@@ -86,6 +117,7 @@ class FeedbackSheet extends StatelessWidget {
                        feedback.exampleAnswer, 
                        isNative: true,
                        context: context,
+                       isSaved: _savedItems.contains(feedback.exampleAnswer),
                        onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
                      ),
                      const SizedBox(height: 16),
@@ -122,13 +154,18 @@ class FeedbackSheet extends StatelessWidget {
   }
 
   void _saveToVocab(BuildContext context, String phrase, String tag) {
-    VocabService().add(
-      phrase,
-      "Smart Feedback", 
-      tag,
-      scenarioId: sceneId,
-    );
-     showTopToast(context, 'Saved to Vocabulary', isError: false);
+    if (!_savedItems.contains(phrase)) {
+      VocabService().add(
+        phrase,
+        "Smart Feedback", 
+        tag,
+        scenarioId: widget.sceneId,
+      );
+      setState(() {
+        _savedItems.add(phrase);
+      });
+      showTopToast(context, 'Saved to Vocabulary', isError: false);
+    }
   }
 
   Widget _buildSection(
@@ -137,6 +174,7 @@ class FeedbackSheet extends StatelessWidget {
     bool isError = false, 
     bool isSuccess = false, 
     bool isNative = false,
+    bool isSaved = false,
     BuildContext? context,
     VoidCallback? onSave,
   }) {
@@ -164,7 +202,11 @@ class FeedbackSheet extends StatelessWidget {
                 onTap: onSave,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
-                  child: Icon(Icons.bookmark_add_outlined, size: 20, color: Colors.grey[600]),
+                  child: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_border, 
+                    size: 20, 
+                    color: isNative ? Colors.purple[700] : Colors.grey[600],
+                  ),
                 ),
               ),
           ],

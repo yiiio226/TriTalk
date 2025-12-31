@@ -122,8 +122,13 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                 runSpacing: 10,
                 children: List.generate(_words.length, (index) {
                   final isSelected = _selectedWordIndices.contains(index);
+                  // Check if word is already saved (strip punctuation for better matching if needed, but simple check first)
+                  // Note: naive check. Ideally we strip punctuation.
+                  final word = _words[index].replaceAll(RegExp(r'[^\w\s]'), ''); 
+                  final isSaved = VocabService().exists(word, scenarioId: widget.sceneId);
+
                   return GestureDetector(
-                    onTap: () {
+                    onTap: isSaved ? null : () {
                       setState(() {
                         if (isSelected) {
                           _selectedWordIndices.remove(index);
@@ -136,10 +141,14 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.black : Colors.white,
+                        color: isSelected 
+                            ? Colors.black 
+                            : (isSaved ? Colors.deepPurple.shade50 : Colors.white),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: isSelected ? Colors.transparent : Colors.grey.shade300,
+                          color: isSelected 
+                              ? Colors.transparent 
+                              : (isSaved ? Colors.deepPurple.shade200 : Colors.grey.shade300),
                           width: 1.5,
                         ),
                         boxShadow: isSelected 
@@ -149,8 +158,10 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                       child: Text(
                         _words[index],
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected 
+                              ? Colors.white 
+                              : (isSaved ? Colors.deepPurple : Colors.black87),
+                          fontWeight: isSelected || isSaved ? FontWeight.bold : FontWeight.w500,
                           fontSize: 15,
                         ),
                       ),
@@ -176,8 +187,8 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                       )
                     : Text(
                         _selectedWordIndices.isEmpty 
-                            ? 'Save Whole Sentence' 
-                            : 'Save Selected Vocabulary',
+                            ? 'Save Entire Sentence' 
+                            : 'Save Selected (${_selectedWordIndices.length})',
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
