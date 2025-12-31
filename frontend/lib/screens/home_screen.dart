@@ -141,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     MaterialPageRoute(
                                       builder: (context) => const ProfileScreen(),
                                     ),
-                                  );
+                                  ).then((_) => setState(() {}));
                                 },
                                   child: Container(
                                     width: 44,
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Choose a scenario to practice your English',
+                        'Choose a scenario to practice your ${AuthService().currentUser?.targetLanguage ?? "English"}',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
