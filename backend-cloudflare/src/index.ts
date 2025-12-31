@@ -260,54 +260,123 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
 
         const analyzePrompt = `Act as a language tutor. Analyze this sentence: "${body.message}"
     
-    Provide a detailed breakdown in ${nativeLang}:
-    1. Grammar points used.
-    2. Key vocabulary with definitions.
-    3. Sentence structure explanation.
-    4. Overall summary of the meaning and nuance.
-    5. Pragmatic Analysis: Explain *WHY* it was said this way. Identify the social logic (e.g., "Used subjunctive 'Could' to make a polite suggestion", "Short sentence indicates urgency"). Connect the grammar/words to the speaker's intent.
-    6. Emotion/Tone tags (e.g., Polite, Casual, Professional, Sarcastic).
-    7. Identify Idioms or Slang if any.
-    8. Sentence Breakdown: Split the sentence into key segments (Subject, Verb, Clause, etc.) for visual tagging.
+    Provide a detailed breakdown in ${nativeLang}.
+    
+    CRITICAL OUTPUT FORMAT RULES:
+    1. Output ONLY raw JSON objects, one per line (NDJSON format)
+    2. DO NOT use markdown code blocks (no \`\`\`json or \`\`\`)
+    3. DO NOT add any explanatory text before or after the JSON
+    4. Each line must be a complete, valid JSON object
+    5. Do NOT wrap the entire output in an array or object
+    
+    Order of output (one JSON object per line):
+    1. Overall Summary
+    2. Sentence Structure
+    3. Grammar Points
+    4. Vocabulary
+    5. Idioms & Slang (if applicable)
+    6. Pragmatic Analysis (if applicable)
+    7. Emotion Tags (if applicable)
 
-    Output JSON ONLY. All explanations, definitions, and analysis text MUST be in ${nativeLang}. DO NOT include Pinyin in any field, especially in examples.
-    {
-        "grammar_points": [{"structure": "...", "explanation": "(in ${nativeLang}, NO Pinyin)...", "example": "Sentence in the identified language of the message (Translation in ${nativeLang})"}],
-        "vocabulary": [{"word": "...", "definition": "(in ${nativeLang}, NO Pinyin)...", "example": "Sentence in the identified language of the message (Translation in ${nativeLang})", "level": "A1/B2/etc"}],
-        "sentence_structure": "(in ${nativeLang})...",
-        "sentence_breakdown": [{"text": "segment text", "tag": "Subject/Verb/Clause/etc"}],
-        "overall_summary": "(in ${nativeLang})...",
-        "pragmatic_analysis": "Explanation of the social intent and why specific phrasing was chosen (in ${nativeLang})...",
-        "emotion_tags": ["(in ${nativeLang})..."],
-        "idioms_slang": [{"text": "...", "explanation": "(in ${nativeLang})...", "type": "Idiom/Slang"}]
-    }`;
+    EXACT FORMAT (copy this structure, replace content only):
+    {"type":"summary","data":"这句话是一个半正式的口语表达..."}
+    {"type":"structure","data":{"structure":"这是一个疑问句...","breakdown":[{"text":"Ah, okay!","tag":"感叹词"},{"text":"What","tag":"疑问代词"}]}}
+    {"type":"grammar","data":[{"structure":"What + 动词 + 主语","explanation":"这是典型的'What'疑问句的结构...","example":"What made you change your mind?"}]}
+    {"type":"vocabulary","data":[{"word":"brings","definition":"带来；引起","example":"What brings you here?","level":"A2"}]}
+    {"type":"pragmatic","data":"说话者使用这个句式表达好奇和友好..."}
+    {"type":"emotion","data":["友好","好奇"]}
+    
+    Remember: Output ONLY the JSON lines above, nothing else. No markdown, no explanations, no code blocks.`;
+
 
         const messages = [{ role: 'user', content: analyzePrompt }];
 
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://tritalk.app',
+                'X-Title': 'TriTalk',
+            },
+            body: JSON.stringify({
+                model: env.OPENROUTER_MODEL,
+                messages,
+                stream: true, // Enable streaming
+            }),
+        });
 
-        let data: any = {};
-        try {
-            data = parseJSON(content);
-        } catch (e) {
-            console.error("JSON Parse Error:", e);
-            data = { overall_summary: "Error parsing analysis results.", sentence_structure: "Data format error." };
+        if (!response.ok) {
+            throw new Error(`OpenRouter API error: ${response.status}`);
         }
 
-        const response: AnalyzeResponse = {
-            grammar_points: data.grammar_points || [],
-            vocabulary: data.vocabulary || [],
-            sentence_structure: data.sentence_structure || 'No structure analysis available.',
-            sentence_breakdown: data.sentence_breakdown || [],
-            overall_summary: data.overall_summary || 'No summary available.',
-            pragmatic_analysis: data.pragmatic_analysis || '',
-            emotion_tags: data.emotion_tags || [],
-            idioms_slang: data.idioms_slang || [],
-        };
+        // Create a transform stream to parse SSE and emit raw text chunks (NDJSON)
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        
+        // Process the stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        
+        let buffer = '';
+        let accumulatedContent = ''; // Accumulate content to detect and strip markdown blocks
 
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        (async () => {
+            try {
+                if (!reader) throw new Error('No response body');
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+                    
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // Keep the incomplete line
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || trimmed === 'data: [DONE]') continue;
+                        
+                        if (trimmed.startsWith('data: ')) {
+                            try {
+                                const jsonStr = trimmed.slice(6);
+                                const parsed = JSON.parse(jsonStr);
+                                const content = parsed.choices?.[0]?.delta?.content || '';
+                                if (content) {
+                                    accumulatedContent += content;
+                                    
+                                    // Clean up markdown code blocks
+                                    let cleanContent = content;
+                                    // Don't write if it's part of a markdown fence
+                                    if (content.includes('```')) {
+                                        // Skip writing markdown fences
+                                        continue;
+                                    }
+                                    
+                                    await writer.write(new TextEncoder().encode(cleanContent));
+                                }
+                            } catch (e) {
+                                // Ignore parse errors for intermediate chunks
+                            }
+                        }
+                    }
+                }
+                await writer.close();
+            } catch (e) {
+                console.error('Stream processing error:', e);
+                await writer.abort(e);
+            }
+        })();
+
+        return new Response(readable, {
+            headers: { 
+                'Content-Type': 'application/x-ndjson', 
+                ...corsHeaders() 
+            },
         });
+
     } catch (error) {
         console.error('Error in /chat/analyze:', error);
         return new Response(

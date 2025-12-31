@@ -894,7 +894,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _handleAnalyze(Message message) async {
+  void _handleAnalyze(Message message) {
     // If analysis already exists, show it directly
     if (message.analysis != null) {
       showModalBottomSheet(
@@ -911,79 +911,53 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    // Show loading sheet
-    setState(() {
-      _isAnalyzing = true;
-      _analyzingMessageId = message.id;
-    });
+    // Create stream
+    // Note: We don't await the stream here; we pass it to the sheet.
+    final stream = _apiService.analyzeMessage(message.content);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      isDismissible: false,
+      // isDismissible: false, // Allow dismissal during streaming to cancel
       backgroundColor: Colors.transparent,
       barrierColor: Colors.white.withOpacity(0.5),
       builder: (context) => AnalysisSheet(
         message: message,
         isLoading: true,
+        sceneId: widget.scene.id,
+        analysisStream: stream,
+        onAnalysisComplete: (finalAnalysis) {
+           _updateMessageAnalysis(message.id, finalAnalysis);
+        },
       ),
     );
+  }
 
-    try {
-      final analysis = await _apiService.analyzeMessage(message.content);
-      
+  void _updateMessageAnalysis(String messageId, MessageAnalysis analysis) {
       if (!mounted) return;
 
       // Update message with analysis
-      final messageIndex = _messages.indexWhere((m) => m.id == message.id);
+      final messageIndex = _messages.indexWhere((m) => m.id == messageId);
       if (messageIndex != -1) {
+        final currentMessage = _messages[messageIndex];
         final updatedMessage = Message(
-          id: message.id,
-          content: message.content,
-          isUser: message.isUser,
-          timestamp: message.timestamp,
-          translation: message.translation,
-          feedback: message.feedback,
+          id: currentMessage.id,
+          content: currentMessage.content,
+          isUser: currentMessage.isUser,
+          timestamp: currentMessage.timestamp,
+          translation: currentMessage.translation,
+          feedback: currentMessage.feedback,
           analysis: analysis,
         );
+        
         setState(() {
           _messages[messageIndex] = updatedMessage;
-          _isAnalyzing = false;
-          _analyzingMessageId = null;
         });
 
         // Save analysis result to local and cloud storage
         final sceneKey = widget.scene.id;
         ChatHistoryService().syncMessages(sceneKey, _messages);
-
-        // Close loading sheet and show result
-        Navigator.pop(context);
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          barrierColor: Colors.white.withOpacity(0.5),
-            builder: (context) => AnalysisSheet(
-            message: updatedMessage,
-            analysis: analysis,
-            sceneId: widget.scene.id,
-          ),
-        );
       }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isAnalyzing = false;
-        _analyzingMessageId = null;
-      });
-      Navigator.pop(context);
-      
-      showTopToast(
-        context, 
-        _getFriendlyErrorMessage(e),
-        isError: true,
-      );
-    }
   }
 
   String _getFriendlyErrorMessage(Object error) {

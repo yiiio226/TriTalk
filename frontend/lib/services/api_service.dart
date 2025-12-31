@@ -146,27 +146,114 @@ class ApiService {
     }
   }
 
-  Future<MessageAnalysis> analyzeMessage(String message) async {
-    try {
-      final prefs = PreferencesService();
-      final nativeLang = await prefs.getNativeLanguage();
+  Stream<MessageAnalysis> analyzeMessage(String message) async* {
+    final prefs = PreferencesService();
+    final nativeLang = await prefs.getNativeLanguage();
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/chat/analyze'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'message': message,
-          'native_language': nativeLang,
-        }),
+    final request = http.Request('POST', Uri.parse('$baseUrl/chat/analyze'));
+    request.headers.addAll({'Content-Type': 'application/json'});
+    request.body = jsonEncode({
+      'message': message,
+      'native_language': nativeLang,
+    });
+
+    final client = http.Client();
+    try {
+      final streamedResponse = await client.send(request);
+      
+      if (streamedResponse.statusCode != 200) {
+        throw Exception('Failed to analyze message: ${streamedResponse.statusCode}');
+      }
+
+      // Initial empty analysis state
+      var currentAnalysis = MessageAnalysis(
+        grammarPoints: [],
+        vocabulary: [],
+        sentenceStructure: '',
+        sentenceBreakdown: [],
+        overallSummary: '',
+        pragmaticAnalysis: null,
+        emotionTags: [],
+        idioms: [],
       );
 
-      if (response.statusCode == 200) {
-        return MessageAnalysis.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to analyze message: ${response.statusCode}');
+      // Buffer for incomplete lines
+      String buffer = '';
+
+      await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
+        buffer += chunk;
+        
+        while (buffer.contains('\n')) {
+          final index = buffer.indexOf('\n');
+          final line = buffer.substring(0, index).trim();
+          buffer = buffer.substring(index + 1);
+
+          if (line.isEmpty) continue;
+
+          try {
+            final json = jsonDecode(line);
+            if (json is Map<String, dynamic> && json.containsKey('type') && json.containsKey('data')) {
+              final type = json['type'];
+              final data = json['data'];
+
+              switch (type) {
+                case 'summary':
+                  currentAnalysis = currentAnalysis.copyWith(overallSummary: data as String);
+                  break;
+                case 'structure':
+                  if (data is Map<String, dynamic>) {
+                    currentAnalysis = currentAnalysis.copyWith(
+                      sentenceStructure: data['structure'] ?? '',
+                      sentenceBreakdown: (data['breakdown'] as List?)
+                          ?.map((e) => StructureSegment.fromJson(e))
+                          .toList() ?? []
+                    );
+                  }
+                  break;
+                case 'grammar':
+                  if (data is List) {
+                     currentAnalysis = currentAnalysis.copyWith(
+                      grammarPoints: data.map((e) => GrammarPoint.fromJson(e)).toList(),
+                    );
+                  }
+                  break;
+                case 'vocabulary':
+                   if (data is List) {
+                    currentAnalysis = currentAnalysis.copyWith(
+                      vocabulary: data.map((e) => VocabularyItem.fromJson(e)).toList(),
+                    );
+                  }
+                  break;
+                case 'idioms':
+                   if (data is List) {
+                    currentAnalysis = currentAnalysis.copyWith(
+                      idioms: data.map((e) => IdiomItem.fromJson(e)).toList(),
+                    );
+                  }
+                  break;
+                case 'pragmatic':
+                  currentAnalysis = currentAnalysis.copyWith(pragmaticAnalysis: data as String);
+                  break;
+                case 'emotion':
+                   if (data is List) {
+                    currentAnalysis = currentAnalysis.copyWith(
+                      emotionTags: List<String>.from(data),
+                    );
+                  }
+                  break;
+              }
+              yield currentAnalysis;
+            }
+          } catch (e) {
+            print('Error parsing chunk: $e');
+            // Continue despite error
+          }
+        }
       }
     } catch (e) {
       throw Exception('Error analyzing message: $e');
+    } finally {
+      client.close();
     }
   }
 

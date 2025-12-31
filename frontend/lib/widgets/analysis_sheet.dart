@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
@@ -8,7 +9,9 @@ class AnalysisSheet extends StatefulWidget {
   final Message message;
   final MessageAnalysis? analysis;
   final bool isLoading;
-  final String? sceneId; // Added sceneId
+  final String? sceneId;
+  final Stream<MessageAnalysis>? analysisStream;
+  final Function(MessageAnalysis)? onAnalysisComplete;
 
   const AnalysisSheet({
     Key? key,
@@ -16,6 +19,8 @@ class AnalysisSheet extends StatefulWidget {
     this.analysis,
     this.isLoading = false,
     this.sceneId,
+    this.analysisStream,
+    this.onAnalysisComplete,
   }) : super(key: key);
 
   @override
@@ -26,19 +31,62 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   // Track which items are saved
   final Set<String> _savedGrammarPoints = {};
   final Set<String> _savedVocabulary = {};
+  
+  // Local analysis state for streaming
+  MessageAnalysis? _currentAnalysis;
+  bool _isStreaming = false;
+  StreamSubscription<MessageAnalysis>? _subscription;
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    _currentAnalysis = widget.analysis;
     _initializeSavedStates();
+    
+    if (widget.analysisStream != null) {
+      _isStreaming = true;
+      _subscription = widget.analysisStream!.listen(
+        (data) {
+          if (mounted) {
+            setState(() {
+              _currentAnalysis = data;
+            });
+          }
+        },
+        onError: (e) {
+            print("Stream error: $e");
+            if (mounted) {
+                setState(() => _isStreaming = false);
+                 showTopToast(context, 'Analysis interrupted', isError: true);
+            }
+        },
+        onDone: () {
+          if (mounted) {
+            setState(() {
+              _isStreaming = false;
+            });
+            if (_currentAnalysis != null && widget.onAnalysisComplete != null) {
+              widget.onAnalysisComplete!(_currentAnalysis!);
+            }
+          }
+        },
+      );
+    }
   }
 
   void _initializeSavedStates() {
     final vocabService = VocabService();
+    final analysisToUse = _currentAnalysis ?? widget.analysis;
     
     // Check which grammar points are already saved
-    if (widget.analysis?.grammarPoints != null) {
-      for (var point in widget.analysis!.grammarPoints) {
+    if (analysisToUse?.grammarPoints != null) {
+      for (var point in analysisToUse!.grammarPoints) {
         if (vocabService.exists(point.structure, scenarioId: widget.sceneId)) {
           _savedGrammarPoints.add(point.structure);
         }
@@ -46,8 +94,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     }
     
     // Check which vocabulary items are already saved
-    if (widget.analysis?.vocabulary != null) {
-      for (var vocab in widget.analysis!.vocabulary) {
+    if (analysisToUse?.vocabulary != null) {
+      for (var vocab in analysisToUse!.vocabulary) {
         if (vocabService.exists(vocab.word, scenarioId: widget.sceneId)) {
           _savedVocabulary.add(vocab.word);
         }
@@ -128,13 +176,18 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   }
 
   Widget _buildContent(BuildContext context) {
+    // Prefer local stream state, fallback to passed props
+    final displayAnalysis = _currentAnalysis ?? widget.analysis;
+    final isStillLoading = widget.isLoading || _isStreaming;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.isLoading) ...[
-          _buildSkeletonLoader(),
-        ] else if (widget.analysis != null) ...[
+        if (displayAnalysis == null && isStillLoading) ...[
+           // Nothing loaded yet, show full skeleton
+           _buildSkeletonLoader(),
+        ] else if (displayAnalysis != null) ...[
           // Original Sentence
           const Text(
             'ORIGINAL SENTENCE',
@@ -153,8 +206,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 24),
 
           // Summary
-          if (widget.analysis!.overallSummary.isNotEmpty && 
-              widget.analysis!.overallSummary != 'No summary available.') ...[
+          if (displayAnalysis.overallSummary.isNotEmpty && 
+              displayAnalysis.overallSummary != 'No summary available.') ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -168,7 +221,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      widget.analysis!.overallSummary,
+                      displayAnalysis.overallSummary,
                       style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
                     ),
                   ),
@@ -179,22 +232,22 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           ],
 
           // Sentence Structure
-          if (widget.analysis!.sentenceStructure.isNotEmpty && 
-              widget.analysis!.sentenceBreakdown.isNotEmpty) ...[
+          if (displayAnalysis.sentenceStructure.isNotEmpty && 
+              displayAnalysis.sentenceBreakdown.isNotEmpty) ...[
             const Text(
               'SENTENCE STRUCTURE',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 8),
             Text(
-              widget.analysis!.sentenceStructure,
+              displayAnalysis.sentenceStructure,
               style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
             ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 12,
-              children: widget.analysis!.sentenceBreakdown.map((segment) => Container(
+              children: displayAnalysis.sentenceBreakdown.map((segment) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE3F2FD), // Blue 50
@@ -229,35 +282,55 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           ],
 
           // Grammar Points
-          if (widget.analysis!.grammarPoints.isNotEmpty) ...[
+          if (displayAnalysis.grammarPoints.isNotEmpty) ...[
             const Text(
               'GRAMMAR POINTS',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            ...widget.analysis!.grammarPoints.map((point) => _buildGrammarPoint(context, point)),
+            ...displayAnalysis.grammarPoints.map((point) => _buildGrammarPoint(context, point)),
+            const SizedBox(height: 12),
+          ] else if (_isStreaming) ...[
+            const Text(
+              'GRAMMAR POINTS',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            _buildSkeletonCard(),
+            const SizedBox(height: 12),
+            _buildSkeletonCard(),
             const SizedBox(height: 12),
           ],
 
           // Vocabulary
-          if (widget.analysis!.vocabulary.isNotEmpty) ...[
+          if (displayAnalysis.vocabulary.isNotEmpty) ...[
             const Text(
               'VOCABULARY',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            ...widget.analysis!.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
+            ...displayAnalysis.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
+            const SizedBox(height: 12),
+          ] else if (_isStreaming) ...[
+            const Text(
+              'VOCABULARY',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            _buildSkeletonCard(),
+            const SizedBox(height: 12),
+            _buildSkeletonCard(),
             const SizedBox(height: 12),
           ],
 
           // Idioms
-          if (widget.analysis!.idioms.isNotEmpty) ...[
+          if (displayAnalysis.idioms.isNotEmpty) ...[
             const Text(
               'IDIOMS & SLANG',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
             ),
             const SizedBox(height: 12),
-            ...widget.analysis!.idioms.map((idiom) => Container(
+            ...displayAnalysis.idioms.map((idiom) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -301,36 +374,54 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             )),
             const SizedBox(height: 12),
           ],
+          
+          if (_isStreaming) ...[
+             const Padding(
+               padding: EdgeInsets.symmetric(vertical: 16.0),
+               child: Center(
+                 child: Row(
+                   mainAxisSize: MainAxisSize.min,
+                   children: [
+                     SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                     SizedBox(width: 12),
+                     Text("Loading...", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                   ],
+                 ),
+               ),
+             ),
+          ],
 
-          // Save button
+          // Save button - only show when finished? Or always allow saving partial?
+          // Better to show when at least something is there or finished.
           const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () {
-              VocabService().add(
-                widget.message.content,
-                "AI Message Analysis",
-                "Analyzed Sentence",
-                scenarioId: widget.sceneId, // Link to current conversation
-              );
-              Navigator.pop(context);
-              showTopToast(context, "Saved to Vocabulary", isError: false);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 56),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          if (!_isStreaming)
+            ElevatedButton(
+              onPressed: () {
+                VocabService().add(
+                  widget.message.content,
+                  "AI Message Analysis",
+                  "Analyzed Sentence",
+                  scenarioId: widget.sceneId, // Link to current conversation
+                );
+                Navigator.pop(context);
+                showTopToast(context, "Saved to Vocabulary", isError: false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 56),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              ),
+              child: const Text('Save Sentence', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-            child: const Text('Save Sentence', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
         ] else ...[
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Text('Analysis not available'),
-            ),
-          ),
+           const Center(
+             child: Padding(
+               padding: EdgeInsets.all(32.0),
+               child: Text('Analysis not available'),
+             ),
+           ),
         ],
       ],
     );

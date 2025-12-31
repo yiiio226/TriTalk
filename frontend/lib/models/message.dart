@@ -169,6 +169,28 @@ class MessageAnalysis {
     this.idioms = const [],
   });
 
+  MessageAnalysis copyWith({
+    List<GrammarPoint>? grammarPoints,
+    List<VocabularyItem>? vocabulary,
+    String? sentenceStructure,
+    List<StructureSegment>? sentenceBreakdown,
+    String? overallSummary,
+    String? pragmaticAnalysis,
+    List<String>? emotionTags,
+    List<IdiomItem>? idioms,
+  }) {
+    return MessageAnalysis(
+      grammarPoints: grammarPoints ?? this.grammarPoints,
+      vocabulary: vocabulary ?? this.vocabulary,
+      sentenceStructure: sentenceStructure ?? this.sentenceStructure,
+      sentenceBreakdown: sentenceBreakdown ?? this.sentenceBreakdown,
+      overallSummary: overallSummary ?? this.overallSummary,
+      pragmaticAnalysis: pragmaticAnalysis ?? this.pragmaticAnalysis,
+      emotionTags: emotionTags ?? this.emotionTags,
+      idioms: idioms ?? this.idioms,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'grammar_points': grammarPoints.map((g) => g.toJson()).toList(),
