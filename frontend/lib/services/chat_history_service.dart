@@ -232,20 +232,40 @@ class ChatHistoryService {
   // Bookmark functionality (keeping local for now)
   void addBookmark(String title, String preview, String date, String sceneKey,
       List<Message> messages) {
-    final newBookmark = BookmarkedConversation(
-      id: const Uuid().v4(),
-      title: title,
-      preview: preview,
-      date: date,
-      sceneKey: sceneKey,
-      messages: List.from(messages),
-    );
+    // Check if a bookmark with the same sceneKey already exists
+    final existingIndex = _bookmarks.indexWhere((b) => b.sceneKey == sceneKey);
+    
+    final BookmarkedConversation bookmark;
+    if (existingIndex != -1) {
+      // Update existing bookmark
+      bookmark = BookmarkedConversation(
+        id: _bookmarks[existingIndex].id, // Keep the same ID
+        title: title,
+        preview: preview,
+        date: date,
+        sceneKey: sceneKey,
+        messages: List.from(messages),
+      );
+      _bookmarks[existingIndex] = bookmark;
+    } else {
+      // Create new bookmark
+      bookmark = BookmarkedConversation(
+        id: const Uuid().v4(),
+        title: title,
+        preview: preview,
+        date: date,
+        sceneKey: sceneKey,
+        messages: List.from(messages),
+      );
+      _bookmarks.add(bookmark);
+    }
+    
     // Save to local
     _updateNotifier();
     _saveBookmarksToLocal();
     
     // Sync to cloud
-    _syncBookmarkToCloud(newBookmark);
+    _syncBookmarkToCloud(bookmark);
   }
 
   void _updateNotifier() {
@@ -260,9 +280,23 @@ class ChatHistoryService {
       if (jsonString != null) {
         final List<dynamic> list = json.decode(jsonString);
         final loaded = list.map((e) => BookmarkedConversation.fromJson(e)).toList();
+        
+        // Deduplicate by sceneKey - keep only the first occurrence
+        final Map<String, BookmarkedConversation> uniqueBookmarks = {};
+        for (final bookmark in loaded) {
+          if (!uniqueBookmarks.containsKey(bookmark.sceneKey)) {
+            uniqueBookmarks[bookmark.sceneKey] = bookmark;
+          }
+        }
+        
         _bookmarks.clear();
-        _bookmarks.addAll(loaded);
+        _bookmarks.addAll(uniqueBookmarks.values);
         _updateNotifier();
+        
+        // Save back to local if we removed duplicates
+        if (uniqueBookmarks.length < loaded.length) {
+          _saveBookmarksToLocal();
+        }
       }
     } catch (e) {
       print('Error loading local bookmarks: $e');
@@ -297,10 +331,18 @@ class ChatHistoryService {
           .map((e) => BookmarkedConversation.fromJson(e))
           .toList();
 
+      // Deduplicate by sceneKey - keep only the first (most recent) occurrence
+      final Map<String, BookmarkedConversation> uniqueBookmarks = {};
+      for (final bookmark in cloudBookmarks) {
+        if (!uniqueBookmarks.containsKey(bookmark.sceneKey)) {
+          uniqueBookmarks[bookmark.sceneKey] = bookmark;
+        }
+      }
+
       // Simple merge: trust cloud if available, or just use cloud list
-      if (cloudBookmarks.isNotEmpty) {
+      if (uniqueBookmarks.isNotEmpty) {
         _bookmarks.clear();
-        _bookmarks.addAll(cloudBookmarks);
+        _bookmarks.addAll(uniqueBookmarks.values);
         _updateNotifier();
         _saveBookmarksToLocal(); // Update local cache
       }
