@@ -445,43 +445,45 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         centerTitle: false,
         titleSpacing: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Row(
-                  children: [
-                    Text(widget.scene.title, style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 8),
-                    ValueListenableBuilder<SyncStatus>(
-                      valueListenable: ChatHistoryService().syncStatus,
-                      builder: (context, status, child) {
-                        switch (status) {
-                          case SyncStatus.syncing:
-                            return const SizedBox(
-                              width: 10,
-                              height: 10,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                              ),
-                            );
-                          case SyncStatus.synced:
-                            return const Icon(Icons.circle, color: Color(0xFF34C759), size: 12);
-                          case SyncStatus.offline:
-                            return Icon(Icons.circle_outlined, color: Colors.grey[400], size: 16);
-                        }
-                      },
-                    ),
-                  ],
+                Flexible(
+                  child: Text(
+                    widget.scene.title,
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                Text(
-                  'Talking to ${widget.scene.aiRole}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                const SizedBox(width: 8),
+                ValueListenableBuilder<SyncStatus>(
+                  valueListenable: ChatHistoryService().syncStatus,
+                  builder: (context, status, child) {
+                    switch (status) {
+                      case SyncStatus.syncing:
+                        return const SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                          ),
+                        );
+                      case SyncStatus.synced:
+                        return const Icon(Icons.circle, color: Color(0xFF34C759), size: 12);
+                      case SyncStatus.offline:
+                        return Icon(Icons.circle_outlined, color: Colors.grey[400], size: 16);
+                    }
+                  },
                 ),
+                const SizedBox(width: 16),
               ],
+            ),
+            Text(
+              'Talking to ${widget.scene.aiRole}',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
             ),
           ],
         ),
