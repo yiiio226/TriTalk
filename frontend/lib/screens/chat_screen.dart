@@ -430,10 +430,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         switch (status) {
                           case SyncStatus.syncing:
                             return const SizedBox(
-                              width: 14,
-                              height: 14,
+                              width: 10,
+                              height: 10,
                               child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                                strokeWidth: 1,
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
                               ),
                             );
