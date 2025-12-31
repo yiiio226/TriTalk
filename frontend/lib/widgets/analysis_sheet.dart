@@ -36,6 +36,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   MessageAnalysis? _currentAnalysis;
   bool _isStreaming = false;
   StreamSubscription<MessageAnalysis>? _subscription;
+  
+  // Track original sentence expand/collapse state
+  bool _isOriginalSentenceExpanded = false;
 
   @override
   void dispose() {
@@ -105,6 +108,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final displayAnalysis = _currentAnalysis ?? widget.analysis;
+    final isStillLoading = widget.isLoading || _isStreaming;
     
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -162,6 +167,63 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             
+            // Original Sentence - Fixed at top
+            if (displayAnalysis != null || isStillLoading)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'ORIGINAL SENTENCE',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.message.content,
+                              maxLines: _isOriginalSentenceExpanded ? null : 2,
+                              overflow: _isOriginalSentenceExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isOriginalSentenceExpanded = !_isOriginalSentenceExpanded;
+                              });
+                            },
+                            child: Icon(
+                              _isOriginalSentenceExpanded 
+                                ? Icons.keyboard_arrow_up_rounded 
+                                : Icons.keyboard_arrow_down_rounded,
+                              color: Colors.black54,
+                              size: 24,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            
             // Scrollable content
             Flexible(
               child: SingleChildScrollView(
@@ -188,23 +250,6 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
            // Nothing loaded yet, show full skeleton
            _buildSkeletonLoader(),
         ] else if (displayAnalysis != null) ...[
-          // Original Sentence
-          const Text(
-            'ORIGINAL SENTENCE',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.message.content,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.blue[700],
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
-
           // Summary
           if (displayAnalysis.overallSummary.isNotEmpty && 
               displayAnalysis.overallSummary != 'No summary available.') ...[
