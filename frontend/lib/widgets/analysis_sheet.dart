@@ -4,7 +4,7 @@ import '../services/vocab_service.dart';
 import 'top_toast.dart';
 import 'styled_drawer.dart';
 
-class AnalysisSheet extends StatelessWidget {
+class AnalysisSheet extends StatefulWidget {
   final Message message;
   final MessageAnalysis? analysis;
   final bool isLoading;
@@ -18,8 +18,42 @@ class AnalysisSheet extends StatelessWidget {
     this.sceneId,
   }) : super(key: key);
 
+  @override
+  State<AnalysisSheet> createState() => _AnalysisSheetState();
+}
 
+class _AnalysisSheetState extends State<AnalysisSheet> {
+  // Track which items are saved
+  final Set<String> _savedGrammarPoints = {};
+  final Set<String> _savedVocabulary = {};
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeSavedStates();
+  }
+
+  void _initializeSavedStates() {
+    final vocabService = VocabService();
+    
+    // Check which grammar points are already saved
+    if (widget.analysis?.grammarPoints != null) {
+      for (var point in widget.analysis!.grammarPoints) {
+        if (vocabService.exists(point.structure, scenarioId: widget.sceneId)) {
+          _savedGrammarPoints.add(point.structure);
+        }
+      }
+    }
+    
+    // Check which vocabulary items are already saved
+    if (widget.analysis?.vocabulary != null) {
+      for (var vocab in widget.analysis!.vocabulary) {
+        if (vocabService.exists(vocab.word, scenarioId: widget.sceneId)) {
+          _savedVocabulary.add(vocab.word);
+        }
+      }
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -98,9 +132,9 @@ class AnalysisSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (isLoading) ...[
+        if (widget.isLoading) ...[
           _buildSkeletonLoader(),
-        ] else if (analysis != null) ...[
+        ] else if (widget.analysis != null) ...[
           // Original Sentence
           const Text(
             'ORIGINAL SENTENCE',
@@ -108,7 +142,7 @@ class AnalysisSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            message.content,
+            widget.message.content,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -119,8 +153,8 @@ class AnalysisSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Summary
-          if (analysis!.overallSummary.isNotEmpty && 
-              analysis!.overallSummary != 'No summary available.') ...[
+          if (widget.analysis!.overallSummary.isNotEmpty && 
+              widget.analysis!.overallSummary != 'No summary available.') ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -134,7 +168,7 @@ class AnalysisSheet extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      analysis!.overallSummary,
+                      widget.analysis!.overallSummary,
                       style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
                     ),
                   ),
@@ -145,22 +179,22 @@ class AnalysisSheet extends StatelessWidget {
           ],
 
           // Sentence Structure
-          if (analysis!.sentenceStructure.isNotEmpty && 
-              analysis!.sentenceBreakdown.isNotEmpty) ...[
+          if (widget.analysis!.sentenceStructure.isNotEmpty && 
+              widget.analysis!.sentenceBreakdown.isNotEmpty) ...[
             const Text(
               'SENTENCE STRUCTURE',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 8),
             Text(
-              analysis!.sentenceStructure,
+              widget.analysis!.sentenceStructure,
               style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
             ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 12,
-              children: analysis!.sentenceBreakdown.map((segment) => Container(
+              children: widget.analysis!.sentenceBreakdown.map((segment) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE3F2FD), // Blue 50
@@ -195,35 +229,35 @@ class AnalysisSheet extends StatelessWidget {
           ],
 
           // Grammar Points
-          if (analysis!.grammarPoints.isNotEmpty) ...[
+          if (widget.analysis!.grammarPoints.isNotEmpty) ...[
             const Text(
               'GRAMMAR POINTS',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            ...analysis!.grammarPoints.map((point) => _buildGrammarPoint(context, point)),
+            ...widget.analysis!.grammarPoints.map((point) => _buildGrammarPoint(context, point)),
             const SizedBox(height: 12),
           ],
 
           // Vocabulary
-          if (analysis!.vocabulary.isNotEmpty) ...[
+          if (widget.analysis!.vocabulary.isNotEmpty) ...[
             const Text(
               'VOCABULARY',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            ...analysis!.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
+            ...widget.analysis!.vocabulary.map((vocab) => _buildVocabularyItem(context, vocab)),
             const SizedBox(height: 12),
           ],
 
           // Idioms
-          if (analysis!.idioms.isNotEmpty) ...[
+          if (widget.analysis!.idioms.isNotEmpty) ...[
             const Text(
               'IDIOMS & SLANG',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
             ),
             const SizedBox(height: 12),
-            ...analysis!.idioms.map((idiom) => Container(
+            ...widget.analysis!.idioms.map((idiom) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -273,10 +307,10 @@ class AnalysisSheet extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               VocabService().add(
-                message.content,
+                widget.message.content,
                 "AI Message Analysis",
                 "Analyzed Sentence",
-                scenarioId: sceneId, // Link to current conversation
+                scenarioId: widget.sceneId, // Link to current conversation
               );
               Navigator.pop(context);
               showTopToast(context, "Saved to Vocabulary", isError: false);
@@ -413,6 +447,8 @@ class AnalysisSheet extends StatelessWidget {
   }
 
   Widget _buildGrammarPoint(BuildContext context, GrammarPoint point) {
+    final isSaved = _savedGrammarPoints.contains(point.structure);
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -444,24 +480,29 @@ class AnalysisSheet extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: () {
-                    final contentToSave = "${point.explanation}\n\n例: ${point.example}";
+                    final contentToSave = "${point.explanation}\\n\\n例: ${point.example}";
                     
-                    VocabService().add(
-                      point.structure,
-                      contentToSave,
-                      "Grammar Point",
-                      scenarioId: sceneId,
-                    );
-                    showTopToast(
-                      context,
-                      'Saved Grammar Point',
-                      isError: false,
-                    );
+                    if (!isSaved) {
+                      VocabService().add(
+                        point.structure,
+                        contentToSave,
+                        "Grammar Point",
+                        scenarioId: widget.sceneId,
+                      );
+                      setState(() {
+                        _savedGrammarPoints.add(point.structure);
+                      });
+                      showTopToast(
+                        context,
+                        'Saved Grammar Point',
+                        isError: false,
+                      );
+                    }
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(4.0),
                     child: Icon(
-                      Icons.bookmark_add_outlined,
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
                       color: Colors.green[700],
                       size: 20,
                     ),
@@ -492,6 +533,8 @@ class AnalysisSheet extends StatelessWidget {
   }
 
   Widget _buildVocabularyItem(BuildContext context, VocabularyItem vocab) {
+    final isSaved = _savedVocabulary.contains(vocab.word);
+    
     Color levelColor = Colors.blue;
     if (vocab.level == 'intermediate') {
       levelColor = Colors.orange;
@@ -545,21 +588,26 @@ class AnalysisSheet extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: () {
-                    VocabService().add(
-                      vocab.word,
-                      vocab.definition,
-                      "Analysis Vocabulary",
-                      scenarioId: sceneId, // Link to current conversation
-                    );
-                    showTopToast(
-                      context,
-                      'Saved "${vocab.word}" to Vocabulary',
-                    );
+                    if (!isSaved) {
+                      VocabService().add(
+                        vocab.word,
+                        vocab.definition,
+                        "Analysis Vocabulary",
+                        scenarioId: widget.sceneId, // Link to current conversation
+                      );
+                      setState(() {
+                        _savedVocabulary.add(vocab.word);
+                      });
+                      showTopToast(
+                        context,
+                        'Saved "${vocab.word}" to Vocabulary',
+                      );
+                    }
                   },
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
                     child: Icon(
-                      Icons.bookmark_add_outlined,
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
                       color: Colors.blue,
                       size: 20,
                     ),
