@@ -131,7 +131,27 @@ class SceneService extends ChangeNotifier {
         hiddenIds = hiddenResponse.map((e) => e['scene_id'] as String).toSet();
       }
 
-      // 3. Merge: (Standard - Hidden) + Custom
+      // 3. Fetch Scene Order from Cloud
+      try {
+        final orderResponse = await _supabase
+            .from('user_scene_order')
+            .select('scene_order')
+            .eq('user_id', userId)
+            .maybeSingle()
+            .timeout(const Duration(seconds: 5));
+        
+        if (orderResponse != null && orderResponse['scene_order'] != null) {
+          final Map<String, dynamic> cloudOrder = jsonDecode(orderResponse['scene_order']);
+          // Merge cloud order with local order (cloud takes precedence)
+          _sceneOrder = cloudOrder.map((key, value) => MapEntry(key, value as int));
+          debugPrint('Fetched scene order from cloud: ${_sceneOrder.length} items');
+        }
+      } catch (e) {
+        debugPrint('Error fetching scene order from cloud (non-critical): $e');
+        // Continue with local order if cloud fetch fails
+      }
+
+      // 4. Merge: (Standard - Hidden) + Custom
       final visibleStandardScenes = mockScenes.where((s) => !hiddenIds.contains(s.id)).toList();
       
       // RECONCILIATION: Check if we have local custom scenes that are NOT in cloud
