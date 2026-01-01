@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
+import 'scene_service.dart';
 
 enum SyncStatus { synced, syncing, offline }
 
@@ -147,6 +148,9 @@ class ChatHistoryService {
     _histories[sceneKey]!.add(message);
     await _saveToLocal(sceneKey, _histories[sceneKey]!);
     
+    // Move scene to top when new message is added
+    SceneService().moveSceneToTop(sceneKey);
+    
     syncStatus.value = SyncStatus.syncing;
     _syncToCloud(sceneKey).then((_) {
       syncStatus.value = SyncStatus.synced;
@@ -163,6 +167,9 @@ class ChatHistoryService {
         index < _histories[sceneKey]!.length) {
       _histories[sceneKey]![index] = message;
       await _saveToLocal(sceneKey, _histories[sceneKey]!);
+      
+      // Move scene to top when message is updated (e.g., AI response completed)
+      SceneService().moveSceneToTop(sceneKey);
       
       syncStatus.value = SyncStatus.syncing;
       _syncToCloud(sceneKey).then((_) {
