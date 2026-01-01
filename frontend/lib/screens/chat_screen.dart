@@ -273,6 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // Error handling state
   String? _failedMessage;
   bool _showErrorBanner = false;
+  bool _isTimeoutError = false; // Track if error was due to timeout
 
   void _sendMessage() async {
     final text = _textController.text.trim();
@@ -281,6 +282,7 @@ class _ChatScreenState extends State<ChatScreen> {
     // Reset error state on new attempt
     setState(() {
       _showErrorBanner = false;
+      _isTimeoutError = false;
     });
 
     if (!RevenueCatService().canSendMessage()) {
@@ -396,7 +398,8 @@ class _ChatScreenState extends State<ChatScreen> {
           _scrollToBottom(); // Final scroll to ensure everything is visible
         }
       });
-    } catch (e) {
+    } on TimeoutException catch (_) {
+      // Handle timeout specifically
       if (!mounted) return;
       setState(() {
         // Remove the failed message so user can retry
@@ -408,6 +411,22 @@ class _ChatScreenState extends State<ChatScreen> {
         _isSending = false;
         _failedMessage = text;
         _showErrorBanner = true;
+        _isTimeoutError = true;
+      });
+    } catch (e) {
+      // Handle other errors
+      if (!mounted) return;
+      setState(() {
+        // Remove the failed message so user can retry
+        _messages.removeWhere((m) => m.id == newMessage.id);
+        
+        // Remove loading message if it was added
+        _messages.removeWhere((m) => m.isLoading);
+        
+        _isSending = false;
+        _failedMessage = text;
+        _showErrorBanner = true;
+        _isTimeoutError = false;
       });
     }
   }
@@ -591,9 +610,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildErrorBanner() {
     final isInitialLoadError = _initialLoadFailed;
-    final errorText = isInitialLoadError 
-        ? 'Network error. Failed to load conversation.'
-        : 'Failed to send message';
+    String errorText;
+    
+    if (isInitialLoadError) {
+      errorText = 'Network error. Failed to load conversation.';
+    } else if (_isTimeoutError) {
+      errorText = 'Request timed out. Please check your connection.';
+    } else {
+      errorText = 'Failed to send message. Please try again.';
+    }
         
     return Container(
       width: double.infinity,
@@ -606,7 +631,7 @@ class _ChatScreenState extends State<ChatScreen> {
            Expanded(
             child: Text(
               errorText,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: Colors.red, fontSize: 14),
             ),
           ),
           TextButton(
