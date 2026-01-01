@@ -401,33 +401,63 @@ class _ChatScreenState extends State<ChatScreen> {
     } on TimeoutException catch (_) {
       // Handle timeout specifically
       if (!mounted) return;
-      setState(() {
-        // Remove the failed message so user can retry
-        _messages.removeWhere((m) => m.id == newMessage.id);
+      
+      // Find and update the user message to stop loading
+      final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
+      if (userMsgIndex != -1) {
+        final updatedMessage = Message(
+          id: newMessage.id,
+          content: newMessage.content,
+          isUser: true,
+          timestamp: newMessage.timestamp,
+          isFeedbackLoading: false, // Stop loading indicator
+        );
         
-        // Remove loading message if it was added
-        _messages.removeWhere((m) => m.isLoading);
+        setState(() {
+          _messages[userMsgIndex] = updatedMessage;
+          
+          // Remove any loading AI messages
+          _messages.removeWhere((m) => m.isLoading);
+          
+          _isSending = false;
+          _failedMessage = text;
+          _showErrorBanner = true;
+          _isTimeoutError = true;
+        });
         
-        _isSending = false;
-        _failedMessage = text;
-        _showErrorBanner = true;
-        _isTimeoutError = true;
-      });
+        // Sync updated state to cloud
+        ChatHistoryService().syncMessages(sceneKey, _messages);
+      }
     } catch (e) {
       // Handle other errors
       if (!mounted) return;
-      setState(() {
-        // Remove the failed message so user can retry
-        _messages.removeWhere((m) => m.id == newMessage.id);
+      
+      // Find and update the user message to stop loading
+      final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
+      if (userMsgIndex != -1) {
+        final updatedMessage = Message(
+          id: newMessage.id,
+          content: newMessage.content,
+          isUser: true,
+          timestamp: newMessage.timestamp,
+          isFeedbackLoading: false, // Stop loading indicator
+        );
         
-        // Remove loading message if it was added
-        _messages.removeWhere((m) => m.isLoading);
+        setState(() {
+          _messages[userMsgIndex] = updatedMessage;
+          
+          // Remove any loading AI messages
+          _messages.removeWhere((m) => m.isLoading);
+          
+          _isSending = false;
+          _failedMessage = text;
+          _showErrorBanner = true;
+          _isTimeoutError = false;
+        });
         
-        _isSending = false;
-        _failedMessage = text;
-        _showErrorBanner = true;
-        _isTimeoutError = false;
-      });
+        // Sync updated state to cloud
+        ChatHistoryService().syncMessages(sceneKey, _messages);
+      }
     }
   }
 
