@@ -269,6 +269,10 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     4. Each line must be a complete, valid JSON object
     5. Do NOT wrap the entire output in an array or object
     
+    IMPORTANT: For all examples in grammar points and vocabulary items, you MUST include a ${nativeLang} translation in parentheses immediately after the example sentence.
+    Format: "English example sentence (${nativeLang}翻译)"
+    Example: "What made you change your mind? (是什么让你改变主意了?)"
+    
     Order of output (one JSON object per line):
     1. Overall Summary
     2. Sentence Structure
@@ -281,8 +285,8 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     EXACT FORMAT (copy this structure, replace content only):
     {"type":"summary","data":"这句话是一个半正式的口语表达..."}
     {"type":"structure","data":{"structure":"这是一个疑问句...","breakdown":[{"text":"Ah, okay!","tag":"感叹词"},{"text":"What","tag":"疑问代词"}]}}
-    {"type":"grammar","data":[{"structure":"What + 动词 + 主语","explanation":"这是典型的'What'疑问句的结构...","example":"What made you change your mind?"}]}
-    {"type":"vocabulary","data":[{"word":"brings","definition":"带来；引起","example":"What brings you here?","level":"A2"}]}
+    {"type":"grammar","data":[{"structure":"What + 动词 + 主语","explanation":"这是典型的'What'疑问句的结构...","example":"What made you change your mind? (是什么让你改变主意了?)"}]}
+    {"type":"vocabulary","data":[{"word":"brings","definition":"带来;引起","example":"What brings you here? (什么风把你吹来了?)","level":"A2"}]}
     {"type":"pragmatic","data":"说话者使用这个句式表达好奇和友好..."}
     {"type":"emotion","data":["友好","好奇"]}
     
