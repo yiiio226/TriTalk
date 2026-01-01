@@ -60,6 +60,58 @@ class ChatHistoryService {
     return List.from(_histories[sceneKey] ?? []);
   }
 
+
+  // Force refresh from cloud with smart timeout fallback
+  // Use this when opening chat screens to ensure fresh data from other devices
+  // Falls back to local cache after 2s timeout for better offline experience
+  Future<List<Message>> getMessagesWithSync(String sceneKey) async {
+    // First, try to load from local storage to have fallback data ready
+    List<Message> localMessages = [];
+    
+    if (_histories.containsKey(sceneKey)) {
+      localMessages = List.from(_histories[sceneKey]!);
+    } else {
+      // Load from SharedPreferences if not in memory cache
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'chat_history_$sceneKey';
+        final jsonString = prefs.getString(key);
+        
+        if (jsonString != null) {
+          final List<dynamic> messagesJson = json.decode(jsonString);
+          localMessages = messagesJson
+              .map((json) => Message.fromJson(json as Map<String, dynamic>))
+              .toList();
+          _histories[sceneKey] = localMessages;
+        }
+      } catch (e) {
+        debugPrint('Error loading local messages: $e');
+      }
+    }
+    
+    // Try to sync from cloud with short timeout (2 seconds)
+    // This balances fresh data with good offline/slow network experience
+    try {
+      await _loadFromCloud(sceneKey).timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          debugPrint('Cloud sync timeout for $sceneKey, using local cache');
+          // Continue with background sync (don't await)
+          _loadFromCloud(sceneKey).then((_) {
+            debugPrint('Background sync completed for $sceneKey');
+          }).catchError((e) {
+            debugPrint('Background sync failed: $e');
+          });
+        },
+      );
+    } catch (e) {
+      debugPrint('Cloud sync failed for $sceneKey: $e, using local cache');
+    }
+    
+    // Return the latest data (either from successful cloud sync or local cache)
+    return List.from(_histories[sceneKey] ?? localMessages);
+  }
+
   // Load from cloud (background operation)
   Future<void> _loadFromCloud(String sceneKey) async {
     try {

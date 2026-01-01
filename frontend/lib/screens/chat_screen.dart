@@ -133,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _loadMessages() async {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
     final sceneKey = widget.scene.id;
-    final history = await ChatHistoryService().getMessages(sceneKey);
+    final history = await ChatHistoryService().getMessagesWithSync(sceneKey);
     
     bool isNewConversation = history.isEmpty;
     
