@@ -117,6 +117,9 @@ class ChatHistoryService {
     // Save to local storage immediately (always succeeds)
     await _saveToLocal(sceneKey, messages);
     
+    // Move scene to top on local activity
+    SceneService().moveSceneToTop(sceneKey);
+    
     // Sync to cloud
     syncStatus.value = SyncStatus.syncing;
     _syncToCloud(sceneKey).then((_) {
