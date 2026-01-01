@@ -279,6 +279,7 @@ class SceneService extends ChangeNotifier {
 
     await _saveLocal(customScenes, hiddenIds);
     _addCloud(scene);
+    _syncOrderToCloud(); // Sync the new order to cloud
   }
 
   Future<void> _addCloud(Scene scene) async {
