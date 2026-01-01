@@ -13,11 +13,19 @@ class SceneService extends ChangeNotifier {
   }
 
   static const String _storageKey = 'custom_scenes_v1';
+  static const String _orderKey = 'scene_order_v1';
+  static const String _activityKey = 'scene_activity_v1';
   final _supabase = Supabase.instance.client;
   
   // Start with mock scenes, custom scenes will be appended
   List<Scene> _scenes = List.from(mockScenes);
   List<Scene> get scenes => List.unmodifiable(_scenes);
+
+  // Track scene order (scene_id -> position)
+  Map<String, int> _sceneOrder = {};
+  
+  // Track last activity time for each scene
+  Map<String, DateTime> _lastActivityTimes = {};
 
   bool _isLoading = true;
   bool get isLoading => _isLoading;
@@ -48,9 +56,27 @@ class SceneService extends ChangeNotifier {
          hiddenIds = decodedHidden.cast<String>().toSet();
       }
 
-      // 3. Merge: (Standard - Hidden) + Custom
+      // 3. Load Scene Order
+      final String? orderJson = prefs.getString(_orderKey);
+      if (orderJson != null) {
+        final Map<String, dynamic> decoded = jsonDecode(orderJson);
+        _sceneOrder = decoded.map((key, value) => MapEntry(key, value as int));
+      }
+      
+      // 4. Load Activity Times
+      final String? activityJson = prefs.getString(_activityKey);
+      if (activityJson != null) {
+        final Map<String, dynamic> decoded = jsonDecode(activityJson);
+        _lastActivityTimes = decoded.map((key, value) => 
+          MapEntry(key, DateTime.parse(value as String)));
+      }
+
+      // 5. Merge: (Standard - Hidden) + Custom
       final visibleStandardScenes = mockScenes.where((s) => !hiddenIds.contains(s.id)).toList();
       _scenes = [...visibleStandardScenes, ...customScenes];
+      
+      // 6. Apply ordering
+      _applyOrder();
       
     } catch (e) {
       debugPrint('Error loading local scenes: $e');
@@ -168,6 +194,10 @@ class SceneService extends ChangeNotifier {
       finalScenes.addAll(scenesToPush);
       
       _scenes = finalScenes;
+      
+      // Apply ordering
+      _applyOrder();
+      
       notifyListeners();
 
       // Update local cache
@@ -192,13 +222,34 @@ class SceneService extends ChangeNotifier {
       // Save Hidden IDs
       final String hiddenJson = jsonEncode(hiddenIds);
       await prefs.setString('hidden_standard_scenes', hiddenJson);
+      
+      // Save Scene Order
+      final String orderJson = jsonEncode(_sceneOrder);
+      await prefs.setString(_orderKey, orderJson);
+      
+      // Save Activity Times
+      final Map<String, String> activityMap = _lastActivityTimes.map(
+        (key, value) => MapEntry(key, value.toIso8601String()));
+      final String activityJson = jsonEncode(activityMap);
+      await prefs.setString(_activityKey, activityJson);
     } catch (e) {
       debugPrint('Error saving local scenes: $e');
     }
   }
   
   Future<void> addScene(Scene scene) async {
-    _scenes.add(scene);
+    // Set activity time for new scene
+    _lastActivityTimes[scene.id] = DateTime.now();
+    
+    // Move new scene to top by inserting at index 0
+    _scenes.insert(0, scene);
+    
+    // Update order map to reflect new positions
+    _sceneOrder.clear();
+    for (int i = 0; i < _scenes.length; i++) {
+      _sceneOrder[_scenes[i].id] = i;
+    }
+    
     notifyListeners();
     
     // Update Local & Cloud
@@ -295,4 +346,101 @@ class SceneService extends ChangeNotifier {
         debugPrint('Error hiding standard scene: $e');
      }
   }
+   
+   // Reorder scenes by moving a scene from one position to another
+   Future<void> reorderScenes(int oldIndex, int newIndex) async {
+     if (oldIndex == newIndex) return;
+     
+     // Update the scenes list
+     final scene = _scenes.removeAt(oldIndex);
+     _scenes.insert(newIndex, scene);
+     
+     // Update the order map
+     _sceneOrder.clear();
+     for (int i = 0; i < _scenes.length; i++) {
+       _sceneOrder[_scenes[i].id] = i;
+     }
+     
+     notifyListeners();
+     
+     // Save to local storage
+     final mockIds = mockScenes.map((e) => e.id).toSet();
+     final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
+     final hiddenIds = mockScenes.where((s) => !_scenes.any((current) => current.id == s.id)).map((s) => s.id).toList();
+     await _saveLocal(customScenes, hiddenIds);
+     
+     // Sync to cloud
+     _syncOrderToCloud();
+   }
+   
+   // Apply the saved order to the scenes list
+   void _applyOrder() {
+     if (_sceneOrder.isEmpty) return;
+     
+     _scenes.sort((a, b) {
+       final orderA = _sceneOrder[a.id] ?? 999999;
+       final orderB = _sceneOrder[b.id] ?? 999999;
+       return orderA.compareTo(orderB);
+     });
+   }
+   
+   // Sync scene order to cloud
+   Future<void> _syncOrderToCloud() async {
+     try {
+       final userId = _supabase.auth.currentUser?.id;
+       if (userId == null) return;
+       
+       await _supabase.from('user_scene_order')
+           .upsert({
+             'user_id': userId,
+             'scene_order': jsonEncode(_sceneOrder),
+             'updated_at': DateTime.now().toIso8601String(),
+           })
+           .timeout(const Duration(seconds: 5));
+     } catch (e) {
+       debugPrint('Error syncing scene order to cloud: $e');
+     }
+   }
+   
+   // Move scene to top when it has new activity
+   Future<void> moveSceneToTop(String sceneId) async {
+     // Update activity time
+     _lastActivityTimes[sceneId] = DateTime.now();
+     
+     // Find the scene
+     final sceneIndex = _scenes.indexWhere((s) => s.id == sceneId);
+     if (sceneIndex == -1 || sceneIndex == 0) {
+       // Scene not found or already at top
+       if (sceneIndex == 0) {
+         // Just update activity time and save
+         final mockIds = mockScenes.map((e) => e.id).toSet();
+         final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
+         final hiddenIds = mockScenes.where((s) => !_scenes.any((current) => current.id == s.id)).map((s) => s.id).toList();
+         await _saveLocal(customScenes, hiddenIds);
+       }
+       return;
+     }
+     
+     // Move scene to top
+     final scene = _scenes.removeAt(sceneIndex);
+     _scenes.insert(0, scene);
+     
+     // Update order map
+     _sceneOrder.clear();
+     for (int i = 0; i < _scenes.length; i++) {
+       _sceneOrder[_scenes[i].id] = i;
+     }
+     
+     notifyListeners();
+     
+     // Save to local storage
+     final mockIds = mockScenes.map((e) => e.id).toSet();
+     final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
+     final hiddenIds = mockScenes.where((s) => !_scenes.any((current) => current.id == s.id)).map((s) => s.id).toList();
+     await _saveLocal(customScenes, hiddenIds);
+     
+     // Sync to cloud
+     _syncOrderToCloud();
+   }
 }
+

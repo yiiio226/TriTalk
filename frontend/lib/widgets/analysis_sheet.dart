@@ -171,55 +171,80 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             if (displayAnalysis != null || isStillLoading)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ORIGINAL SENTENCE',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
+                child: GestureDetector(
+                  onTap: () {
+                    // Only toggle if necessary (calculate overflow again or store state)
+                    // Since we need to know if it's expandable to decide if click does anything,
+                    // we might need to hoist the TextPainter check or just allow toggle even if not truncated (but icon hidden).
+                    // Better: The icon visibility logic is inside LayoutBuilder.
+                    // Let's refactor to calculate expandability once or assume if icon is shown, it's clickable.
+                    // Actually, the user requirement implies if the icon IS shown (condition met), then clicking container toggles.
+                    setState(() {
+                      _isOriginalSentenceExpanded = !_isOriginalSentenceExpanded;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        const style = TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                          height: 1.4,
+                        );
+
+                        final span = TextSpan(text: widget.message.content, style: style);
+                        final tp = TextPainter(
+                          text: span,
+                          maxLines: 2,
+                          textDirection: Directionality.of(context),
+                          textScaler: MediaQuery.of(context).textScaler,
+                        );
+                        tp.layout(maxWidth: constraints.maxWidth);
+                        final isOverflowing = tp.didExceedMaxLines;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'ORIGINAL SENTENCE',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey),
+                                ),
+                                if (isOverflowing)
+                                  Icon(
+                                    _isOriginalSentenceExpanded
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    color: Colors.black54,
+                                    size: 24,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
                               widget.message.content,
                               maxLines: _isOriginalSentenceExpanded ? null : 2,
-                              overflow: _isOriginalSentenceExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                                height: 1.4,
-                              ),
+                              overflow: _isOriginalSentenceExpanded
+                                  ? TextOverflow.visible
+                                  : TextOverflow.ellipsis,
+                              style: style,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isOriginalSentenceExpanded = !_isOriginalSentenceExpanded;
-                              });
-                            },
-                            child: Icon(
-                              _isOriginalSentenceExpanded 
-                                ? Icons.keyboard_arrow_up_rounded 
-                                : Icons.keyboard_arrow_down_rounded,
-                              color: Colors.black54,
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),

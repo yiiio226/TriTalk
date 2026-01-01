@@ -262,10 +262,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 child: DragTarget<Scene>(
-                                  onAccept: (draggedScene) {
-                                    setState(() {
-                                      // Reordering handled by service or locally if needed
-                                    });
+                                  onAccept: (draggedScene) async {
+                                    // Find the indices of the dragged and target scenes
+                                    final oldIndex = scenes.indexWhere((s) => s.id == draggedScene.id);
+                                    final newIndex = index;
+                                    
+                                    if (oldIndex != -1 && oldIndex != newIndex) {
+                                      // Reorder via service
+                                      await SceneService().reorderScenes(oldIndex, newIndex);
+                                    }
                                   },
                                   builder: (context, candidateData, rejectedData) {
                                     final isHovering = candidateData.isNotEmpty;
