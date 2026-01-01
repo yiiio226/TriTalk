@@ -202,12 +202,11 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         final span = TextSpan(text: widget.message.content, style: style);
                         final tp = TextPainter(
                           text: span,
-                          maxLines: 2,
                           textDirection: Directionality.of(context),
                           textScaler: MediaQuery.of(context).textScaler,
                         );
                         tp.layout(maxWidth: constraints.maxWidth);
-                        final isOverflowing = tp.didExceedMaxLines;
+                        final isOverflowing = tp.computeLineMetrics().length > 2;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
