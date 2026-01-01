@@ -72,35 +72,83 @@ class ChatHistoryService {
 
       final response = await _supabase
           .from('chat_history')
-          .select('messages')
+          .select('messages, updated_at')
           .eq('user_id', userId)
           .eq('scene_key', sceneKey)
           .maybeSingle()
           .timeout(const Duration(seconds: 5)); // Add timeout
 
+      final localMessages = _histories[sceneKey] ?? [];
+      
+      // IMPROVED MERGE STRATEGY with timestamp-based conflict resolution
       if (response != null && response['messages'] != null) {
         final List<dynamic> messagesJson = response['messages'];
         final cloudMessages = messagesJson
             .map((json) => Message.fromJson(json as Map<String, dynamic>))
             .toList();
         
-        // MERGE STRATEGY: Only update if cloud has MORE messages than local
-        // This prevents accidental data loss from empty cloud responses
-        final localMessages = _histories[sceneKey] ?? [];
+        // Get cloud update timestamp
+        final cloudUpdatedAt = response['updated_at'] != null 
+            ? DateTime.parse(response['updated_at'] as String)
+            : null;
         
-        if (cloudMessages.length >= localMessages.length) {
+        // Get local update timestamp from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final localUpdatedAtStr = prefs.getString('chat_history_${sceneKey}_updated_at');
+        final localUpdatedAt = localUpdatedAtStr != null 
+            ? DateTime.parse(localUpdatedAtStr)
+            : null;
+        
+        // Decision logic:
+        // 1. If cloud has timestamp and it's newer, trust cloud
+        // 2. If cloud has more or equal messages, use cloud
+        // 3. If local has more messages but cloud is newer, trust cloud (deletion case)
+        // 4. Otherwise keep local
+        
+        if (cloudUpdatedAt != null && localUpdatedAt != null) {
+          // Both have timestamps - use the newer one
+          if (cloudUpdatedAt.isAfter(localUpdatedAt) || cloudUpdatedAt.isAtSameMomentAs(localUpdatedAt)) {
+            _histories[sceneKey] = cloudMessages;
+            await _saveToLocal(sceneKey, cloudMessages);
+            await prefs.setString('chat_history_${sceneKey}_updated_at', cloudUpdatedAt.toIso8601String());
+            debugPrint('Cloud is newer, using cloud data (${cloudMessages.length} messages)');
+          } else {
+            debugPrint('Local is newer, keeping local data (${localMessages.length} messages)');
+          }
+        } else if (cloudMessages.length >= localMessages.length) {
+          // No timestamp or cloud has more/equal messages
           _histories[sceneKey] = cloudMessages;
-          
-          // Save to local storage
           await _saveToLocal(sceneKey, cloudMessages);
+          if (cloudUpdatedAt != null) {
+            await prefs.setString('chat_history_${sceneKey}_updated_at', cloudUpdatedAt.toIso8601String());
+          }
         } else {
-          // Local has more data, keep it and push to cloud
-          debugPrint('Local has more messages (${ localMessages.length}) than cloud (${cloudMessages.length}), keeping local');
-          // Optionally: trigger a sync to cloud here to update it
-          // _syncToCloud(sceneKey); // Uncomment if you want to auto-push
+          // Local has more data and no timestamp to compare
+          debugPrint('Local has more messages (${localMessages.length}) than cloud (${cloudMessages.length}), keeping local');
+        }
+      } else {
+        // Cloud returned null/empty - this could mean explicit deletion
+        // Check if there's a record in the database at all
+        final checkResponse = await _supabase
+            .from('chat_history')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('scene_key', sceneKey)
+            .maybeSingle();
+        
+        if (checkResponse == null) {
+          // No record exists in cloud - this is an explicit deletion
+          // Clear local data to sync with cloud deletion
+          _histories.remove(sceneKey);
+          await _saveToLocal(sceneKey, []);
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('chat_history_${sceneKey}_updated_at');
+          debugPrint('Cloud has no record - clearing local data (explicit deletion)');
+        } else {
+          // Record exists but messages is null/empty - keep local if it has data
+          debugPrint('Cloud record exists but empty, keeping local data if available');
         }
       }
-      // If response is null or empty, keep local data (don't overwrite with nothing)
       
       syncStatus.value = SyncStatus.synced;
     } catch (e) {
@@ -188,15 +236,17 @@ class ChatHistoryService {
   Future<void> clearHistory(String sceneKey) async {
     _histories.remove(sceneKey);
     
-    // Clear from local storage
+    // Clear from local storage including timestamp
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('chat_history_$sceneKey');
+      await prefs.remove('chat_history_${sceneKey}_updated_at');
     } catch (e) {
       print('Error clearing local storage: $e');
     }
     
-    // Try to clear from cloud
+    // Try to clear from cloud - DELETE the entire record
+    // This ensures other devices recognize it as an explicit deletion
     syncStatus.value = SyncStatus.syncing;
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -207,6 +257,8 @@ class ChatHistoryService {
             .eq('user_id', userId)
             .eq('scene_key', sceneKey)
             .timeout(const Duration(seconds: 5));
+        
+        debugPrint('Cleared conversation from cloud: $sceneKey');
       }
       syncStatus.value = SyncStatus.synced;
     } catch (e) {
@@ -223,16 +275,21 @@ class ChatHistoryService {
 
       final messages = _histories[sceneKey] ?? [];
       final messagesJson = messages.map((m) => m.toJson()).toList();
+      final now = DateTime.now();
 
       await _supabase.from('chat_history').upsert(
         {
           'user_id': userId,
           'scene_key': sceneKey,
           'messages': messagesJson,
-          // Let database trigger handle updated_at automatically
+          'updated_at': now.toIso8601String(),
         },
         onConflict: 'user_id,scene_key',
       ).timeout(const Duration(seconds: 10)); // Add timeout
+      
+      // Save timestamp locally for conflict resolution
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('chat_history_${sceneKey}_updated_at', now.toIso8601String());
     } catch (e) {
       // Don't print error - this is expected when offline
       rethrow; // Let caller handle with catchError
