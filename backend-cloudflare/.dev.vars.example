@@ -3,3 +3,15 @@
 
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
+
+# TTS - MiniMax API
+# TODO: [USER] Get your API key from https://platform.minimaxi.com/
+MINIMAX_API_KEY=sk-api-KLGJmEI9dzjGEklwtgIocG-63redbfLXGP37pKy6XIBS87HITPElOYEIBJW8KIuoD9pes7W2cmWeb9MXFr-i2R2ZqjG7Mj18iyFY_UNVof8UjVRQmVmyT8g
+MINIMAX_GROUP_ID=1836297057120305320
+
+# R2 Public Domain (for serving audio files)
+# TODO: [USER] Configure after creating R2 bucket and enabling public access
+# Options:
+#   1. R2.dev subdomain: https://<account-id>.r2.dev/tritalk-audio
+#   2. Custom domain: https://audio.yourdomain.com
+R2_PUBLIC_DOMAIN=https://YOUR_R2_PUBLIC_DOMAIN

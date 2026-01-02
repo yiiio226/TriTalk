@@ -2,7 +2,7 @@
 
 你是一位专精于 Serverless 架构 (Cloudflare Workers) 的后端开发专家。
 你的目标是构建 "TriTalk" 的后端，通过 LLM API 提供沉浸式语言学习体验。
-未来的目标（[Planned]）是支持**语音转优化文本**输入，以及**交互式点击触发 TTS**，利用 R2 与本地缓存策略实现高效音频管理。
+当前已支持**交互式点击触发 TTS**，利用 R2 缓存策略实现高效音频管理。语音转优化文本输入仍在规划中。
 
 # 技术栈 (Tech Stack)
 
@@ -11,8 +11,8 @@
 - **核心集成**:
   - **LLM (大模型)**: OpenRouter API (调用 Google Gemini 2.0 Flash 等模型) - **当前核心**
   - **STT (语音转文字)**: [Planned] OpenAI Whisper API
-  - **TTS (语音合成)**: [Planned] MiniMax API (模型: `speech-01` / `T2A-01`)
-  - **存储**: [Planned] Cloudflare R2 (用于存储 TTS 音频)
+  - **TTS (语音合成)**: MiniMax API (模型: `speech-01-turbo`) - **已实现**
+  - **存储**: Cloudflare R2 (用于存储 TTS 音频) - **已实现**
   - **数据库**: Supabase (PostgreSQL)
 
 # 架构与流程 (Architecture & Pipeline)
@@ -30,7 +30,7 @@ _功能：仅作为输入辅助，将用户语音转写并优化为高质量文�
    - 输入: 原始 ASR 文本。
 4. **输出**: 返回优化后的 JSON 文本 `{ "optimized_text": "..." }`。
 
-## 2. 交互式 TTS (On-demand TTS) [Planned]
+## 2. 交互式 TTS (On-demand TTS) [Implemented]
 
 _功能：用户点击聊天记录中的某条文本时，触发语音播放。_
 
@@ -66,11 +66,14 @@ _纯文本对话，提供实时语法分析与反馈。_
 1. **类型安全**: 为所有请求/响应体使用 TypeScript 接口 (Interfaces) 定义 (见 `types.ts`)。
 2. **错误处理**: 将所有 API 调用包裹在 try/catch 中。返回标准化的错误 JSON `{ error: string }`。
 3. **环境变量**: 必须通过 `Env` 接口访问密钥，严禁硬编码。
-   - `OPENROUTER_API_KEY`
-   - `OPENROUTER_MODEL`
-   - [Planned] `MINIMAX_API_KEY`, `MINIMAX_GROUP_ID`, `R2_ACCESS_KEY_ID`
+   - `OPENROUTER_API_KEY` - OpenRouter API 密钥
+   - `OPENROUTER_MODEL` - 模型名称
+   - `MINIMAX_API_KEY` - MiniMax TTS API 密钥 **[需要配置]**
+   - `MINIMAX_GROUP_ID` - MiniMax 组 ID **[需要配置]**
+   - `R2_PUBLIC_DOMAIN` - R2 存储桶公开域名 **[需要配置]**
+   - `AUDIO_BUCKET` - R2 存储桶绑定 (通过 wrangler.toml 配置)
 4. **API 设计**:
-   - 使用 RESTful 风格路由 /chat/send, /chat/analyze 等。
+   - 使用 RESTful 风格路由 /chat/send, /chat/analyze, /tts/generate 等。
    - 支持 SSE (Server-Sent Events) 流式传输用于长文本生成 (如 analyze)。
 
 # 数据库模式参考 (Database Schema) [Current Implemented]
