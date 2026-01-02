@@ -59,29 +59,6 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  Future<void> _loadHints() async {
-    try {
-      final response = await _apiService.getHints(widget.sceneDescription, widget.history);
-      if (mounted) {
-        setState(() {
-          _hints = response.hints;
-          _isLoading = false;
-        });
-        
-        // Save hints to cache via callback
-        if (widget.onHintsCached != null) {
-          widget.onHintsCached!(_hints);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

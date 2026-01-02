@@ -9,6 +9,7 @@ class Message {
   final bool isLoading; // Transient: Loading state for pending messages
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
+  final List<String>? hints; // For persisting suggested replies
 
   Message({
     required this.id,
@@ -21,6 +22,7 @@ class Message {
     this.isLoading = false,
     this.isAnimated = false,
     this.isFeedbackLoading = false,
+    this.hints,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +34,7 @@ class Message {
       'translation': translation,
       'feedback': feedback?.toJson(),
       'analysis': analysis?.toJson(),
+      'hints': hints,
     };
   }
 
@@ -48,6 +51,7 @@ class Message {
       analysis: json['analysis'] != null
           ? MessageAnalysis.fromJson(json['analysis'])
           : null,
+      hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
     );
   }
 }

@@ -251,19 +251,12 @@ class _ChatScreenState extends State<ChatScreen> {
             analysis: msg.analysis,
             isAnimated: false,
             isLoading: false,
-            hints: msg.hints,
           );
         }
       }
       if (mounted) {
         setState(() {
           _messages = history;
-          
-          // Restore hints from the last message if available
-          if (_messages.isNotEmpty && _messages.last.hints != null) {
-            _cachedHints = _messages.last.hints;
-            _hintsMessageCount = _messages.length;
-          }
         });
         _jumpToBottom(); // Initial jump
         // Additional delayed jump to ensure all messages are fully rendered
@@ -740,28 +733,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     setState(() {
                       _cachedHints = hints;
                       _hintsMessageCount = currentMessageCount;
-                      
-                      // Save hints to the last message for persistence
-                      if (_messages.isNotEmpty) {
-                        final lastMsg = _messages.last;
-                        // Use a copy with hints
-                        _messages[_messages.length - 1] = Message(
-                          id: lastMsg.id,
-                          content: lastMsg.content,
-                          isUser: lastMsg.isUser,
-                          timestamp: lastMsg.timestamp,
-                          translation: lastMsg.translation,
-                          feedback: lastMsg.feedback,
-                          analysis: lastMsg.analysis,
-                          isLoading: lastMsg.isLoading,
-                          isAnimated: false, // Ensure no re-animation
-                          isFeedbackLoading: lastMsg.isFeedbackLoading,
-                          hints: hints,
-                        );
-                        
-                        // Sync to cloud
-                        ChatHistoryService().syncMessages(widget.scene.id, _messages);
-                      }
                     });
                   },
                   onHintSelected: (hint) {
@@ -770,6 +741,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               );
             },
+          ),
           ),
           Expanded(
             child: Container(
