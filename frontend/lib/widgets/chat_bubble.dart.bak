@@ -12,14 +12,12 @@ class ChatBubble extends StatefulWidget {
   final Message message;
   final VoidCallback? onTap;
   final String? sceneId; // Add sceneId to pass to SaveNoteSheet
-  final Function(Message)? onMessageUpdate; // Callback to update message with translation
 
   const ChatBubble({
     Key? key, 
     required this.message, 
     this.onTap,
     this.sceneId,
-    this.onMessageUpdate,
   }) : super(key: key);
 
   @override
@@ -43,11 +41,6 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    
-    // Initialize translation from message if it exists
-    if (widget.message.translation != null) {
-      _translatedText = widget.message.translation;
-    }
     
     // Setup loading controller
     _loadingController = AnimationController(
@@ -375,67 +368,6 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
         ),
       ),
     );
-  }
-
-  Future<void> _handleTranslate() async {
-    // Toggle translation visibility if already translated
-    if (_translatedText != null) {
-      setState(() {
-        _showTranslation = !_showTranslation;
-      });
-      return;
-    }
-
-    // Fetch translation
-    setState(() {
-      _isTranslating = true;
-    });
-
-    try {
-      final prefs = PreferencesService();
-      final nativeLang = await prefs.getNativeLanguage();
-      final apiService = ApiService();
-      
-      final translation = await apiService.translateText(
-        widget.message.content,
-        nativeLang,
-      );
-
-      if (mounted) {
-        setState(() {
-          _translatedText = translation;
-          _showTranslation = true;
-          _isTranslating = false;
-        });
-        
-        // Save translation to message object
-        if (widget.onMessageUpdate != null) {
-          final updatedMessage = Message(
-            id: widget.message.id,
-            content: widget.message.content,
-            isUser: widget.message.isUser,
-            timestamp: widget.message.timestamp,
-            translation: translation, // Save the translation
-            feedback: widget.message.feedback,
-            analysis: widget.message.analysis,
-          );
-          widget.onMessageUpdate!(updatedMessage);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isTranslating = false;
-        });
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Translation failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
   Widget _buildLoadingIndicator() {
     return SizedBox(

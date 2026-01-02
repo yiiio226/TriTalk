@@ -407,20 +407,6 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           _showTranslation = true;
           _isTranslating = false;
         });
-        
-        // Save translation to message object
-        if (widget.onMessageUpdate != null) {
-          final updatedMessage = Message(
-            id: widget.message.id,
-            content: widget.message.content,
-            isUser: widget.message.isUser,
-            timestamp: widget.message.timestamp,
-            translation: translation, // Save the translation
-            feedback: widget.message.feedback,
-            analysis: widget.message.analysis,
-          );
-          widget.onMessageUpdate!(updatedMessage);
-        }
       }
     } catch (e) {
       if (mounted) {

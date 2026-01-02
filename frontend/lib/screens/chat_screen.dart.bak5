@@ -594,38 +594,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   final msg = _messages[index];
                   return Align(
                     alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: ChatBubble(
-                      key: ValueKey(msg.id),
-                      message: msg,
-                      sceneId: widget.scene.id, // Pass sceneId
-                      onMessageUpdate: (updatedMessage) {
-                        // Update message in list and sync to cloud
-                        final msgIndex = _messages.indexWhere((m) => m.id == updatedMessage.id);
-                        if (msgIndex != -1) {
-                          setState(() {
-                            _messages[msgIndex] = updatedMessage;
-                          });
-                          // Sync to cloud
-                          ChatHistoryService().syncMessages(widget.scene.id, _messages);
-                        }
-                      },
-                      onTap: () {
-                        if (msg.feedback != null) {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            barrierColor: Colors.white.withOpacity(0.5),
-                            builder: (context) => FeedbackSheet(
-                              message: msg,
-                              sceneId: widget.scene.id, // Pass sceneId
-                            ),
-                          );
-                        } else if (!msg.isUser) {
-                          _handleAnalyze(msg);
-                        }
-                      },
-                    ),
                   );
                 },
               ),
