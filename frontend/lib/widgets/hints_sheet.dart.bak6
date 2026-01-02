@@ -67,11 +67,6 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
           _hints = response.hints;
           _isLoading = false;
         });
-        
-        // Save hints to cache via callback
-        if (widget.onHintsCached != null) {
-          widget.onHintsCached!(_hints);
-        }
       }
     } catch (e) {
       if (mounted) {
