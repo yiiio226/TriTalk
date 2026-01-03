@@ -15,14 +15,16 @@ class ChatBubble extends StatefulWidget {
   final VoidCallback? onTap;
   final String? sceneId; // Add sceneId to pass to SaveNoteSheet
   final Function(Message)? onMessageUpdate; // Callback to update message with translation
+  final VoidCallback? onShowFeedback;
 
   const ChatBubble({
-    Key? key, 
-    required this.message, 
+    super.key,
+    required this.message,
     this.onTap,
     this.sceneId,
     this.onMessageUpdate,
-  }) : super(key: key);
+    this.onShowFeedback,
+  });
 
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
@@ -192,23 +194,6 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
 
 
   Widget _buildVoiceBubbleContent(bool isUser) {
-    // Score label for voice feedback
-    String? scoreLabel;
-    Color? scoreColor;
-    
-    if (widget.message.voiceFeedback != null) {
-      final score = widget.message.voiceFeedback!.pronunciationScore;
-      scoreLabel = '$score';
-      
-      if (score >= 80) {
-        scoreColor = Colors.green;
-      } else if (score >= 60) {
-        scoreColor = Colors.orange;
-      } else {
-        scoreColor = Colors.red;
-      }
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -231,7 +216,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
               ),
             ),
             const SizedBox(width: 8),
-            // Waveform placeholder or duration
+            // Duration
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -249,32 +234,6 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
               ],
             ),
             const SizedBox(width: 16),
-            if (widget.message.voiceFeedback != null)
-              GestureDetector(
-                onTap: _showVoiceFeedback,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: scoreColor?.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: scoreColor ?? Colors.grey),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        scoreLabel!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: scoreColor,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.mic_rounded, size: 14, color: scoreColor),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ],
@@ -381,21 +340,68 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                Row(
                  mainAxisSize: MainAxisSize.min,
                  children: [
-                   Icon(
-                     isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
-                     size: 16, 
-                     color: isPerfect ? Colors.green[700] : Colors.orange
+                   GestureDetector(
+                     onTap: () => widget.onShowFeedback?.call(),
+                     child: Icon(
+                       isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
+                       size: 16, 
+                       color: isPerfect ? Colors.green[700] : Colors.orange
+                     ),
                    ),
                    if (isPerfect) ...[
                      const SizedBox(width: 4),
-                     Text(
-                       "Perfect!", 
-                       style: TextStyle(
-                         fontSize: 12, 
-                         fontWeight: FontWeight.bold,
-                         color: Colors.green[800]
-                       )
-                     ),
+                     GestureDetector(
+                       onTap: () => widget.onShowFeedback?.call(),
+                       child: Text(
+                         "Perfect!", 
+                         style: TextStyle(
+                           fontSize: 12, 
+                           fontWeight: FontWeight.bold,
+                           color: Colors.green[800]
+                         )
+                       ),
+                     )
+                   ] else if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null) ...[
+                     const SizedBox(width: 8),
+                     GestureDetector(
+                       onTap: _showVoiceFeedback,
+                       child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: widget.message.voiceFeedback!.pronunciationScore >= 80 
+                                  ? Colors.green 
+                                  : Colors.orange,
+                              width: 1
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${widget.message.voiceFeedback!.pronunciationScore}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: widget.message.voiceFeedback!.pronunciationScore >= 80 
+                                      ? Colors.green[800] 
+                                      : Colors.orange[800],
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              Icon(
+                                Icons.mic_rounded, 
+                                size: 12, 
+                                color: widget.message.voiceFeedback!.pronunciationScore >= 80 
+                                    ? Colors.green[800] 
+                                    : Colors.orange[800]
+                              ),
+                            ],
+                          ),
+                       ),
+                     )
                    ]
                  ],
                ),

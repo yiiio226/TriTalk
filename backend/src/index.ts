@@ -316,7 +316,7 @@ async function handleChatSendVoice(request: Request, env: Env): Promise<Response
 
         // 1. MOCK TRANSCRIPTION
         // In production, send audio to STT service
-        const transcribedText = "I would like to practice more, this is fun."; 
+        const transcribedText = "I want to live in a hotel."; 
 
         // 2. Process with LLM (Reusing logic structure from handleChatSend)
         const systemPrompt = `You are roleplaying in a language learning scenario.
@@ -381,11 +381,37 @@ async function handleChatSendVoice(request: Request, env: Env): Promise<Response
         // In production, get this from the STT service or audio analysis model
         const pronunciationScore = Math.floor(Math.random() * 15) + 80; // Random score 80-95
 
+        // Mock sentence breakdown
+        const cleanText = sanitizeText(analysisData.corrected_text || transcribedText).replace(/[.,!?]/g, '');
+        const words = cleanText.split(/\s+/);
+        const sentenceBreakdown = words.map(word => {
+            const rand = Math.random();
+            let score;
+            // Force 'live' to be low score if present (for demo)
+            if (word.toLowerCase() === 'live') score = 45;
+            else if (rand > 0.3) score = Math.floor(Math.random() * 20) + 81; // 81-100
+            else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61; // 61-80
+            else score = Math.floor(Math.random() * 20) + 40; // 40-59
+            return { word, score };
+        });
+
+        // Identify error focus
+        const lowestScoreWord = sentenceBreakdown.reduce((prev, curr) => prev.score < curr.score ? prev : curr, sentenceBreakdown[0] || { word: 'none', score: 100 });
+        
+        const errorFocus = lowestScoreWord.score < 80 ? {
+            word: lowestScoreWord.word,
+            user_ipa: `/liːv/`,
+            correct_ipa: `/lɪv/`,
+            tip: `/${lowestScoreWord.word === 'live' ? 'ɪ' : 'ə'}/ is a short vowel, relax your mouth.`
+        } : null;
+
         const voiceFeedback = {
             pronunciation_score: pronunciationScore,
             corrected_text: sanitizeText(analysisData.corrected_text || transcribedText),
             native_expression: sanitizeText(analysisData.native_expression || ''),
             feedback: sanitizeText(analysisData.explanation || 'Good pronunciation!'),
+            sentence_breakdown: sentenceBreakdown,
+            error_focus: errorFocus,
         };
 
         const response = {
