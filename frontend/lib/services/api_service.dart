@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/message.dart';
 import 'preferences_service.dart';
+import '../env.dart';
 
 // 环境枚举
 enum Environment {
@@ -39,10 +40,10 @@ class ApiService {
   }
   
   // 本地开发 URL (Cloudflare Workers 开发服务器)
-  static const String _localDevUrl = 'http://192.168.1.4:8787';
+  static const String _localDevUrl = Env.localBackendUrl;
   
   // 生产环境 URL (已部署的 Cloudflare Workers)
-  static const String _productionUrl = 'https://tritalk-backend.tristart226.workers.dev';
+  static const String _productionUrl = Env.prodBackendUrl;
   
   // 根据当前环境自动选择 URL
   static String get baseUrl {
