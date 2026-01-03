@@ -297,6 +297,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       _messages.add(loadingAiMessage);
       _isRecordingVoice = false;
     });
+
+    // Save initial state (user message + loading)
+    ChatHistoryService().syncMessages(widget.scene.id, _messages);
     
     _scrollToBottom();
     
@@ -352,6 +355,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         );
         _messages.add(aiMessage);
       });
+
+      // Save final state (AI response + feedback)
+      ChatHistoryService().syncMessages(widget.scene.id, _messages);
       
       _scrollToBottom();
       
@@ -1457,17 +1463,17 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         return AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
-            // Create staggered wave effect
+            // Uniform height, animate color instead
             final offset = (index * 0.1) % 1.0;
             final animValue = (_pulseController.value + offset) % 1.0;
-            final height = 4 + (animValue * 20); // Height varies from 4 to 24
+            final isDark = animValue > 0.5; // Create a moving wave of darkness
             
             return Container(
               width: 3,
-              height: height,
+              height: 20, // Uniform height
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: Colors.grey[400],
+                color: isDark ? Colors.black : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             );
