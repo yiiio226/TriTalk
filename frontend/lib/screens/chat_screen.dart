@@ -102,7 +102,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     
     // Initialize pulse animation controller
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 2800), // Slower wave
       vsync: this,
     );
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
@@ -182,7 +182,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         });
         
         // Start pulsing animation
-        _pulseController.repeat(reverse: true);
+        _pulseController.repeat();
         
         // Start timer for potential future use
         _currentRecordingDuration = 0;
@@ -283,18 +283,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       isFeedbackLoading: true,
     );
     
-    // Add temporary loading AI message
-    final loadingAiMessage = Message(
-      id: aiMessageId,
-      content: '',
-      isUser: false,
-      timestamp: DateTime.now(),
-      isLoading: true,
-    );
-    
     setState(() {
       _messages.add(userMessage);
-      _messages.add(loadingAiMessage);
       _isRecordingVoice = false;
     });
 
@@ -306,7 +296,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     try {
       // Prepare history
       final history = _messages
-          .where((m) => !m.isLoading && m.id != userMessageId && m.id != aiMessageId && m.content.isNotEmpty)
+          .where((m) => !m.isLoading && m.id != userMessageId && m.content.isNotEmpty)
           .map((m) => <String, String>{
             'role': m.isUser ? 'user' : 'assistant',
             'content': m.content,
@@ -341,9 +331,6 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           );
         }
         
-        // Remove loading AI message and add real one
-        _messages.removeWhere((m) => m.id == aiMessageId);
-        
         // Add real AI message
         final aiMessage = Message(
           id: aiMessageId,
@@ -365,8 +352,20 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       if (mounted) {
         showTopToast(context, 'Failed to send voice message: $e', isError: true);
         setState(() {
-          _messages.removeWhere((m) => m.id == aiMessageId);
-          // Optionally mark user message as failed
+           // Optionally mark user message as failed
+           final index = _messages.indexWhere((m) => m.id == userMessageId);
+           if (index != -1) {
+             _messages[index] = Message(
+               id: userMessage.id,
+               content: userMessage.content,
+               isUser: true,
+               timestamp: userMessage.timestamp,
+               audioPath: userMessage.audioPath,
+               audioDuration: userMessage.audioDuration,
+               isFeedbackLoading: false, // Stop loading
+               // Error state could be handled here
+             );
+           }
         });
       }
     }
@@ -1459,18 +1458,20 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   Widget _buildWaveform() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(20, (index) {
+      children: List.generate(30, (index) {
         return AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
             // Uniform height, animate color instead
-            final offset = (index * 0.1) % 1.0;
+            // Use smaller multiplier for wider wave (contiguous blocks)
+            final offset = (index * 0.05) % 1.0; 
             final animValue = (_pulseController.value + offset) % 1.0;
-            final isDark = animValue > 0.5; // Create a moving wave of darkness
+            // Use a threshold that creates a "filling" effect or large block moving
+            final isDark = animValue < 0.5; // Simple moving block
             
             return Container(
-              width: 3,
-              height: 20, // Uniform height
+              width: 2, // Thinner bars
+              height: 14, // Uniform height, reduced
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 color: isDark ? Colors.black : Colors.grey[300],

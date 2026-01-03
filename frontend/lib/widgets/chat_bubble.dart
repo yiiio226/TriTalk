@@ -37,8 +37,9 @@ class ChatBubble extends StatefulWidget {
 }
 
 class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateMixin {
-  // Track which messages have completed their typewriter animation
-  static final Set<String> _completedAnimations = {};
+  // Track which messages have STARTED their typewriter animation
+  // This prevents the animation from restarting if the user scrolls away and back
+  static final Set<String> _startedAnimations = {};
   
   bool _showTranslation = false;
   bool _isTranslating = false;
@@ -76,14 +77,15 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Setup typewriter if needed
     if (widget.message.isAnimated && !widget.message.isLoading) {
-      // Check if this message has already been animated
-      if (_completedAnimations.contains(widget.message.id)) {
-        // Already animated, show full text immediately
+      // Check if this message has already STARTED animating
+      if (_startedAnimations.contains(widget.message.id)) {
+        // Already started (even if not finished), show full text immediately to avoid restart
         _displayedText = widget.message.content;
         _isAnimationComplete = true;
       } else {
-        // First time, start animation
+        // First time, start animation and mark as started
         _isAnimationComplete = false;
+        _startedAnimations.add(widget.message.id);
         _startTypewriter();
       }
     } else {
@@ -134,8 +136,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Handle text changes or animation toggle
     if (widget.message.content != oldWidget.message.content) {
-      // Content changed, remove from completed animations to allow re-animation
-      _completedAnimations.remove(widget.message.id);
+      // Content changed, remove from started animations to allow re-animation
+      _startedAnimations.remove(widget.message.id);
       
       if (widget.message.isAnimated) {
         _currentIndex = 0;
@@ -166,8 +168,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
         if (mounted) {
           setState(() {
             _isAnimationComplete = true;
-            // Mark this message as having completed animation
-            _completedAnimations.add(widget.message.id);
+            // No need to add to set here, we added it at start
           });
         }
       }
