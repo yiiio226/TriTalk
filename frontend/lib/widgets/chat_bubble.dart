@@ -442,6 +442,29 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                     ),
                   ),
 
+                  // Play
+                  GestureDetector(
+                    onTap: _playTextToSpeech,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.play_arrow_rounded, size: 14, color: Colors.black),
+                          const SizedBox(width: 4),
+                          const Text(
+                            "Play",
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   // Shadowing
                   GestureDetector(
                     onTap: () {
@@ -464,6 +487,39 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                           const SizedBox(width: 4),
                           const Text(
                             "Shadow",
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Translate
+                  GestureDetector(
+                    onTap: _handleTranslate,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_isTranslating)
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                              ),
+                            )
+                          else
+                            const Icon(Icons.translate_rounded, size: 14, color: Colors.black),
+                          const SizedBox(width: 4),
+                          const Text(
+                            "Translate",
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
@@ -498,39 +554,6 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                           const SizedBox(width: 4),
                           const Text(
                             "Save",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Translate
-                  GestureDetector(
-                    onTap: _handleTranslate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_isTranslating)
-                            const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                              ),
-                            )
-                          else
-                            const Icon(Icons.translate_rounded, size: 14, color: Colors.black),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "Translate",
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
@@ -616,6 +639,14 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       }
     }
   }
+
+  void _playTextToSpeech() {
+    // Placeholder for TTS functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Text-to-speech functionality coming soon!')),
+    );
+  }
+
   Widget _buildLoadingIndicator() {
     return SizedBox(
       width: 40,
