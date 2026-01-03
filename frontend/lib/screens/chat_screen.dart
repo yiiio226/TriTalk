@@ -48,6 +48,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecordingVoice = false;
   Timer? _recordingTimer;
+  int _currentRecordingDuration = 0;
   
   // Animation controller for pulsing microphone
   late AnimationController _pulseController;
@@ -180,8 +181,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         _pulseController.repeat(reverse: true);
         
         // Start timer for potential future use
+        _currentRecordingDuration = 0;
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          // Timer running during recording
+          setState(() {
+            _currentRecordingDuration++;
+          });
         });
       } else {
         // Request permission
@@ -224,7 +228,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       }
       
       if (sendDirectly) {
-        await _sendVoiceMessage(path);
+        await _sendVoiceMessage(path, _currentRecordingDuration);
       } else if (convertToText) {
         // Transcribe the audio to text
         await _transcribeAudio(path);
@@ -259,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     }
   }
 
-  Future<void> _sendVoiceMessage(String audioPath) async {
+  Future<void> _sendVoiceMessage(String audioPath, int duration) async {
     // Generate IDs
     final userMessageId = _uuid.v4();
     final aiMessageId = _uuid.v4();
@@ -271,7 +275,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       isUser: true,
       timestamp: DateTime.now(),
       audioPath: audioPath,
-      audioDuration: 0, // Placeholder
+      audioDuration: duration,
+      isFeedbackLoading: true,
     );
     
     // Add temporary loading AI message
@@ -325,6 +330,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             audioDuration: userMessage.audioDuration, // Keep placeholder or update
             voiceFeedback: response.voiceFeedback,
             feedback: response.reviewFeedback,
+            isFeedbackLoading: false,
           );
         }
         
