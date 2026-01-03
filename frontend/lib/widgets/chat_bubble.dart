@@ -15,14 +15,16 @@ class ChatBubble extends StatefulWidget {
   final VoidCallback? onTap;
   final String? sceneId; // Add sceneId to pass to SaveNoteSheet
   final Function(Message)? onMessageUpdate; // Callback to update message with translation
+  final VoidCallback? onShowFeedback;
 
   const ChatBubble({
-    Key? key, 
-    required this.message, 
+    super.key,
+    required this.message,
     this.onTap,
     this.sceneId,
     this.onMessageUpdate,
-  }) : super(key: key);
+    this.onShowFeedback,
+  });
 
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
@@ -335,29 +337,35 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       ),
             if (hasFeedback) ...[
                const SizedBox(height: 6),
-                GestureDetector(
-                  onTap: widget.message.isVoiceMessage ? _showVoiceFeedback : null,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
-                        size: 16, 
-                        color: isPerfect ? Colors.green[700] : Colors.orange
-                      ),
-                      if (isPerfect) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          "Perfect!", 
-                          style: TextStyle(
-                            fontSize: 12, 
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[800]
-                          )
-                        ),
-                      ] else if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null) ...[
-                        const SizedBox(width: 8),
-                         Container(
+               Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   GestureDetector(
+                     onTap: () => widget.onShowFeedback?.call(),
+                     child: Icon(
+                       isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
+                       size: 16, 
+                       color: isPerfect ? Colors.green[700] : Colors.orange
+                     ),
+                   ),
+                   if (isPerfect) ...[
+                     const SizedBox(width: 4),
+                     GestureDetector(
+                       onTap: () => widget.onShowFeedback?.call(),
+                       child: Text(
+                         "Perfect!", 
+                         style: TextStyle(
+                           fontSize: 12, 
+                           fontWeight: FontWeight.bold,
+                           color: Colors.green[800]
+                         )
+                       ),
+                     )
+                   ] else if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null) ...[
+                     const SizedBox(width: 8),
+                     GestureDetector(
+                       onTap: _showVoiceFeedback,
+                       child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.5),
@@ -392,11 +400,11 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                               ),
                             ],
                           ),
-                        )
-                      ]
-                    ],
-                  ),
-                ),
+                       ),
+                     )
+                   ]
+                 ],
+               ),
             ],
             if (widget.message.isFeedbackLoading) ...[
                const SizedBox(height: 4),

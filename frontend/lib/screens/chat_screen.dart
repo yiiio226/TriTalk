@@ -853,21 +853,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                         }
                       },
                       onTap: () {
-                        if (msg.feedback != null) {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            barrierColor: Colors.white.withOpacity(0.5),
-                            builder: (context) => FeedbackSheet(
-                              message: msg,
-                              sceneId: widget.scene.id, // Pass sceneId
-                            ),
-                          );
-                        } else if (!msg.isUser) {
-                          _handleAnalyze(msg);
-                        }
+                         if (!msg.isUser) {
+                           _handleAnalyze(msg);
+                         }
                       },
+                      onShowFeedback: () => _showFeedbackSheet(msg),
                     ),
                   );
                 },
@@ -1431,6 +1421,21 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         },
       ),
     );
+  }
+
+  void _showFeedbackSheet(Message message) {
+     if (message.feedback == null) return;
+     
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.white.withOpacity(0.5),
+        builder: (context) => FeedbackSheet(
+          message: message,
+          sceneId: widget.scene.id,
+        ),
+      );
   }
 
   void _updateMessageAnalysis(String messageId, MessageAnalysis analysis) {
