@@ -102,6 +102,10 @@ export interface SceneGenerationResponse {
 export interface Env {
     OPENROUTER_API_KEY: string;
     OPENROUTER_MODEL: string;
+    // Removed TRITALK_API_KEY as we are moving to Supabase Auth
+    // TRITALK_API_KEY: string; 
+    SUPABASE_URL: string;
+    SUPABASE_ANON_KEY: string;
 }
 
 export interface PolishRequest {

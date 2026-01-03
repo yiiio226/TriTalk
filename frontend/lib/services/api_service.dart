@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/message.dart';
 import 'preferences_service.dart';
 
@@ -20,6 +21,22 @@ class ApiService {
           ? Environment.production
           : Environment.localDev;
   // =================================================
+  
+  // Helper to create headers with Auth Token
+  static Map<String, String> _headers() {
+    final session = Supabase.instance.client.auth.currentSession;
+    final token = session?.accessToken ?? '';
+    
+    // Debug print to check if token exists
+    if (token.isEmpty) {
+      print('⚠️ Warning: No Auth Token available for API call');
+    }
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
   
   // 本地开发 URL (Cloudflare Workers 开发服务器)
   static const String _localDevUrl = 'http://192.168.1.4:8787';
@@ -51,7 +68,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/send'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'message': text,
           'history': history,
@@ -79,7 +96,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/hint'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'message': '', // Not needed for hint request strictly but used in model
           'history': history,
@@ -107,7 +124,7 @@ class ApiService {
       
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'description': description,
           'tone': tone,
@@ -128,7 +145,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/common/translate'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'text': text,
           'target_language': targetLanguage,
@@ -151,7 +168,7 @@ class ApiService {
     final nativeLang = await prefs.getNativeLanguage();
 
     final request = http.Request('POST', Uri.parse('$baseUrl/chat/analyze'));
-    request.headers.addAll({'Content-Type': 'application/json'});
+    request.headers.addAll(_headers());
     request.body = jsonEncode({
       'message': message,
       'native_language': nativeLang,
@@ -261,7 +278,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/scene/polish'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'description': description,
         }),
@@ -282,7 +299,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/chat/shadow'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'target_text': targetText,
           'user_audio_text': userAudioText,
@@ -310,7 +327,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/optimize'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'message': draft,
           'scene_context': sceneContext,
