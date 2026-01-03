@@ -460,10 +460,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.play_arrow_rounded, size: 14, color: Colors.black),
+                          const Icon(Icons.volume_up_rounded, size: 14, color: Colors.black),
                           const SizedBox(width: 4),
                           const Text(
-                            "Play",
+                            "Listen",
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
