@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/scene.dart';
 import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
@@ -51,6 +52,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   // Animation controller for pulsing microphone
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  
+  // Audio playback state
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _playingMessageId;
+  bool _isPlaying = false;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -151,6 +157,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     _recordingTimer?.cancel();
     _pulseController.dispose();
     _audioRecorder.dispose();
+    _audioPlayer.dispose();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -197,7 +204,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     }
   }
 
-  Future<void> _stopVoiceRecording() async {
+  Future<void> _stopVoiceRecording({bool convertToText = false, bool sendDirectly = false}) async {
     _recordingTimer?.cancel();
     _recordingTimer = null;
     
@@ -216,8 +223,12 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         return;
       }
       
-      // Transcribe the audio
-      await _transcribeAudio(path);
+      if (sendDirectly) {
+        await _sendVoiceMessage(path);
+      } else if (convertToText) {
+        // Transcribe the audio to text
+        await _transcribeAudio(path);
+      }
     } catch (e) {
       if (mounted) {
         showTopToast(context, '录音失败: $e', isError: true);
@@ -244,6 +255,103 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     } catch (e) {
       if (mounted) {
         showTopToast(context, '语音转文字失败: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _sendVoiceMessage(String audioPath) async {
+    // Generate IDs
+    final userMessageId = _uuid.v4();
+    final aiMessageId = _uuid.v4();
+    
+    // Add user voice message immediately (optimistic UI)
+    final userMessage = Message(
+      id: userMessageId,
+      content: '', // Voice connection doesn't necessarily have text content immediately
+      isUser: true,
+      timestamp: DateTime.now(),
+      audioPath: audioPath,
+      audioDuration: 0, // Placeholder
+    );
+    
+    // Add temporary loading AI message
+    final loadingAiMessage = Message(
+      id: aiMessageId,
+      content: '',
+      isUser: false,
+      timestamp: DateTime.now(),
+      isLoading: true,
+    );
+    
+    setState(() {
+      _messages.add(userMessage);
+      _messages.add(loadingAiMessage);
+      _isRecordingVoice = false;
+    });
+    
+    _scrollToBottom();
+    
+    try {
+      // Prepare history
+      final history = _messages
+          .where((m) => !m.isLoading && m.id != userMessageId && m.id != aiMessageId && m.content.isNotEmpty)
+          .map((m) => <String, String>{
+            'role': m.isUser ? 'user' : 'assistant',
+            'content': m.content,
+          })
+          .toList();
+          
+      // Ensure we have correct role info
+      final sceneContext = 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}';
+      
+      // Call API
+      final response = await _apiService.sendVoiceMessage(
+        audioPath, 
+        sceneContext, 
+        history
+      );
+      
+      // Update UI with response
+      setState(() {
+        // Update user message with feedback if available (and maybe transcribed text if provided)
+        final index = _messages.indexWhere((m) => m.id == userMessageId);
+        if (index != -1) {
+          _messages[index] = Message(
+            id: userMessage.id,
+            content: '', // Keep empty or use transcribed text if API returns it in future
+            isUser: true,
+            timestamp: userMessage.timestamp,
+            audioPath: audioPath,
+            audioDuration: userMessage.audioDuration, // Keep placeholder or update
+            voiceFeedback: response.voiceFeedback,
+            feedback: response.reviewFeedback,
+          );
+        }
+        
+        // Remove loading AI message and add real one
+        _messages.removeWhere((m) => m.id == aiMessageId);
+        
+        // Add real AI message
+        final aiMessage = Message(
+          id: aiMessageId,
+          content: response.message,
+          isUser: false,
+          timestamp: DateTime.now(),
+          translation: response.translation,
+          isAnimated: true,
+        );
+        _messages.add(aiMessage);
+      });
+      
+      _scrollToBottom();
+      
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, 'Failed to send voice message: $e', isError: true);
+        setState(() {
+          _messages.removeWhere((m) => m.id == aiMessageId);
+          // Optionally mark user message as failed
+        });
       }
     }
   }
@@ -829,7 +937,96 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           ),
         ),
       ),
-      child: _buildTextInputMode(),
+      child: _isRecordingVoice ? _buildRecordingMode() : _buildTextInputMode(),
+    );
+  }
+
+  // Recording Mode: Waveform | Text Button | Send Button
+  Widget _buildRecordingMode() {
+    return Row(
+      children: [
+        // Waveform visualization
+        Expanded(
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildWaveform(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Text button (转文本)
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[100],
+          ),
+          child: IconButton(
+            icon: const Text(
+              '文',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            onPressed: () => _stopVoiceRecording(convertToText: true),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Send button (直接发送语音)
+        Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black,
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_upward_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            onPressed: () => _stopVoiceRecording(sendDirectly: true),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Waveform animation widget
+  Widget _buildWaveform() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(20, (index) {
+        return AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            // Create staggered wave effect
+            final offset = (index * 0.1) % 1.0;
+            final animValue = (_pulseController.value + offset) % 1.0;
+            final height = 4 + (animValue * 20); // Height varies from 4 to 24
+            
+            return Container(
+              width: 3,
+              height: height,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 
@@ -858,20 +1055,19 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                 Expanded(
                   child: TextField(
                     controller: _textController,
-                    decoration: InputDecoration(
-                      hintText: _isRecordingVoice ? '正在听...' : 'Type a message...',
+                    decoration: const InputDecoration(
+                      hintText: 'Type a message...',
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
                       isDense: true,
                     ),
                     minLines: 1,
                     maxLines: 4,
                     style: const TextStyle(fontSize: 16),
-                    enabled: !_isRecordingVoice, // Disable input while recording
                   ),
                 ),
-                // AI Optimization Button (only show when not recording and has text)
-                if (!_isRecordingVoice && hasText)
+                // AI Optimization Button (only show when has text)
+                if (hasText)
                   IconButton(
                     iconSize: 20,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
@@ -882,7 +1078,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                             height: 16, 
                             child: CircularProgressIndicator(strokeWidth: 2)
                           )
-                        : Icon(
+                        : const Icon(
                             Icons.auto_fix_high, 
                             color: Colors.green
                           ),
@@ -894,38 +1090,14 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           ),
         ),
         const SizedBox(width: 8),
-        // Voice or Send button with pulsing animation
+        // Voice or Send button
         _buildVoiceOrSendButton(hasText),
       ],
     );
   }
 
   Widget _buildVoiceOrSendButton(bool hasText) {
-    if (_isRecordingVoice) {
-      // Pulsing microphone button during recording
-      return AnimatedBuilder(
-        animation: _pulseAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _pulseAnimation.value,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.red.shade100,
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.mic_rounded,
-                  color: Colors.red,
-                  size: 20,
-                ),
-                onPressed: _stopVoiceRecording,
-              ),
-            ),
-          );
-        },
-      );
-    } else if (hasText) {
+    if (hasText) {
       // Send button when text is present
       return Container(
         decoration: const BoxDecoration(

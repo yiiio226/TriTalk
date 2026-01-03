@@ -386,6 +386,52 @@ class ApiService {
       throw Exception('Error transcribing audio: $e');
     }
   }
+
+  Future<VoiceMessageResponse> sendVoiceMessage(
+    String audioPath,
+    String sceneContext,
+    List<Map<String, String>> history,
+  ) async {
+    try {
+      final prefs = PreferencesService();
+      final nativeLang = await prefs.getNativeLanguage();
+      final targetLang = await prefs.getTargetLanguage();
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/chat/send-voice'),
+      );
+
+      // Add headers
+      final headers = _headers();
+      request.headers.addAll(headers);
+
+      // Add audio file
+      request.files.add(await http.MultipartFile.fromPath(
+        'audio',
+        audioPath,
+      ));
+
+      // Add other fields
+      request.fields['scene_context'] = sceneContext;
+      request.fields['history'] = jsonEncode(history);
+      request.fields['native_language'] = nativeLang;
+      request.fields['target_language'] = targetLang;
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        return VoiceMessageResponse.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('Failed to send voice message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error sending voice message: $e');
+    }
+  }
 }
 
 class ChatResponse {
@@ -445,3 +491,29 @@ class SceneGenerationResponse {
     );
   }
 }
+
+class VoiceMessageResponse {
+  final String message;
+  final String? translation;
+  final VoiceFeedback voiceFeedback;
+  final ReviewFeedback? reviewFeedback;
+
+  VoiceMessageResponse({
+    required this.message,
+    this.translation,
+    required this.voiceFeedback,
+    this.reviewFeedback,
+  });
+
+  factory VoiceMessageResponse.fromJson(Map<String, dynamic> json) {
+    return VoiceMessageResponse(
+      message: json['message'],
+      translation: json['translation'],
+      voiceFeedback: VoiceFeedback.fromJson(json['voice_feedback']),
+      reviewFeedback: json['review_feedback'] != null
+          ? ReviewFeedback.fromJson(json['review_feedback'])
+          : null,
+    );
+  }
+}
+

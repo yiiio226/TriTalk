@@ -45,6 +45,7 @@ dependencies:
   sign_in_with_apple: ^6.1.1
   shimmer: ^3.0.0
   flutter_markdown: ^0.7.6
+  audioplayers: ^5.0.0
 
 dev_dependencies:
   flutter_test:

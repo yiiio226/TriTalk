@@ -10,6 +10,11 @@ class Message {
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
   final List<String>? hints; // For persisting suggested replies
+  
+  // Voice message fields
+  final String? audioPath;  // Local path to audio file
+  final int? audioDuration; // Duration in seconds
+  final VoiceFeedback? voiceFeedback; // Pronunciation feedback
 
   Message({
     required this.id,
@@ -23,6 +28,9 @@ class Message {
     this.isAnimated = false,
     this.isFeedbackLoading = false,
     this.hints,
+    this.audioPath,
+    this.audioDuration,
+    this.voiceFeedback,
   });
 
   Map<String, dynamic> toJson() {
@@ -35,6 +43,9 @@ class Message {
       'feedback': feedback?.toJson(),
       'analysis': analysis?.toJson(),
       'hints': hints,
+      'audioPath': audioPath,
+      'audioDuration': audioDuration,
+      'voiceFeedback': voiceFeedback?.toJson(),
     };
   }
 
@@ -52,8 +63,16 @@ class Message {
           ? MessageAnalysis.fromJson(json['analysis'])
           : null,
       hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
+      audioPath: json['audioPath'],
+      audioDuration: json['audioDuration'],
+      voiceFeedback: json['voiceFeedback'] != null
+          ? VoiceFeedback.fromJson(json['voiceFeedback'])
+          : null,
     );
   }
+  
+  // Helper method to check if this is a voice message
+  bool get isVoiceMessage => audioPath != null && audioPath!.isNotEmpty;
 }
 
 class ReviewFeedback {
@@ -306,3 +325,36 @@ class ShadowResult {
     );
   }
 }
+
+class VoiceFeedback {
+  final int pronunciationScore;  // 0-100
+  final String correctedText;     // Corrected pronunciation text
+  final String nativeExpression;  // Native way to say it
+  final String feedback;          // Detailed feedback
+
+  VoiceFeedback({
+    required this.pronunciationScore,
+    required this.correctedText,
+    required this.nativeExpression,
+    required this.feedback,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'pronunciation_score': pronunciationScore,
+      'corrected_text': correctedText,
+      'native_expression': nativeExpression,
+      'feedback': feedback,
+    };
+  }
+
+  factory VoiceFeedback.fromJson(Map<String, dynamic> json) {
+    return VoiceFeedback(
+      pronunciationScore: json['pronunciation_score'] ?? 0,
+      correctedText: json['corrected_text'] ?? '',
+      nativeExpression: json['native_expression'] ?? '',
+      feedback: json['feedback'] ?? '',
+    );
+  }
+}
+
