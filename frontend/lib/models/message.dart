@@ -10,6 +10,7 @@ class Message {
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
   final List<String>? hints; // For persisting suggested replies
+  final bool hasPendingError; // Whether this message failed to send and needs retry
   
   // Voice message fields
   final String? audioPath;  // Local path to audio file
@@ -28,6 +29,7 @@ class Message {
     this.isAnimated = false,
     this.isFeedbackLoading = false,
     this.hints,
+    this.hasPendingError = false,
     this.audioPath,
     this.audioDuration,
     this.voiceFeedback,
@@ -46,6 +48,7 @@ class Message {
       'audioPath': audioPath,
       'audioDuration': audioDuration,
       'voiceFeedback': voiceFeedback?.toJson(),
+      'hasPendingError': hasPendingError,
     };
   }
 
@@ -68,6 +71,7 @@ class Message {
       voiceFeedback: json['voiceFeedback'] != null
           ? VoiceFeedback.fromJson(json['voiceFeedback'])
           : null,
+      hasPendingError: json['hasPendingError'] ?? false,
     );
   }
   
