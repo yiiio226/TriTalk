@@ -37,6 +37,9 @@ class ChatBubble extends StatefulWidget {
 }
 
 class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateMixin {
+  // Track which messages have completed their typewriter animation
+  static final Set<String> _completedAnimations = {};
+  
   bool _showTranslation = false;
   bool _isTranslating = false;
   String? _translatedText;
@@ -73,8 +76,16 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Setup typewriter if needed
     if (widget.message.isAnimated && !widget.message.isLoading) {
-      _isAnimationComplete = false; // Animation will start
-      _startTypewriter();
+      // Check if this message has already been animated
+      if (_completedAnimations.contains(widget.message.id)) {
+        // Already animated, show full text immediately
+        _displayedText = widget.message.content;
+        _isAnimationComplete = true;
+      } else {
+        // First time, start animation
+        _isAnimationComplete = false;
+        _startTypewriter();
+      }
     } else {
       _displayedText = widget.message.content;
       _isAnimationComplete = true; // No animation, so it's "complete"
@@ -123,6 +134,9 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Handle text changes or animation toggle
     if (widget.message.content != oldWidget.message.content) {
+      // Content changed, remove from completed animations to allow re-animation
+      _completedAnimations.remove(widget.message.id);
+      
       if (widget.message.isAnimated) {
         _currentIndex = 0;
         _displayedText = "";
@@ -152,6 +166,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
         if (mounted) {
           setState(() {
             _isAnimationComplete = true;
+            // Mark this message as having completed animation
+            _completedAnimations.add(widget.message.id);
           });
         }
       }
