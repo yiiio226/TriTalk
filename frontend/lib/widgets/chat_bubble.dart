@@ -16,6 +16,9 @@ class ChatBubble extends StatefulWidget {
   final String? sceneId; // Add sceneId to pass to SaveNoteSheet
   final Function(Message)? onMessageUpdate; // Callback to update message with translation
   final VoidCallback? onShowFeedback;
+  final bool isMultiSelectMode; // Whether multi-select mode is active
+  final VoidCallback? onLongPress; // Callback to enter multi-select mode
+  final VoidCallback? onSelectionToggle; // Callback to toggle selection
 
   const ChatBubble({
     super.key,
@@ -24,6 +27,9 @@ class ChatBubble extends StatefulWidget {
     this.sceneId,
     this.onMessageUpdate,
     this.onShowFeedback,
+    this.isMultiSelectMode = false,
+    this.onLongPress,
+    this.onSelectionToggle,
   });
 
   @override
@@ -299,22 +305,22 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       );
     }
 
-    return GestureDetector(
-      onTap: () {
-        if (!isUser && message.translation != null) {
-          setState(() {
-            _showTranslation = !_showTranslation;
-          });
-        }
-        widget.onTap?.call();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: bubbleDecoration,
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    // In multi-select mode, ignore all internal gestures and let parent handle it
+    final child = Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: bubbleDecoration.copyWith(
+            border: message.isSelected
+                ? Border.all(color: Colors.black, width: 1)
+                : bubbleDecoration.border,
+          ),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+        child: AbsorbPointer(
+          absorbing: widget.isMultiSelectMode, // Block all internal gestures in multi-select mode
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             widget.message.isLoading
                 ? _buildLoadingIndicator()
                 : widget.message.isVoiceMessage
@@ -326,7 +332,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                           strong: const TextStyle(fontWeight: FontWeight.bold),
                           em: const TextStyle(fontStyle: FontStyle.italic),
                         ),
-                        selectable: true, // Allow text selection
+                        selectable: !widget.isMultiSelectMode, // Disable selection in multi-select mode
                       ),
             if (hasFeedback) ...[
                const SizedBox(height: 6),
@@ -566,16 +572,57 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
             ],
             if (_showTranslation && _translatedText != null) ...[
                const SizedBox(height: 8),
-               const Divider(height: 1),
-               const SizedBox(height: 8),
-               SelectableText(
-                 _translatedText!,
-                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-               ),
-            ]
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                SelectableText(
+                  _translatedText!,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                ),
+             ]
           ],
+          ), // Close Column
+        ), // Close AbsorbPointer
+      ), // Close Container
+      // Selection indicator
+      if (message.isSelected)
+        Positioned(
+          top: 4,
+          right: 4,
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const Icon(
+              Icons.check,
+              size: 14,
+              color: Colors.white,
+            ),
+          ),
         ),
-      ),
+    ], // Close Stack children
+    ); // Close Stack
+
+    // In multi-select mode, return child directly without gesture handling
+    if (widget.isMultiSelectMode) {
+      return child;
+    }
+
+    // In normal mode, wrap with GestureDetector for translation toggle
+    return GestureDetector(
+      onTap: () {
+        if (!isUser && message.translation != null) {
+          setState(() {
+            _showTranslation = !_showTranslation;
+          });
+        }
+        widget.onTap?.call();
+      },
+      onLongPress: widget.onLongPress,
+      child: child,
     );
   }
 

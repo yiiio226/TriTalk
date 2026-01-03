@@ -58,6 +58,10 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? _playingMessageId;
   bool _isPlaying = false;
+  
+  // Multi-select mode state
+  bool _isMultiSelectMode = false;
+  final Set<String> _selectedMessageIds = {};
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -579,7 +583,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         text, 
         'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
         history
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 10));
       
       if (!mounted) return;
 
@@ -772,7 +776,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         originalMsg.content, 
         'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
         history
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 10));
       
       if (!mounted) return;
 
@@ -878,6 +882,205 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     }
   }
   
+  // Multi-select mode methods
+  void _enterMultiSelectMode(String messageId) {
+    setState(() {
+      _isMultiSelectMode = true;
+      _selectedMessageIds.clear();
+      _selectedMessageIds.add(messageId);
+      
+      // Update message selection state
+      final index = _messages.indexWhere((m) => m.id == messageId);
+      if (index != -1) {
+        _messages[index] = Message(
+          id: _messages[index].id,
+          content: _messages[index].content,
+          isUser: _messages[index].isUser,
+          timestamp: _messages[index].timestamp,
+          translation: _messages[index].translation,
+          feedback: _messages[index].feedback,
+          analysis: _messages[index].analysis,
+          isLoading: _messages[index].isLoading,
+          isAnimated: _messages[index].isAnimated,
+          isFeedbackLoading: _messages[index].isFeedbackLoading,
+          hints: _messages[index].hints,
+          hasPendingError: _messages[index].hasPendingError,
+          isSelected: true,
+          audioPath: _messages[index].audioPath,
+          audioDuration: _messages[index].audioDuration,
+          voiceFeedback: _messages[index].voiceFeedback,
+        );
+      }
+    });
+  }
+  
+  void _exitMultiSelectMode() {
+    setState(() {
+      _isMultiSelectMode = false;
+      
+      // Clear all selections
+      for (int i = 0; i < _messages.length; i++) {
+        if (_messages[i].isSelected) {
+          _messages[i] = Message(
+            id: _messages[i].id,
+            content: _messages[i].content,
+            isUser: _messages[i].isUser,
+            timestamp: _messages[i].timestamp,
+            translation: _messages[i].translation,
+            feedback: _messages[i].feedback,
+            analysis: _messages[i].analysis,
+            isLoading: _messages[i].isLoading,
+            isAnimated: _messages[i].isAnimated,
+            isFeedbackLoading: _messages[i].isFeedbackLoading,
+            hints: _messages[i].hints,
+            hasPendingError: _messages[i].hasPendingError,
+            isSelected: false,
+            audioPath: _messages[i].audioPath,
+            audioDuration: _messages[i].audioDuration,
+            voiceFeedback: _messages[i].voiceFeedback,
+          );
+        }
+      }
+      
+      _selectedMessageIds.clear();
+    });
+  }
+  
+  void _toggleMessageSelection(String messageId) {
+    setState(() {
+      final index = _messages.indexWhere((m) => m.id == messageId);
+      if (index == -1) return;
+      
+      final isCurrentlySelected = _selectedMessageIds.contains(messageId);
+      
+      if (isCurrentlySelected) {
+        _selectedMessageIds.remove(messageId);
+      } else {
+        _selectedMessageIds.add(messageId);
+      }
+      
+      // Update message selection state
+      _messages[index] = Message(
+        id: _messages[index].id,
+        content: _messages[index].content,
+        isUser: _messages[index].isUser,
+        timestamp: _messages[index].timestamp,
+        translation: _messages[index].translation,
+        feedback: _messages[index].feedback,
+        analysis: _messages[index].analysis,
+        isLoading: _messages[index].isLoading,
+        isAnimated: _messages[index].isAnimated,
+        isFeedbackLoading: _messages[index].isFeedbackLoading,
+        hints: _messages[index].hints,
+        hasPendingError: _messages[index].hasPendingError,
+        isSelected: !isCurrentlySelected,
+        audioPath: _messages[index].audioPath,
+        audioDuration: _messages[index].audioDuration,
+        voiceFeedback: _messages[index].voiceFeedback,
+      );
+      
+      // Exit multi-select mode if no messages are selected
+      if (_selectedMessageIds.isEmpty) {
+        _exitMultiSelectMode();
+      }
+    });
+  }
+  
+  Future<void> _deleteSelectedMessages() async {
+    if (_selectedMessageIds.isEmpty) return;
+    
+    // Show confirmation dialog
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.delete_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Delete ${_selectedMessageIds.length} message${_selectedMessageIds.length > 1 ? 's' : ''}?',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'This action cannot be undone.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Delete'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    if (confirmed != true) return;
+    
+    // Delete messages
+    final messageIdsToDelete = List<String>.from(_selectedMessageIds);
+    final sceneKey = widget.scene.id;
+    
+    setState(() {
+      // Remove messages from local list
+      _messages.removeWhere((m) => messageIdsToDelete.contains(m.id));
+      _exitMultiSelectMode();
+    });
+    
+    // Delete from cloud
+    try {
+      await ChatHistoryService().deleteMessages(sceneKey, messageIdsToDelete);
+      if (mounted) {
+        showTopToast(context, 'Deleted successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete messages: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -885,7 +1088,13 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         leadingWidth: 64, // Added width for custom leading
         leading: Center(
           child: GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              if (_isMultiSelectMode) {
+                _exitMultiSelectMode();
+              } else {
+                Navigator.pop(context);
+              }
+            },
             child: Container(
               width: 44,
               height: 44,
@@ -1002,36 +1211,45 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
-                  return Align(
-                    alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: ChatBubble(
-                      key: ValueKey(msg.id),
-                      message: msg,
-                      sceneId: widget.scene.id, // Pass sceneId
-                      onMessageUpdate: (updatedMessage) {
-                        // Update message in list and sync to cloud
-                        final msgIndex = _messages.indexWhere((m) => m.id == updatedMessage.id);
-                        if (msgIndex != -1) {
-                          setState(() {
-                            _messages[msgIndex] = updatedMessage;
-                          });
-                          // Sync to cloud
-                          ChatHistoryService().syncMessages(widget.scene.id, _messages);
-                        }
-                      },
-                      onTap: () {
-                         if (!msg.isUser) {
-                           _handleAnalyze(msg);
-                         }
-                      },
-                      onShowFeedback: () => _showFeedbackSheet(msg),
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque, // Make entire area tappable
+                    onTap: _isMultiSelectMode ? () => _toggleMessageSelection(msg.id) : null,
+                    onLongPress: () => _enterMultiSelectMode(msg.id),
+                    child: Align(
+                      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: ChatBubble(
+                        key: ValueKey(msg.id),
+                        message: msg,
+                        sceneId: widget.scene.id, // Pass sceneId
+                        isMultiSelectMode: _isMultiSelectMode,
+                        onLongPress: null, // Handled by outer GestureDetector
+                        onSelectionToggle: null, // Handled by outer GestureDetector
+                        onMessageUpdate: (updatedMessage) {
+                          // Update message in list and sync to cloud
+                          final msgIndex = _messages.indexWhere((m) => m.id == updatedMessage.id);
+                          if (msgIndex != -1) {
+                            setState(() {
+                              _messages[msgIndex] = updatedMessage;
+                            });
+                            // Sync to cloud
+                            ChatHistoryService().syncMessages(widget.scene.id, _messages);
+                          }
+                        },
+                        onTap: () {
+                           if (!msg.isUser && !_isMultiSelectMode) {
+                             _handleAnalyze(msg);
+                           }
+                        },
+                        onShowFeedback: () => _showFeedbackSheet(msg),
+                      ),
                     ),
                   );
                 },
               ),
             ),
             if (_showErrorBanner) _buildErrorBanner(),
-            _buildInputArea(),
+            if (_isMultiSelectMode) _buildMultiSelectActionBar(),
+            if (!_isMultiSelectMode) _buildInputArea(),
           ],
         ),
       ),
@@ -1084,6 +1302,72 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMultiSelectActionBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey[200]!,
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Selected count
+            Expanded(
+              child: Text(
+                '${_selectedMessageIds.length} selected',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Delete button
+            ElevatedButton.icon(
+              onPressed: _deleteSelectedMessages,
+              icon: const Icon(Icons.delete_outline, size: 20),
+              label: const Text('Delete'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Cancel button
+            OutlinedButton(
+              onPressed: _exitMultiSelectMode,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
       ),
     );
   }

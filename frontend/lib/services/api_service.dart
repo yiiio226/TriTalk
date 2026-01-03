@@ -432,6 +432,25 @@ class ApiService {
       throw Exception('Error sending voice message: $e');
     }
   }
+
+  Future<void> deleteMessages(String sceneKey, List<String> messageIds) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/chat/messages'),
+        headers: _headers(),
+        body: jsonEncode({
+          'scene_key': sceneKey,
+          'message_ids': messageIds,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete messages: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting messages: $e');
+    }
+  }
 }
 
 class ChatResponse {
