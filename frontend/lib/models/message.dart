@@ -326,17 +326,55 @@ class ShadowResult {
   }
 }
 
+class VoiceWord {
+  final String word;
+  final int score;
+  
+  VoiceWord({required this.word, required this.score});
+  
+  factory VoiceWord.fromJson(Map<String, dynamic> json) => VoiceWord(
+    word: json['word'] ?? '',
+    score: json['score'] ?? 0,
+  );
+
+  Map<String, dynamic> toJson() => {'word': word, 'score': score};
+}
+
+class ErrorFocus {
+  final String word;
+  final String userIpa;
+  final String correctIpa;
+  final String tip;
+
+  ErrorFocus({required this.word, required this.userIpa, required this.correctIpa, required this.tip});
+
+  factory ErrorFocus.fromJson(Map<String, dynamic> json) => ErrorFocus(
+    word: json['word'] ?? '',
+    userIpa: json['user_ipa'] ?? '',
+    correctIpa: json['correct_ipa'] ?? '',
+    tip: json['tip'] ?? '',
+  );
+
+  Map<String, dynamic> toJson() => {
+    'word': word, 'user_ipa': userIpa, 'correct_ipa': correctIpa, 'tip': tip,
+  };
+}
+
 class VoiceFeedback {
   final int pronunciationScore;  // 0-100
   final String correctedText;     // Corrected pronunciation text
   final String nativeExpression;  // Native way to say it
   final String feedback;          // Detailed feedback
+  final List<VoiceWord>? sentenceBreakdown;
+  final ErrorFocus? errorFocus;
 
   VoiceFeedback({
     required this.pronunciationScore,
     required this.correctedText,
     required this.nativeExpression,
     required this.feedback,
+    this.sentenceBreakdown,
+    this.errorFocus,
   });
 
   Map<String, dynamic> toJson() {
@@ -345,6 +383,8 @@ class VoiceFeedback {
       'corrected_text': correctedText,
       'native_expression': nativeExpression,
       'feedback': feedback,
+      'sentence_breakdown': sentenceBreakdown?.map((e) => e.toJson()).toList(),
+      'error_focus': errorFocus?.toJson(),
     };
   }
 
@@ -354,6 +394,12 @@ class VoiceFeedback {
       correctedText: json['corrected_text'] ?? '',
       nativeExpression: json['native_expression'] ?? '',
       feedback: json['feedback'] ?? '',
+      sentenceBreakdown: (json['sentence_breakdown'] as List?)
+          ?.map((e) => VoiceWord.fromJson(e))
+          .toList(),
+      errorFocus: json['error_focus'] != null 
+          ? ErrorFocus.fromJson(json['error_focus']) 
+          : null,
     );
   }
 }
