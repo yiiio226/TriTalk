@@ -1066,6 +1066,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     // Delete from cloud
     try {
       await ChatHistoryService().deleteMessages(sceneKey, messageIdsToDelete);
+      if (mounted) {
+        showTopToast(context, 'Deleted successfully');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

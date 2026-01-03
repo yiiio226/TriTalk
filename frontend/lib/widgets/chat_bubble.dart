@@ -312,7 +312,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: bubbleDecoration.copyWith(
             border: message.isSelected
-                ? Border.all(color: Colors.blue, width: 2)
+                ? Border.all(color: Colors.black, width: 1)
                 : bubbleDecoration.border,
           ),
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
@@ -592,7 +592,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: Colors.blue,
+              color: Colors.black,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
             ),
