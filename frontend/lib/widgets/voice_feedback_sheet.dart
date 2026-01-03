@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../models/message.dart';
+import 'styled_drawer.dart';
 
 class VoiceFeedbackSheet extends StatefulWidget {
   final VoiceFeedback feedback;
@@ -19,15 +20,10 @@ class VoiceFeedbackSheet extends StatefulWidget {
 class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
+    return StyledDrawer(
+      padding: EdgeInsets.zero,
       child: ListView(
+        shrinkWrap: true,
         controller: widget.scrollController,
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         children: [

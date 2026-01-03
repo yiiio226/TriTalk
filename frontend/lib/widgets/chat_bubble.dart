@@ -177,16 +177,9 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) {
-          return VoiceFeedbackSheet(
-            feedback: widget.message.voiceFeedback!,
-            scrollController: scrollController,
-          );
-        },
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => VoiceFeedbackSheet(
+        feedback: widget.message.voiceFeedback!,
       ),
     );
   }
