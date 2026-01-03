@@ -30,7 +30,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
   final _uuid = const Uuid();
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -47,6 +47,10 @@ class _ChatScreenState extends State<ChatScreen> {
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecordingVoice = false;
   Timer? _recordingTimer;
+  
+  // Animation controller for pulsing microphone
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,6 +88,16 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize pulse animation controller
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    
     _loadMessages();
     _textController.addListener(() {
       setState(() {}); // Rebuild to update optimization button state
@@ -135,6 +149,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _autoScrollTimer?.cancel();
     _recordingTimer?.cancel();
+    _pulseController.dispose();
     _audioRecorder.dispose();
     _textController.dispose();
     _scrollController.dispose();
@@ -153,6 +168,9 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _isRecordingVoice = true;
         });
+        
+        // Start pulsing animation
+        _pulseController.repeat(reverse: true);
         
         // Start timer for potential future use
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -182,6 +200,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _stopVoiceRecording() async {
     _recordingTimer?.cancel();
     _recordingTimer = null;
+    
+    // Stop pulsing animation
+    _pulseController.stop();
+    _pulseController.reset();
     
     try {
       final path = await _audioRecorder.stop();
@@ -881,17 +903,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildVoiceOrSendButton(bool hasText) {
     if (_isRecordingVoice) {
       // Pulsing microphone button during recording
-      return TweenAnimationBuilder<double>(
-        tween: Tween(begin: 1.0, end: 1.2),
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOut,
-        builder: (context, scale, child) {
-          // Create a smooth pulse by reversing the scale
-          // When scale goes from 1.0 to 1.2, we want it to go back to 1.0
-          final pulseScale = scale > 1.1 ? 2.2 - scale : scale;
-          
+      return AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
           return Transform.scale(
-            scale: pulseScale,
+            scale: _pulseAnimation.value,
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -907,11 +923,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           );
-        },
-        onEnd: () {
-          if (mounted && _isRecordingVoice) {
-            setState(() {}); // Trigger rebuild to restart animation
-          }
         },
       );
     } else if (hasText) {
