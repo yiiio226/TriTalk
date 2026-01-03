@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../models/scene.dart';
 import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../widgets/analysis_sheet.dart';
 import '../widgets/hints_sheet.dart';
-import '../widgets/favorites_sheet.dart'; // Added
 import '../services/api_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
@@ -28,7 +30,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
   final _uuid = const Uuid();
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -40,6 +42,15 @@ class _ChatScreenState extends State<ChatScreen> {
   // Hints cache
   List<String>? _cachedHints;
   int _hintsMessageCount = 0;
+  
+  // Voice input state
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  bool _isRecordingVoice = false;
+  Timer? _recordingTimer;
+  
+  // Animation controller for pulsing microphone
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,6 +88,16 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize pulse animation controller
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    
     _loadMessages();
     _textController.addListener(() {
       setState(() {}); // Rebuild to update optimization button state
@@ -127,9 +148,104 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _autoScrollTimer?.cancel();
+    _recordingTimer?.cancel();
+    _pulseController.dispose();
+    _audioRecorder.dispose();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Voice input methods
+  Future<void> _startVoiceRecording() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final directory = await getTemporaryDirectory();
+        final path = '${directory.path}/voice_input_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        
+        await _audioRecorder.start(const RecordConfig(), path: path);
+        
+        setState(() {
+          _isRecordingVoice = true;
+        });
+        
+        // Start pulsing animation
+        _pulseController.repeat(reverse: true);
+        
+        // Start timer for potential future use
+        _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          // Timer running during recording
+        });
+      } else {
+        // Request permission
+        final status = await Permission.microphone.request();
+        if (status.isGranted) {
+          _startVoiceRecording();
+        } else {
+          if (mounted) {
+            showTopToast(context, '需要麦克风权限才能录音', isError: true);
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, '无法开始录音: $e', isError: true);
+        setState(() {
+          _isRecordingVoice = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _stopVoiceRecording() async {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+    
+    // Stop pulsing animation
+    _pulseController.stop();
+    _pulseController.reset();
+    
+    try {
+      final path = await _audioRecorder.stop();
+      
+      setState(() {
+        _isRecordingVoice = false;
+      });
+      
+      if (path == null) {
+        return;
+      }
+      
+      // Transcribe the audio
+      await _transcribeAudio(path);
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, '录音失败: $e', isError: true);
+        setState(() {
+          _isRecordingVoice = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _transcribeAudio(String audioPath) async {
+    try {
+      final transcribedText = await _apiService.transcribeAudio(audioPath);
+      
+      if (mounted && transcribedText.isNotEmpty) {
+        setState(() {
+          _textController.text = transcribedText;
+        });
+      } else {
+        if (mounted) {
+          showTopToast(context, '无法识别语音内容', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, '语音转文字失败: $e', isError: true);
+      }
+    }
   }
 
   bool _initialLoadFailed = false; // Added for initial load error tracking
@@ -713,88 +829,49 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
-            onPressed: () {
-              final history = _messages.map((m) => <String, String>{
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.content,
-              }).toList();
-              
-              // Check if cache is valid (message count hasn't changed)
-              final currentMessageCount = _messages.length;
-              final isCacheValid = _cachedHints != null && _hintsMessageCount == currentMessageCount;
+      child: _buildTextInputMode(),
+    );
+  }
 
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                barrierColor: Colors.white.withOpacity(0.5),
-                builder: (context) => HintsSheet(
-                  sceneDescription: 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-                  history: history,
-                  cachedHints: isCacheValid ? _cachedHints : null,
-                  onHintsCached: (hints) {
-                    setState(() {
-                      _cachedHints = hints;
-                      _hintsMessageCount = currentMessageCount;
-                      
-                      // Save hints to the last message for persistence
-                      if (_messages.isNotEmpty) {
-                        final lastMsg = _messages.last;
-                        // Use a copy with hints
-                        _messages[_messages.length - 1] = Message(
-                          id: lastMsg.id,
-                          content: lastMsg.content,
-                          isUser: lastMsg.isUser,
-                          timestamp: lastMsg.timestamp,
-                          translation: lastMsg.translation,
-                          feedback: lastMsg.feedback,
-                          analysis: lastMsg.analysis,
-                          isLoading: lastMsg.isLoading,
-                          isAnimated: false, // Ensure no re-animation
-                          isFeedbackLoading: lastMsg.isFeedbackLoading,
-                          hints: hints,
-                        );
-                        
-                        // Sync to cloud
-                        ChatHistoryService().syncMessages(widget.scene.id, _messages);
-                      }
-                    });
-                  },
-                  onHintSelected: (hint) {
-                    _textController.text = hint;
-                  },
-                ),
-              );
-            },
-          ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      decoration: const InputDecoration(
-                        hintText: 'Type a message...',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
-                        isDense: true,
-                      ),
-                      minLines: 1,
-                      maxLines: 4,
-                      style: const TextStyle(fontSize: 16),
+  // Text Input Mode with inline voice recording
+  Widget _buildTextInputMode() {
+    final hasText = _textController.text.trim().isNotEmpty;
+    
+    return Row(
+      key: const ValueKey('textMode'),
+      children: [
+        // Lightbulb button
+        IconButton(
+          icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
+          onPressed: _showHintsSheet,
+        ),
+        // Text input field
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: InputDecoration(
+                      hintText: _isRecordingVoice ? '正在听...' : 'Type a message...',
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      isDense: true,
                     ),
+                    minLines: 1,
+                    maxLines: 4,
+                    style: const TextStyle(fontSize: 16),
+                    enabled: !_isRecordingVoice, // Disable input while recording
                   ),
-                  // AI Optimization Button inside input container
+                ),
+                // AI Optimization Button (only show when not recording and has text)
+                if (!_isRecordingVoice && hasText)
                   IconButton(
                     iconSize: 20,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
@@ -807,65 +884,165 @@ class _ChatScreenState extends State<ChatScreen> {
                           )
                         : Icon(
                             Icons.auto_fix_high, 
-                            color: _textController.text.trim().isNotEmpty 
-                                ? Colors.green 
-                                : Colors.grey[400]
+                            color: Colors.green
                           ),
                     tooltip: 'Optimize with AI',
-                    onPressed: _textController.text.trim().isEmpty || _isOptimizing
-                        ? null
-                        : () async {
-                            final text = _textController.text.trim();
-                            setState(() => _isOptimizing = true);
-
-                            try {
-                              final history = _messages
-                                  .where((m) => !m.isLoading && m.content.isNotEmpty)
-                                  .map((m) => <String, String>{
-                                    'role': m.isUser ? 'user' : 'assistant',
-                                    'content': m.content,
-                                  })
-                                  .toList();
-
-                              final optimizedText = await _apiService.optimizeMessage(
-                                text, 
-                                'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-                                history
-                              );
-
-                              if (mounted) {
-                                _textController.text = optimizedText;
-                                showTopToast(context, "Message optimized!", isError: false);
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                 showTopToast(context, "Optimization failed: $e", isError: true);
-                              }
-                            } finally {
-                              if (mounted) {
-                                setState(() => _isOptimizing = false);
-                              }
-                            }
-                          },
+                    onPressed: _isOptimizing ? null : _optimizeMessage,
                   ),
-                ],
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Voice or Send button with pulsing animation
+        _buildVoiceOrSendButton(hasText),
+      ],
+    );
+  }
+
+  Widget _buildVoiceOrSendButton(bool hasText) {
+    if (_isRecordingVoice) {
+      // Pulsing microphone button during recording
+      return AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _pulseAnimation.value,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.red.shade100,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.mic_rounded,
+                  color: Colors.red,
+                  size: 20,
+                ),
+                onPressed: _stopVoiceRecording,
               ),
             ),
+          );
+        },
+      );
+    } else if (hasText) {
+      // Send button when text is present
+      return Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black,
+        ),
+        child: IconButton(
+          icon: const Icon(
+            Icons.arrow_upward_rounded,
+            color: Colors.white,
+            size: 20,
           ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
-              onPressed: _sendMessage,
-            ),
+          onPressed: _sendMessage,
+        ),
+      );
+    } else {
+      // Microphone button when no text
+      return Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey[100],
+        ),
+        child: IconButton(
+          icon: const Icon(
+            Icons.mic_rounded,
+            color: Color(0xFF1A1A1A),
+            size: 20,
           ),
-        ],
+          onPressed: _startVoiceRecording,
+        ),
+      );
+    }
+  }
+
+  // Helper method to show hints sheet
+  void _showHintsSheet() {
+    final history = _messages.map((m) => <String, String>{
+      'role': m.isUser ? 'user' : 'assistant',
+      'content': m.content,
+    }).toList();
+    
+    final currentMessageCount = _messages.length;
+    final isCacheValid = _cachedHints != null && _hintsMessageCount == currentMessageCount;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) => HintsSheet(
+        sceneDescription: 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+        history: history,
+        cachedHints: isCacheValid ? _cachedHints : null,
+        onHintsCached: (hints) {
+          setState(() {
+            _cachedHints = hints;
+            _hintsMessageCount = currentMessageCount;
+            
+            if (_messages.isNotEmpty) {
+              final lastMsg = _messages.last;
+              _messages[_messages.length - 1] = Message(
+                id: lastMsg.id,
+                content: lastMsg.content,
+                isUser: lastMsg.isUser,
+                timestamp: lastMsg.timestamp,
+                translation: lastMsg.translation,
+                feedback: lastMsg.feedback,
+                analysis: lastMsg.analysis,
+                isLoading: lastMsg.isLoading,
+                isAnimated: false,
+                isFeedbackLoading: lastMsg.isFeedbackLoading,
+                hints: hints,
+              );
+              ChatHistoryService().syncMessages(widget.scene.id, _messages);
+            }
+          });
+        },
+        onHintSelected: (hint) {
+          _textController.text = hint;
+        },
       ),
     );
+  }
+
+  // Helper method to optimize message
+  Future<void> _optimizeMessage() async {
+    final text = _textController.text.trim();
+    setState(() => _isOptimizing = true);
+
+    try {
+      final history = _messages
+          .where((m) => !m.isLoading && m.content.isNotEmpty)
+          .map((m) => <String, String>{
+            'role': m.isUser ? 'user' : 'assistant',
+            'content': m.content,
+          })
+          .toList();
+
+      final optimizedText = await _apiService.optimizeMessage(
+        text, 
+        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+        history
+      );
+
+      if (mounted) {
+        _textController.text = optimizedText;
+        showTopToast(context, "Message optimized!", isError: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, "Optimization failed: $e", isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isOptimizing = false);
+      }
+    }
   }
 
   void _bookmarkConversation() {

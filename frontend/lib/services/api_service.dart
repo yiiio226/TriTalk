@@ -347,6 +347,45 @@ class ApiService {
       throw Exception('Error optimizing message: $e');
     }
   }
+
+  Future<String> transcribeAudio(String audioPath) async {
+    try {
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/chat/transcribe'),
+      );
+
+      // Add headers
+      final headers = _headers();
+      request.headers.addAll(headers);
+
+      // Add audio file
+      request.files.add(await http.MultipartFile.fromPath(
+        'audio',
+        audioPath,
+      ));
+
+      // Add target language as field
+      request.fields['target_language'] = targetLang;
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['text'] ?? '';
+      } else {
+        throw Exception('Failed to transcribe audio: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error transcribing audio: $e');
+    }
+  }
 }
 
 class ChatResponse {
