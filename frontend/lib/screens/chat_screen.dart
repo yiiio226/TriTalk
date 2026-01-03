@@ -440,7 +440,6 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
               _messages = []; // Clear loading message
               _initialLoadFailed = true;
               _showErrorBanner = true;
-              _failedMessage = "Initial Load Failed"; // Marker
             });
           }
           return; // Exit on error
@@ -468,8 +467,13 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       }
     } else {
       // Reset animation flags for existing messages to prevent re-animation
+      // Check for pending error messages and restore error banner
+      bool hasFailedMessage = false;
       for (int i = 0; i < history.length; i++) {
         final msg = history[i];
+        if (msg.hasPendingError) {
+          hasFailedMessage = true;
+        }
         if (msg.isAnimated || msg.isLoading) {
           history[i] = Message(
             id: msg.id,
@@ -482,12 +486,18 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             isAnimated: false,
             isLoading: false,
             hints: msg.hints,
+            hasPendingError: msg.hasPendingError,
           );
         }
       }
       if (mounted) {
         setState(() {
           _messages = history;
+          
+          // Restore error banner if there's a failed message
+          if (hasFailedMessage) {
+            _showErrorBanner = true;
+          }
           
           // Restore hints from the last message if available
           if (_messages.isNotEmpty && _messages.last.hints != null) {
@@ -512,7 +522,6 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   bool _isSending = false;
   bool _isOptimizing = false; // Added for AI optimization loading state
   // Error handling state
-  String? _failedMessage;
   bool _showErrorBanner = false;
   bool _isTimeoutError = false; // Track if error was due to timeout
 
@@ -656,19 +665,27 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           isFeedbackLoading: false, // Stop loading indicator
         );
         
+        final failedMessage = Message(
+          id: newMessage.id,
+          content: newMessage.content,
+          isUser: true,
+          timestamp: newMessage.timestamp,
+          isFeedbackLoading: false,
+          hasPendingError: true, // Mark as failed
+        );
+        
         setState(() {
-          _messages[userMsgIndex] = updatedMessage;
+          _messages[userMsgIndex] = failedMessage;
           
           // Remove any loading AI messages
           _messages.removeWhere((m) => m.isLoading);
           
           _isSending = false;
-          _failedMessage = text;
           _showErrorBanner = true;
           _isTimeoutError = true;
         });
         
-        // Sync updated state to cloud
+        // Sync updated state to cloud (includes hasPendingError)
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
     } catch (e) {
@@ -686,28 +703,178 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           isFeedbackLoading: false, // Stop loading indicator
         );
         
+        final failedMessage = Message(
+          id: newMessage.id,
+          content: newMessage.content,
+          isUser: true,
+          timestamp: newMessage.timestamp,
+          isFeedbackLoading: false,
+          hasPendingError: true, // Mark as failed
+        );
+        
         setState(() {
-          _messages[userMsgIndex] = updatedMessage;
+          _messages[userMsgIndex] = failedMessage;
           
           // Remove any loading AI messages
           _messages.removeWhere((m) => m.isLoading);
           
           _isSending = false;
-          _failedMessage = text;
           _showErrorBanner = true;
           _isTimeoutError = false;
         });
         
-        // Sync updated state to cloud
+        // Sync updated state to cloud (includes hasPendingError)
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
     }
   }
 
   void _retryLastMessage() {
-    if (_failedMessage != null) {
-      _textController.text = _failedMessage!;
-      _sendMessage();
+    // Find the message with hasPendingError
+    final failedMsgIndex = _messages.indexWhere((m) => m.hasPendingError);
+    if (failedMsgIndex == -1) return;
+    
+    final failedMsg = _messages[failedMsgIndex];
+    final sceneKey = widget.scene.id;
+    
+    // Reset error state on UI
+    setState(() {
+      _showErrorBanner = false;
+      _isTimeoutError = false;
+      _isSending = true;
+      
+      // Update message to show loading state
+      _messages[failedMsgIndex] = Message(
+        id: failedMsg.id,
+        content: failedMsg.content,
+        isUser: true,
+        timestamp: failedMsg.timestamp,
+        isFeedbackLoading: true,
+        hasPendingError: false, // Clear error state
+      );
+    });
+    
+    // Resend the message
+    _resendMessage(failedMsg, failedMsgIndex, sceneKey);
+  }
+  
+  Future<void> _resendMessage(Message originalMsg, int msgIndex, String sceneKey) async {
+    try {
+      final history = _messages
+          .where((m) => !m.isLoading && m.content.isNotEmpty)
+          .map((m) => <String, String>{
+            'role': m.isUser ? 'user' : 'assistant',
+            'content': m.content,
+          })
+          .toList();
+
+      final response = await _apiService.sendMessage(
+        originalMsg.content, 
+        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+        history
+      ).timeout(const Duration(seconds: 30));
+      
+      if (!mounted) return;
+
+      // Update user message with feedback
+      final updatedMessage = Message(
+        id: originalMsg.id,
+        content: originalMsg.content,
+        isUser: true,
+        timestamp: originalMsg.timestamp,
+        feedback: response.feedback,
+        isFeedbackLoading: false,
+        hasPendingError: false,
+      );
+      
+      setState(() {
+        _messages[msgIndex] = updatedMessage;
+        
+        // Add loading message for AI response
+        _messages.add(Message(
+          id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+          content: '',
+          isUser: false,
+          timestamp: DateTime.now(),
+          isLoading: true,
+        ));
+      });
+      
+      ChatHistoryService().syncMessages(sceneKey, _messages);
+      _scrollToBottom();
+      
+      await Future.delayed(const Duration(milliseconds: 1500));
+      
+      if (!mounted) return;
+
+      setState(() {
+        _isSending = false;
+        _messages.removeWhere((m) => m.isLoading);
+        
+        final aiMessage = Message(
+          id: _uuid.v4(),
+          content: response.message,
+          isUser: false,
+          timestamp: DateTime.now(),
+          translation: response.translation,
+          isAnimated: true,
+        );
+
+        _messages.add(aiMessage);
+      });
+      
+      ChatHistoryService().syncMessages(sceneKey, _messages);
+      _scrollToBottom();
+      _startAutoScroll();
+      final animationDuration = (response.message.length * 30).clamp(1000, 5000);
+      Future.delayed(Duration(milliseconds: animationDuration), () {
+        if (mounted) {
+          _stopAutoScroll();
+          _scrollToBottom();
+        }
+      });
+    } on TimeoutException catch (_) {
+      if (!mounted) return;
+      
+      final failedMessage = Message(
+        id: originalMsg.id,
+        content: originalMsg.content,
+        isUser: true,
+        timestamp: originalMsg.timestamp,
+        isFeedbackLoading: false,
+        hasPendingError: true,
+      );
+      
+      setState(() {
+        _messages[msgIndex] = failedMessage;
+        _messages.removeWhere((m) => m.isLoading);
+        _isSending = false;
+        _showErrorBanner = true;
+        _isTimeoutError = true;
+      });
+      
+      ChatHistoryService().syncMessages(sceneKey, _messages);
+    } catch (e) {
+      if (!mounted) return;
+      
+      final failedMessage = Message(
+        id: originalMsg.id,
+        content: originalMsg.content,
+        isUser: true,
+        timestamp: originalMsg.timestamp,
+        isFeedbackLoading: false,
+        hasPendingError: true,
+      );
+      
+      setState(() {
+        _messages[msgIndex] = failedMessage;
+        _messages.removeWhere((m) => m.isLoading);
+        _isSending = false;
+        _showErrorBanner = true;
+        _isTimeoutError = false;
+      });
+      
+      ChatHistoryService().syncMessages(sceneKey, _messages);
     }
   }
   
