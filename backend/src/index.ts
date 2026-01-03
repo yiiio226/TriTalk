@@ -86,8 +86,8 @@ function corsHeaders(origin: string | null) {
     
     return {
         'Access-Control-Allow-Origin': allowedOrigin ? origin : 'null',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
     };
 }
 
@@ -857,6 +857,107 @@ async function handleChatOptimize(request: Request, env: Env): Promise<Response>
     }
 }
 
+// Handle /chat/messages DELETE endpoint
+async function handleDeleteMessages(request: Request, env: Env): Promise<Response> {
+    try {
+        const body: any = await request.json();
+        const sceneKey = body.scene_key;
+        const messageIds: string[] = body.message_ids || [];
+
+        if (!sceneKey || !messageIds || messageIds.length === 0) {
+            return new Response(
+                JSON.stringify({ error: 'Missing scene_key or message_ids' }),
+                { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+            );
+        }
+
+        // Get authenticated user
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+            );
+        }
+
+        const token = authHeader.split(' ')[1];
+        const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        });
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+            );
+        }
+
+        // Fetch current messages for this scene
+        const { data: chatHistory, error: fetchError } = await supabase
+            .from('chat_history')
+            .select('messages')
+            .eq('user_id', user.id)
+            .eq('scene_key', sceneKey)
+            .maybeSingle();
+
+        if (fetchError) {
+            console.error('Error fetching chat history:', fetchError);
+            return new Response(
+                JSON.stringify({ error: 'Failed to fetch chat history' }),
+                { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+            );
+        }
+
+        if (!chatHistory || !chatHistory.messages) {
+            // No messages to delete
+            return new Response(
+                JSON.stringify({ success: true, deleted_count: 0 }),
+                { headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+            );
+        }
+
+        // Filter out messages with IDs in the messageIds array
+        const currentMessages = chatHistory.messages as any[];
+        const filteredMessages = currentMessages.filter(msg => !messageIds.includes(msg.id));
+        const deletedCount = currentMessages.length - filteredMessages.length;
+
+        // Update the chat_history record with filtered messages
+        const { error: updateError } = await supabase
+            .from('chat_history')
+            .update({
+                messages: filteredMessages,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('user_id', user.id)
+            .eq('scene_key', sceneKey);
+
+        if (updateError) {
+            console.error('Error updating chat history:', updateError);
+            return new Response(
+                JSON.stringify({ error: 'Failed to delete messages' }),
+                { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+            );
+        }
+
+        return new Response(
+            JSON.stringify({ success: true, deleted_count: deletedCount }),
+            { headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+        );
+
+    } catch (error) {
+        console.error('Error in /chat/messages DELETE:', error);
+        return new Response(
+            JSON.stringify({ error: 'Failed to delete messages' }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+        );
+    }
+}
+
 // Handle /user/sync endpoint
 async function handleUserSync(request: Request, env: Env): Promise<Response> {
     try {
@@ -959,6 +1060,10 @@ export default {
 
         if (url.pathname === '/chat/optimize' && request.method === 'POST') {
             return handleChatOptimize(request, env);
+        }
+
+        if (url.pathname === '/chat/messages' && request.method === 'DELETE') {
+            return handleDeleteMessages(request, env);
         }
 
         // 404 for unknown routes

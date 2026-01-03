@@ -11,6 +11,7 @@ class Message {
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
   final List<String>? hints; // For persisting suggested replies
   final bool hasPendingError; // Whether this message failed to send and needs retry
+  final bool isSelected; // Transient: Whether this message is selected in multi-select mode
   
   // Voice message fields
   final String? audioPath;  // Local path to audio file
@@ -30,6 +31,7 @@ class Message {
     this.isFeedbackLoading = false,
     this.hints,
     this.hasPendingError = false,
+    this.isSelected = false,
     this.audioPath,
     this.audioDuration,
     this.voiceFeedback,
