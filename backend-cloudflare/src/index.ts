@@ -18,13 +18,76 @@ import {
     OptimizeResponse,
     Env,
 } from './types';
+import { createClient } from '@supabase/supabase-js';
+
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:3000',
+    // Add production domain here when deployed
+    // 'https://yourdomain.com',
+];
+
+// Helper to authenticate user via Supabase
+async function authenticateUser(request: Request, env: Env): Promise<any> {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return null;
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    try {
+        // Create a Supabase client with the user's token.
+        // This ensures that subsequent DB queries respect RLS (Row Level Security).
+        const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        });
+        
+        // 1. Verify Token
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error || !user) {
+            console.error('Auth Error:', error);
+            return null;
+        }
+
+        // 2. Check Subscription/Balance (Optional/Extensible)
+        // Since we are now authenticated as the user (via the client headers), we can access RLS-protected data.
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError || !profile) {
+             console.error('Profile Error:', profileError);
+             // If strict mode, return null. For now, we allow if Auth is valid.
+             // return null; 
+        }
+
+        return user;
+    } catch (e) {
+        console.error('Auth Exception:', e);
+        return null;
+    }
+}
 
 // Helper to create CORS headers
-function corsHeaders() {
+function corsHeaders(origin: string | null) {
+    // Check if origin is allowed
+    const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
+    
     return {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowedOrigin ? origin : 'null',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
     };
 }
 
@@ -192,7 +255,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
         };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /chat/send:', error);
@@ -201,7 +264,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
                 message: "Sorry, I'm having trouble connecting to the AI right now.",
                 debug_error: String(error)
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -240,13 +303,13 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
         const response: HintResponse = { hints };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /chat/hint:', error);
         return new Response(
             JSON.stringify({ hints: ['Could you help me?', "I don't understand.", 'Please continue.'] }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -377,7 +440,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
         return new Response(readable, {
             headers: { 
                 'Content-Type': 'application/x-ndjson', 
-                ...corsHeaders() 
+                ...corsHeaders(request.headers.get('Origin')) 
             },
         });
 
@@ -391,7 +454,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
                 overall_summary: 'Description unavailable.',
                 debug_error: String(error)
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -436,7 +499,7 @@ async function handleSceneGenerate(request: Request, env: Env): Promise<Response
         };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /scene/generate:', error);
@@ -451,7 +514,7 @@ async function handleSceneGenerate(request: Request, env: Env): Promise<Response
                 initial_message: "Hi! Let's start practicing.",
                 emoji: '📝',
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -479,7 +542,7 @@ async function handleScenePolish(request: Request, env: Env): Promise<Response> 
         };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /scene/polish:', error);
@@ -487,7 +550,7 @@ async function handleScenePolish(request: Request, env: Env): Promise<Response> 
             JSON.stringify({
                 polished_text: "Could not polish text at this time.",
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -511,7 +574,7 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
         };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /common/translate:', error);
@@ -519,7 +582,7 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
             JSON.stringify({
                 translation: "Translation unavailable.",
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -559,7 +622,7 @@ async function handleShadowAnalysis(request: Request, env: Env): Promise<Respons
         };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /chat/shadow:', error);
@@ -568,7 +631,7 @@ async function handleShadowAnalysis(request: Request, env: Env): Promise<Respons
                 score: 0,
                 details: { intonation_score: 0, pronunciation_score: 0, feedback: "Analysis failed." }
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -606,7 +669,7 @@ async function handleChatOptimize(request: Request, env: Env): Promise<Response>
         };
 
         return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /chat/optimize:', error);
@@ -614,7 +677,7 @@ async function handleChatOptimize(request: Request, env: Env): Promise<Response>
             JSON.stringify({
                 optimized_text: "Optimization unavailable.",
             }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -629,13 +692,13 @@ async function handleUserSync(request: Request, env: Env): Promise<Response> {
         console.log('Received user sync:', body.id, body.email);
 
         return new Response(JSON.stringify({ status: 'success', synced_at: new Date().toISOString() }), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     } catch (error) {
         console.error('Error in /user/sync:', error);
         return new Response(
             JSON.stringify({ error: 'Failed to sync user data' }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders() } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
         );
     }
 }
@@ -644,22 +707,38 @@ async function handleUserSync(request: Request, env: Env): Promise<Response> {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
+        const origin = request.headers.get('Origin');
 
         // Handle CORS preflight
         if (request.method === 'OPTIONS') {
-            return new Response(null, { headers: corsHeaders() });
+            return new Response(null, { headers: corsHeaders(origin) });
+        }
+
+        // Validate User Authentication (Option C - Most Thorough)
+        if (url.pathname !== '/health' && url.pathname !== '/user/sync') {
+            const user = await authenticateUser(request, env);
+            if (!user) {
+                return new Response(
+                    JSON.stringify({ error: 'Unauthorized: Invalid User Token or Subscription' }),
+                    { 
+                        status: 401, 
+                        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } 
+                    }
+                );
+            }
+            // Request is authenticated, proceed
         }
 
         // Route requests
         if (url.pathname === '/' && request.method === 'GET') {
             return new Response(JSON.stringify({ message: 'TriTalk Backend Running on Cloudflare Workers' }), {
-                headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+                headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
             });
         }
 
         if (url.pathname === '/health' && request.method === 'GET') {
             return new Response(JSON.stringify({ status: 'ok' }), {
-                headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+                headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
             });
         }
 
@@ -702,7 +781,7 @@ export default {
         // 404 for unknown routes
         return new Response(JSON.stringify({ error: 'Not Found' }), {
             status: 404,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
         });
     },
 };
