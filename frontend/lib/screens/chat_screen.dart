@@ -579,7 +579,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         text, 
         'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
         history
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 10));
       
       if (!mounted) return;
 
@@ -772,7 +772,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         originalMsg.content, 
         'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
         history
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(const Duration(seconds: 10));
       
       if (!mounted) return;
 
