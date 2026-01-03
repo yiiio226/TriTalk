@@ -269,6 +269,155 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     }
 }
 
+// Handle /chat/transcribe endpoint
+async function handleChatTranscribe(request: Request, env: Env): Promise<Response> {
+    try {
+        const formData = await request.formData();
+        const audioFile = formData.get('audio');
+
+        if (!audioFile || typeof audioFile === 'string') {
+             throw new Error('No audio file uploaded');
+        }
+
+        // MOCK TRANSCRIPTION for MVP
+        // In production, integrate with OpenAI Whisper or Cloudflare Workers AI
+        const transcribedText = "This simulates the transcription of your voice message.";
+
+        return new Response(JSON.stringify({ text: transcribedText }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
+        });
+    } catch (error) {
+        console.error('Error in /chat/transcribe:', error);
+        return new Response(
+            JSON.stringify({ error: 'Failed to transcribe audio' }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+        );
+    }
+}
+
+// Handle /chat/send-voice endpoint
+async function handleChatSendVoice(request: Request, env: Env): Promise<Response> {
+    try {
+        const formData = await request.formData();
+        const audioFile = formData.get('audio');
+        const sceneContext = formData.get('scene_context') as string || '';
+        const historyStr = formData.get('history') as string || '[]';
+        const nativeLang = formData.get('native_language') as string || 'Chinese (Simplified)';
+        const targetLang = formData.get('target_language') as string || 'English';
+
+        let history = [];
+        try {
+            history = JSON.parse(historyStr);
+        } catch (e) {}
+
+        if (!audioFile || typeof audioFile === 'string') {
+            throw new Error('No audio file uploaded');
+        }
+
+        // 1. MOCK TRANSCRIPTION
+        // In production, send audio to STT service
+        const transcribedText = "I would like to practice more, this is fun."; 
+
+        // 2. Process with LLM (Reusing logic structure from handleChatSend)
+        const systemPrompt = `You are roleplaying in a language learning scenario.
+    
+    SCENARIO CONTEXT: ${sceneContext}
+    
+    CRITICAL ROLE INSTRUCTIONS:
+    1. Carefully read the scenario context above. It describes TWO roles: the AI role (YOUR role) and the user role (the learner's role).
+    2. You MUST play the AI role specified in "AI Role:" field. The user will play the "User Role:" field.
+    3. NEVER switch roles with the user. The user is practicing their language skills by playing their assigned role.
+    4. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
+    5. Respond naturally as your character would in this real-world situation.
+    6. Keep responses conversational and realistic for the scenario.
+    7. Your goal is to help the user practice ${targetLang} by maintaining an authentic conversation.
+    
+    === TASK 1: GENERATE YOUR ROLEPLAY REPLY ===
+    First, generate your in-character reply to the user's LATEST message.
+    
+    === TASK 2: ANALYZE PRONUNCIATION & GRAMMAR ===
+    Instead of full text analysis, assume the user SPOKE this message.
+    Provide feedback on what a native speaker would say instead.
+    
+    You MUST return your response in valid JSON format:
+    {
+        "reply": "Your in-character conversational reply",
+        "translation": "Translation of your reply in ${nativeLang}",
+        "analysis": {
+            "corrected_text": "Grammatically correct version of USER message",
+            "native_expression": "More natural spoken expression for USER message",
+            "explanation": "Brief explanation",
+            "example_answer": "Alternative answer"
+        }
+    }`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+        ];
+
+        if (history && history.length > 0) {
+            const recentHistory = history.slice(-10);
+            messages.push(...recentHistory);
+        }
+
+        messages.push({
+            role: 'user',
+            content: `<<LATEST_USER_MESSAGE>>${transcribedText}<</LATEST_USER_MESSAGE>>`
+        });
+
+        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
+        const data = parseJSON(content);
+
+        // Helper to sanitize text
+        const sanitizeText = (text: string): string => {
+            if (!text) return '';
+            return text.replace(/[\uD800-\uDFFF]/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        };
+
+        const replyText = sanitizeText(data.reply || '');
+        const analysisData = data.analysis || {};
+
+        // 3. MOCK PRONUNCIATION SCORE
+        // In production, get this from the STT service or audio analysis model
+        const pronunciationScore = Math.floor(Math.random() * 15) + 80; // Random score 80-95
+
+        const voiceFeedback = {
+            pronunciation_score: pronunciationScore,
+            corrected_text: sanitizeText(analysisData.corrected_text || transcribedText),
+            native_expression: sanitizeText(analysisData.native_expression || ''),
+            feedback: sanitizeText(analysisData.explanation || 'Good pronunciation!'),
+        };
+
+        const response = {
+            message: replyText,
+            translation: data.translation,
+            voice_feedback: voiceFeedback,
+            // Also include standard review feedback structure if needed by frontend
+            review_feedback: {
+                is_perfect: false,
+                corrected_text: voiceFeedback.corrected_text,
+                native_expression: voiceFeedback.native_expression,
+                explanation: voiceFeedback.feedback,
+                example_answer: sanitizeText(analysisData.example_answer || ''),
+            }
+        };
+
+        return new Response(JSON.stringify(response), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
+        });
+
+    } catch (error) {
+        console.error('Error in /chat/send-voice:', error);
+        return new Response(
+            JSON.stringify({
+                message: "Sorry, I'm having trouble processing your voice message.",
+                debug_error: String(error)
+            }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
+        );
+    }
+}
+
 // Handle /chat/hint endpoint
 async function handleChatHint(request: Request, env: Env): Promise<Response> {
     try {
@@ -744,6 +893,14 @@ export default {
 
         if (url.pathname === '/chat/send' && request.method === 'POST') {
             return handleChatSend(request, env);
+        }
+
+        if (url.pathname === '/chat/transcribe' && request.method === 'POST') {
+            return handleChatTranscribe(request, env);
+        }
+
+        if (url.pathname === '/chat/send-voice' && request.method === 'POST') {
+            return handleChatSendVoice(request, env);
         }
 
         if (url.pathname === '/user/sync' && request.method === 'POST') {

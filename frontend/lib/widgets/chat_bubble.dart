@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:async';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/message.dart';
 import '../widgets/shadowing_sheet.dart';
 import '../widgets/save_note_sheet.dart';
+import '../widgets/voice_feedback_sheet.dart'; // New import
 import '../services/api_service.dart';
 import '../services/preferences_service.dart';
 
@@ -40,6 +42,12 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
   // Loading state
   late AnimationController _loadingController;
   
+  // Audio Playback
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  
   @override
   void initState() {
     super.initState();
@@ -62,6 +70,42 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     } else {
       _displayedText = widget.message.content;
       _isAnimationComplete = true; // No animation, so it's "complete"
+    }
+
+    // Setup audio player listeners if it's a voice message
+    if (widget.message.isVoiceMessage) {
+      _audioPlayer.onPlayerStateChanged.listen((state) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = state == PlayerState.playing;
+          });
+        }
+      });
+
+      _audioPlayer.onDurationChanged.listen((newDuration) {
+        if (mounted) {
+          setState(() {
+            _duration = newDuration;
+          });
+        }
+      });
+
+      _audioPlayer.onPositionChanged.listen((newPosition) {
+        if (mounted) {
+          setState(() {
+            _position = newPosition;
+          });
+        }
+      });
+      
+      _audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _position = Duration.zero;
+          });
+        }
+      });
     }
   }
   
@@ -105,11 +149,145 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       }
     });
   }
+
+  Future<void> _playPauseVoice() async {
+    if (widget.message.audioPath == null) return;
+    
+    try {
+      if (_isPlaying) {
+        await _audioPlayer.pause();
+      } else {
+        await _audioPlayer.play(DeviceFileSource(widget.message.audioPath!));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to play audio: $e')),
+        );
+      }
+    }
+  }
+  
+  void _showVoiceFeedback() {
+    if (widget.message.voiceFeedback == null) return;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) {
+          return VoiceFeedbackSheet(
+            feedback: widget.message.voiceFeedback!,
+            scrollController: scrollController,
+          );
+        },
+      ),
+    );
+  }
+
+
+
+  Widget _buildVoiceBubbleContent(bool isUser) {
+    // Score label for voice feedback
+    String? scoreLabel;
+    Color? scoreColor;
+    
+    if (widget.message.voiceFeedback != null) {
+      final score = widget.message.voiceFeedback!.pronunciationScore;
+      scoreLabel = '$score';
+      
+      if (score >= 80) {
+        scoreColor = Colors.green;
+      } else if (score >= 60) {
+        scoreColor = Colors.orange;
+      } else {
+        scoreColor = Colors.red;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: _playPauseVoice,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isUser ? Colors.white.withOpacity(0.3) : Colors.grey[200],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  size: 24,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Waveform placeholder or duration
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isPlaying 
+                      ? '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}'
+                      : widget.message.audioDuration != null 
+                          ? '${widget.message.audioDuration! ~/ 60}:${(widget.message.audioDuration! % 60).toString().padLeft(2, '0')}'
+                          : 'Voice Message',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            if (widget.message.voiceFeedback != null)
+              GestureDetector(
+                onTap: _showVoiceFeedback,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: scoreColor?.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: scoreColor ?? Colors.grey),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        scoreLabel!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: scoreColor,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.mic_rounded, size: 14, color: scoreColor),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+  
+
   
   @override
   void dispose() {
     _typewriterTimer?.cancel();
     _loadingController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -187,15 +365,17 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           children: [
             widget.message.isLoading
                 ? _buildLoadingIndicator()
-                : MarkdownBody(
-                    data: _displayedText,
-                    styleSheet: MarkdownStyleSheet(
-                      p: const TextStyle(fontSize: 16, height: 1.4),
-                      strong: const TextStyle(fontWeight: FontWeight.bold),
-                      em: const TextStyle(fontStyle: FontStyle.italic),
-                    ),
-                    selectable: true, // Allow text selection
-                  ),
+                : widget.message.isVoiceMessage
+                    ? _buildVoiceBubbleContent(isUser)
+                    : MarkdownBody(
+                        data: _displayedText,
+                        styleSheet: MarkdownStyleSheet(
+                          p: const TextStyle(fontSize: 16, height: 1.4),
+                          strong: const TextStyle(fontWeight: FontWeight.bold),
+                          em: const TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                        selectable: true, // Allow text selection
+                      ),
             if (hasFeedback) ...[
                const SizedBox(height: 6),
                Row(
