@@ -37,6 +37,10 @@ class ChatBubble extends StatefulWidget {
 }
 
 class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateMixin {
+  // Track which messages have STARTED their typewriter animation
+  // This prevents the animation from restarting if the user scrolls away and back
+  static final Set<String> _startedAnimations = {};
+  
   bool _showTranslation = false;
   bool _isTranslating = false;
   String? _translatedText;
@@ -73,8 +77,17 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Setup typewriter if needed
     if (widget.message.isAnimated && !widget.message.isLoading) {
-      _isAnimationComplete = false; // Animation will start
-      _startTypewriter();
+      // Check if this message has already STARTED animating
+      if (_startedAnimations.contains(widget.message.id)) {
+        // Already started (even if not finished), show full text immediately to avoid restart
+        _displayedText = widget.message.content;
+        _isAnimationComplete = true;
+      } else {
+        // First time, start animation and mark as started
+        _isAnimationComplete = false;
+        _startedAnimations.add(widget.message.id);
+        _startTypewriter();
+      }
     } else {
       _displayedText = widget.message.content;
       _isAnimationComplete = true; // No animation, so it's "complete"
@@ -123,6 +136,9 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     
     // Handle text changes or animation toggle
     if (widget.message.content != oldWidget.message.content) {
+      // Content changed, remove from started animations to allow re-animation
+      _startedAnimations.remove(widget.message.id);
+      
       if (widget.message.isAnimated) {
         _currentIndex = 0;
         _displayedText = "";
@@ -152,6 +168,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
         if (mounted) {
           setState(() {
             _isAnimationComplete = true;
+            // No need to add to set here, we added it at start
           });
         }
       }
@@ -193,49 +210,37 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
 
 
   Widget _buildVoiceBubbleContent(bool isUser) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    // Duration formatting: e.g. 3"
+    final duration = widget.message.audioDuration ?? 0;
+    final durationText = '${duration}"';
+
+    return GestureDetector(
+      onTap: _playPauseVoice,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: Colors.transparent, // Expand tap area
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        alignment: Alignment.centerRight,
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            GestureDetector(
-              onTap: _playPauseVoice,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isUser ? Colors.white.withOpacity(0.3) : Colors.grey[200],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  size: 24,
-                  color: Colors.black,
-                ),
+            Text(
+              durationText,
+              style: const TextStyle(
+                fontSize: 14, // Reduced from 16
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 8),
-            // Duration
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isPlaying 
-                      ? '${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}'
-                      : widget.message.audioDuration != null 
-                          ? '${widget.message.audioDuration! ~/ 60}:${(widget.message.audioDuration! % 60).toString().padLeft(2, '0')}'
-                          : 'Voice Message',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+            const SizedBox(width: 4),
+            _isPlaying
+                ? const Icon(Icons.pause_rounded, size: 16, color: Colors.black87)
+                : RotatedBox(
+                    quarterTurns: 1,
+                    child: Icon(Icons.wifi_rounded, size: 16, color: Colors.black87),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 16),
           ],
         ),
-      ],
+      ),
     );
   }
   
@@ -318,8 +323,9 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
         child: AbsorbPointer(
           absorbing: widget.isMultiSelectMode, // Block all internal gestures in multi-select mode
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: IntrinsicWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
             widget.message.isLoading
                 ? _buildLoadingIndicator()
@@ -335,73 +341,78 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                         selectable: !widget.isMultiSelectMode, // Disable selection in multi-select mode
                       ),
             if (hasFeedback) ...[
-               const SizedBox(height: 6),
+                const SizedBox(height: 6),
                Row(
                  mainAxisSize: MainAxisSize.min,
                  children: [
+                   // Grammar/Perfect Button
                    GestureDetector(
                      onTap: () => widget.onShowFeedback?.call(),
-                     child: Icon(
-                       isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
-                       size: 16, 
-                       color: isPerfect ? Colors.green[700] : Colors.orange
+                     child: Container(
+                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                       decoration: BoxDecoration(
+                         color: Colors.white.withOpacity(0.2), // Increased transparency
+                         borderRadius: BorderRadius.circular(16),
+                       ),
+                       child: Row(
+                         mainAxisSize: MainAxisSize.min,
+                         children: [
+                           Icon(
+                             isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded,
+                             size: 14,
+                             color: isPerfect ? Colors.green[800] : Colors.orange[600], // Darker for visibility
+                           ),
+                           const SizedBox(width: 4),
+                           Text(
+                             isPerfect ? "Perfect" : "Fix",
+                             style: TextStyle(
+                               fontSize: 11,
+                               fontWeight: FontWeight.bold,
+                               color: isPerfect ? Colors.green[800] : Colors.orange[600] // Darker for visibility
+                             ),
+                           ),
+                         ],
+                       ),
                      ),
                    ),
-                   if (isPerfect) ...[
-                     const SizedBox(width: 4),
-                     GestureDetector(
-                       onTap: () => widget.onShowFeedback?.call(),
-                       child: Text(
-                         "Perfect!", 
-                         style: TextStyle(
-                           fontSize: 12, 
-                           fontWeight: FontWeight.bold,
-                           color: Colors.green[800]
-                         )
-                       ),
-                     )
-                   ] else if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null) ...[
+
+                   // Pronunciation Score (if exists)
+                   if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null) ...[
                      const SizedBox(width: 8),
                      GestureDetector(
                        onTap: _showVoiceFeedback,
                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: widget.message.voiceFeedback!.pronunciationScore >= 80 
-                                  ? Colors.green 
-                                  : Colors.orange,
-                              width: 1
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${widget.message.voiceFeedback!.pronunciationScore}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: widget.message.voiceFeedback!.pronunciationScore >= 80 
-                                      ? Colors.green[800] 
-                                      : Colors.orange[800],
-                                ),
-                              ),
-                              const SizedBox(width: 2),
-                              Icon(
-                                Icons.mic_rounded, 
-                                size: 12, 
-                                color: widget.message.voiceFeedback!.pronunciationScore >= 80 
-                                    ? Colors.green[800] 
-                                    : Colors.orange[800]
-                              ),
-                            ],
-                          ),
+                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                         decoration: BoxDecoration(
+                           color: Colors.white.withOpacity(0.2), // Increased transparency
+                           borderRadius: BorderRadius.circular(16),
+                         ),
+                         child: Row(
+                           mainAxisSize: MainAxisSize.min,
+                           children: [
+                             Icon(
+                               Icons.mic_none_rounded,
+                               size: 14,
+                               color: widget.message.voiceFeedback!.pronunciationScore >= 80
+                                   ? Colors.green[800]
+                                   : Colors.orange[900],
+                             ),
+                             const SizedBox(width: 4),
+                             Text(
+                               '${widget.message.voiceFeedback!.pronunciationScore}',
+                               style: TextStyle(
+                                 fontSize: 11,
+                                 fontWeight: FontWeight.bold,
+                                 color: widget.message.voiceFeedback!.pronunciationScore >= 80
+                                     ? Colors.green[800]
+                                     : Colors.orange[900],
+                               ),
+                             ),
+                           ],
+                         ),
                        ),
-                     )
-                   ]
+                     ),
+                   ],
                  ],
                ),
             ],
@@ -460,10 +471,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.play_arrow_rounded, size: 14, color: Colors.black),
+                          const Icon(Icons.volume_up_rounded, size: 14, color: Colors.black),
                           const SizedBox(width: 4),
                           const Text(
-                            "Play",
+                            "Listen",
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                         ],
@@ -581,6 +592,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
              ]
           ],
           ), // Close Column
+          ), // Close IntrinsicWidth
         ), // Close AbsorbPointer
       ), // Close Container
       // Selection indicator
