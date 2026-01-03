@@ -325,9 +325,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       ),
             if (hasFeedback) ...[
                 const SizedBox(height: 6),
-               Wrap(
-                 spacing: 8,
-                 runSpacing: 8,
+               Row(
+                 mainAxisSize: MainAxisSize.min,
                  children: [
                    // Grammar/Perfect Button
                    GestureDetector(
@@ -350,8 +349,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                            Text(
                              isPerfect ? "Perfect" : "Fix",
                              style: TextStyle(
-                               fontSize: 11, 
-                               fontWeight: FontWeight.bold, 
+                               fontSize: 11,
+                               fontWeight: FontWeight.bold,
                                color: isPerfect ? Colors.green[800] : Colors.orange[900] // Match bg family
                              ),
                            ),
@@ -361,7 +360,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                    ),
 
                    // Pronunciation Score (if exists)
-                   if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null)
+                   if (widget.message.isVoiceMessage && widget.message.voiceFeedback != null) ...[
+                     const SizedBox(width: 8),
                      GestureDetector(
                        onTap: _showVoiceFeedback,
                        child: Container(
@@ -376,8 +376,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                              Icon(
                                Icons.mic_none_rounded,
                                size: 14,
-                               color: widget.message.voiceFeedback!.pronunciationScore >= 80 
-                                   ? Colors.green[800] 
+                               color: widget.message.voiceFeedback!.pronunciationScore >= 80
+                                   ? Colors.green[800]
                                    : Colors.orange[900],
                              ),
                              const SizedBox(width: 4),
@@ -386,8 +386,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                                style: TextStyle(
                                  fontSize: 11,
                                  fontWeight: FontWeight.bold,
-                                 color: widget.message.voiceFeedback!.pronunciationScore >= 80 
-                                     ? Colors.green[800] 
+                                 color: widget.message.voiceFeedback!.pronunciationScore >= 80
+                                     ? Colors.green[800]
                                      : Colors.orange[900],
                                ),
                              ),
@@ -395,6 +395,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                          ),
                        ),
                      ),
+                   ],
                  ],
                ),
             ],
