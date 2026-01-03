@@ -324,6 +324,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             audioPath: audioPath,
             audioDuration: userMessage.audioDuration, // Keep placeholder or update
             voiceFeedback: response.voiceFeedback,
+            feedback: response.reviewFeedback,
           );
         }
         
@@ -337,7 +338,6 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           isUser: false,
           timestamp: DateTime.now(),
           translation: response.translation,
-          feedback: response.reviewFeedback,
           isAnimated: true,
         );
         _messages.add(aiMessage);
