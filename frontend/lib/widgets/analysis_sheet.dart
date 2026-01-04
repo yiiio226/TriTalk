@@ -216,7 +216,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                           textScaler: MediaQuery.of(context).textScaler,
                         );
                         tp.layout(maxWidth: constraints.maxWidth);
-                        final isOverflowing = tp.computeLineMetrics().length > 2;
+                        final isOverflowing = tp.computeLineMetrics().length > 1;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +244,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             const SizedBox(height: 8),
                             Text(
                               widget.message.content,
-                              maxLines: _isOriginalSentenceExpanded ? null : 2,
+                              maxLines: _isOriginalSentenceExpanded ? null : 1,
                               overflow: _isOriginalSentenceExpanded
                                   ? TextOverflow.visible
                                   : TextOverflow.ellipsis,
