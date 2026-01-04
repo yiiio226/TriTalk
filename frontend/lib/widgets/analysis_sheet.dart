@@ -293,18 +293,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 color: const Color(0xFFF3E5F5), // Purple 50 equivalent
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.lightbulb_outline_rounded, size: 22, color: Colors.purple[700]),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      displayAnalysis.overallSummary,
-                      style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
-                    ),
-                  ),
-                ],
+              child: Text(
+                displayAnalysis.overallSummary,
+                style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
               ),
             ),
             const SizedBox(height: 24),
