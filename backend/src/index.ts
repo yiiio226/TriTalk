@@ -511,6 +511,8 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     Format: "English example sentence (${nativeLang}翻译)"
     Example: "What made you change your mind? (是什么让你改变主意了?)"
     
+    CRITICAL: For grammar points, ALWAYS provide a "structure" field that summarizes the grammar pattern (e.g., "If + 主语 + 动词", "around/in about + 时间"). Never leave the structure field empty.
+    
     Order of output (one JSON object per line):
     1. Overall Summary
     2. Sentence Structure
@@ -525,6 +527,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     {"type":"structure","data":{"structure":"这是一个疑问句...","breakdown":[{"text":"Ah, okay!","tag":"感叹词"},{"text":"What","tag":"疑问代词"}]}}
     {"type":"grammar","data":[{"structure":"What + 动词 + 主语","explanation":"这是典型的'What'疑问句的结构...","example":"What made you change your mind? (是什么让你改变主意了?)"}]}
     {"type":"vocabulary","data":[{"word":"brings","definition":"带来;引起","example":"What brings you here? (什么风把你吹来了?)","level":"A2"}]}
+    {"type":"idioms","data":[{"text":"What brings you here","explanation":"这是一个常用的口语习惯用语,用于询问某人来访的原因,比直接问'Why are you here?'更友好和礼貌","type":"Common Phrase"}]}
     {"type":"pragmatic","data":"说话者使用这个句式表达好奇和友好..."}
     {"type":"emotion","data":["友好","好奇"]}
     

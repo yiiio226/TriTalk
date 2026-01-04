@@ -775,6 +775,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       ),
     );
   }
+}
+
   Widget _buildIdiomItem(BuildContext context, IdiomItem idiom) {
     final isSaved = _savedIdioms.contains(idiom.text);
     
@@ -857,4 +859,3 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       ),
     );
   }
-}
