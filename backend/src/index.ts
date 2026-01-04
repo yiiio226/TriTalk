@@ -513,6 +513,16 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     
     CRITICAL: For grammar points, ALWAYS provide a "structure" field that summarizes the grammar pattern (e.g., "If + 主语 + 动词", "around/in about + 时间"). Never leave the structure field empty.
     
+    CRITICAL: For vocabulary items, ALWAYS include a "part_of_speech" field using standard abbreviations:
+    - n. (noun/名词)
+    - v. (verb/动词)
+    - adj. (adjective/形容词)
+    - adv. (adverb/副词)
+    - prep. (preposition/介词)
+    - conj. (conjunction/连词)
+    - pron. (pronoun/代词)
+    - interj. (interjection/感叹词)
+    
     IMPORTANT: For the Overall Summary, provide VALUABLE insights that help learners understand:
     - When and where this expression is commonly used (formal/informal contexts, specific situations)
     - Cultural or pragmatic nuances (tone, politeness level, emotional undertones)
@@ -533,7 +543,7 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     {"type":"summary","data":"这是一段充满情感且具有反思意义的口语表达,通常出现在跨年夜等重大时刻。它结合了即时感官体验(描述美景)和深度对话引导(回顾过去的一年),语气亲切且富有启发性。"}
     {"type":"structure","data":{"structure":"这是一个疑问句...","breakdown":[{"text":"Ah, okay!","tag":"感叹词"},{"text":"What","tag":"疑问代词"}]}}
     {"type":"grammar","data":[{"structure":"What + 动词 + 主语","explanation":"这是典型的'What'疑问句的结构...","example":"What made you change your mind? (是什么让你改变主意了?)"}]}
-    {"type":"vocabulary","data":[{"word":"brings","definition":"带来;引起","example":"What brings you here? (什么风把你吹来了?)","level":"A2"}]}
+    {"type":"vocabulary","data":[{"word":"brings","definition":"带来;引起","example":"What brings you here? (什么风把你吹来了?)","level":"A2","part_of_speech":"v."}]}
     {"type":"idioms","data":[{"text":"What brings you here","explanation":"这是一个常用的口语习惯用语,用于询问某人来访的原因,比直接问'Why are you here?'更友好和礼貌","type":"Common Phrase"}]}
     {"type":"pragmatic","data":"说话者使用这个句式表达好奇和友好..."}
     {"type":"emotion","data":["友好","好奇"]}

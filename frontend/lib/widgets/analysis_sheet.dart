@@ -711,6 +711,17 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   color: Colors.blue[900],
                 ),
               ),
+              if (vocab.partOfSpeech != null && vocab.partOfSpeech!.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(
+                  vocab.partOfSpeech!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
               const Spacer(),
               // Save Button
               Material(
