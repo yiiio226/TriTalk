@@ -49,6 +49,7 @@ export interface VocabularyItem {
     definition: string;
     example: string;
     level?: string;
+    part_of_speech?: string;
 }
 
 export interface AnalyzeRequest {

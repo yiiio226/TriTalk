@@ -216,7 +216,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                           textScaler: MediaQuery.of(context).textScaler,
                         );
                         tp.layout(maxWidth: constraints.maxWidth);
-                        final isOverflowing = tp.computeLineMetrics().length > 1;
+                        final isOverflowing = tp.computeLineMetrics().length > 2;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +244,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             const SizedBox(height: 8),
                             Text(
                               widget.message.content,
-                              maxLines: _isOriginalSentenceExpanded ? null : 1,
+                              maxLines: _isOriginalSentenceExpanded ? null : 2,
                               overflow: _isOriginalSentenceExpanded
                                   ? TextOverflow.visible
                                   : TextOverflow.ellipsis,
@@ -293,9 +293,18 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 color: const Color(0xFFF3E5F5), // Purple 50 equivalent
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                displayAnalysis.overallSummary,
-                style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.lightbulb_outline_rounded, size: 22, color: Colors.purple[700]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      displayAnalysis.overallSummary,
+                      style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -711,17 +720,6 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   color: Colors.blue[900],
                 ),
               ),
-              if (vocab.partOfSpeech != null && vocab.partOfSpeech!.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text(
-                  vocab.partOfSpeech!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
               const Spacer(),
               // Save Button
               Material(
@@ -777,6 +775,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       ),
     );
   }
+}
+
   Widget _buildIdiomItem(BuildContext context, IdiomItem idiom) {
     final isSaved = _savedIdioms.contains(idiom.text);
     
@@ -859,4 +859,3 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       ),
     );
   }
-}

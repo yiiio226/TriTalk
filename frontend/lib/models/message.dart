@@ -150,12 +150,14 @@ class VocabularyItem {
   final String definition;
   final String example;
   final String? level;
+  final String? partOfSpeech;
 
   VocabularyItem({
     required this.word,
     required this.definition,
     required this.example,
     this.level,
+    this.partOfSpeech,
   });
 
   Map<String, dynamic> toJson() {
@@ -164,6 +166,7 @@ class VocabularyItem {
       'definition': definition,
       'example': example,
       'level': level,
+      'part_of_speech': partOfSpeech,
     };
   }
 
@@ -173,6 +176,7 @@ class VocabularyItem {
       definition: json['definition'] ?? '',
       example: json['example'] ?? '',
       level: json['level'],
+      partOfSpeech: json['part_of_speech'],
     );
   }
 }
