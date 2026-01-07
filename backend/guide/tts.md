@@ -73,6 +73,54 @@ wrangler secret put MINIMAX_API_KEY
 wrangler secret put MINIMAX_GROUP_ID
 ```
 
+### [Planned] R2 云端缓存增强
+
+_目标：减少重复 TTS API 调用，实现跨设备音频共享，降低成本。_
+
+**优势**:
+
+- **跨设备共享**: 同一用户在不同设备上不需要重新生成相同内容的音频
+- **减少 API 成本**: 相同文本内容只调用一次 MiniMax API
+- **更快响应**: R2 CDN 分发比实时生成更快
+
+**实现计划**:
+
+1. **后端流程改进**:
+
+   - 接收 TTS 请求时，先计算 `text` 内容的 hash 作为缓存 key
+   - 检查 R2 存储桶 `audios/${hash}.mp3` 是否存在
+   - **HIT**: 返回 R2 公开 URL 或 Signed URL
+   - **MISS**: 调用 MiniMax API 生成 → 上传到 R2 → 返回 URL
+
+2. **响应格式变更**:
+
+   ```json
+   {
+     "audio_url": "https://r2.tritalk.app/audios/abc123.mp3",
+     "duration_ms": 3500,
+     "cached": true
+   }
+   ```
+
+3. **额外环境变量**:
+
+   ```bash
+   wrangler secret put R2_ACCESS_KEY_ID
+   wrangler secret put R2_SECRET_ACCESS_KEY
+   ```
+
+4. **Wrangler 配置** (wrangler.toml):
+
+   ```toml
+   [[r2_buckets]]
+   binding = "TTS_BUCKET"
+   bucket_name = "tritalk-tts-audio"
+   ```
+
+5. **缓存策略**:
+   - 使用文本内容的 SHA-256 hash 作为文件名
+   - 可考虑添加 TTL 过期策略（如 30 天未访问则删除）
+
 ## 3. 标准对话流程 (Standard Chat Flow) [Current Implemented]
 
 _纯文本对话，提供实时语法分析与反馈。_
