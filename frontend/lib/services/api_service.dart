@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/message.dart';
@@ -30,7 +31,9 @@ class ApiService {
 
     // Debug print to check if token exists
     if (token.isEmpty) {
-      print('⚠️ Warning: No Auth Token available for API call');
+      if (kDebugMode) {
+        debugPrint('⚠️ Warning: No Auth Token available for API call');
+      }
     }
 
     return {
@@ -49,14 +52,18 @@ class ApiService {
   static String get baseUrl {
     switch (currentEnvironment) {
       case Environment.localDev:
-        print(
-          '🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl',
+          );
+        }
         return _localDevUrl;
       case Environment.production:
-        print(
-          '🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            '🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl',
+          );
+        }
         return _productionUrl;
     }
   }
@@ -282,7 +289,9 @@ class ApiService {
               yield currentAnalysis;
             }
           } catch (e) {
-            print('Error parsing chunk: $e');
+            if (kDebugMode) {
+              debugPrint('Error parsing chunk: $e');
+            }
             // Continue despite error
           }
         }
@@ -541,7 +550,9 @@ class ApiService {
             }
           } catch (e) {
             if (e is Exception) rethrow;
-            print('Error parsing TTS chunk: $e');
+            if (kDebugMode) {
+              debugPrint('Error parsing TTS chunk: $e');
+            }
           }
         }
       }
