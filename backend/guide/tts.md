@@ -19,23 +19,51 @@
 
 目前核心功能为基于 LLM 的文本对话、语法分析、场景生成。
 
-## 1. 智能语音输入 (Smart Voice Input - Helper) [Planned]
+## 1. 智能语音输入 (Smart Voice Input - Helper) [已实现]
 
 _功能：仅作为输入辅助，将用户语音转写并优化为高质量文本，填入输入框供用户发送。_
 
-1. **输入**: 用户录音文件。
-2. **转录 (Whisper)**: 调用 OpenAI Whisper API 获取原始文本。
-3. **优化 (LLM)**:
+### 实现架构
+
+**后端 (Cloudflare Workers)**:
+
+- **端点**: `POST /chat/transcribe`
+- **输入**: FormData with `audio` file and `target_language` field
+- **模型**: `google/gemini-2.0-flash-lite-001` (通过 OpenRouter)
+- **特点**: 利用 Gemini 2.0 Flash Lite 的多模态能力，直接处理音频输入，在单次 API 调用中完成转录和优化
+
+**响应格式**:
+
+```json
+{
+  "text": "Optimized transcription text"
+}
+```
+
+### 流程
+
+1. **输入**: 用户录音文件 (m4a/mp3/wav/webm/ogg/flac/aac)。
+2. **处理 (Gemini 多模态)**:
 
    - **模型**: `google/gemini-2.0-flash-lite-001` (通过 OpenRouter)
-   - **策略**: 复用现有 `callOpenRouter` 函数。由于该函数已支持动态传入 `model` 参数，可直接复用代码逻辑，仅需在调用时指定 Gemini Lite 模型，既能利用现有架构又能获得更快的响应速度和更低的成本。
-   - **Prompt**: "Please act as a professional editor. Refine the provided text by:
-     1. Correcting all grammatical and spelling errors.
-     2. Removing filler words (e.g., 'uh', 'um', 'well', 'you know').
-     3. Polishing the phrasing for better flow while strictly preserving the original meaning."
-   - **输入**: 原始 ASR 文本。
+   - **音频编码**: 将音频文件转为 Base64 编码，作为多模态输入发送
+   - **Prompt**:
 
-4. **输出**: 返回优化后的 JSON 文本 `{ "optimized_text": "..." }`。
+     ```
+     You are a professional transcription and editing assistant.
+
+     Listen to the audio and perform these tasks:
+     1. Transcribe the speech accurately in ${targetLanguage}.
+     2. Correct any grammatical and spelling errors.
+     3. Remove filler words (e.g., 'uh', 'um', 'well', 'you know', 'like').
+     4. Polish the phrasing for better flow while strictly preserving the original meaning.
+     ```
+
+3. **输出**: 返回优化后的 JSON 文本 `{ "text": "..." }`。
+
+### 配置
+
+无需额外环境变量，复用现有的 `OPENROUTER_API_KEY`。
 
 ## 2. 交互式 TTS (On-demand TTS) [已实现]
 
