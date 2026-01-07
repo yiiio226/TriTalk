@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:record/record.dart';
@@ -262,6 +263,28 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() => _isTranscribing = true);
 
     try {
+      // Debug: Check if the audio file exists and has content
+      final file = File(audioPath);
+      if (!await file.exists()) {
+        throw Exception('Audio file does not exist at path: $audioPath');
+      }
+
+      final fileSize = await file.length();
+      print('🎤 Audio file size: $fileSize bytes at $audioPath');
+
+      // iOS Simulator doesn't have real microphone - file will be empty or very small
+      if (fileSize < 1000) {
+        if (mounted) {
+          setState(() => _isTranscribing = false);
+          showTopToast(
+            context,
+            'Recording too short or empty (${fileSize}B). Try on a real device.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
       final transcribedText = await _apiService.transcribeAudio(audioPath);
 
       if (mounted && transcribedText.isNotEmpty) {
