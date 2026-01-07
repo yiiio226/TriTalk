@@ -153,3 +153,9 @@ export interface TTSResponse {
   duration_ms?: number; // Audio duration in milliseconds
   error?: string;
 }
+
+// Smart Voice Input (Transcribe + Optimize) Types
+// Uses Gemini 2.0 Flash Lite multimodal for direct audio-to-text transcription and optimization
+export interface TranscribeResponse {
+  text: string; // The optimized/refined transcription
+}
