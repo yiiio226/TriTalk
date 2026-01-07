@@ -41,7 +41,19 @@ _功能：用户点击聊天记录中的 AI 消息气泡的"Listen"按钮时，�
 - **端点**: `POST /tts/generate`
 - **输入**: `{ text: string, message_id?: string, voice_id?: string }`
 - **模型**: MiniMax T2A V2 (`speech-01-turbo`)
-- **输出**: `{ audio_base64: string, duration_ms?: number }`
+- **输出**: `TTSResponse` 接口（定义于 `src/types.ts`）
+  - **成功**: `{ audio_base64: string, duration_ms?: number }`
+  - **失败**: `{ error: string }`
+
+```typescript
+// TTSResponse 接口定义
+interface TTSResponse {
+  audio_url?: string; // URL to the audio file (if using R2 storage)
+  audio_base64?: string; // Base64 encoded audio data (current implementation)
+  duration_ms?: number; // Audio duration in milliseconds
+  error?: string; // Error message when synthesis fails
+}
+```
 
 **前端 (Flutter)**:
 

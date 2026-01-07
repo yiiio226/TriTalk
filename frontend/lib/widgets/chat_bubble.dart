@@ -69,6 +69,8 @@ class _ChatBubbleState extends State<ChatBubble>
   bool _isTTSLoading = false;
   bool _isTTSPlaying = false;
   String? _ttsAudioPath; // Cached TTS audio file path
+  StreamSubscription<void>?
+  _ttsCompleteSubscription; // Single TTS completion listener
 
   @override
   void initState() {
@@ -138,6 +140,15 @@ class _ChatBubbleState extends State<ChatBubble>
         }
       });
     }
+
+    // Setup TTS completion listener once (to avoid accumulation)
+    _ttsCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          _isTTSPlaying = false;
+        });
+      }
+    });
   }
 
   @override
@@ -265,6 +276,7 @@ class _ChatBubbleState extends State<ChatBubble>
   void dispose() {
     _typewriterTimer?.cancel();
     _loadingController.dispose();
+    _ttsCompleteSubscription?.cancel(); // Cancel TTS completion listener
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -903,15 +915,6 @@ class _ChatBubbleState extends State<ChatBubble>
   /// Play TTS audio from the given file path
   Future<void> _playTTSAudio(String audioPath) async {
     try {
-      // Listen for completion
-      _audioPlayer.onPlayerComplete.listen((event) {
-        if (mounted) {
-          setState(() {
-            _isTTSPlaying = false;
-          });
-        }
-      });
-
       await _audioPlayer.play(DeviceFileSource(audioPath));
       if (mounted) {
         setState(() {

@@ -757,12 +757,19 @@ async function handleSceneGenerate(
   request: Request,
   env: Env
 ): Promise<Response> {
+  let body: SceneGenerationRequest | undefined;
   try {
-    const body: SceneGenerationRequest = await request.json();
+    body = await request.json();
+    if (!body) {
+      throw new Error("Invalid request body");
+    }
+
+    // At this point body is guaranteed to be defined
+    const { description, tone } = body;
 
     const prompt = `Act as a creative educational scenario designer.
-    User Request: "${body.description}"
-    Tone: ${body.tone || "Casual"}
+    User Request: "${description}"
+    Tone: ${tone || "Casual"}
     
     Create a roleplay scenario for learning English.
     Output JSON ONLY with these fields:
@@ -793,7 +800,7 @@ async function handleSceneGenerate(
       ai_role: data.ai_role || "Assistant",
       user_role: data.user_role || "Learner",
       goal: data.goal || "Practice English",
-      description: data.description || body.description,
+      description: data.description || description,
       initial_message: data.initial_message || "Hello! Ready to practice?",
       emoji: data.emoji || "✨",
     };
@@ -806,14 +813,13 @@ async function handleSceneGenerate(
     });
   } catch (error) {
     console.error("Error in /scene/generate:", error);
-    const body: SceneGenerationRequest = await request.json();
     return new Response(
       JSON.stringify({
         title: "Custom Scene",
         ai_role: "Assistant",
         user_role: "User",
         goal: "Practice conversation",
-        description: body.description,
+        description: body?.description || "Custom scenario",
         initial_message: "Hi! Let's start practicing.",
         emoji: "📝",
       }),
