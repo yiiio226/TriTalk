@@ -373,12 +373,12 @@ Return ONLY a JSON object in this exact format:
           model: "google/gemini-2.0-flash-lite-001",
           messages: [
             {
+              role: "system",
+              content: transcribePrompt,
+            },
+            {
               role: "user",
               content: [
-                {
-                  type: "text",
-                  text: transcribePrompt,
-                },
                 {
                   type: "input_audio",
                   input_audio: {
