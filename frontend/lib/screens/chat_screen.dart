@@ -9,6 +9,7 @@ import '../widgets/analysis_sheet.dart';
 import '../widgets/hints_sheet.dart';
 import '../widgets/favorites_sheet.dart'; // Added
 import '../services/api_service.dart';
+import '../services/audio_service.dart'; // Added for TTS
 import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
 import '../services/preferences_service.dart';
@@ -37,6 +38,10 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _analyzingMessageId;
   Timer? _autoScrollTimer; // Timer for continuous scrolling during animation
 
+  // TTS/Audio state
+  final AudioService _audioService = AudioService();
+  String? _currentlyPlayingMessageId;
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -59,7 +64,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      timer,
+    ) {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
@@ -70,6 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _autoScrollTimer?.cancel();
     _autoScrollTimer = null;
   }
+
   @override
   void initState() {
     super.initState();
@@ -77,46 +85,48 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.addListener(() {
       setState(() {}); // Rebuild to update optimization button state
     });
-    
+
     // Listen to keyboard changes and scroll to bottom when keyboard appears
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollController.addListener(_handleScroll);
     });
   }
-  
+
   double _previousKeyboardHeight = 0;
-  
+
   void _handleScroll() {
     // This will be called on every frame, but we only care about keyboard changes
     // The actual keyboard detection happens in didChangeDependencies
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
+
     // Detect keyboard height changes
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    
+
     // If keyboard is appearing (height increased from 0 or small value)
     if (keyboardHeight > _previousKeyboardHeight && keyboardHeight > 100) {
       // Only scroll if user is already near the bottom (within 100 pixels)
       if (_scrollController.hasClients) {
         final position = _scrollController.position;
         final isNearBottom = position.maxScrollExtent - position.pixels < 100;
-        
+
         if (isNearBottom) {
           // User is at bottom, scroll to keep latest messages visible
           Future.delayed(const Duration(milliseconds: 100), () {
             if (mounted && _scrollController.hasClients) {
-              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+              _scrollController.jumpTo(
+                _scrollController.position.maxScrollExtent,
+              );
             }
           });
         }
         // If not near bottom, don't scroll - user is viewing history
       }
     }
-    
+
     _previousKeyboardHeight = keyboardHeight;
   }
 
@@ -125,6 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _autoScrollTimer?.cancel();
     _textController.dispose();
     _scrollController.dispose();
+    _audioService.stop(); // Stop any playing audio
     super.dispose();
   }
 
@@ -134,9 +145,9 @@ class _ChatScreenState extends State<ChatScreen> {
     // Unique key for the scene. Title + Role is usually unique enough for MVP.
     final sceneKey = widget.scene.id;
     final history = await ChatHistoryService().getMessagesWithSync(sceneKey);
-    
+
     bool isNewConversation = history.isEmpty;
-    
+
     if (isNewConversation) {
       // Add a loading placeholder immediately
       final loadingId = 'init_loading';
@@ -147,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
         timestamp: DateTime.now(),
         isLoading: true,
       );
-      
+
       if (mounted) {
         setState(() {
           _messages = [loadingMsg]; // Initialize with loading message
@@ -159,45 +170,56 @@ class _ChatScreenState extends State<ChatScreen> {
       // Check target language
       final prefs = PreferencesService();
       final targetLang = await prefs.getTargetLanguage();
-      
+
       String initialContent = widget.scene.initialMessage;
 
       // Handle name substitution for placeholders like [Client's Name...]
       try {
         String displayName = widget.scene.userRole;
-        final genericRoles = ['User', 'Client', 'Student', 'Me', 'You', 'Guest'];
-        
+        final genericRoles = [
+          'User',
+          'Client',
+          'Student',
+          'Me',
+          'You',
+          'Guest',
+        ];
+
         // Helper to check if role is generic (case-insensitive)
-        bool isGeneric(String role) => genericRoles.any((r) => r.toLowerCase() == role.toLowerCase());
-        
+        bool isGeneric(String role) =>
+            genericRoles.any((r) => r.toLowerCase() == role.toLowerCase());
+
         if (isGeneric(displayName)) {
-             final authUser = AuthService().currentUser;
-             if (authUser != null && authUser.name.isNotEmpty && authUser.name != 'User' && authUser.name != 'TriTalk Explorer') {
-                 displayName = authUser.name;
-             }
+          final authUser = AuthService().currentUser;
+          if (authUser != null &&
+              authUser.name.isNotEmpty &&
+              authUser.name != 'User' &&
+              authUser.name != 'TriTalk Explorer') {
+            displayName = authUser.name;
+          }
         }
-        
+
         // Remove "User" or generic fallback if no name found, or keep role if it's "Client" and no auth name?
         // Requirement: "If no name, use user name." If user name not available, stick to role?
         // If authUser.name is empty/generic, we might still want to replace placeholder with "User" or just remove brackets.
         // Let's stick to using displayName which is now either the specific role or the auth name.
-        
+
         // Replace regex [.*?(Name|Client|User).*?] with displayName
         // Matches things like [Client's Name], [Client's Name - optional], [Insert Name]
         initialContent = initialContent.replaceAll(
-          RegExp(r'\[.*?(?:Name|Client|User).*?\]', caseSensitive: false), 
-          displayName
+          RegExp(r'\[.*?(?:Name|Client|User).*?\]', caseSensitive: false),
+          displayName,
         );
       } catch (e) {
         print("Error substituting name: $e");
       }
-      
+
       // If target language is not English, translate the initial message
       if (targetLang != 'English') {
         try {
           initialContent = await _apiService.translateText(
-            widget.scene.initialMessage, 
-            targetLang
+            widget.scene.initialMessage,
+            targetLang,
           );
         } catch (e) {
           print("Translation failed: $e");
@@ -217,19 +239,19 @@ class _ChatScreenState extends State<ChatScreen> {
       final initialMsg = Message(
         id: 'init_${DateTime.now().millisecondsSinceEpoch}', // Unique ID to force re-render
         content: initialContent,
-        isUser: false, 
+        isUser: false,
         timestamp: DateTime.now(),
         isAnimated: true, // Enable typewriter effect for initial message
       );
-      
+
       if (mounted) {
         setState(() {
           _messages = [...history, initialMsg];
         });
-        
+
         // Sync entire message list to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
-        
+
         _jumpToBottom(); // Jump to bottom after loading initial message
       }
     } else {
@@ -264,7 +286,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _retryInitialLoad() {
-      _loadMessages();
+    _loadMessages();
   }
 
   final ApiService _apiService = ApiService();
@@ -299,17 +321,17 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     final sceneKey = widget.scene.id;
-    
+
     setState(() {
       _messages.add(newMessage);
       _isSending = true;
     });
-    
+
     // Sync entire message list to cloud (don't await to not block UI)
     ChatHistoryService().syncMessages(sceneKey, _messages);
-    
+
     RevenueCatService().incrementMessageCount();
-    
+
     _textController.clear();
     _scrollToBottom();
 
@@ -317,18 +339,22 @@ class _ChatScreenState extends State<ChatScreen> {
       // Build conversation history (exclude loading messages and current message)
       final history = _messages
           .where((m) => !m.isLoading && m.content.isNotEmpty)
-          .map((m) => <String, String>{
-            'role': m.isUser ? 'user' : 'assistant',
-            'content': m.content,
-          })
+          .map(
+            (m) => <String, String>{
+              'role': m.isUser ? 'user' : 'assistant',
+              'content': m.content,
+            },
+          )
           .toList();
 
-      final response = await _apiService.sendMessage(
-        text, 
-        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-        history
-      ).timeout(const Duration(seconds: 30));
-      
+      final response = await _apiService
+          .sendMessage(
+            text,
+            'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+            history,
+          )
+          .timeout(const Duration(seconds: 30));
+
       if (!mounted) return;
 
       // 1. Update user message with feedback (Turns it Yellow)
@@ -342,37 +368,39 @@ class _ChatScreenState extends State<ChatScreen> {
           feedback: response.feedback,
           isFeedbackLoading: false,
         );
-        
+
         setState(() {
           _messages[userMsgIndex] = updatedMessage;
-          
+
           // 2. Add loading message for AI response NOW (after feedback)
-          _messages.add(Message(
-            id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
-            content: '',
-            isUser: false,
-            timestamp: DateTime.now(),
-            isLoading: true,
-          ));
+          _messages.add(
+            Message(
+              id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+              content: '',
+              isUser: false,
+              timestamp: DateTime.now(),
+              isLoading: true,
+            ),
+          );
         });
-        
+
         // Sync entire message list to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
-      
+
       _scrollToBottom();
-      
+
       // 3. Simulated "thinking" delay for AI (1.5 seconds)
       await Future.delayed(const Duration(milliseconds: 1500));
-      
+
       if (!mounted) return;
 
       setState(() {
         _isSending = false;
-        
+
         // Remove loading message
         _messages.removeWhere((m) => m.isLoading);
-        
+
         final aiMessage = Message(
           id: _uuid.v4(),
           content: response.message,
@@ -384,14 +412,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
         _messages.add(aiMessage);
       });
-      
+
       // Sync entire message list to cloud
       ChatHistoryService().syncMessages(sceneKey, _messages);
       _scrollToBottom();
       // Start continuous auto-scroll during typewriter animation
       _startAutoScroll();
       // Stop auto-scroll after animation should be complete (estimate based on content length)
-      final animationDuration = (response.message.length * 30).clamp(1000, 5000);
+      final animationDuration = (response.message.length * 30).clamp(
+        1000,
+        5000,
+      );
       Future.delayed(Duration(milliseconds: animationDuration), () {
         if (mounted) {
           _stopAutoScroll();
@@ -401,7 +432,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } on TimeoutException catch (_) {
       // Handle timeout specifically
       if (!mounted) return;
-      
+
       // Find and update the user message to stop loading
       final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
       if (userMsgIndex != -1) {
@@ -412,26 +443,26 @@ class _ChatScreenState extends State<ChatScreen> {
           timestamp: newMessage.timestamp,
           isFeedbackLoading: false, // Stop loading indicator
         );
-        
+
         setState(() {
           _messages[userMsgIndex] = updatedMessage;
-          
+
           // Remove any loading AI messages
           _messages.removeWhere((m) => m.isLoading);
-          
+
           _isSending = false;
           _failedMessage = text;
           _showErrorBanner = true;
           _isTimeoutError = true;
         });
-        
+
         // Sync updated state to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
     } catch (e) {
       // Handle other errors
       if (!mounted) return;
-      
+
       // Find and update the user message to stop loading
       final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
       if (userMsgIndex != -1) {
@@ -442,19 +473,19 @@ class _ChatScreenState extends State<ChatScreen> {
           timestamp: newMessage.timestamp,
           isFeedbackLoading: false, // Stop loading indicator
         );
-        
+
         setState(() {
           _messages[userMsgIndex] = updatedMessage;
-          
+
           // Remove any loading AI messages
           _messages.removeWhere((m) => m.isLoading);
-          
+
           _isSending = false;
           _failedMessage = text;
           _showErrorBanner = true;
           _isTimeoutError = false;
         });
-        
+
         // Sync updated state to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
@@ -467,7 +498,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _sendMessage();
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -517,13 +548,23 @@ class _ChatScreenState extends State<ChatScreen> {
                           height: 10,
                           child: CircularProgressIndicator(
                             strokeWidth: 1,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.grey,
+                            ),
                           ),
                         );
                       case SyncStatus.synced:
-                        return const Icon(Icons.circle, color: Color(0xFF34C759), size: 12);
+                        return const Icon(
+                          Icons.circle,
+                          color: Color(0xFF34C759),
+                          size: 12,
+                        );
                       case SyncStatus.offline:
-                        return Icon(Icons.circle_outlined, color: Colors.grey[400], size: 16);
+                        return Icon(
+                          Icons.circle_outlined,
+                          color: Colors.grey[400],
+                          size: 16,
+                        );
                     }
                   },
                 ),
@@ -532,15 +573,22 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Text(
               'Talking to ${widget.scene.aiRole}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ],
         ),
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent, 
+        surfaceTintColor: Colors.transparent,
         foregroundColor: Colors.black,
-        elevation: 0, 
-        titleTextStyle: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+        elevation: 0,
+        titleTextStyle: const TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -593,11 +641,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
                   return Align(
-                    alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: msg.isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: ChatBubble(
                       key: ValueKey(msg.id),
                       message: msg,
                       sceneId: widget.scene.id, // Pass sceneId
+                      isPlayingAudio: _currentlyPlayingMessageId == msg.id,
+                      onSpeakerTap: msg.isUser
+                          ? null
+                          : () => _handleSpeaker(msg),
                       onTap: () {
                         if (msg.feedback != null) {
                           showModalBottomSheet(
@@ -638,10 +692,82 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// Handle TTS speaker button tap
+  Future<void> _handleSpeaker(Message message) async {
+    // If currently playing this message, stop
+    if (_currentlyPlayingMessageId == message.id) {
+      await _audioService.stop();
+      if (mounted) {
+        setState(() {
+          _currentlyPlayingMessageId = null;
+        });
+      }
+      return;
+    }
+
+    // Stop any other playing audio
+    await _audioService.stop();
+
+    // Update state to show loading/playing
+    if (mounted) {
+      setState(() {
+        _currentlyPlayingMessageId = message.id;
+      });
+    }
+
+    try {
+      // Check if audio is already cached locally
+      final isCached = await _audioService.isAudioCached(message.id);
+
+      String audioUrl;
+
+      if (isCached) {
+        // Use empty URL since we have local cache
+        audioUrl = '';
+      } else {
+        // Request TTS from backend
+        final ttsResponse = await _apiService.generateTTS(
+          messageId: message.id,
+          text: message.content,
+        );
+        audioUrl = ttsResponse.audioUrl;
+      }
+
+      // Play the audio
+      final success = await _audioService.playAudio(
+        messageId: message.id,
+        audioUrl: audioUrl,
+      );
+
+      if (!success && mounted) {
+        showTopToast(context, 'Failed to play audio', isError: true);
+        setState(() {
+          _currentlyPlayingMessageId = null;
+        });
+      }
+
+      // Listen for playback completion to update state
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && _audioService.currentlyPlayingMessageId != message.id) {
+          setState(() {
+            _currentlyPlayingMessageId = null;
+          });
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, 'TTS error: $e', isError: true);
+        setState(() {
+          _currentlyPlayingMessageId = null;
+        });
+      }
+    }
+  }
+
   Widget _buildErrorBanner() {
     final isInitialLoadError = _initialLoadFailed;
     String errorText;
-    
+
     if (isInitialLoadError) {
       errorText = 'Network error. Failed to load conversation.';
     } else if (_isTimeoutError) {
@@ -649,7 +775,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } else {
       errorText = 'Failed to send message. Please try again.';
     }
-        
+
     return Container(
       width: double.infinity,
       color: Colors.red.shade50,
@@ -658,19 +784,24 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           const Icon(Icons.error_outline, color: Colors.red, size: 20),
           const SizedBox(width: 8),
-           Expanded(
+          Expanded(
             child: Text(
               errorText,
               style: const TextStyle(color: Colors.red, fontSize: 14),
             ),
           ),
           TextButton(
-            onPressed: isInitialLoadError ? _retryInitialLoad : _retryLastMessage,
+            onPressed: isInitialLoadError
+                ? _retryInitialLoad
+                : _retryLastMessage,
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: const Size(50, 30),
             ),
-            child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Retry',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -682,22 +813,24 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 40),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
+            icon: const Icon(
+              Icons.lightbulb_outline_rounded,
+              color: Colors.amber,
+            ),
             onPressed: () {
-              final history = _messages.map((m) => <String, String>{
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.content,
-              }).toList();
+              final history = _messages
+                  .map(
+                    (m) => <String, String>{
+                      'role': m.isUser ? 'user' : 'assistant',
+                      'content': m.content,
+                    },
+                  )
+                  .toList();
 
               showModalBottomSheet(
                 context: context,
@@ -705,7 +838,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 backgroundColor: Colors.transparent,
                 barrierColor: Colors.white.withOpacity(0.5),
                 builder: (context) => HintsSheet(
-                  sceneDescription: 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+                  sceneDescription:
+                      'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
                   history: history,
                   onHintSelected: (hint) {
                     _textController.text = hint;
@@ -740,22 +874,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   // AI Optimization Button inside input container
                   IconButton(
                     iconSize: 20,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 40,
+                    ),
                     padding: EdgeInsets.zero,
-                    icon: _isOptimizing 
+                    icon: _isOptimizing
                         ? const SizedBox(
-                            width: 16, 
-                            height: 16, 
-                            child: CircularProgressIndicator(strokeWidth: 2)
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Icon(
-                            Icons.auto_fix_high, 
-                            color: _textController.text.trim().isNotEmpty 
-                                ? Colors.green 
-                                : Colors.grey[400]
+                            Icons.auto_fix_high,
+                            color: _textController.text.trim().isNotEmpty
+                                ? Colors.green
+                                : Colors.grey[400],
                           ),
                     tooltip: 'Optimize with AI',
-                    onPressed: _textController.text.trim().isEmpty || _isOptimizing
+                    onPressed:
+                        _textController.text.trim().isEmpty || _isOptimizing
                         ? null
                         : () async {
                             final text = _textController.text.trim();
@@ -763,26 +901,39 @@ class _ChatScreenState extends State<ChatScreen> {
 
                             try {
                               final history = _messages
-                                  .where((m) => !m.isLoading && m.content.isNotEmpty)
-                                  .map((m) => <String, String>{
-                                    'role': m.isUser ? 'user' : 'assistant',
-                                    'content': m.content,
-                                  })
+                                  .where(
+                                    (m) => !m.isLoading && m.content.isNotEmpty,
+                                  )
+                                  .map(
+                                    (m) => <String, String>{
+                                      'role': m.isUser ? 'user' : 'assistant',
+                                      'content': m.content,
+                                    },
+                                  )
                                   .toList();
 
-                              final optimizedText = await _apiService.optimizeMessage(
-                                text, 
-                                'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-                                history
-                              );
+                              final optimizedText = await _apiService
+                                  .optimizeMessage(
+                                    text,
+                                    'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+                                    history,
+                                  );
 
                               if (mounted) {
                                 _textController.text = optimizedText;
-                                showTopToast(context, "Message optimized!", isError: false);
+                                showTopToast(
+                                  context,
+                                  "Message optimized!",
+                                  isError: false,
+                                );
                               }
                             } catch (e) {
                               if (mounted) {
-                                 showTopToast(context, "Optimization failed: $e", isError: true);
+                                showTopToast(
+                                  context,
+                                  "Optimization failed: $e",
+                                  isError: true,
+                                );
                               }
                             } finally {
                               if (mounted) {
@@ -802,7 +953,11 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.black,
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_upward_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: _sendMessage,
             ),
           ),
@@ -813,26 +968,30 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _bookmarkConversation() {
     final sceneKey = widget.scene.id;
-    final nonEmptyMessages = _messages.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
-    
+    final nonEmptyMessages = _messages
+        .where((m) => m.content.isNotEmpty && !m.isLoading)
+        .toList();
+
     if (nonEmptyMessages.isEmpty) {
       showTopToast(context, "No messages to bookmark", isError: true);
       return;
     }
 
     final lastMessage = nonEmptyMessages.last.content;
-    final preview = lastMessage.length > 50 ? '${lastMessage.substring(0, 50)}...' : lastMessage;
-    
+    final preview = lastMessage.length > 50
+        ? '${lastMessage.substring(0, 50)}...'
+        : lastMessage;
+
     // Format date: "Today", "Yesterday", or "MM-dd"
     final now = DateTime.now();
     final dateStr = "${now.month}/${now.day}"; // Simple format for now
 
     ChatHistoryService().addBookmark(
-      widget.scene.title, 
-      preview, 
-      dateStr, 
-      sceneKey, 
-      nonEmptyMessages
+      widget.scene.title,
+      preview,
+      dateStr,
+      sceneKey,
+      nonEmptyMessages,
     );
 
     showTopToast(context, "Conversation bookmarked!", isError: false);
@@ -851,10 +1010,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             const Text(
               'Clear Conversation',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -867,10 +1023,7 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
                 TextButton(
@@ -879,7 +1032,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     await ChatHistoryService().clearHistory(sceneKey);
                     if (mounted) {
                       _loadMessages();
-                      showTopToast(context, 'Conversation cleared', isError: false);
+                      showTopToast(
+                        context,
+                        'Conversation cleared',
+                        isError: false,
+                      );
                       Navigator.pop(context);
                     }
                   },
@@ -910,10 +1067,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             const Text(
               'Delete Conversation',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -926,10 +1080,7 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
                 TextButton(
@@ -1015,42 +1166,42 @@ class _ChatScreenState extends State<ChatScreen> {
         sceneId: widget.scene.id,
         analysisStream: stream,
         onAnalysisComplete: (finalAnalysis) {
-           _updateMessageAnalysis(message.id, finalAnalysis);
+          _updateMessageAnalysis(message.id, finalAnalysis);
         },
       ),
     );
   }
 
   void _updateMessageAnalysis(String messageId, MessageAnalysis analysis) {
-      if (!mounted) return;
+    if (!mounted) return;
 
-      // Update message with analysis
-      final messageIndex = _messages.indexWhere((m) => m.id == messageId);
-      if (messageIndex != -1) {
-        final currentMessage = _messages[messageIndex];
-        final updatedMessage = Message(
-          id: currentMessage.id,
-          content: currentMessage.content,
-          isUser: currentMessage.isUser,
-          timestamp: currentMessage.timestamp,
-          translation: currentMessage.translation,
-          feedback: currentMessage.feedback,
-          analysis: analysis,
-        );
-        
-        setState(() {
-          _messages[messageIndex] = updatedMessage;
-        });
+    // Update message with analysis
+    final messageIndex = _messages.indexWhere((m) => m.id == messageId);
+    if (messageIndex != -1) {
+      final currentMessage = _messages[messageIndex];
+      final updatedMessage = Message(
+        id: currentMessage.id,
+        content: currentMessage.content,
+        isUser: currentMessage.isUser,
+        timestamp: currentMessage.timestamp,
+        translation: currentMessage.translation,
+        feedback: currentMessage.feedback,
+        analysis: analysis,
+      );
 
-        // Save analysis result to local and cloud storage
-        final sceneKey = widget.scene.id;
-        ChatHistoryService().syncMessages(sceneKey, _messages);
-      }
+      setState(() {
+        _messages[messageIndex] = updatedMessage;
+      });
+
+      // Save analysis result to local and cloud storage
+      final sceneKey = widget.scene.id;
+      ChatHistoryService().syncMessages(sceneKey, _messages);
+    }
   }
 
   String _getFriendlyErrorMessage(Object error) {
     final errorStr = error.toString();
-    if (errorStr.contains('SocketException') || 
+    if (errorStr.contains('SocketException') ||
         errorStr.contains('Connection refused') ||
         errorStr.contains('Network is unreachable')) {
       return 'Network error. Please check your connection.';
@@ -1067,5 +1218,4 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     return 'An error occurred: $errorStr';
   }
-  }
-
+}

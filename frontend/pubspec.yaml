@@ -2,7 +2,7 @@ name: frontend
 description: "TriTalk - Your AI Language Practice Companion."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -45,6 +45,7 @@ dependencies:
   sign_in_with_apple: ^6.1.1
   shimmer: ^3.0.0
   flutter_markdown: ^0.7.6
+  just_audio: ^0.9.40
 
 dev_dependencies:
   flutter_test:
@@ -70,7 +71,6 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

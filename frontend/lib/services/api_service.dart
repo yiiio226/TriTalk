@@ -5,8 +5,8 @@ import 'preferences_service.dart';
 
 // 环境枚举
 enum Environment {
-  localDev,    // 本地开发环境 (Wrangler dev server)
-  production,  // 生产环境 (已部署的 Cloudflare Workers)
+  localDev, // 本地开发环境 (Wrangler dev server)
+  production, // 生产环境 (已部署的 Cloudflare Workers)
 }
 
 class ApiService {
@@ -15,32 +15,37 @@ class ApiService {
   // - 开发时: flutter run (默认使用 localDev)
   // - 生产时: flutter run --dart-define=USE_PROD=true
   //          flutter build apk --dart-define=USE_PROD=true
-  static const Environment currentEnvironment = 
+  static const Environment currentEnvironment =
       bool.fromEnvironment('USE_PROD', defaultValue: false)
-          ? Environment.production
-          : Environment.localDev;
+      ? Environment.production
+      : Environment.localDev;
   // =================================================
-  
+
   // 本地开发 URL (Cloudflare Workers 开发服务器)
   static const String _localDevUrl = 'http://192.168.1.4:8787';
-  
+
   // 生产环境 URL (已部署的 Cloudflare Workers)
-  static const String _productionUrl = 'https://tritalk-backend.tristart226.workers.dev';
-  
+  static const String _productionUrl =
+      'https://tritalk-backend.tristart226.workers.dev';
+
   // 根据当前环境自动选择 URL
   static String get baseUrl {
     switch (currentEnvironment) {
       case Environment.localDev:
-        print('🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl');
+        print(
+          '🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl',
+        );
         return _localDevUrl;
       case Environment.production:
-        print('🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl');
+        print(
+          '🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl',
+        );
         return _productionUrl;
     }
-  } 
+  }
 
   Future<ChatResponse> sendMessage(
-    String text, 
+    String text,
     String sceneContext,
     List<Map<String, String>> history,
   ) async {
@@ -71,7 +76,10 @@ class ApiService {
     }
   }
 
-  Future<HintResponse> getHints(String sceneContext, List<Map<String, String>> history) async {
+  Future<HintResponse> getHints(
+    String sceneContext,
+    List<Map<String, String>> history,
+  ) async {
     try {
       final prefs = PreferencesService();
       final nativeLang = await prefs.getNativeLanguage();
@@ -81,7 +89,8 @@ class ApiService {
         Uri.parse('$baseUrl/chat/hint'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'message': '', // Not needed for hint request strictly but used in model
+          'message':
+              '', // Not needed for hint request strictly but used in model
           'history': history,
           'scene_context': sceneContext,
           'native_language': nativeLang,
@@ -98,20 +107,20 @@ class ApiService {
       throw Exception('Error getting hints: $e');
     }
   }
-  
-  Future<SceneGenerationResponse> generateScene(String description, String tone) async {
+
+  Future<SceneGenerationResponse> generateScene(
+    String description,
+    String tone,
+  ) async {
     try {
       // Scene generation might mostly depend on target language for the content,
       // but we pass it anyway if the backend uses it.
       // Currently backend doesn't explicitly look for it in generate_scene but it's good practice.
-      
+
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'description': description,
-          'tone': tone,
-        }),
+        body: jsonEncode({'description': description, 'tone': tone}),
       );
 
       if (response.statusCode == 200) {
@@ -129,10 +138,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/common/translate'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'text': text,
-          'target_language': targetLanguage,
-        }),
+        body: jsonEncode({'text': text, 'target_language': targetLanguage}),
       );
 
       if (response.statusCode == 200) {
@@ -160,9 +166,11 @@ class ApiService {
     final client = http.Client();
     try {
       final streamedResponse = await client.send(request);
-      
+
       if (streamedResponse.statusCode != 200) {
-        throw Exception('Failed to analyze message: ${streamedResponse.statusCode}');
+        throw Exception(
+          'Failed to analyze message: ${streamedResponse.statusCode}',
+        );
       }
 
       // Initial empty analysis state
@@ -182,7 +190,7 @@ class ApiService {
 
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
         buffer += chunk;
-        
+
         while (buffer.contains('\n')) {
           final index = buffer.indexOf('\n');
           final line = buffer.substring(0, index).trim();
@@ -192,50 +200,62 @@ class ApiService {
 
           try {
             final json = jsonDecode(line);
-            if (json is Map<String, dynamic> && json.containsKey('type') && json.containsKey('data')) {
+            if (json is Map<String, dynamic> &&
+                json.containsKey('type') &&
+                json.containsKey('data')) {
               final type = json['type'];
               final data = json['data'];
 
               switch (type) {
                 case 'summary':
-                  currentAnalysis = currentAnalysis.copyWith(overallSummary: data as String);
+                  currentAnalysis = currentAnalysis.copyWith(
+                    overallSummary: data as String,
+                  );
                   break;
                 case 'structure':
                   if (data is Map<String, dynamic>) {
                     currentAnalysis = currentAnalysis.copyWith(
                       sentenceStructure: data['structure'] ?? '',
-                      sentenceBreakdown: (data['breakdown'] as List?)
-                          ?.map((e) => StructureSegment.fromJson(e))
-                          .toList() ?? []
+                      sentenceBreakdown:
+                          (data['breakdown'] as List?)
+                              ?.map((e) => StructureSegment.fromJson(e))
+                              .toList() ??
+                          [],
                     );
                   }
                   break;
                 case 'grammar':
                   if (data is List) {
-                     currentAnalysis = currentAnalysis.copyWith(
-                      grammarPoints: data.map((e) => GrammarPoint.fromJson(e)).toList(),
+                    currentAnalysis = currentAnalysis.copyWith(
+                      grammarPoints: data
+                          .map((e) => GrammarPoint.fromJson(e))
+                          .toList(),
                     );
                   }
                   break;
                 case 'vocabulary':
-                   if (data is List) {
+                  if (data is List) {
                     currentAnalysis = currentAnalysis.copyWith(
-                      vocabulary: data.map((e) => VocabularyItem.fromJson(e)).toList(),
+                      vocabulary: data
+                          .map((e) => VocabularyItem.fromJson(e))
+                          .toList(),
                     );
                   }
                   break;
                 case 'idioms':
-                   if (data is List) {
+                  if (data is List) {
                     currentAnalysis = currentAnalysis.copyWith(
                       idioms: data.map((e) => IdiomItem.fromJson(e)).toList(),
                     );
                   }
                   break;
                 case 'pragmatic':
-                  currentAnalysis = currentAnalysis.copyWith(pragmaticAnalysis: data as String);
+                  currentAnalysis = currentAnalysis.copyWith(
+                    pragmaticAnalysis: data as String,
+                  );
                   break;
                 case 'emotion':
-                   if (data is List) {
+                  if (data is List) {
                     currentAnalysis = currentAnalysis.copyWith(
                       emotionTags: List<String>.from(data),
                     );
@@ -262,9 +282,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/scene/polish'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'description': description,
-        }),
+        body: jsonEncode({'description': description}),
       );
 
       if (response.statusCode == 200) {
@@ -278,7 +296,10 @@ class ApiService {
     }
   }
 
-  Future<ShadowResult> analyzeShadow(String targetText, String userAudioText) async {
+  Future<ShadowResult> analyzeShadow(
+    String targetText,
+    String userAudioText,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/chat/shadow'),
@@ -300,9 +321,9 @@ class ApiService {
   }
 
   Future<String> optimizeMessage(
-    String draft, 
-    String sceneContext, 
-    List<Map<String, String>> history
+    String draft,
+    String sceneContext,
+    List<Map<String, String>> history,
   ) async {
     try {
       final prefs = PreferencesService();
@@ -328,6 +349,53 @@ class ApiService {
     } catch (e) {
       throw Exception('Error optimizing message: $e');
     }
+  }
+
+  /// Generate TTS audio for a message
+  /// Returns the audio URL from the backend
+  Future<TTSResponse> generateTTS({
+    required String messageId,
+    required String text,
+    String? voiceId,
+  }) async {
+    try {
+      final body = {'message_id': messageId, 'text': text};
+
+      if (voiceId != null) {
+        body['voice_id'] = voiceId;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/tts/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return TTSResponse.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 503) {
+        throw Exception('TTS service not configured');
+      } else {
+        throw Exception('Failed to generate TTS: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error generating TTS: $e');
+    }
+  }
+}
+
+/// TTS Response model
+class TTSResponse {
+  final String audioUrl;
+  final bool cached;
+
+  TTSResponse({required this.audioUrl, required this.cached});
+
+  factory TTSResponse.fromJson(Map<String, dynamic> json) {
+    return TTSResponse(
+      audioUrl: json['audio_url'],
+      cached: json['cached'] ?? false,
+    );
   }
 }
 

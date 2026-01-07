@@ -10,40 +10,46 @@ class ChatBubble extends StatefulWidget {
   final Message message;
   final VoidCallback? onTap;
   final String? sceneId; // Add sceneId to pass to SaveNoteSheet
+  final VoidCallback? onSpeakerTap; // Callback for TTS speaker button
+  final bool
+  isPlayingAudio; // Whether this message's audio is currently playing
 
   const ChatBubble({
-    Key? key, 
-    required this.message, 
+    Key? key,
+    required this.message,
     this.onTap,
     this.sceneId,
+    this.onSpeakerTap,
+    this.isPlayingAudio = false,
   }) : super(key: key);
 
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
 }
 
-class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateMixin {
+class _ChatBubbleState extends State<ChatBubble>
+    with SingleTickerProviderStateMixin {
   bool _showTranslation = false;
-  
+
   // Typewriter state
   String _displayedText = "";
   Timer? _typewriterTimer;
   int _currentIndex = 0;
   bool _isAnimationComplete = false; // Track if typewriter animation is done
-  
+
   // Loading state
   late AnimationController _loadingController;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Setup loading controller
     _loadingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat();
-    
+
     // Setup typewriter if needed
     if (widget.message.isAnimated && !widget.message.isLoading) {
       _isAnimationComplete = false; // Animation will start
@@ -53,11 +59,11 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       _isAnimationComplete = true; // No animation, so it's "complete"
     }
   }
-  
+
   @override
   void didUpdateWidget(ChatBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Handle text changes or animation toggle
     if (widget.message.content != oldWidget.message.content) {
       if (widget.message.isAnimated) {
@@ -71,11 +77,13 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       }
     }
   }
-  
+
   void _startTypewriter() {
     _typewriterTimer?.cancel();
-    
-    _typewriterTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+
+    _typewriterTimer = Timer.periodic(const Duration(milliseconds: 30), (
+      timer,
+    ) {
       if (_currentIndex < widget.message.content.length) {
         if (mounted) {
           setState(() {
@@ -94,7 +102,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       }
     });
   }
-  
+
   @override
   void dispose() {
     _typewriterTimer?.cancel();
@@ -107,13 +115,13 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     final message = widget.message;
     final isUser = message.isUser;
     final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    
+
     final hasFeedback = message.feedback != null;
     final isPerfect = message.feedback?.isPerfect ?? false;
     final isMagicWand = hasFeedback && !isPerfect;
 
     // Color logic: User messages are white until feedback received (yellow). AI messages are white.
-    final Color color = isUser 
+    final Color color = isUser
         ? (hasFeedback ? const Color(0xFFFFF3CD) : Colors.white)
         : Colors.white;
 
@@ -137,7 +145,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     if (isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.green.shade100], 
+          colors: [Colors.green.shade50, Colors.green.shade100],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -146,7 +154,7 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
     } else if (isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)], 
+          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -170,7 +178,9 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: bubbleDecoration,
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -186,44 +196,44 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                     selectable: true, // Allow text selection
                   ),
             if (hasFeedback) ...[
-               const SizedBox(height: 6),
-               Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   Icon(
-                     isPerfect ? Icons.star_rounded : Icons.auto_fix_high_rounded, 
-                     size: 16, 
-                     color: isPerfect ? Colors.green[700] : Colors.orange
-                   ),
-                   if (isPerfect) ...[
-                     const SizedBox(width: 4),
-                     Text(
-                       "Perfect!", 
-                       style: TextStyle(
-                         fontSize: 12, 
-                         fontWeight: FontWeight.bold,
-                         color: Colors.green[800]
-                       )
-                     ),
-                   ]
-                 ],
-               ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isPerfect
+                        ? Icons.star_rounded
+                        : Icons.auto_fix_high_rounded,
+                    size: 16,
+                    color: isPerfect ? Colors.green[700] : Colors.orange,
+                  ),
+                  if (isPerfect) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      "Perfect!",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[800],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
             if (widget.message.isFeedbackLoading) ...[
-               const SizedBox(height: 4),
-               Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   SizedBox(
-                     width: 24,
-                     height: 12,
-                     child: _buildSmallLoader(),
-                   ),
-                 ],
-               ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(width: 24, height: 12, child: _buildSmallLoader()),
+                ],
+              ),
             ],
             // Analysis icon for AI messages (only show when animation is complete)
-            if (!isUser && !widget.message.isLoading && _isAnimationComplete) ...[
+            if (!isUser &&
+                !widget.message.isLoading &&
+                _isAnimationComplete) ...[
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -233,7 +243,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                   GestureDetector(
                     onTap: () => widget.onTap?.call(),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(16),
@@ -241,11 +254,61 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.auto_awesome_rounded, size: 14, color: Colors.black),
+                          const Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 14,
+                            color: Colors.black,
+                          ),
                           const SizedBox(width: 4),
                           const Text(
                             "Analyze",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Speaker (TTS)
+                  GestureDetector(
+                    onTap: widget.onSpeakerTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.isPlayingAudio
+                            ? Colors.blue[100]
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            widget.isPlayingAudio
+                                ? Icons.stop_rounded
+                                : Icons.volume_up_rounded,
+                            size: 14,
+                            color: widget.isPlayingAudio
+                                ? Colors.blue[700]
+                                : Colors.black,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.isPlayingAudio ? "Stop" : "Speak",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: widget.isPlayingAudio
+                                  ? Colors.blue[700]
+                                  : Colors.black,
+                            ),
                           ),
                         ],
                       ),
@@ -258,11 +321,15 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        builder: (context) => ShadowingSheet(targetText: message.content),
+                        builder: (context) =>
+                            ShadowingSheet(targetText: message.content),
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(16),
@@ -270,11 +337,19 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.mic_none_rounded, size: 14, color: Colors.black),
+                          const Icon(
+                            Icons.mic_none_rounded,
+                            size: 14,
+                            color: Colors.black,
+                          ),
                           const SizedBox(width: 4),
                           const Text(
                             "Shadow",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ],
                       ),
@@ -285,10 +360,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                   GestureDetector(
                     onTap: () {
                       showModalBottomSheet(
-                         context: context,
-                         isScrollControlled: true,
-                         backgroundColor: Colors.transparent,
-                         barrierColor: Colors.white.withOpacity(0.5),
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        barrierColor: Colors.white.withOpacity(0.5),
                         builder: (context) => SaveNoteSheet(
                           originalSentence: message.content,
                           sceneId: widget.sceneId, // Pass sceneId
@@ -296,7 +371,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(16),
@@ -304,11 +382,19 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.bookmark_border_rounded, size: 14, color: Colors.black),
+                          const Icon(
+                            Icons.bookmark_border_rounded,
+                            size: 14,
+                            color: Colors.black,
+                          ),
                           const SizedBox(width: 4),
                           const Text(
                             "Save",
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ],
                       ),
@@ -319,19 +405,20 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
               const SizedBox(height: 2),
             ],
             if (_showTranslation && message.translation != null) ...[
-               const SizedBox(height: 8),
-               const Divider(height: 1),
-               const SizedBox(height: 8),
-               SelectableText(
-                 message.translation!,
-                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-               ),
-            ]
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              SelectableText(
+                message.translation!,
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+
   Widget _buildLoadingIndicator() {
     return SizedBox(
       width: 40,
@@ -344,8 +431,13 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
             children: List.generate(3, (index) {
               return Transform.translate(
                 offset: Offset(
-                  0, 
-                  -4 * sin(0.5 + 0.5 * DateTime.now().millisecondsSinceEpoch / 200 + index)
+                  0,
+                  -4 *
+                      sin(
+                        0.5 +
+                            0.5 * DateTime.now().millisecondsSinceEpoch / 200 +
+                            index,
+                      ),
                 ), // Bouncing effect
                 child: Container(
                   width: 6,
@@ -372,7 +464,10 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(3, (index) {
             return Transform.scale(
-              scale: 0.5 + 0.5 * sin(DateTime.now().millisecondsSinceEpoch / 200 + index),
+              scale:
+                  0.5 +
+                  0.5 *
+                      sin(DateTime.now().millisecondsSinceEpoch / 200 + index),
               child: Container(
                 width: 4,
                 height: 4,
