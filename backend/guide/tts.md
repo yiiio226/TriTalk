@@ -26,8 +26,15 @@ _功能：仅作为输入辅助，将用户语音转写并优化为高质量文�
 1. **输入**: 用户录音文件。
 2. **转录 (Whisper)**: 调用 OpenAI Whisper API 获取原始文本。
 3. **优化 (LLM)**:
-   - Prompt 目标: "修正语法错误、去除语气词(如'呃', '嗯')、润色表达，但保持原意"。
-   - 输入: 原始 ASR 文本。
+
+   - **模型**: `google/gemini-2.0-flash-lite-001` (通过 OpenRouter)
+   - **策略**: 复用现有 `callOpenRouter` 函数。由于该函数已支持动态传入 `model` 参数，可直接复用代码逻辑，仅需在调用时指定 Gemini Lite 模型，既能利用现有架构又能获得更快的响应速度和更低的成本。
+   - **Prompt**: "Please act as a professional editor. Refine the provided text by:
+     1. Correcting all grammatical and spelling errors.
+     2. Removing filler words (e.g., 'uh', 'um', 'well', 'you know').
+     3. Polishing the phrasing for better flow while strictly preserving the original meaning."
+   - **输入**: 原始 ASR 文本。
+
 4. **输出**: 返回优化后的 JSON 文本 `{ "optimized_text": "..." }`。
 
 ## 2. 交互式 TTS (On-demand TTS) [已实现]
