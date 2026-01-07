@@ -32,7 +32,7 @@ _功能：仅作为输入辅助，将用户语音转写并优化为高质量文�
 
 ## 2. 交互式 TTS (On-demand TTS) [已实现]
 
-_功能：用户点击聊天记录中的 AI 消息气泡的"Listen"按钮时，触发语音播放。_
+_功能：用户点击聊天记录中的 AI 消息气泡的"Listen"按钮时，触发语音播放。使用流式输出降低延迟。_
 
 ### 实现架构
 
@@ -40,25 +40,44 @@ _功能：用户点击聊天记录中的 AI 消息气泡的"Listen"按钮时，�
 
 - **端点**: `POST /tts/generate`
 - **输入**: `{ text: string, message_id?: string, voice_id?: string }`
-- **模型**: MiniMax T2A V2 (`speech-01-turbo`)
-- **输出**: `TTSResponse` 接口（定义于 `src/types.ts`）
-  - **成功**: `{ audio_base64: string, duration_ms?: number }`
-  - **失败**: `{ error: string }`
+- **模型**: MiniMax T2A V2 (`speech-2.6-turbo`)
+- **流式输出**: 启用 `stream: true` 和 `stream_options.exclude_aggregated_audio: true`
+- **输出**: NDJSON 流式响应，逐块返回音频数据
+
+**响应格式 (NDJSON)**:
+
+```json
+{"type": "audio_chunk", "chunk_index": 0, "audio_base64": "..."}
+{"type": "audio_chunk", "chunk_index": 1, "audio_base64": "..."}
+{"type": "info", "duration_ms": 3500}
+{"type": "done"}
+```
+
+**错误响应**:
+
+```json
+{ "type": "error", "error": "TTS generation failed" }
+```
 
 ```typescript
-// TTSResponse 接口定义
-interface TTSResponse {
-  audio_url?: string; // URL to the audio file (if using R2 storage)
-  audio_base64?: string; // Base64 encoded audio data (current implementation)
-  duration_ms?: number; // Audio duration in milliseconds
-  error?: string; // Error message when synthesis fails
+// TTSStreamChunk 类型定义 (前端 Dart)
+enum TTSChunkType { audioChunk, info, done, error }
+
+class TTSStreamChunk {
+  final TTSChunkType type;
+  final String? audioBase64;
+  final int? chunkIndex;
+  final int? durationMs;
+  final List<String>? allChunksBase64;
+  final String? error;
 }
 ```
 
 **前端 (Flutter)**:
 
-- **服务**: `ApiService.generateTTS()` - 调用后端 TTS API
-- **UI**: `ChatBubble._playTextToSpeech()` - 处理播放逻辑
+- **服务**: `ApiService.generateTTSStream()` - 流式接收后端 TTS 数据
+- **服务**: `ApiService.generateTTS()` - 兼容性封装，内部使用流式 API
+- **UI**: `ChatBubble._playTextToSpeech()` - 处理流式接收和播放逻辑
 - **缓存**: 音频文件缓存在 `Documents/tts_cache/${message_id}.mp3`
 
 ### 流程
