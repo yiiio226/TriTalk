@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart' as app_models;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+
+import '../models/user.dart' as app_models;
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -11,8 +13,9 @@ class AuthService {
   AuthService._internal();
 
   app_models.User? _currentUser;
-  bool _profileExistsInDatabase = false; // Track if user has completed onboarding
-  
+  bool _profileExistsInDatabase =
+      false; // Track if user has completed onboarding
+
   app_models.User? get currentUser => _currentUser;
   bool get isAuthenticated => Supabase.instance.client.auth.currentUser != null;
 
@@ -48,22 +51,22 @@ class AuthService {
           .eq('id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 5)); // Timeout to fallback quickly
-          
+
       if (response != null && response['gender'] != null) {
         // Profile exists with gender set - user has completed onboarding
         _profileExistsInDatabase = true;
-        
+
         String name = response['name'] ?? '';
         String email = Supabase.instance.client.auth.currentUser?.email ?? '';
-        
+
         // Fallback for empty name
         if (name.isEmpty || name == 'User') {
           name = 'TriTalk Explorer';
         }
-        
+
         // Handle Apple Private Relay email or empty email
         if (email.isEmpty || email.contains('privaterelay.appleid.com')) {
-           email = 'Signed in with Apple';
+          email = 'Signed in with Apple';
         }
 
         _currentUser = app_models.User(
@@ -75,7 +78,7 @@ class AuthService {
           nativeLanguage: response['native_lang'] ?? 'Chinese (Simplified)',
           targetLanguage: response['target_lang'] ?? 'English',
         );
-        
+
         // Cache user data locally
         await _saveUserToLocal(_currentUser!, true);
       } else {
@@ -90,10 +93,10 @@ class AuthService {
         if (authUser != null) {
           String displayName = authUser.userMetadata?['full_name'] ?? '';
           String displayEmail = authUser.email ?? '';
-          
+
           // Check if signed in with Apple
           final isAppleLogin = authUser.appMetadata['provider'] == 'apple';
-          
+
           if (isAppleLogin) {
             if (displayName.isEmpty || displayName == 'User') {
               displayName = 'TriTalk Explorer';
@@ -126,7 +129,10 @@ class AuthService {
     }
   }
 
-  Future<void> _saveUserToLocal(app_models.User user, bool profileExists) async {
+  Future<void> _saveUserToLocal(
+    app_models.User user,
+    bool profileExists,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = {
@@ -161,7 +167,9 @@ class AuthService {
           targetLanguage: userMap['targetLanguage'],
         );
         _profileExistsInDatabase = userMap['profileExists'] ?? false;
-        print('Loaded user from local cache (profileExists: $_profileExistsInDatabase)');
+        print(
+          'Loaded user from local cache (profileExists: $_profileExistsInDatabase)',
+        );
       }
     } catch (e) {
       print('Error loading cached user profile: $e');
@@ -174,15 +182,15 @@ class AuthService {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: 'io.supabase.tritalk://login-callback',
-        authScreenLaunchMode: LaunchMode.externalApplication,
       );
 
       return true;
     } catch (e) {
-      if (e.toString().contains('PlatformException') && e.toString().contains('Error while launching')) {
+      if (e.toString().contains('PlatformException') &&
+          e.toString().contains('Error while launching')) {
         // Known issue with inAppWebView on some iOS versions where it throws but still works via deep link
         print('Suppressing launch error: $e');
-        return false; 
+        return false;
       }
       print('Google login error: $e');
       return false;
@@ -200,36 +208,38 @@ class AuthService {
             AppleIDAuthorizationScopes.fullName,
           ],
         );
-        
+
         if (credential.identityToken == null) {
           print('Apple login error: Missing identity token');
           return false;
         }
 
         // Sign in to Supabase with the ID token
-        final authResponse = await Supabase.instance.client.auth.signInWithIdToken(
-          provider: OAuthProvider.apple,
-          idToken: credential.identityToken!,
-          accessToken: credential.authorizationCode, 
-        );
+        final authResponse = await Supabase.instance.client.auth
+            .signInWithIdToken(
+              provider: OAuthProvider.apple,
+              idToken: credential.identityToken!,
+              accessToken: credential.authorizationCode,
+            );
 
         // Update user metadata with name if provided (Apple only provides this on first login)
         if (credential.givenName != null || credential.familyName != null) {
-          final String fullName = [credential.givenName, credential.familyName]
-              .where((s) => s != null && s.isNotEmpty)
-              .join(' ');
-          
+          final String fullName = [
+            credential.givenName,
+            credential.familyName,
+          ].where((s) => s != null && s.isNotEmpty).join(' ');
+
           if (fullName.isNotEmpty && authResponse.user != null) {
-             try {
-                await Supabase.instance.client.auth.updateUser(
-                  UserAttributes(
-                    data: {'full_name': fullName},
-                  ),
-                );
-                print('Updated Supabase user metadata with Apple name: $fullName');
-             } catch (updateError) {
-               print('Failed to update user metadata: $updateError');
-             }
+            try {
+              await Supabase.instance.client.auth.updateUser(
+                UserAttributes(data: {'full_name': fullName}),
+              );
+              print(
+                'Updated Supabase user metadata with Apple name: $fullName',
+              );
+            } catch (updateError) {
+              print('Failed to update user metadata: $updateError');
+            }
           }
         }
       } else {
