@@ -31,6 +31,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   // Track which items are saved
   final Set<String> _savedGrammarPoints = {};
   final Set<String> _savedVocabulary = {};
+  final Set<String> _savedIdioms = {};
   
   // Local analysis state for streaming
   MessageAnalysis? _currentAnalysis;
@@ -101,6 +102,15 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       for (var vocab in analysisToUse!.vocabulary) {
         if (vocabService.exists(vocab.word, scenarioId: widget.sceneId)) {
           _savedVocabulary.add(vocab.word);
+        }
+      }
+    }
+    
+    // Check which idioms are already saved
+    if (analysisToUse?.idioms != null) {
+      for (var idiom in analysisToUse!.idioms) {
+        if (vocabService.exists(idiom.text, scenarioId: widget.sceneId)) {
+          _savedIdioms.add(idiom.text);
         }
       }
     }
@@ -206,7 +216,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                           textScaler: MediaQuery.of(context).textScaler,
                         );
                         tp.layout(maxWidth: constraints.maxWidth);
-                        final isOverflowing = tp.computeLineMetrics().length > 2;
+                        final isOverflowing = tp.computeLineMetrics().length > 1;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +244,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             const SizedBox(height: 8),
                             Text(
                               widget.message.content,
-                              maxLines: _isOriginalSentenceExpanded ? null : 2,
+                              maxLines: _isOriginalSentenceExpanded ? null : 1,
                               overflow: _isOriginalSentenceExpanded
                                   ? TextOverflow.visible
                                   : TextOverflow.ellipsis,
@@ -283,18 +293,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 color: const Color(0xFFF3E5F5), // Purple 50 equivalent
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.lightbulb_outline_rounded, size: 22, color: Colors.purple[700]),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      displayAnalysis.overallSummary,
-                      style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
-                    ),
-                  ),
-                ],
+              child: Text(
+                displayAnalysis.overallSummary,
+                style: TextStyle(color: Colors.purple[900], fontSize: 15, height: 1.5),
               ),
             ),
             const SizedBox(height: 24),
@@ -399,48 +400,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
             ),
             const SizedBox(height: 12),
-            ...displayAnalysis.idioms.map((idiom) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFEBEE), // Red 50
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.shade100),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.stars_rounded, size: 18, color: Colors.red[700]),
-                      const SizedBox(width: 6),
-                      Text(
-                        idiom.type.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red[800],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    idiom.text,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red[900],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    idiom.explanation,
-                    style: TextStyle(fontSize: 14, color: Colors.red[900], height: 1.4),
-                  ),
-                ],
-              ),
-            )),
+            ...displayAnalysis.idioms.map((idiom) => _buildIdiomItem(context, idiom)),
             const SizedBox(height: 12),
           ],
           
@@ -624,13 +584,34 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  point.structure,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[900],
-                  ),
+                child: Builder(
+                  builder: (context) {
+                    String displayTitle;
+                    if (point.structure.isNotEmpty) {
+                      displayTitle = point.structure;
+                    } else {
+                      // Extract a concise title from explanation
+                      // Take first sentence or first 40 chars
+                      final explanation = point.explanation;
+                      final firstSentenceEnd = explanation.indexOf('。');
+                      if (firstSentenceEnd != -1 && firstSentenceEnd < 50) {
+                        displayTitle = explanation.substring(0, firstSentenceEnd);
+                      } else if (explanation.length > 40) {
+                        displayTitle = explanation.substring(0, 40) + '...';
+                      } else {
+                        displayTitle = explanation;
+                      }
+                    }
+                    
+                    return Text(
+                      displayTitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[900],
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -640,11 +621,18 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: () {
-                    final contentToSave = "${point.explanation}\\n\\n例: ${point.example}";
+                    final titleToSave = point.structure.isNotEmpty 
+                        ? point.structure 
+                        : (point.explanation.length > 30 
+                            ? point.explanation.substring(0, 30) 
+                            : point.explanation);
+                    final contentToSave = point.structure.isNotEmpty
+                        ? "${point.explanation}\\n\\n例: ${point.example}"
+                        : "例: ${point.example}";
                     
                     if (!isSaved) {
                       VocabService().add(
-                        point.structure,
+                        titleToSave,
                         contentToSave,
                         "Grammar Point",
                         scenarioId: widget.sceneId,
@@ -723,21 +711,14 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   color: Colors.blue[900],
                 ),
               ),
-              if (vocab.level != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: levelColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    vocab.level!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: levelColor,
-                    ),
+              if (vocab.partOfSpeech != null && vocab.partOfSpeech!.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(
+                  vocab.partOfSpeech!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.grey[600],
                   ),
                 ),
               ],
@@ -792,6 +773,88 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+  Widget _buildIdiomItem(BuildContext context, IdiomItem idiom) {
+    final isSaved = _savedIdioms.contains(idiom.text);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE), // Red 50
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.stars_rounded, size: 18, color: Colors.red[700]),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  idiom.type.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red[800],
+                  ),
+                ),
+              ),
+              // Save Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    if (!isSaved) {
+                      VocabService().add(
+                        idiom.text,
+                        idiom.explanation,
+                        "Idiom/Slang",
+                        scenarioId: widget.sceneId,
+                      );
+                      setState(() {
+                        _savedIdioms.add(idiom.text);
+                      });
+                      showTopToast(
+                        context,
+                        'Saved Idiom',
+                        isError: false,
+                      );
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      color: Colors.red[700],
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            idiom.text,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.red[900],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            idiom.explanation,
+            style: TextStyle(fontSize: 14, color: Colors.red[900], height: 1.4),
+          ),
         ],
       ),
     );

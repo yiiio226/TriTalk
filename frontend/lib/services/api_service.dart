@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/message.dart';
 import 'preferences_service.dart';
+import '../env.dart';
 
 // 环境枚举
 enum Environment {
@@ -21,12 +23,27 @@ class ApiService {
       : Environment.localDev;
   // =================================================
 
+  // Helper to create headers with Auth Token
+  static Map<String, String> _headers() {
+    final session = Supabase.instance.client.auth.currentSession;
+    final token = session?.accessToken ?? '';
+
+    // Debug print to check if token exists
+    if (token.isEmpty) {
+      print('⚠️ Warning: No Auth Token available for API call');
+    }
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
   // 本地开发 URL (Cloudflare Workers 开发服务器)
-  static const String _localDevUrl = 'http://192.168.1.4:8787';
+  static const String _localDevUrl = Env.localBackendUrl;
 
   // 生产环境 URL (已部署的 Cloudflare Workers)
-  static const String _productionUrl =
-      'https://tritalk-backend.tristart226.workers.dev';
+  static const String _productionUrl = Env.prodBackendUrl;
 
   // 根据当前环境自动选择 URL
   static String get baseUrl {
@@ -56,7 +73,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/send'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'message': text,
           'history': history,
@@ -87,7 +104,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/hint'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'message':
               '', // Not needed for hint request strictly but used in model
@@ -119,7 +136,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({'description': description, 'tone': tone}),
       );
 
@@ -137,7 +154,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/common/translate'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({'text': text, 'target_language': targetLanguage}),
       );
 
@@ -157,7 +174,7 @@ class ApiService {
     final nativeLang = await prefs.getNativeLanguage();
 
     final request = http.Request('POST', Uri.parse('$baseUrl/chat/analyze'));
-    request.headers.addAll({'Content-Type': 'application/json'});
+    request.headers.addAll(_headers());
     request.body = jsonEncode({
       'message': message,
       'native_language': nativeLang,
@@ -281,7 +298,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/scene/polish'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({'description': description}),
       );
 
@@ -303,7 +320,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/chat/shadow'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'target_text': targetText,
           'user_audio_text': userAudioText,
@@ -331,7 +348,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/chat/optimize'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode({
           'message': draft,
           'scene_context': sceneContext,
@@ -367,7 +384,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/tts/generate'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers(),
         body: jsonEncode(body),
       );
 
@@ -380,6 +397,101 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error generating TTS: $e');
+    }
+  }
+
+  Future<String> transcribeAudio(String audioPath) async {
+    try {
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/chat/transcribe'),
+      );
+
+      // Add headers
+      final headers = _headers();
+      request.headers.addAll(headers);
+
+      // Add audio file
+      request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
+
+      // Add target language as field
+      request.fields['target_language'] = targetLang;
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['text'] ?? '';
+      } else {
+        throw Exception('Failed to transcribe audio: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error transcribing audio: $e');
+    }
+  }
+
+  Future<VoiceMessageResponse> sendVoiceMessage(
+    String audioPath,
+    String sceneContext,
+    List<Map<String, String>> history,
+  ) async {
+    try {
+      final prefs = PreferencesService();
+      final nativeLang = await prefs.getNativeLanguage();
+      final targetLang = await prefs.getTargetLanguage();
+
+      // Create multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/chat/send-voice'),
+      );
+
+      // Add headers
+      final headers = _headers();
+      request.headers.addAll(headers);
+
+      // Add audio file
+      request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
+
+      // Add other fields
+      request.fields['scene_context'] = sceneContext;
+      request.fields['history'] = jsonEncode(history);
+      request.fields['native_language'] = nativeLang;
+      request.fields['target_language'] = targetLang;
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        return VoiceMessageResponse.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('Failed to send voice message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error sending voice message: $e');
+    }
+  }
+
+  Future<void> deleteMessages(String sceneKey, List<String> messageIds) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/chat/messages'),
+        headers: _headers(),
+        body: jsonEncode({'scene_key': sceneKey, 'message_ids': messageIds}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete messages: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting messages: $e');
     }
   }
 }
@@ -453,6 +565,31 @@ class SceneGenerationResponse {
       description: json['description'],
       initialMessage: json['initial_message'],
       emoji: json['emoji'],
+    );
+  }
+}
+
+class VoiceMessageResponse {
+  final String message;
+  final String? translation;
+  final VoiceFeedback voiceFeedback;
+  final ReviewFeedback? reviewFeedback;
+
+  VoiceMessageResponse({
+    required this.message,
+    this.translation,
+    required this.voiceFeedback,
+    this.reviewFeedback,
+  });
+
+  factory VoiceMessageResponse.fromJson(Map<String, dynamic> json) {
+    return VoiceMessageResponse(
+      message: json['message'],
+      translation: json['translation'],
+      voiceFeedback: VoiceFeedback.fromJson(json['voice_feedback']),
+      reviewFeedback: json['review_feedback'] != null
+          ? ReviewFeedback.fromJson(json['review_feedback'])
+          : null,
     );
   }
 }

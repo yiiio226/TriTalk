@@ -319,6 +319,73 @@ class ChatHistoryService {
     }
   }
 
+  // Delete specific messages locally and in cloud
+  Future<void> deleteMessages(String sceneKey, List<String> messageIds) async {
+    if (messageIds.isEmpty) return;
+    
+    // Remove messages from local cache
+    if (_histories.containsKey(sceneKey)) {
+      _histories[sceneKey] = _histories[sceneKey]!
+          .where((msg) => !messageIds.contains(msg.id))
+          .toList();
+      
+      // Save updated list to local storage
+      await _saveToLocal(sceneKey, _histories[sceneKey]!);
+    }
+    
+    // Try to delete from cloud
+    syncStatus.value = SyncStatus.syncing;
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        // Fetch current messages from cloud
+        final response = await _supabase
+            .from('chat_history')
+            .select('messages')
+            .eq('user_id', userId)
+            .eq('scene_key', sceneKey)
+            .maybeSingle()
+            .timeout(const Duration(seconds: 5));
+        
+        if (response != null && response['messages'] != null) {
+          final List<dynamic> messagesJson = response['messages'];
+          final cloudMessages = messagesJson
+              .map((json) => Message.fromJson(json as Map<String, dynamic>))
+              .toList();
+          
+          // Filter out deleted messages
+          final filteredMessages = cloudMessages
+              .where((msg) => !messageIds.contains(msg.id))
+              .toList();
+          
+          // Update cloud with filtered messages
+          final messagesJsonFiltered = filteredMessages.map((m) => m.toJson()).toList();
+          final now = DateTime.now();
+          
+          await _supabase.from('chat_history').upsert(
+            {
+              'user_id': userId,
+              'scene_key': sceneKey,
+              'messages': messagesJsonFiltered,
+              'updated_at': now.toIso8601String(),
+            },
+            onConflict: 'user_id,scene_key',
+          ).timeout(const Duration(seconds: 10));
+          
+          // Save timestamp locally for conflict resolution
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('chat_history_${sceneKey}_updated_at', now.toIso8601String());
+          
+          debugPrint('Deleted ${messageIds.length} messages from cloud: $sceneKey');
+        }
+      }
+      syncStatus.value = SyncStatus.synced;
+    } catch (e) {
+      print('Error deleting from cloud (non-critical): $e');
+      syncStatus.value = SyncStatus.offline;
+    }
+  }
+
   // Sync messages to Supabase (background operation)
   Future<void> _syncToCloud(String sceneKey) async {
     try {

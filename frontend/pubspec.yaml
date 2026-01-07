@@ -46,6 +46,8 @@ dependencies:
   shimmer: ^3.0.0
   flutter_markdown: ^0.7.6
   just_audio: ^0.9.40
+  audioplayers: ^5.0.0
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:

@@ -9,6 +9,14 @@ class Message {
   final bool isLoading; // Transient: Loading state for pending messages
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
+  final List<String>? hints; // For persisting suggested replies
+  final bool hasPendingError; // Whether this message failed to send and needs retry
+  final bool isSelected; // Transient: Whether this message is selected in multi-select mode
+  
+  // Voice message fields
+  final String? audioPath;  // Local path to audio file
+  final int? audioDuration; // Duration in seconds
+  final VoiceFeedback? voiceFeedback; // Pronunciation feedback
 
   Message({
     required this.id,
@@ -21,6 +29,12 @@ class Message {
     this.isLoading = false,
     this.isAnimated = false,
     this.isFeedbackLoading = false,
+    this.hints,
+    this.hasPendingError = false,
+    this.isSelected = false,
+    this.audioPath,
+    this.audioDuration,
+    this.voiceFeedback,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +46,11 @@ class Message {
       'translation': translation,
       'feedback': feedback?.toJson(),
       'analysis': analysis?.toJson(),
+      'hints': hints,
+      'audioPath': audioPath,
+      'audioDuration': audioDuration,
+      'voiceFeedback': voiceFeedback?.toJson(),
+      'hasPendingError': hasPendingError,
     };
   }
 
@@ -48,8 +67,18 @@ class Message {
       analysis: json['analysis'] != null
           ? MessageAnalysis.fromJson(json['analysis'])
           : null,
+      hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
+      audioPath: json['audioPath'],
+      audioDuration: json['audioDuration'],
+      voiceFeedback: json['voiceFeedback'] != null
+          ? VoiceFeedback.fromJson(json['voiceFeedback'])
+          : null,
+      hasPendingError: json['hasPendingError'] ?? false,
     );
   }
+  
+  // Helper method to check if this is a voice message
+  bool get isVoiceMessage => audioPath != null && audioPath!.isNotEmpty;
 }
 
 class ReviewFeedback {
@@ -121,12 +150,14 @@ class VocabularyItem {
   final String definition;
   final String example;
   final String? level;
+  final String? partOfSpeech;
 
   VocabularyItem({
     required this.word,
     required this.definition,
     required this.example,
     this.level,
+    this.partOfSpeech,
   });
 
   Map<String, dynamic> toJson() {
@@ -135,6 +166,7 @@ class VocabularyItem {
       'definition': definition,
       'example': example,
       'level': level,
+      'part_of_speech': partOfSpeech,
     };
   }
 
@@ -144,6 +176,7 @@ class VocabularyItem {
       definition: json['definition'] ?? '',
       example: json['example'] ?? '',
       level: json['level'],
+      partOfSpeech: json['part_of_speech'],
     );
   }
 }
@@ -302,3 +335,82 @@ class ShadowResult {
     );
   }
 }
+
+class VoiceWord {
+  final String word;
+  final int score;
+  
+  VoiceWord({required this.word, required this.score});
+  
+  factory VoiceWord.fromJson(Map<String, dynamic> json) => VoiceWord(
+    word: json['word'] ?? '',
+    score: json['score'] ?? 0,
+  );
+
+  Map<String, dynamic> toJson() => {'word': word, 'score': score};
+}
+
+class ErrorFocus {
+  final String word;
+  final String userIpa;
+  final String correctIpa;
+  final String tip;
+
+  ErrorFocus({required this.word, required this.userIpa, required this.correctIpa, required this.tip});
+
+  factory ErrorFocus.fromJson(Map<String, dynamic> json) => ErrorFocus(
+    word: json['word'] ?? '',
+    userIpa: json['user_ipa'] ?? '',
+    correctIpa: json['correct_ipa'] ?? '',
+    tip: json['tip'] ?? '',
+  );
+
+  Map<String, dynamic> toJson() => {
+    'word': word, 'user_ipa': userIpa, 'correct_ipa': correctIpa, 'tip': tip,
+  };
+}
+
+class VoiceFeedback {
+  final int pronunciationScore;  // 0-100
+  final String correctedText;     // Corrected pronunciation text
+  final String nativeExpression;  // Native way to say it
+  final String feedback;          // Detailed feedback
+  final List<VoiceWord>? sentenceBreakdown;
+  final ErrorFocus? errorFocus;
+
+  VoiceFeedback({
+    required this.pronunciationScore,
+    required this.correctedText,
+    required this.nativeExpression,
+    required this.feedback,
+    this.sentenceBreakdown,
+    this.errorFocus,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'pronunciation_score': pronunciationScore,
+      'corrected_text': correctedText,
+      'native_expression': nativeExpression,
+      'feedback': feedback,
+      'sentence_breakdown': sentenceBreakdown?.map((e) => e.toJson()).toList(),
+      'error_focus': errorFocus?.toJson(),
+    };
+  }
+
+  factory VoiceFeedback.fromJson(Map<String, dynamic> json) {
+    return VoiceFeedback(
+      pronunciationScore: json['pronunciation_score'] ?? 0,
+      correctedText: json['corrected_text'] ?? '',
+      nativeExpression: json['native_expression'] ?? '',
+      feedback: json['feedback'] ?? '',
+      sentenceBreakdown: (json['sentence_breakdown'] as List?)
+          ?.map((e) => VoiceWord.fromJson(e))
+          .toList(),
+      errorFocus: json['error_focus'] != null 
+          ? ErrorFocus.fromJson(json['error_focus']) 
+          : null,
+    );
+  }
+}
+

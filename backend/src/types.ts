@@ -49,6 +49,7 @@ export interface VocabularyItem {
   definition: string;
   example: string;
   level?: string;
+  part_of_speech?: string;
 }
 
 export interface AnalyzeRequest {
@@ -109,6 +110,10 @@ export interface Env {
   AUDIO_BUCKET: R2Bucket;
   // R2 Public URL for serving audio (optional, defaults to placeholder)
   R2_PUBLIC_DOMAIN?: string;
+  // Removed TRITALK_API_KEY as we are moving to Supabase Auth
+  // TRITALK_API_KEY: string;
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
 }
 
 export interface PolishRequest {

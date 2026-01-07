@@ -6,12 +6,16 @@ class HintsSheet extends StatefulWidget {
   final String sceneDescription;
   final List<Map<String, String>> history;
   final Function(String) onHintSelected;
+  final List<String>? cachedHints; // Optional pre-loaded hints
+  final Function(List<String>)? onHintsCached; // Callback to save hints
 
   const HintsSheet({
     Key? key,
     required this.sceneDescription,
     required this.history,
     required this.onHintSelected,
+    this.cachedHints,
+    this.onHintsCached,
   }) : super(key: key);
 
   @override
@@ -29,7 +33,14 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _loadHints();
+    
+    // Use cached hints if available
+    if (widget.cachedHints != null && widget.cachedHints!.isNotEmpty) {
+      _hints = widget.cachedHints!;
+      _isLoading = false;
+    } else {
+      _loadHints();
+    }
     
     // Setup pulse animation for skeleton
     _controller = AnimationController(
@@ -56,6 +67,11 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
           _hints = response.hints;
           _isLoading = false;
         });
+        
+        // Save hints to cache via callback
+        if (widget.onHintsCached != null) {
+          widget.onHintsCached!(_hints);
+        }
       }
     } catch (e) {
       if (mounted) {

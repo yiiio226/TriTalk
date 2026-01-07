@@ -21,13 +21,83 @@ import {
   MiniMaxTTSResponse,
   Env,
 } from "./types";
+import { createClient } from "@supabase/supabase-js";
+
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "http://localhost:8080",
+  "http://localhost:3000",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:3000",
+  // Add production domain here when deployed
+  // 'https://yourdomain.com',
+];
+
+// Helper to authenticate user via Supabase
+async function authenticateUser(request: Request, env: Env): Promise<any> {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Create a Supabase client with the user's token.
+    // This ensures that subsequent DB queries respect RLS (Row Level Security).
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    // 1. Verify Token
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      console.error("Auth Error:", error);
+      return null;
+    }
+
+    // 2. Check Subscription/Balance (Optional/Extensible)
+    // Since we are now authenticated as the user (via the client headers), we can access RLS-protected data.
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error("Profile Error:", profileError);
+      // If strict mode, return null. For now, we allow if Auth is valid.
+      // return null;
+    }
+
+    return user;
+  } catch (e) {
+    console.error("Auth Exception:", e);
+    return null;
+  }
+}
 
 // Helper to create CORS headers
-function corsHeaders() {
+function corsHeaders(origin: string | null) {
+  // Check if origin is allowed
+  const allowedOrigin =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:"));
+
   return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Origin": allowedOrigin ? origin : "null",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
   };
 }
 
@@ -204,7 +274,10 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /chat/send:", error);
@@ -215,7 +288,227 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
+}
+
+// Handle /chat/transcribe endpoint
+async function handleChatTranscribe(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const formData = await request.formData();
+    const audioFile = formData.get("audio");
+
+    if (!audioFile || typeof audioFile === "string") {
+      throw new Error("No audio file uploaded");
+    }
+
+    // MOCK TRANSCRIPTION for MVP
+    // In production, integrate with OpenAI Whisper or Cloudflare Workers AI
+    const transcribedText =
+      "This simulates the transcription of your voice message.";
+
+    return new Response(JSON.stringify({ text: transcribedText }), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/transcribe:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to transcribe audio" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
+}
+
+// Handle /chat/send-voice endpoint
+async function handleChatSendVoice(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const formData = await request.formData();
+    const audioFile = formData.get("audio");
+    const sceneContext = (formData.get("scene_context") as string) || "";
+    const historyStr = (formData.get("history") as string) || "[]";
+    const nativeLang =
+      (formData.get("native_language") as string) || "Chinese (Simplified)";
+    const targetLang = (formData.get("target_language") as string) || "English";
+
+    let history = [];
+    try {
+      history = JSON.parse(historyStr);
+    } catch (e) {}
+
+    if (!audioFile || typeof audioFile === "string") {
+      throw new Error("No audio file uploaded");
+    }
+
+    // 1. MOCK TRANSCRIPTION
+    // In production, send audio to STT service
+    const transcribedText = "I want to live in a hotel.";
+
+    // 2. Process with LLM (Reusing logic structure from handleChatSend)
+    const systemPrompt = `You are roleplaying in a language learning scenario.
+    
+    SCENARIO CONTEXT: ${sceneContext}
+    
+    CRITICAL ROLE INSTRUCTIONS:
+    1. Carefully read the scenario context above. It describes TWO roles: the AI role (YOUR role) and the user role (the learner's role).
+    2. You MUST play the AI role specified in "AI Role:" field. The user will play the "User Role:" field.
+    3. NEVER switch roles with the user. The user is practicing their language skills by playing their assigned role.
+    4. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
+    5. Respond naturally as your character would in this real-world situation.
+    6. Keep responses conversational and realistic for the scenario.
+    7. Your goal is to help the user practice ${targetLang} by maintaining an authentic conversation.
+    
+    === TASK 1: GENERATE YOUR ROLEPLAY REPLY ===
+    First, generate your in-character reply to the user's LATEST message.
+    
+    === TASK 2: ANALYZE PRONUNCIATION & GRAMMAR ===
+    Instead of full text analysis, assume the user SPOKE this message.
+    Provide feedback on what a native speaker would say instead.
+    
+    You MUST return your response in valid JSON format:
+    {
+        "reply": "Your in-character conversational reply",
+        "translation": "Translation of your reply in ${nativeLang}",
+        "analysis": {
+            "corrected_text": "Grammatically correct version of USER message",
+            "native_expression": "More natural spoken expression for USER message",
+            "explanation": "Brief explanation",
+            "example_answer": "Alternative answer"
+        }
+    }`;
+
+    const messages = [{ role: "system", content: systemPrompt }];
+
+    if (history && history.length > 0) {
+      const recentHistory = history.slice(-10);
+      messages.push(...recentHistory);
+    }
+
+    messages.push({
+      role: "user",
+      content: `<<LATEST_USER_MESSAGE>>${transcribedText}<</LATEST_USER_MESSAGE>>`,
+    });
+
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
+
+    // Helper to sanitize text
+    const sanitizeText = (text: string): string => {
+      if (!text) return "";
+      return text
+        .replace(/[\uD800-\uDFFF]/g, "")
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+    };
+
+    const replyText = sanitizeText(data.reply || "");
+    const analysisData = data.analysis || {};
+
+    // 3. MOCK PRONUNCIATION SCORE
+    // In production, get this from the STT service or audio analysis model
+    const pronunciationScore = Math.floor(Math.random() * 15) + 80; // Random score 80-95
+
+    // Mock sentence breakdown
+    const cleanText = sanitizeText(
+      analysisData.corrected_text || transcribedText
+    ).replace(/[.,!?]/g, "");
+    const words = cleanText.split(/\s+/);
+    const sentenceBreakdown = words.map((word) => {
+      const rand = Math.random();
+      let score;
+      // Force 'live' to be low score if present (for demo)
+      if (word.toLowerCase() === "live") score = 45;
+      else if (rand > 0.3)
+        score = Math.floor(Math.random() * 20) + 81; // 81-100
+      else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61; // 61-80
+      else score = Math.floor(Math.random() * 20) + 40; // 40-59
+      return { word, score };
+    });
+
+    // Identify error focus
+    const lowestScoreWord = sentenceBreakdown.reduce(
+      (prev, curr) => (prev.score < curr.score ? prev : curr),
+      sentenceBreakdown[0] || { word: "none", score: 100 }
+    );
+
+    const errorFocus =
+      lowestScoreWord.score < 80
+        ? {
+            word: lowestScoreWord.word,
+            user_ipa: `/liːv/`,
+            correct_ipa: `/lɪv/`,
+            tip: `/${
+              lowestScoreWord.word === "live" ? "ɪ" : "ə"
+            }/ is a short vowel, relax your mouth.`,
+          }
+        : null;
+
+    const voiceFeedback = {
+      pronunciation_score: pronunciationScore,
+      corrected_text: sanitizeText(
+        analysisData.corrected_text || transcribedText
+      ),
+      native_expression: sanitizeText(analysisData.native_expression || ""),
+      feedback: sanitizeText(analysisData.explanation || "Good pronunciation!"),
+      sentence_breakdown: sentenceBreakdown,
+      error_focus: errorFocus,
+    };
+
+    const response = {
+      message: replyText,
+      translation: data.translation,
+      voice_feedback: voiceFeedback,
+      // Also include standard review feedback structure if needed by frontend
+      review_feedback: {
+        is_perfect: false,
+        corrected_text: voiceFeedback.corrected_text,
+        native_expression: voiceFeedback.native_expression,
+        explanation: voiceFeedback.feedback,
+        example_answer: sanitizeText(analysisData.example_answer || ""),
+      },
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/send-voice:", error);
+    return new Response(
+      JSON.stringify({
+        message: "Sorry, I'm having trouble processing your voice message.",
+        debug_error: String(error),
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -259,7 +552,10 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
     const response: HintResponse = { hints };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /chat/hint:", error);
@@ -273,7 +569,10 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -304,6 +603,25 @@ async function handleChatAnalyze(
     Format: "English example sentence (${nativeLang}翻译)"
     Example: "What made you change your mind? (是什么让你改变主意了?)"
     
+    CRITICAL: For grammar points, ALWAYS provide a "structure" field that summarizes the grammar pattern (e.g., "If + 主语 + 动词", "around/in about + 时间"). Never leave the structure field empty.
+    
+    CRITICAL: For vocabulary items, ALWAYS include a "part_of_speech" field using standard abbreviations:
+    - n. (noun/名词)
+    - v. (verb/动词)
+    - adj. (adjective/形容词)
+    - adv. (adverb/副词)
+    - prep. (preposition/介词)
+    - conj. (conjunction/连词)
+    - pron. (pronoun/代词)
+    - interj. (interjection/感叹词)
+    
+    IMPORTANT: For the Overall Summary, provide VALUABLE insights that help learners understand:
+    - When and where this expression is commonly used (formal/informal contexts, specific situations)
+    - Cultural or pragmatic nuances (tone, politeness level, emotional undertones)
+    - Key learning points or common mistakes to avoid
+    - How native speakers typically use this pattern
+    DO NOT just describe the sentence type or structure - focus on practical usage insights.
+    
     Order of output (one JSON object per line):
     1. Overall Summary
     2. Sentence Structure
@@ -314,10 +632,11 @@ async function handleChatAnalyze(
     7. Emotion Tags (if applicable)
 
     EXACT FORMAT (copy this structure, replace content only):
-    {"type":"summary","data":"这句话是一个半正式的口语表达..."}
+    {"type":"summary","data":"这是一段充满情感且具有反思意义的口语表达,通常出现在跨年夜等重大时刻。它结合了即时感官体验(描述美景)和深度对话引导(回顾过去的一年),语气亲切且富有启发性。"}
     {"type":"structure","data":{"structure":"这是一个疑问句...","breakdown":[{"text":"Ah, okay!","tag":"感叹词"},{"text":"What","tag":"疑问代词"}]}}
     {"type":"grammar","data":[{"structure":"What + 动词 + 主语","explanation":"这是典型的'What'疑问句的结构...","example":"What made you change your mind? (是什么让你改变主意了?)"}]}
-    {"type":"vocabulary","data":[{"word":"brings","definition":"带来;引起","example":"What brings you here? (什么风把你吹来了?)","level":"A2"}]}
+    {"type":"vocabulary","data":[{"word":"brings","definition":"带来;引起","example":"What brings you here? (什么风把你吹来了?)","level":"A2","part_of_speech":"v."}]}
+    {"type":"idioms","data":[{"text":"What brings you here","explanation":"这是一个常用的口语习惯用语,用于询问某人来访的原因,比直接问'Why are you here?'更友好和礼貌","type":"Common Phrase"}]}
     {"type":"pragmatic","data":"说话者使用这个句式表达好奇和友好..."}
     {"type":"emotion","data":["友好","好奇"]}
     
@@ -410,7 +729,7 @@ async function handleChatAnalyze(
     return new Response(readable, {
       headers: {
         "Content-Type": "application/x-ndjson",
-        ...corsHeaders(),
+        ...corsHeaders(request.headers.get("Origin")),
       },
     });
   } catch (error) {
@@ -425,7 +744,10 @@ async function handleChatAnalyze(
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -478,7 +800,10 @@ async function handleSceneGenerate(
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /scene/generate:", error);
@@ -495,7 +820,10 @@ async function handleSceneGenerate(
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -529,7 +857,10 @@ async function handleScenePolish(
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /scene/polish:", error);
@@ -539,7 +870,10 @@ async function handleScenePolish(
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -568,7 +902,10 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /common/translate:", error);
@@ -578,7 +915,10 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -626,7 +966,10 @@ async function handleShadowAnalysis(
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /chat/shadow:", error);
@@ -641,7 +984,10 @@ async function handleShadowAnalysis(
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
   }
@@ -686,7 +1032,10 @@ async function handleChatOptimize(
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   } catch (error) {
     console.error("Error in /chat/optimize:", error);
@@ -696,9 +1045,190 @@ async function handleChatOptimize(
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
+  }
+}
+
+// Handle /chat/messages DELETE endpoint
+async function handleDeleteMessages(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: any = await request.json();
+    const sceneKey = body.scene_key;
+    const messageIds: string[] = body.message_ids || [];
+
+    if (!sceneKey || !messageIds || messageIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Missing scene_key or message_ids" }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    // Get authenticated user
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
+
+    // Fetch current messages for this scene
+    const { data: chatHistory, error: fetchError } = await supabase
+      .from("chat_history")
+      .select("messages")
+      .eq("user_id", user.id)
+      .eq("scene_key", sceneKey)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error("Error fetching chat history:", fetchError);
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch chat history" }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    if (!chatHistory || !chatHistory.messages) {
+      // No messages to delete
+      return new Response(JSON.stringify({ success: true, deleted_count: 0 }), {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
+
+    // Filter out messages with IDs in the messageIds array
+    const currentMessages = chatHistory.messages as any[];
+    const filteredMessages = currentMessages.filter(
+      (msg) => !messageIds.includes(msg.id)
+    );
+    const deletedCount = currentMessages.length - filteredMessages.length;
+
+    // Update the chat_history record with filtered messages
+    const { error: updateError } = await supabase
+      .from("chat_history")
+      .update({
+        messages: filteredMessages,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("scene_key", sceneKey);
+
+    if (updateError) {
+      console.error("Error updating chat history:", updateError);
+      return new Response(
+        JSON.stringify({ error: "Failed to delete messages" }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, deleted_count: deletedCount }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in /chat/messages DELETE:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to delete messages" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
+}
+
+// Handle /user/sync endpoint
+async function handleUserSync(request: Request, env: Env): Promise<Response> {
+  try {
+    const body: any = await request.json();
+
+    // In a real application, you would valid the user data and store it in a database (D1, KV, Supabase, etc)
+    // For now, we just log it (in production logs) and return success.
+    console.log("Received user sync:", body.id, body.email);
+
+    return new Response(
+      JSON.stringify({
+        status: "success",
+        synced_at: new Date().toISOString(),
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in /user/sync:", error);
+    return new Response(JSON.stringify({ error: "Failed to sync user data" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
   }
 }
 
@@ -712,6 +1242,7 @@ async function handleTTSGenerate(
   request: Request,
   env: Env
 ): Promise<Response> {
+  const origin = request.headers.get("Origin");
   try {
     const body: TTSRequest = await request.json();
     const { message_id, text, voice_id = "female-tianmei" } = body;
@@ -722,7 +1253,10 @@ async function handleTTSGenerate(
         JSON.stringify({ error: "message_id and text are required" }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders() },
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(origin),
+          },
         }
       );
     }
@@ -732,7 +1266,7 @@ async function handleTTSGenerate(
     if (trimmedText.length === 0) {
       return new Response(JSON.stringify({ error: "text cannot be empty" }), {
         status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
       });
     }
 
@@ -745,13 +1279,15 @@ async function handleTTSGenerate(
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders() },
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(origin),
+          },
         }
       );
     }
 
     // Sanitize message_id to prevent path traversal attacks
-    // Only allow alphanumeric, hyphens, and underscores
     const sanitizedMessageId = message_id.replace(/[^a-zA-Z0-9\-_]/g, "_");
     if (sanitizedMessageId !== message_id) {
       console.warn(
@@ -771,7 +1307,10 @@ async function handleTTSGenerate(
         }),
         {
           status: 503,
-          headers: { "Content-Type": "application/json", ...corsHeaders() },
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(origin),
+          },
         }
       );
     }
@@ -787,7 +1326,7 @@ async function handleTTSGenerate(
         cached: true,
       };
       return new Response(JSON.stringify(response), {
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
       });
     }
 
@@ -860,7 +1399,7 @@ async function handleTTSGenerate(
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
     });
   } catch (error) {
     console.error("Error in /tts/generate:", error);
@@ -871,36 +1410,12 @@ async function handleTTSGenerate(
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       }
     );
-  }
-}
-
-// Handle /user/sync endpoint
-async function handleUserSync(request: Request, env: Env): Promise<Response> {
-  try {
-    const body: any = await request.json();
-
-    // In a real application, you would valid the user data and store it in a database (D1, KV, Supabase, etc)
-    // For now, we just log it (in production logs) and return success.
-    console.log("Received user sync:", body.id, body.email);
-
-    return new Response(
-      JSON.stringify({
-        status: "success",
-        synced_at: new Date().toISOString(),
-      }),
-      {
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
-      }
-    );
-  } catch (error) {
-    console.error("Error in /user/sync:", error);
-    return new Response(JSON.stringify({ error: "Failed to sync user data" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
-    });
   }
 }
 
@@ -908,10 +1423,31 @@ async function handleUserSync(request: Request, env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const origin = request.headers.get("Origin");
 
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders() });
+      return new Response(null, { headers: corsHeaders(origin) });
+    }
+
+    // Validate User Authentication (Option C - Most Thorough)
+    if (url.pathname !== "/health" && url.pathname !== "/user/sync") {
+      const user = await authenticateUser(request, env);
+      if (!user) {
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized: Invalid User Token or Subscription",
+          }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders(origin),
+            },
+          }
+        );
+      }
+      // Request is authenticated, proceed
     }
 
     // Route requests
@@ -921,19 +1457,33 @@ export default {
           message: "TriTalk Backend Running on Cloudflare Workers",
         }),
         {
-          headers: { "Content-Type": "application/json", ...corsHeaders() },
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
         }
       );
     }
 
     if (url.pathname === "/health" && request.method === "GET") {
       return new Response(JSON.stringify({ status: "ok" }), {
-        headers: { "Content-Type": "application/json", ...corsHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
       });
     }
 
     if (url.pathname === "/chat/send" && request.method === "POST") {
       return handleChatSend(request, env);
+    }
+
+    if (url.pathname === "/chat/transcribe" && request.method === "POST") {
+      return handleChatTranscribe(request, env);
+    }
+
+    if (url.pathname === "/chat/send-voice" && request.method === "POST") {
+      return handleChatSendVoice(request, env);
     }
 
     if (url.pathname === "/user/sync" && request.method === "POST") {
@@ -968,6 +1518,10 @@ export default {
       return handleChatOptimize(request, env);
     }
 
+    if (url.pathname === "/chat/messages" && request.method === "DELETE") {
+      return handleDeleteMessages(request, env);
+    }
+
     if (url.pathname === "/tts/generate" && request.method === "POST") {
       return handleTTSGenerate(request, env);
     }
@@ -975,7 +1529,10 @@ export default {
     // 404 for unknown routes
     return new Response(JSON.stringify({ error: "Not Found" }), {
       status: 404,
-      headers: { "Content-Type": "application/json", ...corsHeaders() },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
     });
   },
 };

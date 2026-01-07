@@ -60,6 +60,14 @@
 - Name: `OPENROUTER_API_KEY`
 - Secret: 粘贴你的 OpenRouter API key
 
+#### 4. SUPABASE_URL
+- Name: `SUPABASE_URL`
+- Secret: 你的 Supabase URL (例如 https://xyz.supabase.co)
+
+#### 5. SUPABASE_ANON_KEY
+- Name: `SUPABASE_ANON_KEY`
+- Secret: 你的 Supabase Anon Key
+
 ### 部署触发条件
 
 自动部署会在以下情况触发：
@@ -91,9 +99,11 @@ cd backend-cloudflare
 # 部署到生产环境
 npm run deploy
 
-# 首次部署需要先设置 secret
+# 首次部署需要先设置 secrets
 wrangler secret put OPENROUTER_API_KEY
-# 然后输入你的 API key
+
+wrangler secret put SUPABASE_URL
+wrangler secret put SUPABASE_ANON_KEY
 ```
 
 ## 查看部署日志
