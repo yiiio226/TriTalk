@@ -18,6 +18,7 @@ import {
   OptimizeResponse,
   TTSRequest,
   TTSResponse,
+  TranscribeResponse,
   Env,
 } from "./types";
 import { createClient } from "@supabase/supabase-js";
@@ -297,6 +298,7 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
 }
 
 // Handle /chat/transcribe endpoint
+// Smart Voice Input: Uses Gemini 2.0 Flash Lite's multimodal capability for direct audio transcription + optimization
 async function handleChatTranscribe(
   request: Request,
   env: Env
@@ -304,17 +306,108 @@ async function handleChatTranscribe(
   try {
     const formData = await request.formData();
     const audioFile = formData.get("audio");
+    const targetLanguage =
+      (formData.get("target_language") as string) || "English";
 
     if (!audioFile || typeof audioFile === "string") {
       throw new Error("No audio file uploaded");
     }
 
-    // MOCK TRANSCRIPTION for MVP
-    // In production, integrate with OpenAI Whisper or Cloudflare Workers AI
-    const transcribedText =
-      "This simulates the transcription of your voice message.";
+    // Convert audio file to base64
+    const audioBlob = audioFile as File;
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
 
-    return new Response(JSON.stringify({ text: transcribedText }), {
+    // Convert to base64
+    let binary = "";
+    for (let i = 0; i < uint8Array.length; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    const audioBase64 = btoa(binary);
+
+    // Determine MIME type from file extension or use default
+    const fileName = audioBlob.name || "audio.m4a";
+    let mimeType = "audio/mp4"; // default for m4a
+    if (fileName.endsWith(".mp3")) {
+      mimeType = "audio/mp3";
+    } else if (fileName.endsWith(".wav")) {
+      mimeType = "audio/wav";
+    } else if (fileName.endsWith(".webm")) {
+      mimeType = "audio/webm";
+    } else if (fileName.endsWith(".ogg")) {
+      mimeType = "audio/ogg";
+    } else if (fileName.endsWith(".flac")) {
+      mimeType = "audio/flac";
+    } else if (fileName.endsWith(".aac")) {
+      mimeType = "audio/aac";
+    }
+
+    // Build the multimodal prompt for Gemini
+    // Gemini 2.0 Flash Lite can directly process audio and output text
+    const transcribePrompt = `You are a professional transcription and editing assistant.
+
+Listen to the audio and perform these tasks:
+1. Transcribe the speech accurately in ${targetLanguage}.
+2. Correct any grammatical and spelling errors.
+3. Remove filler words (e.g., 'uh', 'um', 'well', 'you know', 'like').
+4. Polish the phrasing for better flow while strictly preserving the original meaning.
+
+Return ONLY a JSON object in this exact format:
+{ "optimized_text": "the polished transcription here" }`;
+
+    // Call OpenRouter with multimodal content (audio + text)
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://tritalk.app",
+          "X-Title": "TriTalk",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.0-flash-lite-001",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "audio_url",
+                  audio_url: {
+                    url: `data:${mimeType};base64,${audioBase64}`,
+                  },
+                },
+                {
+                  type: "text",
+                  text: transcribePrompt,
+                },
+              ],
+            },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenRouter API error:", errorText);
+      throw new Error(
+        `OpenRouter API error: ${response.status} - ${errorText}`
+      );
+    }
+
+    const data = (await response.json()) as any;
+    const content = data.choices[0].message.content;
+    const parsedData = parseJSON(content);
+    const optimizedText = parsedData.optimized_text || "";
+
+    const transcribeResponse: TranscribeResponse = {
+      text: optimizedText,
+    };
+
+    return new Response(JSON.stringify(transcribeResponse), {
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders(request.headers.get("Origin")),
@@ -323,7 +416,10 @@ async function handleChatTranscribe(
   } catch (error) {
     console.error("Error in /chat/transcribe:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to transcribe audio" }),
+      JSON.stringify({
+        error: "Failed to transcribe audio",
+        details: String(error),
+      }),
       {
         status: 500,
         headers: {
