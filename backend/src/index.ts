@@ -380,6 +380,10 @@ Return ONLY a JSON object in this exact format:
               role: "user",
               content: [
                 {
+                  type: "text",
+                  text: "Please transcribe the attached audio.",
+                },
+                {
                   type: "input_audio",
                   input_audio: {
                     data: audioBase64,
