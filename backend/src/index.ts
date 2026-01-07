@@ -344,6 +344,16 @@ async function handleChatTranscribe(
       audioFormat = "m4a";
     }
 
+    console.log("=== AUDIO DEBUG INFO ===");
+    console.log(`Original File Name: ${fileName}`);
+    console.log(`Detected Format: ${audioFormat}`);
+    console.log(`File Size (bytes): ${arrayBuffer.byteLength}`);
+    console.log(`Base64 Length: ${audioBase64.length}`);
+    console.log(
+      `Base64 Preview (first 100 chars): ${audioBase64.substring(0, 100)}`
+    );
+    console.log("========================");
+
     // Build the multimodal prompt for Gemini
     // Gemini 2.0 Flash Lite can directly process audio and output text
     const transcribePrompt = `You are a professional transcription and editing assistant.
