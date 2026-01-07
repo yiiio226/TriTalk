@@ -325,21 +325,23 @@ async function handleChatTranscribe(
     }
     const audioBase64 = btoa(binary);
 
-    // Determine MIME type from file extension or use default
+    // Determine audio format from file extension
     const fileName = audioBlob.name || "audio.m4a";
-    let mimeType = "audio/mp4"; // default for m4a
+    let audioFormat = "m4a"; // default
     if (fileName.endsWith(".mp3")) {
-      mimeType = "audio/mp3";
+      audioFormat = "mp3";
     } else if (fileName.endsWith(".wav")) {
-      mimeType = "audio/wav";
+      audioFormat = "wav";
     } else if (fileName.endsWith(".webm")) {
-      mimeType = "audio/webm";
+      audioFormat = "webm";
     } else if (fileName.endsWith(".ogg")) {
-      mimeType = "audio/ogg";
+      audioFormat = "ogg";
     } else if (fileName.endsWith(".flac")) {
-      mimeType = "audio/flac";
+      audioFormat = "flac";
     } else if (fileName.endsWith(".aac")) {
-      mimeType = "audio/aac";
+      audioFormat = "aac";
+    } else if (fileName.endsWith(".m4a")) {
+      audioFormat = "m4a";
     }
 
     // Build the multimodal prompt for Gemini
@@ -356,6 +358,7 @@ Return ONLY a JSON object in this exact format:
 { "optimized_text": "the polished transcription here" }`;
 
     // Call OpenRouter with multimodal content (audio + text)
+    // Using input_audio format as per OpenRouter API spec
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -373,14 +376,15 @@ Return ONLY a JSON object in this exact format:
               role: "user",
               content: [
                 {
-                  type: "audio_url",
-                  audio_url: {
-                    url: `data:${mimeType};base64,${audioBase64}`,
-                  },
-                },
-                {
                   type: "text",
                   text: transcribePrompt,
+                },
+                {
+                  type: "input_audio",
+                  input_audio: {
+                    data: audioBase64,
+                    format: audioFormat,
+                  },
                 },
               ],
             },
