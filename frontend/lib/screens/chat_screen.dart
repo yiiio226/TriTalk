@@ -32,7 +32,8 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen>
+    with SingleTickerProviderStateMixin {
   final _uuid = const Uuid();
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -40,6 +41,29 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   bool _isAnalyzing = false;
   String? _analyzingMessageId;
   Timer? _autoScrollTimer; // Timer for continuous scrolling during animation
+
+  // Voice recording state
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isRecordingVoice = false;
+  Timer? _recordingTimer;
+  int _currentRecordingDuration = 0;
+
+  // Pulse animation for recording button
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  // TTS / Audio Service
+  final AudioService _audioService = AudioService();
+  String? _currentlyPlayingMessageId;
+
+  // Hints caching
+  List<String>? _cachedHints;
+  int _hintsMessageCount = 0;
+
+  // Multi-select mode
+  bool _isMultiSelectMode = false;
+  final Set<String> _selectedMessageIds = {};
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,7 +104,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize pulse animation controller
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2800), // Slower wave
@@ -89,7 +113,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    
+
     _loadMessages();
     _textController.addListener(() {
       setState(() {}); // Rebuild to update optimization button state
@@ -157,17 +181,18 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     try {
       if (await _audioRecorder.hasPermission()) {
         final directory = await getTemporaryDirectory();
-        final path = '${directory.path}/voice_input_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        
+        final path =
+            '${directory.path}/voice_input_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
         await _audioRecorder.start(const RecordConfig(), path: path);
-        
+
         setState(() {
           _isRecordingVoice = true;
         });
-        
+
         // Start pulsing animation
         _pulseController.repeat();
-        
+
         // Start timer for potential future use
         _currentRecordingDuration = 0;
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -196,25 +221,28 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     }
   }
 
-  Future<void> _stopVoiceRecording({bool convertToText = false, bool sendDirectly = false}) async {
+  Future<void> _stopVoiceRecording({
+    bool convertToText = false,
+    bool sendDirectly = false,
+  }) async {
     _recordingTimer?.cancel();
     _recordingTimer = null;
-    
+
     // Stop pulsing animation
     _pulseController.stop();
     _pulseController.reset();
-    
+
     try {
       final path = await _audioRecorder.stop();
-      
+
       setState(() {
         _isRecordingVoice = false;
       });
-      
+
       if (path == null) {
         return;
       }
-      
+
       if (sendDirectly) {
         await _sendVoiceMessage(path, _currentRecordingDuration);
       } else if (convertToText) {
@@ -234,7 +262,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   Future<void> _transcribeAudio(String audioPath) async {
     try {
       final transcribedText = await _apiService.transcribeAudio(audioPath);
-      
+
       if (mounted && transcribedText.isNotEmpty) {
         setState(() {
           _textController.text = transcribedText;
@@ -255,18 +283,19 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     // Generate IDs
     final userMessageId = _uuid.v4();
     final aiMessageId = _uuid.v4();
-    
+
     // Add user voice message immediately (optimistic UI)
     final userMessage = Message(
       id: userMessageId,
-      content: '', // Voice connection doesn't necessarily have text content immediately
+      content:
+          '', // Voice connection doesn't necessarily have text content immediately
       isUser: true,
       timestamp: DateTime.now(),
       audioPath: audioPath,
       audioDuration: duration,
       isFeedbackLoading: true,
     );
-    
+
     setState(() {
       _messages.add(userMessage);
       _isRecordingVoice = false;
@@ -274,29 +303,35 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
 
     // Save initial state (user message + loading)
     ChatHistoryService().syncMessages(widget.scene.id, _messages);
-    
+
     _scrollToBottom();
-    
+
     try {
       // Prepare history
       final history = _messages
-          .where((m) => !m.isLoading && m.id != userMessageId && m.content.isNotEmpty)
-          .map((m) => <String, String>{
-            'role': m.isUser ? 'user' : 'assistant',
-            'content': m.content,
-          })
+          .where(
+            (m) =>
+                !m.isLoading && m.id != userMessageId && m.content.isNotEmpty,
+          )
+          .map(
+            (m) => <String, String>{
+              'role': m.isUser ? 'user' : 'assistant',
+              'content': m.content,
+            },
+          )
           .toList();
-          
+
       // Ensure we have correct role info
-      final sceneContext = 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}';
-      
+      final sceneContext =
+          'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}';
+
       // Call API
       final response = await _apiService.sendVoiceMessage(
-        audioPath, 
-        sceneContext, 
-        history
+        audioPath,
+        sceneContext,
+        history,
       );
-      
+
       // Update UI with response
       setState(() {
         // Update user message with feedback if available (and maybe transcribed text if provided)
@@ -304,17 +339,19 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         if (index != -1) {
           _messages[index] = Message(
             id: userMessage.id,
-            content: '', // Keep empty or use transcribed text if API returns it in future
+            content:
+                '', // Keep empty or use transcribed text if API returns it in future
             isUser: true,
             timestamp: userMessage.timestamp,
             audioPath: audioPath,
-            audioDuration: userMessage.audioDuration, // Keep placeholder or update
+            audioDuration:
+                userMessage.audioDuration, // Keep placeholder or update
             voiceFeedback: response.voiceFeedback,
             feedback: response.reviewFeedback,
             isFeedbackLoading: false,
           );
         }
-        
+
         // Add real AI message
         final aiMessage = Message(
           id: aiMessageId,
@@ -329,27 +366,30 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
 
       // Save final state (AI response + feedback)
       ChatHistoryService().syncMessages(widget.scene.id, _messages);
-      
+
       _scrollToBottom();
-      
     } catch (e) {
       if (mounted) {
-        showTopToast(context, 'Failed to send voice message: $e', isError: true);
+        showTopToast(
+          context,
+          'Failed to send voice message: $e',
+          isError: true,
+        );
         setState(() {
-           // Optionally mark user message as failed
-           final index = _messages.indexWhere((m) => m.id == userMessageId);
-           if (index != -1) {
-             _messages[index] = Message(
-               id: userMessage.id,
-               content: userMessage.content,
-               isUser: true,
-               timestamp: userMessage.timestamp,
-               audioPath: userMessage.audioPath,
-               audioDuration: userMessage.audioDuration,
-               isFeedbackLoading: false, // Stop loading
-               // Error state could be handled here
-             );
-           }
+          // Optionally mark user message as failed
+          final index = _messages.indexWhere((m) => m.id == userMessageId);
+          if (index != -1) {
+            _messages[index] = Message(
+              id: userMessage.id,
+              content: userMessage.content,
+              isUser: true,
+              timestamp: userMessage.timestamp,
+              audioPath: userMessage.audioPath,
+              audioDuration: userMessage.audioDuration,
+              isFeedbackLoading: false, // Stop loading
+              // Error state could be handled here
+            );
+          }
         });
       }
     }
@@ -497,12 +537,12 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       if (mounted) {
         setState(() {
           _messages = history;
-          
+
           // Restore error banner if there's a failed message
           if (hasFailedMessage) {
             _showErrorBanner = true;
           }
-          
+
           // Restore hints from the last message if available
           if (_messages.isNotEmpty && _messages.last.hints != null) {
             _cachedHints = _messages.last.hints;
@@ -581,12 +621,14 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           )
           .toList();
 
-      final response = await _apiService.sendMessage(
-        text, 
-        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-        history
-      ).timeout(const Duration(seconds: 30));
-      
+      final response = await _apiService
+          .sendMessage(
+            text,
+            'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+            history,
+          )
+          .timeout(const Duration(seconds: 30));
+
       if (!mounted) return;
 
       // 1. Update user message with feedback (Turns it Yellow)
@@ -675,10 +717,10 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           timestamp: newMessage.timestamp,
           isFeedbackLoading: false, // Stop loading indicator
         );
-        
+
         setState(() {
           _messages[userMsgIndex] = updatedMessage;
-          
+
           // Remove any loading AI messages
           _messages.removeWhere((m) => m.isLoading);
 
@@ -686,7 +728,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           _showErrorBanner = true;
           _isTimeoutError = true;
         });
-        
+
         // Sync updated state to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
@@ -704,10 +746,10 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           timestamp: newMessage.timestamp,
           isFeedbackLoading: false, // Stop loading indicator
         );
-        
+
         setState(() {
           _messages[userMsgIndex] = updatedMessage;
-          
+
           // Remove any loading AI messages
           _messages.removeWhere((m) => m.isLoading);
 
@@ -715,7 +757,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           _showErrorBanner = true;
           _isTimeoutError = false;
         });
-        
+
         // Sync updated state to cloud
         ChatHistoryService().syncMessages(sceneKey, _messages);
       }
@@ -726,16 +768,16 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     // Find the message with hasPendingError
     final failedMsgIndex = _messages.indexWhere((m) => m.hasPendingError);
     if (failedMsgIndex == -1) return;
-    
+
     final failedMsg = _messages[failedMsgIndex];
     final sceneKey = widget.scene.id;
-    
+
     // Reset error state on UI
     setState(() {
       _showErrorBanner = false;
       _isTimeoutError = false;
       _isSending = true;
-      
+
       // Update message to show loading state
       _messages[failedMsgIndex] = Message(
         id: failedMsg.id,
@@ -746,27 +788,35 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         hasPendingError: false, // Clear error state
       );
     });
-    
+
     // Resend the message
     _resendMessage(failedMsg, failedMsgIndex, sceneKey);
   }
-  
-  Future<void> _resendMessage(Message originalMsg, int msgIndex, String sceneKey) async {
+
+  Future<void> _resendMessage(
+    Message originalMsg,
+    int msgIndex,
+    String sceneKey,
+  ) async {
     try {
       final history = _messages
           .where((m) => !m.isLoading && m.content.isNotEmpty)
-          .map((m) => <String, String>{
-            'role': m.isUser ? 'user' : 'assistant',
-            'content': m.content,
-          })
+          .map(
+            (m) => <String, String>{
+              'role': m.isUser ? 'user' : 'assistant',
+              'content': m.content,
+            },
+          )
           .toList();
 
-      final response = await _apiService.sendMessage(
-        originalMsg.content, 
-        'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-        history
-      ).timeout(const Duration(seconds: 10));
-      
+      final response = await _apiService
+          .sendMessage(
+            originalMsg.content,
+            'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+            history,
+          )
+          .timeout(const Duration(seconds: 10));
+
       if (!mounted) return;
 
       // Update user message with feedback
@@ -779,31 +829,33 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         isFeedbackLoading: false,
         hasPendingError: false,
       );
-      
+
       setState(() {
         _messages[msgIndex] = updatedMessage;
-        
+
         // Add loading message for AI response
-        _messages.add(Message(
-          id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
-          content: '',
-          isUser: false,
-          timestamp: DateTime.now(),
-          isLoading: true,
-        ));
+        _messages.add(
+          Message(
+            id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+            content: '',
+            isUser: false,
+            timestamp: DateTime.now(),
+            isLoading: true,
+          ),
+        );
       });
-      
+
       ChatHistoryService().syncMessages(sceneKey, _messages);
       _scrollToBottom();
-      
+
       await Future.delayed(const Duration(milliseconds: 1500));
-      
+
       if (!mounted) return;
 
       setState(() {
         _isSending = false;
         _messages.removeWhere((m) => m.isLoading);
-        
+
         final aiMessage = Message(
           id: _uuid.v4(),
           content: response.message,
@@ -815,11 +867,14 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
 
         _messages.add(aiMessage);
       });
-      
+
       ChatHistoryService().syncMessages(sceneKey, _messages);
       _scrollToBottom();
       _startAutoScroll();
-      final animationDuration = (response.message.length * 30).clamp(1000, 5000);
+      final animationDuration = (response.message.length * 30).clamp(
+        1000,
+        5000,
+      );
       Future.delayed(Duration(milliseconds: animationDuration), () {
         if (mounted) {
           _stopAutoScroll();
@@ -828,7 +883,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       });
     } on TimeoutException catch (_) {
       if (!mounted) return;
-      
+
       final failedMessage = Message(
         id: originalMsg.id,
         content: originalMsg.content,
@@ -837,7 +892,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         isFeedbackLoading: false,
         hasPendingError: true,
       );
-      
+
       setState(() {
         _messages[msgIndex] = failedMessage;
         _messages.removeWhere((m) => m.isLoading);
@@ -845,11 +900,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         _showErrorBanner = true;
         _isTimeoutError = true;
       });
-      
+
       ChatHistoryService().syncMessages(sceneKey, _messages);
     } catch (e) {
       if (!mounted) return;
-      
+
       final failedMessage = Message(
         id: originalMsg.id,
         content: originalMsg.content,
@@ -858,7 +913,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         isFeedbackLoading: false,
         hasPendingError: true,
       );
-      
+
       setState(() {
         _messages[msgIndex] = failedMessage;
         _messages.removeWhere((m) => m.isLoading);
@@ -866,18 +921,18 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         _showErrorBanner = true;
         _isTimeoutError = false;
       });
-      
+
       ChatHistoryService().syncMessages(sceneKey, _messages);
     }
   }
-  
+
   // Multi-select mode methods
   void _enterMultiSelectMode(String messageId) {
     setState(() {
       _isMultiSelectMode = true;
       _selectedMessageIds.clear();
       _selectedMessageIds.add(messageId);
-      
+
       // Update message selection state
       final index = _messages.indexWhere((m) => m.id == messageId);
       if (index != -1) {
@@ -902,11 +957,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       }
     });
   }
-  
+
   void _exitMultiSelectMode() {
     setState(() {
       _isMultiSelectMode = false;
-      
+
       // Clear all selections
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].isSelected) {
@@ -930,24 +985,24 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           );
         }
       }
-      
+
       _selectedMessageIds.clear();
     });
   }
-  
+
   void _toggleMessageSelection(String messageId) {
     setState(() {
       final index = _messages.indexWhere((m) => m.id == messageId);
       if (index == -1) return;
-      
+
       final isCurrentlySelected = _selectedMessageIds.contains(messageId);
-      
+
       if (isCurrentlySelected) {
         _selectedMessageIds.remove(messageId);
       } else {
         _selectedMessageIds.add(messageId);
       }
-      
+
       // Update message selection state
       _messages[index] = Message(
         id: _messages[index].id,
@@ -967,17 +1022,17 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         audioDuration: _messages[index].audioDuration,
         voiceFeedback: _messages[index].voiceFeedback,
       );
-      
+
       // Exit multi-select mode if no messages are selected
       if (_selectedMessageIds.isEmpty) {
         _exitMultiSelectMode();
       }
     });
   }
-  
+
   Future<void> _deleteSelectedMessages() async {
     if (_selectedMessageIds.isEmpty) return;
-    
+
     // Show confirmation dialog
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -1039,19 +1094,19 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         ),
       ),
     );
-    
+
     if (confirmed != true) return;
-    
+
     // Delete messages
     final messageIdsToDelete = List<String>.from(_selectedMessageIds);
     final sceneKey = widget.scene.id;
-    
+
     setState(() {
       // Remove messages from local list
       _messages.removeWhere((m) => messageIdsToDelete.contains(m.id));
       _exitMultiSelectMode();
     });
-    
+
     // Delete from cloud
     try {
       await ChatHistoryService().deleteMessages(sceneKey, messageIdsToDelete);
@@ -1218,7 +1273,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
                   return Align(
-                    alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: msg.isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: ChatBubble(
                       key: ValueKey(msg.id),
                       message: msg,
@@ -1386,12 +1443,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -1422,7 +1474,10 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1433,7 +1488,10 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             OutlinedButton(
               onPressed: _exitMultiSelectMode,
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1451,22 +1509,24 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 40),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
+            icon: const Icon(
+              Icons.lightbulb_outline_rounded,
+              color: Colors.amber,
+            ),
             onPressed: () {
-              final history = _messages.map((m) => <String, String>{
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.content,
-              }).toList();
+              final history = _messages
+                  .map(
+                    (m) => <String, String>{
+                      'role': m.isUser ? 'user' : 'assistant',
+                      'content': m.content,
+                    },
+                  )
+                  .toList();
 
               showModalBottomSheet(
                 context: context,
@@ -1474,7 +1534,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                 backgroundColor: Colors.transparent,
                 barrierColor: Colors.white.withOpacity(0.5),
                 builder: (context) => HintsSheet(
-                  sceneDescription: 'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+                  sceneDescription:
+                      'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
                   history: history,
                   onHintSelected: (hint) {
                     _textController.text = hint;
@@ -1521,13 +1582,14 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Icon(
-                            Icons.auto_fix_high, 
-                            color: _textController.text.trim().isNotEmpty 
-                                ? Colors.green 
-                                : Colors.grey[400]
+                            Icons.auto_fix_high,
+                            color: _textController.text.trim().isNotEmpty
+                                ? Colors.green
+                                : Colors.grey[400],
                           ),
                     tooltip: 'Optimize with AI',
-                    onPressed: _textController.text.trim().isEmpty || _isOptimizing
+                    onPressed:
+                        _textController.text.trim().isEmpty || _isOptimizing
                         ? null
                         : () async {
                             final text = _textController.text.trim();
@@ -1535,26 +1597,39 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
 
                             try {
                               final history = _messages
-                                  .where((m) => !m.isLoading && m.content.isNotEmpty)
-                                  .map((m) => <String, String>{
-                                    'role': m.isUser ? 'user' : 'assistant',
-                                    'content': m.content,
-                                  })
+                                  .where(
+                                    (m) => !m.isLoading && m.content.isNotEmpty,
+                                  )
+                                  .map(
+                                    (m) => <String, String>{
+                                      'role': m.isUser ? 'user' : 'assistant',
+                                      'content': m.content,
+                                    },
+                                  )
                                   .toList();
 
-                              final optimizedText = await _apiService.optimizeMessage(
-                                text, 
-                                'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
-                                history
-                              );
+                              final optimizedText = await _apiService
+                                  .optimizeMessage(
+                                    text,
+                                    'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+                                    history,
+                                  );
 
                               if (mounted) {
                                 _textController.text = optimizedText;
-                                showTopToast(context, "Message optimized!", isError: false);
+                                showTopToast(
+                                  context,
+                                  "Message optimized!",
+                                  isError: false,
+                                );
                               }
                             } catch (e) {
                               if (mounted) {
-                                 showTopToast(context, "Optimization failed: $e", isError: true);
+                                showTopToast(
+                                  context,
+                                  "Optimization failed: $e",
+                                  isError: true,
+                                );
                               }
                             } finally {
                               if (mounted) {
@@ -1574,7 +1649,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
               color: Colors.black,
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_upward_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: _sendMessage,
             ),
           ),
@@ -1790,18 +1869,16 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   }
 
   void _showFeedbackSheet(Message message) {
-     if (message.feedback == null) return;
-     
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        barrierColor: Colors.white.withOpacity(0.5),
-        builder: (context) => FeedbackSheet(
-          message: message,
-          sceneId: widget.scene.id,
-        ),
-      );
+    if (message.feedback == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withOpacity(0.5),
+      builder: (context) =>
+          FeedbackSheet(message: message, sceneId: widget.scene.id),
+    );
   }
 
   void _updateMessageAnalysis(String messageId, MessageAnalysis analysis) {
