@@ -350,37 +350,10 @@ async function handleChatTranscribe(
       audioFormat = "m4a";
     }
 
-    console.log("=== AUDIO DEBUG INFO ===");
-    console.log(`Original File Name: ${fileName}`);
-    console.log(`File MIME Type: ${audioBlob.type || "unknown"}`);
-    console.log(`Detected Format: ${audioFormat}`);
-    console.log(`File Size (bytes): ${arrayBuffer.byteLength}`);
-    console.log(`Base64 Length: ${audioBase64.length}`);
+    // Log basic audio file information
     console.log(
-      `Base64 Preview (first 100 chars): ${audioBase64.substring(0, 100)}`
+      `[Transcribe] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
     );
-
-    // Additional WAV file validation
-    if (audioFormat === "wav") {
-      // Check WAV header (first 12 bytes should be RIFF....WAVE)
-      const header = String.fromCharCode.apply(
-        null,
-        Array.from(uint8Array.subarray(0, 12))
-      );
-      console.log(
-        `WAV Header Check: ${header.substring(0, 4)} (should be RIFF)`
-      );
-      console.log(`WAV Format: ${header.substring(8, 12)} (should be WAVE)`);
-
-      // Check format chunk (bytes 20-23 should indicate PCM = 1)
-      if (uint8Array.length > 23) {
-        const audioFormat = uint8Array[20] + (uint8Array[21] << 8);
-        const numChannels = uint8Array[22] + (uint8Array[23] << 8);
-        console.log(`WAV Audio Format Code: ${audioFormat} (1=PCM)`);
-        console.log(`WAV Channels: ${numChannels}`);
-      }
-    }
-    console.log("========================");
 
     // Build the multimodal prompt for Gemini
     // Gemini 2.0 Flash Lite can directly process audio and output text
