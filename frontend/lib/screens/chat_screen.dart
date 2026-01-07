@@ -214,9 +214,17 @@ class _ChatScreenState extends State<ChatScreen>
       if (await _audioRecorder.hasPermission()) {
         final directory = await getTemporaryDirectory();
         final path =
-            '${directory.path}/voice_input_${DateTime.now().millisecondsSinceEpoch}.m4a';
+            '${directory.path}/voice_input_${DateTime.now().millisecondsSinceEpoch}.wav';
 
-        await _audioRecorder.start(const RecordConfig(), path: path);
+        // Use WAV format with PCM encoding for better transcription accuracy
+        await _audioRecorder.start(
+          const RecordConfig(
+            encoder: AudioEncoder.wav,
+            sampleRate: 16000, // 16kHz is optimal for speech recognition
+            numChannels: 1, // Mono audio
+          ),
+          path: path,
+        );
 
         setState(() {
           _isRecordingVoice = true;
