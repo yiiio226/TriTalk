@@ -1,158 +1,172 @@
 import {
-    ChatRequest,
-    ChatResponse,
-    HintRequest,
-    HintResponse,
-    SceneGenerationRequest,
-    SceneGenerationResponse,
-    AnalyzeRequest,
-    AnalyzeResponse,
-    ReviewFeedback,
-    PolishRequest,
-    PolishResponse,
-    TranslateRequest,
-    TranslateResponse,
-    ShadowRequest,
-    ShadowResponse,
-    OptimizeRequest,
-    OptimizeResponse,
-    Env,
-} from './types';
-import { createClient } from '@supabase/supabase-js';
+  ChatRequest,
+  ChatResponse,
+  HintRequest,
+  HintResponse,
+  SceneGenerationRequest,
+  SceneGenerationResponse,
+  AnalyzeRequest,
+  AnalyzeResponse,
+  ReviewFeedback,
+  PolishRequest,
+  PolishResponse,
+  TranslateRequest,
+  TranslateResponse,
+  ShadowRequest,
+  ShadowResponse,
+  OptimizeRequest,
+  OptimizeResponse,
+  TTSRequest,
+  TTSResponse,
+  Env,
+} from "./types";
+import { createClient } from "@supabase/supabase-js";
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'http://127.0.0.1:8080',
-    'http://127.0.0.1:3000',
-    // Add production domain here when deployed
-    // 'https://yourdomain.com',
+  "http://localhost:8080",
+  "http://localhost:3000",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:3000",
+  // Add production domain here when deployed
+  // 'https://yourdomain.com',
 ];
 
 // Helper to authenticate user via Supabase
 async function authenticateUser(request: Request, env: Env): Promise<any> {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return null;
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Create a Supabase client with the user's token.
+    // This ensures that subsequent DB queries respect RLS (Row Level Security).
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    // 1. Verify Token
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      console.error("Auth Error:", error);
+      return null;
     }
-    
-    const token = authHeader.split(' ')[1];
-    
-    try {
-        // Create a Supabase client with the user's token.
-        // This ensures that subsequent DB queries respect RLS (Row Level Security).
-        const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        });
-        
-        // 1. Verify Token
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error || !user) {
-            console.error('Auth Error:', error);
-            return null;
-        }
 
-        // 2. Check Subscription/Balance (Optional/Extensible)
-        // Since we are now authenticated as the user (via the client headers), we can access RLS-protected data.
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+    // 2. Check Subscription/Balance (Optional/Extensible)
+    // Since we are now authenticated as the user (via the client headers), we can access RLS-protected data.
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
-        if (profileError || !profile) {
-             console.error('Profile Error:', profileError);
-             // If strict mode, return null. For now, we allow if Auth is valid.
-             // return null; 
-        }
-
-        return user;
-    } catch (e) {
-        console.error('Auth Exception:', e);
-        return null;
+    if (profileError || !profile) {
+      console.error("Profile Error:", profileError);
+      // If strict mode, return null. For now, we allow if Auth is valid.
+      // return null;
     }
+
+    return user;
+  } catch (e) {
+    console.error("Auth Exception:", e);
+    return null;
+  }
 }
 
 // Helper to create CORS headers
 function corsHeaders(origin: string | null) {
-    // Check if origin is allowed
-    const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
-    
-    return {
-        'Access-Control-Allow-Origin': allowedOrigin ? origin : 'null',
-        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
-    };
+  // Check if origin is allowed
+  const allowedOrigin =
+    origin &&
+    (ALLOWED_ORIGINS.includes(origin) ||
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:"));
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin ? origin : "null",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
+  };
 }
 
 // Helper to parse JSON from LLM response (handles markdown wrapping)
 function parseJSON(content: string): any {
-    let cleaned = content.trim();
-    if (cleaned.startsWith('```json')) {
-        cleaned = cleaned.slice(7);
-    } else if (cleaned.startsWith('```')) {
-        cleaned = cleaned.slice(3);
-    }
-    if (cleaned.endsWith('```')) {
-        cleaned = cleaned.slice(0, -3);
-    }
+  let cleaned = content.trim();
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.slice(7);
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.slice(3);
+  }
+  if (cleaned.endsWith("```")) {
+    cleaned = cleaned.slice(0, -3);
+  }
 
-    const parsed = JSON.parse(cleaned.trim());
+  const parsed = JSON.parse(cleaned.trim());
 
-    // Handle case where LLM returns an array with a single object
-    if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed[0];
-    }
+  // Handle case where LLM returns an array with a single object
+  if (Array.isArray(parsed) && parsed.length > 0) {
+    return parsed[0];
+  }
 
-    return parsed;
+  return parsed;
 }
 
 // Call OpenRouter API
 async function callOpenRouter(
-    apiKey: string,
-    model: string,
-    messages: Array<{ role: string; content: string }>,
-    jsonMode: boolean = true
+  apiKey: string,
+  model: string,
+  messages: Array<{ role: string; content: string }>,
+  jsonMode: boolean = true
 ): Promise<any> {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://tritalk.app',
-            'X-Title': 'TriTalk',
-        },
-        body: JSON.stringify({
-            model,
-            messages,
-            ...(jsonMode && { response_format: { type: 'json_object' } }),
-        }),
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenRouter API Response:', errorText);
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://tritalk.app",
+        "X-Title": "TriTalk",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        ...(jsonMode && { response_format: { type: "json_object" } }),
+      }),
     }
+  );
 
-    const data = await response.json() as any;
-    return data.choices[0].message.content;
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("OpenRouter API Response:", errorText);
+    throw new Error(
+      `OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`
+    );
+  }
+
+  const data = (await response.json()) as any;
+  return data.choices[0].message.content;
 }
 
 // Handle /chat/send endpoint
 async function handleChatSend(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: ChatRequest = await request.json();
-        const nativeLang = body.native_language || 'Chinese (Simplified)';
-        const targetLang = body.target_language || 'English';
+  try {
+    const body: ChatRequest = await request.json();
+    const nativeLang = body.native_language || "Chinese (Simplified)";
+    const targetLang = body.target_language || "English";
 
-        const systemPrompt = `You are roleplaying in a language learning scenario.
+    const systemPrompt = `You are roleplaying in a language learning scenario.
     
     SCENARIO CONTEXT: ${body.scene_context}
     
@@ -212,114 +226,144 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
         }
     }`;
 
-        const messages = [
-            { role: 'system', content: systemPrompt },
-        ];
+    const messages = [{ role: "system", content: systemPrompt }];
 
-        // Add conversation history (limit to last 10 messages to avoid token limits)
-        if (body.history && body.history.length > 0) {
-            const recentHistory = body.history.slice(-10);
-            messages.push(...recentHistory);
-        }
-
-        // Add current user message with EXPLICIT marker to help AI identify it
-        messages.push({
-            role: 'user',
-            content: `<<LATEST_USER_MESSAGE>>${body.message}<</LATEST_USER_MESSAGE>>`
-        });
-
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
-
-        // Helper to sanitize text (remove invalid UTF-16 characters)
-        const sanitizeText = (text: string): string => {
-            if (!text) return '';
-            // Remove any invalid UTF-16 surrogate pairs and control characters
-            return text.replace(/[\uD800-\uDFFF]/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-        };
-
-        const replyText = sanitizeText(data.reply || '');
-        const analysisData = data.analysis || {};
-
-        const feedback: ReviewFeedback = {
-            is_perfect: analysisData.is_perfect || false,
-            corrected_text: sanitizeText(analysisData.corrected_text || body.message),
-            native_expression: sanitizeText(analysisData.native_expression || ''),
-            explanation: sanitizeText(analysisData.explanation || ''),
-            example_answer: sanitizeText(analysisData.example_answer || ''),
-        };
-
-        const response: ChatResponse = {
-            message: replyText,
-            review_feedback: feedback,
-        };
-
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /chat/send:', error);
-        return new Response(
-            JSON.stringify({
-                message: "Sorry, I'm having trouble connecting to the AI right now.",
-                debug_error: String(error)
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+    // Add conversation history (limit to last 10 messages to avoid token limits)
+    if (body.history && body.history.length > 0) {
+      const recentHistory = body.history.slice(-10);
+      messages.push(...recentHistory);
     }
+
+    // Add current user message with EXPLICIT marker to help AI identify it
+    messages.push({
+      role: "user",
+      content: `<<LATEST_USER_MESSAGE>>${body.message}<</LATEST_USER_MESSAGE>>`,
+    });
+
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
+
+    // Helper to sanitize text (remove invalid UTF-16 characters)
+    const sanitizeText = (text: string): string => {
+      if (!text) return "";
+      // Remove any invalid UTF-16 surrogate pairs and control characters
+      return text
+        .replace(/[\uD800-\uDFFF]/g, "")
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+    };
+
+    const replyText = sanitizeText(data.reply || "");
+    const analysisData = data.analysis || {};
+
+    const feedback: ReviewFeedback = {
+      is_perfect: analysisData.is_perfect || false,
+      corrected_text: sanitizeText(analysisData.corrected_text || body.message),
+      native_expression: sanitizeText(analysisData.native_expression || ""),
+      explanation: sanitizeText(analysisData.explanation || ""),
+      example_answer: sanitizeText(analysisData.example_answer || ""),
+    };
+
+    const response: ChatResponse = {
+      message: replyText,
+      review_feedback: feedback,
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/send:", error);
+    return new Response(
+      JSON.stringify({
+        message: "Sorry, I'm having trouble connecting to the AI right now.",
+        debug_error: String(error),
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/transcribe endpoint
-async function handleChatTranscribe(request: Request, env: Env): Promise<Response> {
-    try {
-        const formData = await request.formData();
-        const audioFile = formData.get('audio');
+async function handleChatTranscribe(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const formData = await request.formData();
+    const audioFile = formData.get("audio");
 
-        if (!audioFile || typeof audioFile === 'string') {
-             throw new Error('No audio file uploaded');
-        }
-
-        // MOCK TRANSCRIPTION for MVP
-        // In production, integrate with OpenAI Whisper or Cloudflare Workers AI
-        const transcribedText = "This simulates the transcription of your voice message.";
-
-        return new Response(JSON.stringify({ text: transcribedText }), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /chat/transcribe:', error);
-        return new Response(
-            JSON.stringify({ error: 'Failed to transcribe audio' }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+    if (!audioFile || typeof audioFile === "string") {
+      throw new Error("No audio file uploaded");
     }
+
+    // MOCK TRANSCRIPTION for MVP
+    // In production, integrate with OpenAI Whisper or Cloudflare Workers AI
+    const transcribedText =
+      "This simulates the transcription of your voice message.";
+
+    return new Response(JSON.stringify({ text: transcribedText }), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/transcribe:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to transcribe audio" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/send-voice endpoint
-async function handleChatSendVoice(request: Request, env: Env): Promise<Response> {
+async function handleChatSendVoice(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const formData = await request.formData();
+    const audioFile = formData.get("audio");
+    const sceneContext = (formData.get("scene_context") as string) || "";
+    const historyStr = (formData.get("history") as string) || "[]";
+    const nativeLang =
+      (formData.get("native_language") as string) || "Chinese (Simplified)";
+    const targetLang = (formData.get("target_language") as string) || "English";
+
+    let history = [];
     try {
-        const formData = await request.formData();
-        const audioFile = formData.get('audio');
-        const sceneContext = formData.get('scene_context') as string || '';
-        const historyStr = formData.get('history') as string || '[]';
-        const nativeLang = formData.get('native_language') as string || 'Chinese (Simplified)';
-        const targetLang = formData.get('target_language') as string || 'English';
+      history = JSON.parse(historyStr);
+    } catch (e) {}
 
-        let history = [];
-        try {
-            history = JSON.parse(historyStr);
-        } catch (e) {}
+    if (!audioFile || typeof audioFile === "string") {
+      throw new Error("No audio file uploaded");
+    }
 
-        if (!audioFile || typeof audioFile === 'string') {
-            throw new Error('No audio file uploaded');
-        }
+    // 1. MOCK TRANSCRIPTION
+    // In production, send audio to STT service
+    const transcribedText = "I want to live in a hotel.";
 
-        // 1. MOCK TRANSCRIPTION
-        // In production, send audio to STT service
-        const transcribedText = "I want to live in a hotel."; 
-
-        // 2. Process with LLM (Reusing logic structure from handleChatSend)
-        const systemPrompt = `You are roleplaying in a language learning scenario.
+    // 2. Process with LLM (Reusing logic structure from handleChatSend)
+    const systemPrompt = `You are roleplaying in a language learning scenario.
     
     SCENARIO CONTEXT: ${sceneContext}
     
@@ -351,106 +395,131 @@ async function handleChatSendVoice(request: Request, env: Env): Promise<Response
         }
     }`;
 
-        const messages = [
-            { role: 'system', content: systemPrompt },
-        ];
+    const messages = [{ role: "system", content: systemPrompt }];
 
-        if (history && history.length > 0) {
-            const recentHistory = history.slice(-10);
-            messages.push(...recentHistory);
-        }
+    if (history && history.length > 0) {
+      const recentHistory = history.slice(-10);
+      messages.push(...recentHistory);
+    }
 
-        messages.push({
-            role: 'user',
-            content: `<<LATEST_USER_MESSAGE>>${transcribedText}<</LATEST_USER_MESSAGE>>`
-        });
+    messages.push({
+      role: "user",
+      content: `<<LATEST_USER_MESSAGE>>${transcribedText}<</LATEST_USER_MESSAGE>>`,
+    });
 
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
 
-        // Helper to sanitize text
-        const sanitizeText = (text: string): string => {
-            if (!text) return '';
-            return text.replace(/[\uD800-\uDFFF]/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-        };
+    // Helper to sanitize text
+    const sanitizeText = (text: string): string => {
+      if (!text) return "";
+      return text
+        .replace(/[\uD800-\uDFFF]/g, "")
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+    };
 
-        const replyText = sanitizeText(data.reply || '');
-        const analysisData = data.analysis || {};
+    const replyText = sanitizeText(data.reply || "");
+    const analysisData = data.analysis || {};
 
-        // 3. MOCK PRONUNCIATION SCORE
-        // In production, get this from the STT service or audio analysis model
-        const pronunciationScore = Math.floor(Math.random() * 15) + 80; // Random score 80-95
+    // 3. MOCK PRONUNCIATION SCORE
+    // In production, get this from the STT service or audio analysis model
+    const pronunciationScore = Math.floor(Math.random() * 15) + 80; // Random score 80-95
 
-        // Mock sentence breakdown
-        const cleanText = sanitizeText(analysisData.corrected_text || transcribedText).replace(/[.,!?]/g, '');
-        const words = cleanText.split(/\s+/);
-        const sentenceBreakdown = words.map(word => {
-            const rand = Math.random();
-            let score;
-            // Force 'live' to be low score if present (for demo)
-            if (word.toLowerCase() === 'live') score = 45;
-            else if (rand > 0.3) score = Math.floor(Math.random() * 20) + 81; // 81-100
-            else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61; // 61-80
-            else score = Math.floor(Math.random() * 20) + 40; // 40-59
-            return { word, score };
-        });
+    // Mock sentence breakdown
+    const cleanText = sanitizeText(
+      analysisData.corrected_text || transcribedText
+    ).replace(/[.,!?]/g, "");
+    const words = cleanText.split(/\s+/);
+    const sentenceBreakdown = words.map((word) => {
+      const rand = Math.random();
+      let score;
+      // Force 'live' to be low score if present (for demo)
+      if (word.toLowerCase() === "live") score = 45;
+      else if (rand > 0.3)
+        score = Math.floor(Math.random() * 20) + 81; // 81-100
+      else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61; // 61-80
+      else score = Math.floor(Math.random() * 20) + 40; // 40-59
+      return { word, score };
+    });
 
-        // Identify error focus
-        const lowestScoreWord = sentenceBreakdown.reduce((prev, curr) => prev.score < curr.score ? prev : curr, sentenceBreakdown[0] || { word: 'none', score: 100 });
-        
-        const errorFocus = lowestScoreWord.score < 80 ? {
+    // Identify error focus
+    const lowestScoreWord = sentenceBreakdown.reduce(
+      (prev, curr) => (prev.score < curr.score ? prev : curr),
+      sentenceBreakdown[0] || { word: "none", score: 100 }
+    );
+
+    const errorFocus =
+      lowestScoreWord.score < 80
+        ? {
             word: lowestScoreWord.word,
             user_ipa: `/liːv/`,
             correct_ipa: `/lɪv/`,
-            tip: `/${lowestScoreWord.word === 'live' ? 'ɪ' : 'ə'}/ is a short vowel, relax your mouth.`
-        } : null;
+            tip: `/${
+              lowestScoreWord.word === "live" ? "ɪ" : "ə"
+            }/ is a short vowel, relax your mouth.`,
+          }
+        : null;
 
-        const voiceFeedback = {
-            pronunciation_score: pronunciationScore,
-            corrected_text: sanitizeText(analysisData.corrected_text || transcribedText),
-            native_expression: sanitizeText(analysisData.native_expression || ''),
-            feedback: sanitizeText(analysisData.explanation || 'Good pronunciation!'),
-            sentence_breakdown: sentenceBreakdown,
-            error_focus: errorFocus,
-        };
+    const voiceFeedback = {
+      pronunciation_score: pronunciationScore,
+      corrected_text: sanitizeText(
+        analysisData.corrected_text || transcribedText
+      ),
+      native_expression: sanitizeText(analysisData.native_expression || ""),
+      feedback: sanitizeText(analysisData.explanation || "Good pronunciation!"),
+      sentence_breakdown: sentenceBreakdown,
+      error_focus: errorFocus,
+    };
 
-        const response = {
-            message: replyText,
-            translation: data.translation,
-            voice_feedback: voiceFeedback,
-            // Also include standard review feedback structure if needed by frontend
-            review_feedback: {
-                is_perfect: false,
-                corrected_text: voiceFeedback.corrected_text,
-                native_expression: voiceFeedback.native_expression,
-                explanation: voiceFeedback.feedback,
-                example_answer: sanitizeText(analysisData.example_answer || ''),
-            }
-        };
+    const response = {
+      message: replyText,
+      translation: data.translation,
+      voice_feedback: voiceFeedback,
+      // Also include standard review feedback structure if needed by frontend
+      review_feedback: {
+        is_perfect: false,
+        corrected_text: voiceFeedback.corrected_text,
+        native_expression: voiceFeedback.native_expression,
+        explanation: voiceFeedback.feedback,
+        example_answer: sanitizeText(analysisData.example_answer || ""),
+      },
+    };
 
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-
-    } catch (error) {
-        console.error('Error in /chat/send-voice:', error);
-        return new Response(
-            JSON.stringify({
-                message: "Sorry, I'm having trouble processing your voice message.",
-                debug_error: String(error)
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
-    }
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/send-voice:", error);
+    return new Response(
+      JSON.stringify({
+        message: "Sorry, I'm having trouble processing your voice message.",
+        debug_error: String(error),
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/hint endpoint
 async function handleChatHint(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: HintRequest = await request.json();
-        const targetLang = body.target_language || 'English';
+  try {
+    const body: HintRequest = await request.json();
+    const targetLang = body.target_language || "English";
 
-        const hintPrompt = `You are a helpful conversation tutor teaching ${targetLang}.
+    const hintPrompt = `You are a helpful conversation tutor teaching ${targetLang}.
     Key Scenario Context: ${body.scene_context}.
     
     Based on the conversation history, suggest 3 natural, diverse, and appropriate short responses for the user (learner) to say next in ${targetLang}.
@@ -460,43 +529,65 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
     2. Vary the intent (e.g., one agreement, one question, one alternative).
     3. Output JSON format only: { "hints": ["Hint 1", "Hint 2", "Hint 3"] }`;
 
-        const messages = [{ role: 'system', content: hintPrompt }];
+    const messages = [{ role: "system", content: hintPrompt }];
 
-        // Add recent history (last 5 messages)
-        if (body.history && body.history.length > 0) {
-            messages.push(...body.history.slice(-5));
-        }
-
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
-
-        let hints = data.hints || [];
-        if (hints.length === 0) {
-            hints = ['Yes, please.', 'No, thank you.', 'Could you repeat that?'];
-        }
-
-        const response: HintResponse = { hints };
-
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /chat/hint:', error);
-        return new Response(
-            JSON.stringify({ hints: ['Could you help me?', "I don't understand.", 'Please continue.'] }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+    // Add recent history (last 5 messages)
+    if (body.history && body.history.length > 0) {
+      messages.push(...body.history.slice(-5));
     }
+
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
+
+    let hints = data.hints || [];
+    if (hints.length === 0) {
+      hints = ["Yes, please.", "No, thank you.", "Could you repeat that?"];
+    }
+
+    const response: HintResponse = { hints };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/hint:", error);
+    return new Response(
+      JSON.stringify({
+        hints: [
+          "Could you help me?",
+          "I don't understand.",
+          "Please continue.",
+        ],
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/analyze endpoint
 // Handle /chat/analyze endpoint
-async function handleChatAnalyze(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: AnalyzeRequest = await request.json();
-        const nativeLang = body.native_language || 'Chinese (Simplified)';
+async function handleChatAnalyze(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: AnalyzeRequest = await request.json();
+    const nativeLang = body.native_language || "Chinese (Simplified)";
 
-        const analyzePrompt = `Act as a language tutor. Analyze this sentence: "${body.message}"
+    const analyzePrompt = `Act as a language tutor. Analyze this sentence: "${body.message}"
     
     Provide a detailed breakdown in ${nativeLang}.
     
@@ -550,118 +641,128 @@ async function handleChatAnalyze(request: Request, env: Env): Promise<Response> 
     
     Remember: Output ONLY the JSON lines above, nothing else. No markdown, no explanations, no code blocks.`;
 
+    const messages = [{ role: "user", content: analyzePrompt }];
 
-        const messages = [{ role: 'user', content: analyzePrompt }];
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://tritalk.app",
+          "X-Title": "TriTalk",
+        },
+        body: JSON.stringify({
+          model: env.OPENROUTER_MODEL,
+          messages,
+          stream: true, // Enable streaming
+        }),
+      }
+    );
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://tritalk.app',
-                'X-Title': 'TriTalk',
-            },
-            body: JSON.stringify({
-                model: env.OPENROUTER_MODEL,
-                messages,
-                stream: true, // Enable streaming
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`OpenRouter API error: ${response.status}`);
-        }
-
-        // Create a transform stream to parse SSE and emit raw text chunks (NDJSON)
-        const { readable, writable } = new TransformStream();
-        const writer = writable.getWriter();
-        
-        // Process the stream
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        
-        let buffer = '';
-        let accumulatedContent = ''; // Accumulate content to detect and strip markdown blocks
-
-        (async () => {
-            try {
-                if (!reader) throw new Error('No response body');
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    buffer += chunk;
-                    
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || ''; // Keep the incomplete line
-
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (!trimmed || trimmed === 'data: [DONE]') continue;
-                        
-                        if (trimmed.startsWith('data: ')) {
-                            try {
-                                const jsonStr = trimmed.slice(6);
-                                const parsed = JSON.parse(jsonStr);
-                                const content = parsed.choices?.[0]?.delta?.content || '';
-                                if (content) {
-                                    accumulatedContent += content;
-                                    
-                                    // Clean up markdown code blocks
-                                    let cleanContent = content;
-                                    // Don't write if it's part of a markdown fence
-                                    if (content.includes('```')) {
-                                        // Skip writing markdown fences
-                                        continue;
-                                    }
-                                    
-                                    await writer.write(new TextEncoder().encode(cleanContent));
-                                }
-                            } catch (e) {
-                                // Ignore parse errors for intermediate chunks
-                            }
-                        }
-                    }
-                }
-                await writer.close();
-            } catch (e) {
-                console.error('Stream processing error:', e);
-                await writer.abort(e);
-            }
-        })();
-
-        return new Response(readable, {
-            headers: { 
-                'Content-Type': 'application/x-ndjson', 
-                ...corsHeaders(request.headers.get('Origin')) 
-            },
-        });
-
-    } catch (error) {
-        console.error('Error in /chat/analyze:', error);
-        return new Response(
-            JSON.stringify({
-                grammar_points: [],
-                vocabulary: [],
-                sentence_structure: 'Analysis unavailable (Server Error)',
-                overall_summary: 'Description unavailable.',
-                debug_error: String(error)
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status}`);
     }
+
+    // Create a transform stream to parse SSE and emit raw text chunks (NDJSON)
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+
+    // Process the stream
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    let buffer = "";
+    let accumulatedContent = ""; // Accumulate content to detect and strip markdown blocks
+
+    (async () => {
+      try {
+        if (!reader) throw new Error("No response body");
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep the incomplete line
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed === "data: [DONE]") continue;
+
+            if (trimmed.startsWith("data: ")) {
+              try {
+                const jsonStr = trimmed.slice(6);
+                const parsed = JSON.parse(jsonStr);
+                const content = parsed.choices?.[0]?.delta?.content || "";
+                if (content) {
+                  accumulatedContent += content;
+
+                  // Clean up markdown code blocks
+                  let cleanContent = content;
+                  // Don't write if it's part of a markdown fence
+                  if (content.includes("```")) {
+                    // Skip writing markdown fences
+                    continue;
+                  }
+
+                  await writer.write(new TextEncoder().encode(cleanContent));
+                }
+              } catch (e) {
+                // Ignore parse errors for intermediate chunks
+              }
+            }
+          }
+        }
+        await writer.close();
+      } catch (e) {
+        console.error("Stream processing error:", e);
+        await writer.abort(e);
+      }
+    })();
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "application/x-ndjson",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/analyze:", error);
+    return new Response(
+      JSON.stringify({
+        grammar_points: [],
+        vocabulary: [],
+        sentence_structure: "Analysis unavailable (Server Error)",
+        overall_summary: "Description unavailable.",
+        debug_error: String(error),
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /scene/generate endpoint
-async function handleSceneGenerate(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: SceneGenerationRequest = await request.json();
+async function handleSceneGenerate(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: SceneGenerationRequest = await request.json();
 
-        const prompt = `Act as a creative educational scenario designer.
+    const prompt = `Act as a creative educational scenario designer.
     User Request: "${body.description}"
-    Tone: ${body.tone || 'Casual'}
+    Tone: ${body.tone || "Casual"}
     
     Create a roleplay scenario for learning English.
     Output JSON ONLY with these fields:
@@ -673,173 +774,235 @@ async function handleSceneGenerate(request: Request, env: Env): Promise<Response
     - initial_message: The first thing the AI says to start the conversation.
     - emoji: A single relevant emoji char.`;
 
-        const messages = [{ role: 'user', content: prompt }];
+    const messages = [{ role: "user", content: prompt }];
 
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        let data = parseJSON(content);
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    let data = parseJSON(content);
 
-        // Handle list response (some models return [{}])
-        if (Array.isArray(data) && data.length > 0) {
-            data = data[0];
-        }
-
-        const response: SceneGenerationResponse = {
-            title: data.title || 'Custom Scene',
-            ai_role: data.ai_role || 'Assistant',
-            user_role: data.user_role || 'Learner',
-            goal: data.goal || 'Practice English',
-            description: data.description || body.description,
-            initial_message: data.initial_message || 'Hello! Ready to practice?',
-            emoji: data.emoji || '✨',
-        };
-
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /scene/generate:', error);
-        const body: SceneGenerationRequest = await request.json();
-        return new Response(
-            JSON.stringify({
-                title: 'Custom Scene',
-                ai_role: 'Assistant',
-                user_role: 'User',
-                goal: 'Practice conversation',
-                description: body.description,
-                initial_message: "Hi! Let's start practicing.",
-                emoji: '📝',
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+    // Handle list response (some models return [{}])
+    if (Array.isArray(data) && data.length > 0) {
+      data = data[0];
     }
+
+    const response: SceneGenerationResponse = {
+      title: data.title || "Custom Scene",
+      ai_role: data.ai_role || "Assistant",
+      user_role: data.user_role || "Learner",
+      goal: data.goal || "Practice English",
+      description: data.description || body.description,
+      initial_message: data.initial_message || "Hello! Ready to practice?",
+      emoji: data.emoji || "✨",
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /scene/generate:", error);
+    const body: SceneGenerationRequest = await request.json();
+    return new Response(
+      JSON.stringify({
+        title: "Custom Scene",
+        ai_role: "Assistant",
+        user_role: "User",
+        goal: "Practice conversation",
+        description: body.description,
+        initial_message: "Hi! Let's start practicing.",
+        emoji: "📝",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
-
-
 // Handle /scene/polish endpoint
-async function handleScenePolish(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: PolishRequest = await request.json();
+async function handleScenePolish(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: PolishRequest = await request.json();
 
-        const prompt = `Refine and expand the following scenario description for an English roleplay practice session. 
+    const prompt = `Refine and expand the following scenario description for an English roleplay practice session. 
     User Input: "${body.description}"
     
     Make it more specific and suitable for setting up a roleplay context in a few sentences. 
     It should describe the situation clearly so the AI knows how to roleplay.
     Output JSON ONLY: { "polished_text": "..." }`;
 
-        const messages = [{ role: 'user', content: prompt }];
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
+    const messages = [{ role: "user", content: prompt }];
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
 
-        const response: PolishResponse = {
-            polished_text: data.polished_text || body.description,
-        };
+    const response: PolishResponse = {
+      polished_text: data.polished_text || body.description,
+    };
 
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /scene/polish:', error);
-        return new Response(
-            JSON.stringify({
-                polished_text: "Could not polish text at this time.",
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
-    }
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /scene/polish:", error);
+    return new Response(
+      JSON.stringify({
+        polished_text: "Could not polish text at this time.",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /common/translate endpoint
 async function handleTranslate(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: TranslateRequest = await request.json();
+  try {
+    const body: TranslateRequest = await request.json();
 
-        const prompt = `Translate the following text to ${body.target_language}.
+    const prompt = `Translate the following text to ${body.target_language}.
     Text: "${body.text}"
     
     Output JSON ONLY: { "translation": "..." }`;
 
-        const messages = [{ role: 'user', content: prompt }];
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
+    const messages = [{ role: "user", content: prompt }];
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
 
-        const response: TranslateResponse = {
-            translation: data.translation || body.text,
-        };
+    const response: TranslateResponse = {
+      translation: data.translation || body.text,
+    };
 
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /common/translate:', error);
-        return new Response(
-            JSON.stringify({
-                translation: "Translation unavailable.",
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
-    }
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /common/translate:", error);
+    return new Response(
+      JSON.stringify({
+        translation: "Translation unavailable.",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/shadow endpoint (Simulated for MVP)
-async function handleShadowAnalysis(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: ShadowRequest = await request.json();
+async function handleShadowAnalysis(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: ShadowRequest = await request.json();
 
-        // SIMULATION: Compare texts for a rough score
-        const target = body.target_text.toLowerCase().replace(/[^\w\s]/g, '');
-        const user = body.user_audio_text.toLowerCase().replace(/[^\w\s]/g, '');
+    // SIMULATION: Compare texts for a rough score
+    const target = body.target_text.toLowerCase().replace(/[^\w\s]/g, "");
+    const user = body.user_audio_text.toLowerCase().replace(/[^\w\s]/g, "");
 
-        // Simple Levenshtein-like ratio or word match (Simplified for speed)
-        const targetWords = target.split(/\s+/);
-        const userWords = user.split(/\s+/);
-        const matchCount = userWords.filter(w => targetWords.includes(w)).length;
-        let score = Math.round((matchCount / Math.max(targetWords.length, 1)) * 100);
+    // Simple Levenshtein-like ratio or word match (Simplified for speed)
+    const targetWords = target.split(/\s+/);
+    const userWords = user.split(/\s+/);
+    const matchCount = userWords.filter((w) => targetWords.includes(w)).length;
+    let score = Math.round(
+      (matchCount / Math.max(targetWords.length, 1)) * 100
+    );
 
-        // Cap and floor
-        score = Math.max(0, Math.min(100, score));
+    // Cap and floor
+    score = Math.max(0, Math.min(100, score));
 
-        // Generate heuristic feedback
-        let feedback = "Good effort!";
-        if (score > 90) feedback = "Excellent! Your pronunciation is very clear.";
-        else if (score > 70) feedback = "Great job, but watch your intonation on the key words.";
-        else if (score > 50) feedback = "You're getting there. Try to mimic the stress on verbs.";
-        else feedback = "Keep practicing! Listen closely to the original audio.";
+    // Generate heuristic feedback
+    let feedback = "Good effort!";
+    if (score > 90) feedback = "Excellent! Your pronunciation is very clear.";
+    else if (score > 70)
+      feedback = "Great job, but watch your intonation on the key words.";
+    else if (score > 50)
+      feedback = "You're getting there. Try to mimic the stress on verbs.";
+    else feedback = "Keep practicing! Listen closely to the original audio.";
 
-        const response: ShadowResponse = {
-            score: score,
-            details: {
-                intonation_score: Math.max(0, score - 10), // Simulated variety
-                pronunciation_score: score,
-                feedback: feedback
-            }
-        };
+    const response: ShadowResponse = {
+      score: score,
+      details: {
+        intonation_score: Math.max(0, score - 10), // Simulated variety
+        pronunciation_score: score,
+        feedback: feedback,
+      },
+    };
 
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /chat/shadow:', error);
-        return new Response(
-            JSON.stringify({
-                score: 0,
-                details: { intonation_score: 0, pronunciation_score: 0, feedback: "Analysis failed." }
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
-    }
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/shadow:", error);
+    return new Response(
+      JSON.stringify({
+        score: 0,
+        details: {
+          intonation_score: 0,
+          pronunciation_score: 0,
+          feedback: "Analysis failed.",
+        },
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/optimize endpoint
-async function handleChatOptimize(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: OptimizeRequest = await request.json();
+async function handleChatOptimize(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: OptimizeRequest = await request.json();
 
+    const targetLang = body.target_language || "English";
 
-        const targetLang = body.target_language || 'English';
-
-        const prompt = `You are a helpful language tutor.
+    const prompt = `You are a helpful language tutor.
     Context: The user is in a roleplay scenario described as: "${body.scene_context}".
     Goal: Optimize the user's draft message into natural, correct ${targetLang} suitable for this context.
     Draft: "${body.message}"
@@ -849,247 +1012,509 @@ async function handleChatOptimize(request: Request, env: Env): Promise<Response>
     2. Maintain the persona/role if apparent from context.
     3. Output JSON ONLY: { "optimized_text": "..." }`;
 
-        const messages = [{ role: 'system', content: prompt }];
+    const messages = [{ role: "system", content: prompt }];
 
-        // Add recent history for context if available
-        if (body.history && body.history.length > 0) {
-            messages.push(...body.history.slice(-5));
-        }
-
-        const content = await callOpenRouter(env.OPENROUTER_API_KEY, env.OPENROUTER_MODEL, messages);
-        const data = parseJSON(content);
-
-        const response: OptimizeResponse = {
-            optimized_text: data.optimized_text || body.message,
-        };
-
-        return new Response(JSON.stringify(response), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /chat/optimize:', error);
-        return new Response(
-            JSON.stringify({
-                optimized_text: "Optimization unavailable.",
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+    // Add recent history for context if available
+    if (body.history && body.history.length > 0) {
+      messages.push(...body.history.slice(-5));
     }
+
+    const content = await callOpenRouter(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_MODEL,
+      messages
+    );
+    const data = parseJSON(content);
+
+    const response: OptimizeResponse = {
+      optimized_text: data.optimized_text || body.message,
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /chat/optimize:", error);
+    return new Response(
+      JSON.stringify({
+        optimized_text: "Optimization unavailable.",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
+}
+
+// Handle /tts/generate endpoint
+// Generates speech audio from text using MiniMax T2A V2 API
+async function handleTTSGenerate(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    // Check if MiniMax credentials are configured
+    if (!env.MINIMAX_API_KEY || !env.MINIMAX_GROUP_ID) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "TTS service not configured. Please set MINIMAX_API_KEY and MINIMAX_GROUP_ID.",
+        } as TTSResponse),
+        {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    const body: TTSRequest = await request.json();
+
+    if (!body.text || body.text.trim().length === 0) {
+      return new Response(
+        JSON.stringify({
+          error: "Text is required for TTS generation.",
+        } as TTSResponse),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    // Limit text length to avoid excessive API costs
+    const text = body.text.slice(0, 2000);
+
+    // MiniMax T2A V2 API endpoint
+    const apiUrl = `https://api.minimax.chat/v1/t2a_v2?GroupId=${env.MINIMAX_GROUP_ID}`;
+
+    // Default voice settings - using a natural English voice
+    const voiceId = body.voice_id || "male-qn-qingse"; // Default voice
+
+    const ttsRequestBody = {
+      model: "speech-01-turbo", // Fast, low-latency model
+      text: text,
+      stream: false,
+      voice_setting: {
+        voice_id: voiceId,
+        speed: 1.0,
+        vol: 1.0,
+        pitch: 0,
+      },
+      audio_setting: {
+        sample_rate: 32000,
+        bitrate: 128000,
+        format: "mp3",
+        channel: 1,
+      },
+    };
+
+    const ttsResponse = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.MINIMAX_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(ttsRequestBody),
+    });
+
+    if (!ttsResponse.ok) {
+      const errorText = await ttsResponse.text();
+      console.error("MiniMax TTS API Error:", errorText);
+      return new Response(
+        JSON.stringify({
+          error: `TTS generation failed: ${ttsResponse.status}`,
+        } as TTSResponse),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    const ttsData = (await ttsResponse.json()) as any;
+
+    // Check for API-level errors
+    if (ttsData.base_resp?.status_code !== 0) {
+      console.error("MiniMax TTS API returned error:", ttsData.base_resp);
+      return new Response(
+        JSON.stringify({
+          error: ttsData.base_resp?.status_msg || "TTS generation failed",
+        } as TTSResponse),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    // Extract audio data (hex-encoded) and convert to base64
+    const audioHex = ttsData.data?.audio;
+    if (!audioHex) {
+      return new Response(
+        JSON.stringify({
+          error: "No audio data received from TTS API",
+        } as TTSResponse),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    // Convert hex to base64
+    const hexToBase64 = (hexString: string): string => {
+      const bytes = new Uint8Array(
+        hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+      );
+      let binary = "";
+      bytes.forEach((byte) => (binary += String.fromCharCode(byte)));
+      return btoa(binary);
+    };
+
+    const audioBase64 = hexToBase64(audioHex);
+
+    const response: TTSResponse = {
+      audio_base64: audioBase64,
+      duration_ms: ttsData.extra_info?.audio_length,
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  } catch (error) {
+    console.error("Error in /tts/generate:", error);
+    return new Response(
+      JSON.stringify({
+        error: "TTS generation failed.",
+      } as TTSResponse),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /chat/messages DELETE endpoint
-async function handleDeleteMessages(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: any = await request.json();
-        const sceneKey = body.scene_key;
-        const messageIds: string[] = body.message_ids || [];
+async function handleDeleteMessages(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body: any = await request.json();
+    const sceneKey = body.scene_key;
+    const messageIds: string[] = body.message_ids || [];
 
-        if (!sceneKey || !messageIds || messageIds.length === 0) {
-            return new Response(
-                JSON.stringify({ error: 'Missing scene_key or message_ids' }),
-                { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-            );
+    if (!sceneKey || !messageIds || messageIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Missing scene_key or message_ids" }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
         }
-
-        // Get authenticated user
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return new Response(
-                JSON.stringify({ error: 'Unauthorized' }),
-                { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-            );
-        }
-
-        const token = authHeader.split(' ')[1];
-        const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        });
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return new Response(
-                JSON.stringify({ error: 'Unauthorized' }),
-                { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-            );
-        }
-
-        // Fetch current messages for this scene
-        const { data: chatHistory, error: fetchError } = await supabase
-            .from('chat_history')
-            .select('messages')
-            .eq('user_id', user.id)
-            .eq('scene_key', sceneKey)
-            .maybeSingle();
-
-        if (fetchError) {
-            console.error('Error fetching chat history:', fetchError);
-            return new Response(
-                JSON.stringify({ error: 'Failed to fetch chat history' }),
-                { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-            );
-        }
-
-        if (!chatHistory || !chatHistory.messages) {
-            // No messages to delete
-            return new Response(
-                JSON.stringify({ success: true, deleted_count: 0 }),
-                { headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-            );
-        }
-
-        // Filter out messages with IDs in the messageIds array
-        const currentMessages = chatHistory.messages as any[];
-        const filteredMessages = currentMessages.filter(msg => !messageIds.includes(msg.id));
-        const deletedCount = currentMessages.length - filteredMessages.length;
-
-        // Update the chat_history record with filtered messages
-        const { error: updateError } = await supabase
-            .from('chat_history')
-            .update({
-                messages: filteredMessages,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', user.id)
-            .eq('scene_key', sceneKey);
-
-        if (updateError) {
-            console.error('Error updating chat history:', updateError);
-            return new Response(
-                JSON.stringify({ error: 'Failed to delete messages' }),
-                { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-            );
-        }
-
-        return new Response(
-            JSON.stringify({ success: true, deleted_count: deletedCount }),
-            { headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
-
-    } catch (error) {
-        console.error('Error in /chat/messages DELETE:', error);
-        return new Response(
-            JSON.stringify({ error: 'Failed to delete messages' }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
+      );
     }
+
+    // Get authenticated user
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
+
+    // Fetch current messages for this scene
+    const { data: chatHistory, error: fetchError } = await supabase
+      .from("chat_history")
+      .select("messages")
+      .eq("user_id", user.id)
+      .eq("scene_key", sceneKey)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error("Error fetching chat history:", fetchError);
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch chat history" }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    if (!chatHistory || !chatHistory.messages) {
+      // No messages to delete
+      return new Response(JSON.stringify({ success: true, deleted_count: 0 }), {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
+
+    // Filter out messages with IDs in the messageIds array
+    const currentMessages = chatHistory.messages as any[];
+    const filteredMessages = currentMessages.filter(
+      (msg) => !messageIds.includes(msg.id)
+    );
+    const deletedCount = currentMessages.length - filteredMessages.length;
+
+    // Update the chat_history record with filtered messages
+    const { error: updateError } = await supabase
+      .from("chat_history")
+      .update({
+        messages: filteredMessages,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("scene_key", sceneKey);
+
+    if (updateError) {
+      console.error("Error updating chat history:", updateError);
+      return new Response(
+        JSON.stringify({ error: "Failed to delete messages" }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, deleted_count: deletedCount }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in /chat/messages DELETE:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to delete messages" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  }
 }
 
 // Handle /user/sync endpoint
 async function handleUserSync(request: Request, env: Env): Promise<Response> {
-    try {
-        const body: any = await request.json();
+  try {
+    const body: any = await request.json();
 
-        // In a real application, you would valid the user data and store it in a database (D1, KV, Supabase, etc)
-        // For now, we just log it (in production logs) and return success.
-        console.log('Received user sync:', body.id, body.email);
+    // In a real application, you would valid the user data and store it in a database (D1, KV, Supabase, etc)
+    // For now, we just log it (in production logs) and return success.
+    console.log("Received user sync:", body.id, body.email);
 
-        return new Response(JSON.stringify({ status: 'success', synced_at: new Date().toISOString() }), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    } catch (error) {
-        console.error('Error in /user/sync:', error);
-        return new Response(
-            JSON.stringify({ error: 'Failed to sync user data' }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) } }
-        );
-    }
+    return new Response(
+      JSON.stringify({
+        status: "success",
+        synced_at: new Date().toISOString(),
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in /user/sync:", error);
+    return new Response(JSON.stringify({ error: "Failed to sync user data" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  }
 }
 
 // Main worker handler
 export default {
-    async fetch(request: Request, env: Env): Promise<Response> {
-        const url = new URL(request.url);
-        const origin = request.headers.get('Origin');
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const origin = request.headers.get("Origin");
 
-        // Handle CORS preflight
-        if (request.method === 'OPTIONS') {
-            return new Response(null, { headers: corsHeaders(origin) });
+    // Handle CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders(origin) });
+    }
+
+    // Validate User Authentication (Option C - Most Thorough)
+    if (url.pathname !== "/health" && url.pathname !== "/user/sync") {
+      const user = await authenticateUser(request, env);
+      if (!user) {
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized: Invalid User Token or Subscription",
+          }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders(origin),
+            },
+          }
+        );
+      }
+      // Request is authenticated, proceed
+    }
+
+    // Route requests
+    if (url.pathname === "/" && request.method === "GET") {
+      return new Response(
+        JSON.stringify({
+          message: "TriTalk Backend Running on Cloudflare Workers",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders(request.headers.get("Origin")),
+          },
         }
+      );
+    }
 
-        // Validate User Authentication (Option C - Most Thorough)
-        if (url.pathname !== '/health' && url.pathname !== '/user/sync') {
-            const user = await authenticateUser(request, env);
-            if (!user) {
-                return new Response(
-                    JSON.stringify({ error: 'Unauthorized: Invalid User Token or Subscription' }),
-                    { 
-                        status: 401, 
-                        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } 
-                    }
-                );
-            }
-            // Request is authenticated, proceed
-        }
+    if (url.pathname === "/health" && request.method === "GET") {
+      return new Response(JSON.stringify({ status: "ok" }), {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders(request.headers.get("Origin")),
+        },
+      });
+    }
 
-        // Route requests
-        if (url.pathname === '/' && request.method === 'GET') {
-            return new Response(JSON.stringify({ message: 'TriTalk Backend Running on Cloudflare Workers' }), {
-                headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-            });
-        }
+    if (url.pathname === "/chat/send" && request.method === "POST") {
+      return handleChatSend(request, env);
+    }
 
-        if (url.pathname === '/health' && request.method === 'GET') {
-            return new Response(JSON.stringify({ status: 'ok' }), {
-                headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-            });
-        }
+    if (url.pathname === "/chat/transcribe" && request.method === "POST") {
+      return handleChatTranscribe(request, env);
+    }
 
-        if (url.pathname === '/chat/send' && request.method === 'POST') {
-            return handleChatSend(request, env);
-        }
+    if (url.pathname === "/chat/send-voice" && request.method === "POST") {
+      return handleChatSendVoice(request, env);
+    }
 
-        if (url.pathname === '/chat/transcribe' && request.method === 'POST') {
-            return handleChatTranscribe(request, env);
-        }
+    if (url.pathname === "/user/sync" && request.method === "POST") {
+      return handleUserSync(request, env);
+    }
 
-        if (url.pathname === '/chat/send-voice' && request.method === 'POST') {
-            return handleChatSendVoice(request, env);
-        }
+    if (url.pathname === "/chat/hint" && request.method === "POST") {
+      return handleChatHint(request, env);
+    }
 
-        if (url.pathname === '/user/sync' && request.method === 'POST') {
-            return handleUserSync(request, env);
-        }
+    if (url.pathname === "/chat/analyze" && request.method === "POST") {
+      return handleChatAnalyze(request, env);
+    }
 
-        if (url.pathname === '/chat/hint' && request.method === 'POST') {
-            return handleChatHint(request, env);
-        }
+    if (url.pathname === "/scene/generate" && request.method === "POST") {
+      return handleSceneGenerate(request, env);
+    }
 
-        if (url.pathname === '/chat/analyze' && request.method === 'POST') {
-            return handleChatAnalyze(request, env);
-        }
+    if (url.pathname === "/scene/polish" && request.method === "POST") {
+      return handleScenePolish(request, env);
+    }
 
-        if (url.pathname === '/scene/generate' && request.method === 'POST') {
-            return handleSceneGenerate(request, env);
-        }
+    if (url.pathname === "/common/translate" && request.method === "POST") {
+      return handleTranslate(request, env);
+    }
 
-        if (url.pathname === '/scene/polish' && request.method === 'POST') {
-            return handleScenePolish(request, env);
-        }
+    if (url.pathname === "/chat/shadow" && request.method === "POST") {
+      return handleShadowAnalysis(request, env);
+    }
 
-        if (url.pathname === '/common/translate' && request.method === 'POST') {
-            return handleTranslate(request, env);
-        }
+    if (url.pathname === "/chat/optimize" && request.method === "POST") {
+      return handleChatOptimize(request, env);
+    }
 
-        if (url.pathname === '/chat/shadow' && request.method === 'POST') {
-            return handleShadowAnalysis(request, env);
-        }
+    if (url.pathname === "/chat/messages" && request.method === "DELETE") {
+      return handleDeleteMessages(request, env);
+    }
 
-        if (url.pathname === '/chat/optimize' && request.method === 'POST') {
-            return handleChatOptimize(request, env);
-        }
+    if (url.pathname === "/tts/generate" && request.method === "POST") {
+      return handleTTSGenerate(request, env);
+    }
 
-        if (url.pathname === '/chat/messages' && request.method === 'DELETE') {
-            return handleDeleteMessages(request, env);
-        }
-
-        // 404 for unknown routes
-        return new Response(JSON.stringify({ error: 'Not Found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) },
-        });
-    },
+    // 404 for unknown routes
+    return new Response(JSON.stringify({ error: "Not Found" }), {
+      status: 404,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request.headers.get("Origin")),
+      },
+    });
+  },
 };

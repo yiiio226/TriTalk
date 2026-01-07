@@ -7,8 +7,8 @@ import '../env.dart';
 
 // 环境枚举
 enum Environment {
-  localDev,    // 本地开发环境 (Wrangler dev server)
-  production,  // 生产环境 (已部署的 Cloudflare Workers)
+  localDev, // 本地开发环境 (Wrangler dev server)
+  production, // 生产环境 (已部署的 Cloudflare Workers)
 }
 
 class ApiService {
@@ -17,17 +17,17 @@ class ApiService {
   // - 开发时: flutter run (默认使用 localDev)
   // - 生产时: flutter run --dart-define=USE_PROD=true
   //          flutter build apk --dart-define=USE_PROD=true
-  static const Environment currentEnvironment = 
+  static const Environment currentEnvironment =
       bool.fromEnvironment('USE_PROD', defaultValue: false)
-          ? Environment.production
-          : Environment.localDev;
+      ? Environment.production
+      : Environment.localDev;
   // =================================================
-  
+
   // Helper to create headers with Auth Token
   static Map<String, String> _headers() {
     final session = Supabase.instance.client.auth.currentSession;
     final token = session?.accessToken ?? '';
-    
+
     // Debug print to check if token exists
     if (token.isEmpty) {
       print('⚠️ Warning: No Auth Token available for API call');
@@ -38,27 +38,31 @@ class ApiService {
       'Authorization': 'Bearer $token',
     };
   }
-  
+
   // 本地开发 URL (Cloudflare Workers 开发服务器)
   static const String _localDevUrl = Env.localBackendUrl;
-  
+
   // 生产环境 URL (已部署的 Cloudflare Workers)
   static const String _productionUrl = Env.prodBackendUrl;
-  
+
   // 根据当前环境自动选择 URL
   static String get baseUrl {
     switch (currentEnvironment) {
       case Environment.localDev:
-        print('🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl');
+        print(
+          '🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl',
+        );
         return _localDevUrl;
       case Environment.production:
-        print('🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl');
+        print(
+          '🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl',
+        );
         return _productionUrl;
     }
-  } 
+  }
 
   Future<ChatResponse> sendMessage(
-    String text, 
+    String text,
     String sceneContext,
     List<Map<String, String>> history,
   ) async {
@@ -89,7 +93,10 @@ class ApiService {
     }
   }
 
-  Future<HintResponse> getHints(String sceneContext, List<Map<String, String>> history) async {
+  Future<HintResponse> getHints(
+    String sceneContext,
+    List<Map<String, String>> history,
+  ) async {
     try {
       final prefs = PreferencesService();
       final nativeLang = await prefs.getNativeLanguage();
@@ -99,7 +106,8 @@ class ApiService {
         Uri.parse('$baseUrl/chat/hint'),
         headers: _headers(),
         body: jsonEncode({
-          'message': '', // Not needed for hint request strictly but used in model
+          'message':
+              '', // Not needed for hint request strictly but used in model
           'history': history,
           'scene_context': sceneContext,
           'native_language': nativeLang,
@@ -116,20 +124,20 @@ class ApiService {
       throw Exception('Error getting hints: $e');
     }
   }
-  
-  Future<SceneGenerationResponse> generateScene(String description, String tone) async {
+
+  Future<SceneGenerationResponse> generateScene(
+    String description,
+    String tone,
+  ) async {
     try {
       // Scene generation might mostly depend on target language for the content,
       // but we pass it anyway if the backend uses it.
       // Currently backend doesn't explicitly look for it in generate_scene but it's good practice.
-      
+
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
         headers: _headers(),
-        body: jsonEncode({
-          'description': description,
-          'tone': tone,
-        }),
+        body: jsonEncode({'description': description, 'tone': tone}),
       );
 
       if (response.statusCode == 200) {
@@ -147,10 +155,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/common/translate'),
         headers: _headers(),
-        body: jsonEncode({
-          'text': text,
-          'target_language': targetLanguage,
-        }),
+        body: jsonEncode({'text': text, 'target_language': targetLanguage}),
       );
 
       if (response.statusCode == 200) {
@@ -178,9 +183,11 @@ class ApiService {
     final client = http.Client();
     try {
       final streamedResponse = await client.send(request);
-      
+
       if (streamedResponse.statusCode != 200) {
-        throw Exception('Failed to analyze message: ${streamedResponse.statusCode}');
+        throw Exception(
+          'Failed to analyze message: ${streamedResponse.statusCode}',
+        );
       }
 
       // Initial empty analysis state
@@ -200,7 +207,7 @@ class ApiService {
 
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
         buffer += chunk;
-        
+
         while (buffer.contains('\n')) {
           final index = buffer.indexOf('\n');
           final line = buffer.substring(0, index).trim();
@@ -210,50 +217,62 @@ class ApiService {
 
           try {
             final json = jsonDecode(line);
-            if (json is Map<String, dynamic> && json.containsKey('type') && json.containsKey('data')) {
+            if (json is Map<String, dynamic> &&
+                json.containsKey('type') &&
+                json.containsKey('data')) {
               final type = json['type'];
               final data = json['data'];
 
               switch (type) {
                 case 'summary':
-                  currentAnalysis = currentAnalysis.copyWith(overallSummary: data as String);
+                  currentAnalysis = currentAnalysis.copyWith(
+                    overallSummary: data as String,
+                  );
                   break;
                 case 'structure':
                   if (data is Map<String, dynamic>) {
                     currentAnalysis = currentAnalysis.copyWith(
                       sentenceStructure: data['structure'] ?? '',
-                      sentenceBreakdown: (data['breakdown'] as List?)
-                          ?.map((e) => StructureSegment.fromJson(e))
-                          .toList() ?? []
+                      sentenceBreakdown:
+                          (data['breakdown'] as List?)
+                              ?.map((e) => StructureSegment.fromJson(e))
+                              .toList() ??
+                          [],
                     );
                   }
                   break;
                 case 'grammar':
                   if (data is List) {
-                     currentAnalysis = currentAnalysis.copyWith(
-                      grammarPoints: data.map((e) => GrammarPoint.fromJson(e)).toList(),
+                    currentAnalysis = currentAnalysis.copyWith(
+                      grammarPoints: data
+                          .map((e) => GrammarPoint.fromJson(e))
+                          .toList(),
                     );
                   }
                   break;
                 case 'vocabulary':
-                   if (data is List) {
+                  if (data is List) {
                     currentAnalysis = currentAnalysis.copyWith(
-                      vocabulary: data.map((e) => VocabularyItem.fromJson(e)).toList(),
+                      vocabulary: data
+                          .map((e) => VocabularyItem.fromJson(e))
+                          .toList(),
                     );
                   }
                   break;
                 case 'idioms':
-                   if (data is List) {
+                  if (data is List) {
                     currentAnalysis = currentAnalysis.copyWith(
                       idioms: data.map((e) => IdiomItem.fromJson(e)).toList(),
                     );
                   }
                   break;
                 case 'pragmatic':
-                  currentAnalysis = currentAnalysis.copyWith(pragmaticAnalysis: data as String);
+                  currentAnalysis = currentAnalysis.copyWith(
+                    pragmaticAnalysis: data as String,
+                  );
                   break;
                 case 'emotion':
-                   if (data is List) {
+                  if (data is List) {
                     currentAnalysis = currentAnalysis.copyWith(
                       emotionTags: List<String>.from(data),
                     );
@@ -280,9 +299,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/scene/polish'),
         headers: _headers(),
-        body: jsonEncode({
-          'description': description,
-        }),
+        body: jsonEncode({'description': description}),
       );
 
       if (response.statusCode == 200) {
@@ -296,7 +313,10 @@ class ApiService {
     }
   }
 
-  Future<ShadowResult> analyzeShadow(String targetText, String userAudioText) async {
+  Future<ShadowResult> analyzeShadow(
+    String targetText,
+    String userAudioText,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/chat/shadow'),
@@ -318,9 +338,9 @@ class ApiService {
   }
 
   Future<String> optimizeMessage(
-    String draft, 
-    String sceneContext, 
-    List<Map<String, String>> history
+    String draft,
+    String sceneContext,
+    List<Map<String, String>> history,
   ) async {
     try {
       final prefs = PreferencesService();
@@ -364,10 +384,7 @@ class ApiService {
       request.headers.addAll(headers);
 
       // Add audio file
-      request.files.add(await http.MultipartFile.fromPath(
-        'audio',
-        audioPath,
-      ));
+      request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
 
       // Add target language as field
       request.fields['target_language'] = targetLang;
@@ -408,10 +425,7 @@ class ApiService {
       request.headers.addAll(headers);
 
       // Add audio file
-      request.files.add(await http.MultipartFile.fromPath(
-        'audio',
-        audioPath,
-      ));
+      request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
 
       // Add other fields
       request.fields['scene_context'] = sceneContext;
@@ -438,10 +452,7 @@ class ApiService {
       final response = await http.delete(
         Uri.parse('$baseUrl/chat/messages'),
         headers: _headers(),
-        body: jsonEncode({
-          'scene_key': sceneKey,
-          'message_ids': messageIds,
-        }),
+        body: jsonEncode({'scene_key': sceneKey, 'message_ids': messageIds}),
       );
 
       if (response.statusCode != 200) {
@@ -449,6 +460,39 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error deleting messages: $e');
+    }
+  }
+
+  /// Generate text-to-speech audio from text
+  /// Returns TTSResponse with base64-encoded audio data
+  Future<TTSResponse> generateTTS(
+    String text, {
+    String? messageId,
+    String? voiceId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/tts/generate'),
+        headers: _headers(),
+        body: jsonEncode({
+          'text': text,
+          if (messageId != null) 'message_id': messageId,
+          if (voiceId != null) 'voice_id': voiceId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return TTSResponse.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 503) {
+        throw Exception('TTS service not configured');
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(
+          data['error'] ?? 'Failed to generate TTS: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error generating TTS: $e');
     }
   }
 }
@@ -536,3 +580,23 @@ class VoiceMessageResponse {
   }
 }
 
+/// Response from TTS API containing audio data
+class TTSResponse {
+  final String? audioUrl;
+  final String? audioBase64;
+  final int? durationMs;
+  final String? error;
+
+  TTSResponse({this.audioUrl, this.audioBase64, this.durationMs, this.error});
+
+  factory TTSResponse.fromJson(Map<String, dynamic> json) {
+    return TTSResponse(
+      audioUrl: json['audio_url'],
+      audioBase64: json['audio_base64'],
+      durationMs: json['duration_ms'],
+      error: json['error'],
+    );
+  }
+
+  bool get hasAudio => audioBase64 != null || audioUrl != null;
+}
