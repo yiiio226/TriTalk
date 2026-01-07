@@ -463,7 +463,96 @@ class ApiService {
     }
   }
 
-  /// Generate text-to-speech audio from text
+  /// Generate text-to-speech audio from text using streaming API
+  /// Returns a Stream of TTSStreamChunk that yields audio data as it arrives
+  Stream<TTSStreamChunk> generateTTSStream(
+    String text, {
+    String? messageId,
+    String? voiceId,
+  }) async* {
+    final request = http.Request('POST', Uri.parse('$baseUrl/tts/generate'));
+    request.headers.addAll(_headers());
+    request.body = jsonEncode({
+      'text': text,
+      if (messageId != null) 'message_id': messageId,
+      if (voiceId != null) 'voice_id': voiceId,
+    });
+
+    final client = http.Client();
+    try {
+      final streamedResponse = await client.send(request);
+
+      if (streamedResponse.statusCode != 200) {
+        throw Exception(
+          'Failed to generate TTS: ${streamedResponse.statusCode}',
+        );
+      }
+
+      // Buffer for incomplete lines
+      String buffer = '';
+      final List<String> audioChunks = [];
+      int? durationMs;
+
+      await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
+        buffer += chunk;
+
+        while (buffer.contains('\n')) {
+          final index = buffer.indexOf('\n');
+          final line = buffer.substring(0, index).trim();
+          buffer = buffer.substring(index + 1);
+
+          if (line.isEmpty) continue;
+
+          try {
+            final json = jsonDecode(line);
+            if (json is Map<String, dynamic>) {
+              final type = json['type'];
+
+              switch (type) {
+                case 'audio_chunk':
+                  final audioBase64 = json['audio_base64'] as String?;
+                  if (audioBase64 != null) {
+                    audioChunks.add(audioBase64);
+                    yield TTSStreamChunk(
+                      type: TTSChunkType.audioChunk,
+                      audioBase64: audioBase64,
+                      chunkIndex: json['chunk_index'] as int? ?? 0,
+                      allChunksBase64: List.from(audioChunks),
+                    );
+                  }
+                  break;
+                case 'info':
+                  durationMs = json['duration_ms'] as int?;
+                  yield TTSStreamChunk(
+                    type: TTSChunkType.info,
+                    durationMs: durationMs,
+                  );
+                  break;
+                case 'done':
+                  yield TTSStreamChunk(
+                    type: TTSChunkType.done,
+                    allChunksBase64: List.from(audioChunks),
+                    durationMs: durationMs,
+                  );
+                  break;
+                case 'error':
+                  throw Exception(json['error'] ?? 'TTS generation failed');
+              }
+            }
+          } catch (e) {
+            if (e is Exception) rethrow;
+            print('Error parsing TTS chunk: $e');
+          }
+        }
+      }
+    } catch (e) {
+      throw Exception('Error generating TTS: $e');
+    } finally {
+      client.close();
+    }
+  }
+
+  /// Generate text-to-speech audio from text (non-streaming fallback)
   /// Returns TTSResponse with base64-encoded audio data
   Future<TTSResponse> generateTTS(
     String text, {
@@ -471,28 +560,34 @@ class ApiService {
     String? voiceId,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/tts/generate'),
-        headers: _headers(),
-        body: jsonEncode({
-          'text': text,
-          if (messageId != null) 'message_id': messageId,
-          if (voiceId != null) 'voice_id': voiceId,
-        }),
-      );
+      // Use streaming API and accumulate all chunks
+      final List<String> allChunks = [];
+      int? durationMs;
 
-      if (response.statusCode == 200) {
-        return TTSResponse.fromJson(jsonDecode(response.body));
-      } else if (response.statusCode == 503) {
-        throw Exception('TTS service not configured');
-      } else {
-        final data = jsonDecode(response.body);
-        throw Exception(
-          data['error'] ?? 'Failed to generate TTS: ${response.statusCode}',
-        );
+      await for (final chunk in generateTTSStream(
+        text,
+        messageId: messageId,
+        voiceId: voiceId,
+      )) {
+        if (chunk.type == TTSChunkType.audioChunk &&
+            chunk.audioBase64 != null) {
+          allChunks.add(chunk.audioBase64!);
+        }
+        if (chunk.durationMs != null) {
+          durationMs = chunk.durationMs;
+        }
       }
+
+      if (allChunks.isEmpty) {
+        return TTSResponse(error: 'No audio received');
+      }
+
+      // Combine all base64 chunks into one
+      final combinedBase64 = allChunks.join('');
+
+      return TTSResponse(audioBase64: combinedBase64, durationMs: durationMs);
     } catch (e) {
-      throw Exception('Error generating TTS: $e');
+      return TTSResponse(error: e.toString());
     }
   }
 }
@@ -599,4 +694,30 @@ class TTSResponse {
   }
 
   bool get hasAudio => audioBase64 != null || audioUrl != null;
+}
+
+/// Type of TTS stream chunk
+enum TTSChunkType { audioChunk, info, done, error }
+
+/// A chunk of streaming TTS audio data
+class TTSStreamChunk {
+  final TTSChunkType type;
+  final String? audioBase64;
+  final int? chunkIndex;
+  final int? durationMs;
+  final List<String>? allChunksBase64;
+  final String? error;
+
+  TTSStreamChunk({
+    required this.type,
+    this.audioBase64,
+    this.chunkIndex,
+    this.durationMs,
+    this.allChunksBase64,
+    this.error,
+  });
+
+  /// Combine all collected chunks into a single base64 string
+  String? get combinedAudioBase64 =>
+      allChunksBase64?.isNotEmpty == true ? allChunksBase64!.join('') : null;
 }

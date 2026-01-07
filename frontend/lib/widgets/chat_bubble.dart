@@ -839,7 +839,7 @@ class _ChatBubbleState extends State<ChatBubble>
     }
   }
 
-  /// Play text-to-speech for the message content
+  /// Play text-to-speech for the message content using streaming API
   Future<void> _playTextToSpeech() async {
     // If already playing TTS, stop it
     if (_isTTSPlaying) {
@@ -863,17 +863,43 @@ class _ChatBubbleState extends State<ChatBubble>
 
     try {
       final apiService = ApiService();
-      final response = await apiService.generateTTS(
+      final List<String> audioChunks = [];
+
+      // Use streaming API to receive audio chunks
+      await for (final chunk in apiService.generateTTSStream(
         widget.message.content,
         messageId: widget.message.id,
-      );
+      )) {
+        if (!mounted) break;
 
-      if (!response.hasAudio) {
-        throw Exception(response.error ?? 'No audio received');
+        switch (chunk.type) {
+          case TTSChunkType.audioChunk:
+            if (chunk.audioBase64 != null) {
+              audioChunks.add(chunk.audioBase64!);
+            }
+            break;
+          case TTSChunkType.info:
+            // Duration info received (could be used for UI in the future)
+            break;
+          case TTSChunkType.done:
+            // All chunks received, now save and play
+            break;
+          case TTSChunkType.error:
+            throw Exception(chunk.error ?? 'TTS generation failed');
+        }
       }
 
-      // Decode base64 audio and save to cache
-      final audioBytes = base64Decode(response.audioBase64!);
+      if (!mounted) return;
+
+      if (audioChunks.isEmpty) {
+        throw Exception('No audio received');
+      }
+
+      // Combine all base64 chunks and decode
+      final combinedBase64 = audioChunks.join('');
+      final audioBytes = base64Decode(combinedBase64);
+
+      // Save to cache
       final cacheDir = await getApplicationDocumentsDirectory();
       final ttsCacheDir = Directory('${cacheDir.path}/tts_cache');
       if (!await ttsCacheDir.exists()) {
@@ -894,7 +920,7 @@ class _ChatBubbleState extends State<ChatBubble>
           _isTTSLoading = false;
         });
 
-        // Play the audio
+        // Play the audio immediately
         await _playTTSAudio(audioFile.path);
       }
     } catch (e) {
