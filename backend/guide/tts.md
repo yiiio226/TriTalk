@@ -11,7 +11,7 @@
 - **核心集成**:
   - **LLM (大模型)**: OpenRouter API (调用 Google Gemini 2.0 Flash 等模型) - **当前核心**
   - **STT (语音转文字)**: [Planned] OpenAI Whisper API
-  - **TTS (语音合成)**: [Planned] MiniMax API (模型: `speech-01` / `T2A-01`)
+  - **TTS (语音合成)**: MiniMax API (模型: `speech-01-turbo`) - **已实现**
   - **存储**: [Planned] Cloudflare R2 (用于存储 TTS 音频)
   - **数据库**: Supabase (PostgreSQL)
 
@@ -30,24 +30,108 @@ _功能：仅作为输入辅助，将用户语音转写并优化为高质量文�
    - 输入: 原始 ASR 文本。
 4. **输出**: 返回优化后的 JSON 文本 `{ "optimized_text": "..." }`。
 
-## 2. 交互式 TTS (On-demand TTS) [Planned]
+## 2. 交互式 TTS (On-demand TTS) [已实现]
 
-_功能：用户点击聊天记录中的某条文本时，触发语音播放。_
+_功能：用户点击聊天记录中的 AI 消息气泡的"Listen"按钮时，触发语音播放。_
 
-1. **触发**: 用户在客户端点击某条消息气泡 (Message ID)。
-2. **客户端缓存策略 (Client-First Strategy)**:
-   - **Step 1**: 检查本地文件系统 (如 `Documents/audio_cache/`) 是否存在名为 `${message_id}.mp3` 的文件。
-   - **Step 2**:
-     - **HIT**: 若存在，直接播放本地文件。
-     - **MISS**: 若不存在，向后端请求音频。
-3. **后端处理 (Backend Logic)**:
-   - **输入**: `message_id`, `text_content`, `scenario_voice_setting`。
-   - **R2 检查**: 检查 Cloudflare R2 中是否存在 `audios/${message_id}.mp3`。
-   - **生成 (Optional)**: 若 R2 中不存在，调用 MiniMax TTS 生成音频流，并以此 `message_id` 为 Key 上传至 R2。
-   - **返回**: 返回音频文件的 R2 下载链接 (Public URL 或 Signed URL)。
+### 实现架构
+
+**后端 (Cloudflare Workers)**:
+
+- **端点**: `POST /tts/generate`
+- **输入**: `{ text: string, message_id?: string, voice_id?: string }`
+- **模型**: MiniMax T2A V2 (`speech-01-turbo`)
+- **输出**: `TTSResponse` 接口（定义于 `src/types.ts`）
+  - **成功**: `{ audio_base64: string, duration_ms?: number }`
+  - **失败**: `{ error: string }`
+
+```typescript
+// TTSResponse 接口定义
+interface TTSResponse {
+  audio_url?: string; // URL to the audio file (if using R2 storage)
+  audio_base64?: string; // Base64 encoded audio data (current implementation)
+  duration_ms?: number; // Audio duration in milliseconds
+  error?: string; // Error message when synthesis fails
+}
+```
+
+**前端 (Flutter)**:
+
+- **服务**: `ApiService.generateTTS()` - 调用后端 TTS API
+- **UI**: `ChatBubble._playTextToSpeech()` - 处理播放逻辑
+- **缓存**: 音频文件缓存在 `Documents/tts_cache/${message_id}.mp3`
+
+### 流程
+
+1. **触发**: 用户点击 AI 消息气泡上的 "Listen" 按钮
+2. **客户端缓存检查**:
+   - 检查本地 `tts_cache` 目录是否存在该消息的音频文件
+   - **HIT**: 直接播放本地文件
+   - **MISS**: 调用后端 API
+3. **后端处理**:
+   - 调用 MiniMax T2A V2 API 生成音频
+   - 返回 Base64 编码的 MP3 音频数据
 4. **客户端后处理**:
-   - 下载音频并播放。
-   - **写入缓存**: 将下载的音频保存为 `${message_id}.mp3`，供下次离线/快速访问。
+   - 解码 Base64 音频数据
+   - 保存到本地缓存 (`tts_cache/${message_id}.mp3`)
+   - 播放音频
+
+### 配置
+
+需要在 Cloudflare Workers 中设置以下环境变量:
+
+```bash
+wrangler secret put MINIMAX_API_KEY
+wrangler secret put MINIMAX_GROUP_ID
+```
+
+### [Planned] R2 云端缓存增强
+
+_目标：减少重复 TTS API 调用，实现跨设备音频共享，降低成本。_
+
+**优势**:
+
+- **跨设备共享**: 同一用户在不同设备上不需要重新生成相同内容的音频
+- **减少 API 成本**: 相同文本内容只调用一次 MiniMax API
+- **更快响应**: R2 CDN 分发比实时生成更快
+
+**实现计划**:
+
+1. **后端流程改进**:
+
+   - 接收 TTS 请求时，先计算 `text` 内容的 hash 作为缓存 key
+   - 检查 R2 存储桶 `audios/${hash}.mp3` 是否存在
+   - **HIT**: 返回 R2 公开 URL 或 Signed URL
+   - **MISS**: 调用 MiniMax API 生成 → 上传到 R2 → 返回 URL
+
+2. **响应格式变更**:
+
+   ```json
+   {
+     "audio_url": "https://r2.tritalk.app/audios/abc123.mp3",
+     "duration_ms": 3500,
+     "cached": true
+   }
+   ```
+
+3. **额外环境变量**:
+
+   ```bash
+   wrangler secret put R2_ACCESS_KEY_ID
+   wrangler secret put R2_SECRET_ACCESS_KEY
+   ```
+
+4. **Wrangler 配置** (wrangler.toml):
+
+   ```toml
+   [[r2_buckets]]
+   binding = "TTS_BUCKET"
+   bucket_name = "tritalk-tts-audio"
+   ```
+
+5. **缓存策略**:
+   - 使用文本内容的 SHA-256 hash 作为文件名
+   - 可考虑添加 TTL 过期策略（如 30 天未访问则删除）
 
 ## 3. 标准对话流程 (Standard Chat Flow) [Current Implemented]
 
@@ -68,7 +152,9 @@ _纯文本对话，提供实时语法分析与反馈。_
 3. **环境变量**: 必须通过 `Env` 接口访问密钥，严禁硬编码。
    - `OPENROUTER_API_KEY`
    - `OPENROUTER_MODEL`
-   - [Planned] `MINIMAX_API_KEY`, `MINIMAX_GROUP_ID`, `R2_ACCESS_KEY_ID`
+   - `MINIMAX_API_KEY` - **已实现**
+   - `MINIMAX_GROUP_ID` - **已实现**
+   - [Planned] `R2_ACCESS_KEY_ID`
 4. **API 设计**:
    - 使用 RESTful 风格路由 /chat/send, /chat/analyze 等。
    - 支持 SSE (Server-Sent Events) 流式传输用于长文本生成 (如 analyze)。
