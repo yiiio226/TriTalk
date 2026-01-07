@@ -313,21 +313,27 @@ async function handleChatTranscribe(
       throw new Error("No audio file uploaded");
     }
 
-    // Convert audio file to base64
+    // Convert audio file to base64 with improved binary handling
     const audioBlob = audioFile as File;
     const arrayBuffer = await audioBlob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // Convert to base64
+    // Convert to base64 using a chunked approach to handle large files
+    // This prevents issues with String.fromCharCode on large arrays
+    const CHUNK_SIZE = 65536; // 64KB chunks
     let binary = "";
-    for (let i = 0; i < uint8Array.length; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
+    for (let i = 0; i < uint8Array.length; i += CHUNK_SIZE) {
+      const chunk = uint8Array.subarray(
+        i,
+        Math.min(i + CHUNK_SIZE, uint8Array.length)
+      );
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
     }
     const audioBase64 = btoa(binary);
 
     // Determine audio format from file extension
-    const fileName = audioBlob.name || "audio.m4a";
-    let audioFormat = "m4a"; // default
+    const fileName = audioBlob.name || "audio.wav";
+    let audioFormat = "wav"; // default - changed to wav
     if (fileName.endsWith(".mp3")) {
       audioFormat = "mp3";
     } else if (fileName.endsWith(".wav")) {
@@ -346,12 +352,34 @@ async function handleChatTranscribe(
 
     console.log("=== AUDIO DEBUG INFO ===");
     console.log(`Original File Name: ${fileName}`);
+    console.log(`File MIME Type: ${audioBlob.type || "unknown"}`);
     console.log(`Detected Format: ${audioFormat}`);
     console.log(`File Size (bytes): ${arrayBuffer.byteLength}`);
     console.log(`Base64 Length: ${audioBase64.length}`);
     console.log(
       `Base64 Preview (first 100 chars): ${audioBase64.substring(0, 100)}`
     );
+
+    // Additional WAV file validation
+    if (audioFormat === "wav") {
+      // Check WAV header (first 12 bytes should be RIFF....WAVE)
+      const header = String.fromCharCode.apply(
+        null,
+        Array.from(uint8Array.subarray(0, 12))
+      );
+      console.log(
+        `WAV Header Check: ${header.substring(0, 4)} (should be RIFF)`
+      );
+      console.log(`WAV Format: ${header.substring(8, 12)} (should be WAVE)`);
+
+      // Check format chunk (bytes 20-23 should indicate PCM = 1)
+      if (uint8Array.length > 23) {
+        const audioFormat = uint8Array[20] + (uint8Array[21] << 8);
+        const numChannels = uint8Array[22] + (uint8Array[23] << 8);
+        console.log(`WAV Audio Format Code: ${audioFormat} (1=PCM)`);
+        console.log(`WAV Channels: ${numChannels}`);
+      }
+    }
     console.log("========================");
 
     // Build the multimodal prompt for Gemini
