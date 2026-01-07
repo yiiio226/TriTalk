@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user.dart';
 import 'auth_service.dart';
@@ -28,11 +29,13 @@ class UserService {
 
     try {
       await _supabase.from('profiles').upsert(updates);
-      
+
       // Update local state by reloading
-      await _authService.init(); 
+      await _authService.init();
     } catch (e) {
-      print('Error updating profile: $e');
+      if (kDebugMode) {
+        debugPrint('Error updating profile: $e');
+      }
       rethrow;
     }
   }

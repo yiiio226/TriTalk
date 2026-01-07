@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,7 +30,9 @@ class AuthService {
 
     // Listen to auth state changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      print('Auth state changed: ${data.event}');
+      if (kDebugMode) {
+        debugPrint('Auth state changed: ${data.event}');
+      }
       final session = data.session;
       if (session != null) {
         _loadUserFromSupabase(session.user.id);
@@ -126,7 +129,9 @@ class AuthService {
         }
       }
     } catch (e) {
-      print('Error loading user profile: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading user profile: $e');
+      }
       // Local cache already loaded in init(), just log the error
       // The cached _profileExistsInDatabase value will be used for navigation
     }
@@ -150,7 +155,9 @@ class AuthService {
       };
       await prefs.setString('cached_user_profile', json.encode(userJson));
     } catch (e) {
-      print('Error caching user profile: $e');
+      if (kDebugMode) {
+        debugPrint('Error caching user profile: $e');
+      }
     }
   }
 
@@ -170,12 +177,16 @@ class AuthService {
           targetLanguage: userMap['targetLanguage'],
         );
         _profileExistsInDatabase = userMap['profileExists'] ?? false;
-        print(
-          'Loaded user from local cache (profileExists: $_profileExistsInDatabase)',
-        );
+        if (kDebugMode) {
+          debugPrint(
+            'Loaded user from local cache (profileExists: $_profileExistsInDatabase)',
+          );
+        }
       }
     } catch (e) {
-      print('Error loading cached user profile: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading cached user profile: $e');
+      }
     }
   }
 
@@ -216,7 +227,9 @@ class AuthService {
 
       return true;
     } catch (e) {
-      print('Google login error: $e');
+      if (kDebugMode) {
+        debugPrint('Google login error: $e');
+      }
       return false;
     }
   }
@@ -234,7 +247,9 @@ class AuthService {
         );
 
         if (credential.identityToken == null) {
-          print('Apple login error: Missing identity token');
+          if (kDebugMode) {
+            debugPrint('Apple login error: Missing identity token');
+          }
           return false;
         }
 
@@ -258,11 +273,15 @@ class AuthService {
               await Supabase.instance.client.auth.updateUser(
                 UserAttributes(data: {'full_name': fullName}),
               );
-              print(
-                'Updated Supabase user metadata with Apple name: $fullName',
-              );
+              if (kDebugMode) {
+                debugPrint(
+                  'Updated Supabase user metadata with Apple name: $fullName',
+                );
+              }
             } catch (updateError) {
-              print('Failed to update user metadata: $updateError');
+              if (kDebugMode) {
+                debugPrint('Failed to update user metadata: $updateError');
+              }
             }
           }
         }
@@ -275,7 +294,9 @@ class AuthService {
       }
       return true;
     } catch (e) {
-      print('Apple login error: $e');
+      if (kDebugMode) {
+        debugPrint('Apple login error: $e');
+      }
       return false;
     }
   }
