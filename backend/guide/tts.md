@@ -42,7 +42,8 @@ _功能：仅作为输入辅助，将用户语音转写并优化为高质量文�
 
 ### 流程
 
-1. **输入**: 用户录音文件 (m4a/mp3/wav/webm/ogg/flac/aac)。
+1. **输入**: 用户录音文件 (wav/mp3/webm/ogg/flac/aac/m4a)。
+   - **推荐格式**: WAV (PCM 16-bit, 16kHz, Mono) - 最佳转录准确度
 2. **处理 (Gemini 多模态)**:
 
    - **模型**: `google/gemini-2.0-flash-lite-001` (通过 OpenRouter)
