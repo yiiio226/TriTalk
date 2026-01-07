@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+
+import '../env.dart';
 
 import '../models/user.dart' as app_models;
 
@@ -177,21 +180,42 @@ class AuthService {
   }
 
   // Google Login via Supabase OAuth
+  // Google Login via native Google Sign In
   Future<bool> loginWithGoogle() async {
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'io.supabase.tritalk://login-callback',
+      // Use the GoogleSignIn package for native login
+      final GoogleSignIn googleSignIn = GoogleSignIn.instance;
+
+      await googleSignIn.initialize(
+        clientId: Env.googleOAuthIosClientId,
+        serverClientId: Env.googleOAuthWebClientId,
+      );
+
+      final googleUser = await googleSignIn.authenticate();
+
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) {
+        throw 'No ID Token found.';
+      }
+      final authClient = googleUser.authorizationClient;
+      final authTokens = await authClient.authorizationForScopes([
+        'openid',
+        'profile',
+        'email',
+      ]);
+      final accessToken = authTokens?.accessToken;
+      if (accessToken == null) {
+        throw 'No Access Token found.';
+      }
+
+      await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
       );
 
       return true;
     } catch (e) {
-      if (e.toString().contains('PlatformException') &&
-          e.toString().contains('Error while launching')) {
-        // Known issue with inAppWebView on some iOS versions where it throws but still works via deep link
-        print('Suppressing launch error: $e');
-        return false;
-      }
       print('Google login error: $e');
       return false;
     }
