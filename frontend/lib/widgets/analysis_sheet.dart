@@ -317,36 +317,36 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             Wrap(
               spacing: 8,
               runSpacing: 12,
-              children: displayAnalysis.sentenceBreakdown.map((segment) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2FD), // Blue 50
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade100),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      segment.text,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                children: displayAnalysis.sentenceBreakdown.map((segment) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        segment.text,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      segment.tag,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.blue[700],
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 2),
+                      Text(
+                        segment.tag,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.blueGrey[600],
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              )).toList(),
+                    ],
+                  ),
+                )).toList(),
             ),
             const SizedBox(height: 24),
           ],
