@@ -36,9 +36,18 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
     try {
       if (await _audioRecorder.hasPermission()) {
         final directory = await getTemporaryDirectory();
-        final path = '${directory.path}/shadow_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path =
+            '${directory.path}/shadow_${DateTime.now().millisecondsSinceEpoch}.wav';
 
-        await _audioRecorder.start(const RecordConfig(), path: path);
+        // Use WAV format with PCM encoding for better transcription accuracy
+        await _audioRecorder.start(
+          const RecordConfig(
+            encoder: AudioEncoder.wav,
+            sampleRate: 16000, // 16kHz is optimal for speech recognition
+            numChannels: 1, // Mono audio
+          ),
+          path: path,
+        );
 
         setState(() {
           _isRecording = true;
@@ -69,19 +78,22 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
 
   Future<void> _analyzeAudio(String path) async {
     setState(() => _isAnalyzing = true);
-    
+
     try {
       // TODO: In real implementation, transcribe audio first or send audio file.
       // For MVP simulation, we simulate text based on random success or strict match (not possible here without STT).
-      // Since we don't have STT on device, we will mock the "user_audio_text" to be the same as target 
+      // Since we don't have STT on device, we will mock the "user_audio_text" to be the same as target
       // but slightly modified to test the "score" logic, or just send targetText to get a perfect score for demo.
-      // Let's send the targetText to simulate a "Good" attempt for now. 
+      // Let's send the targetText to simulate a "Good" attempt for now.
       // Real App needs: Whispher API or on-device speech-to-text.
-      
-      final mockUserText = widget.targetText; 
 
-      final result = await _apiService.analyzeShadow(widget.targetText, mockUserText);
-      
+      final mockUserText = widget.targetText;
+
+      final result = await _apiService.analyzeShadow(
+        widget.targetText,
+        mockUserText,
+      );
+
       if (mounted) {
         setState(() {
           _result = result;
@@ -128,18 +140,21 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
             ),
           ),
           const SizedBox(height: 32),
-          
+
           if (_isAnalyzing)
             const CircularProgressIndicator()
           else if (_result != null)
             _buildResultView()
           else
             _buildRecordButton(),
-            
+
           if (_errorMessage.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Text(_errorMessage, style: const TextStyle(color: Colors.red)),
+              child: Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           const SizedBox(height: 20),
         ],
@@ -195,14 +210,11 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
                     color: _getScoreColor(_result!.score),
                   ),
                 ),
-                Text(
-                  'Score',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
+                Text('Score', style: TextStyle(color: Colors.grey.shade600)),
               ],
             ),
             const SizedBox(width: 32),
-             Column(
+            Column(
               children: [
                 _buildMiniScore('Intonation', _result!.intonationScore),
                 const SizedBox(height: 8),
@@ -256,7 +268,7 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
     return Row(
       children: [
         SizedBox(
-          width: 25, 
+          width: 25,
           height: 25,
           child: CircularProgressIndicator(
             value: score / 100,
