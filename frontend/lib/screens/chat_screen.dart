@@ -133,38 +133,6 @@ class _ChatScreenState extends State<ChatScreen>
     // The actual keyboard detection happens in didChangeDependencies
   }
 
-  // Temporary function to export voice recordings to Documents folder
-  Future<void> _exportVoiceRecordings() async {
-    try {
-      final tempDir = await getTemporaryDirectory();
-      final docsDir = await getApplicationDocumentsDirectory();
-
-      final tempDirDir = Directory(tempDir.path);
-      if (!tempDirDir.existsSync()) return;
-
-      final files = tempDirDir.listSync();
-      int count = 0;
-
-      for (final file in files) {
-        if (file.path.endsWith('.wav')) {
-          final filename = file.path.split('/').last;
-          final newPath = '${docsDir.path}/$filename';
-          await File(file.path).copy(newPath);
-          print('Extracted recording: $filename');
-          count++;
-        }
-      }
-
-      if (count > 0) {
-        print(
-          'Successfully exported $count recordings to Documents directory.',
-        );
-      }
-    } catch (e) {
-      print('Error exporting recordings: $e');
-    }
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -310,7 +278,6 @@ class _ChatScreenState extends State<ChatScreen>
       }
 
       final fileSize = await file.length();
-      print('🎤 Audio file size: $fileSize bytes at $audioPath');
 
       // iOS Simulator doesn't have real microphone - file will be empty or very small
       if (fileSize < 1000) {
