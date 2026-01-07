@@ -56,3 +56,6 @@ env.bak/
 venv.bak/
 venv.bak/
 .env
+
+# Node.js
+node_modules/
