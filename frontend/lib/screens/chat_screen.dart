@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -502,7 +503,9 @@ class _ChatScreenState extends State<ChatScreen>
           displayName,
         );
       } catch (e) {
-        print("Error substituting name: $e");
+        if (kDebugMode) {
+          debugPrint("Error substituting name: $e");
+        }
       }
 
       // If target language is not English, translate the initial message
@@ -513,7 +516,9 @@ class _ChatScreenState extends State<ChatScreen>
             targetLang,
           );
         } catch (e) {
-          print("Translation failed: $e");
+          if (kDebugMode) {
+            debugPrint("Translation failed: $e");
+          }
           if (mounted) {
             setState(() {
               _messages = []; // Clear loading message
