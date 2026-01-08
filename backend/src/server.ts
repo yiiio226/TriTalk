@@ -216,9 +216,11 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
 
     const parsedData = parseJSON(content);
     const optimizedText = parsedData.optimized_text || "";
+    const rawText = parsedData.raw_text || "";
 
     const transcribeResponse: TranscribeResponse = {
       text: optimizedText,
+      raw_text: rawText,
     };
 
     return c.json(transcribeResponse);
