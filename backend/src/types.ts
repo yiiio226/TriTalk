@@ -111,6 +111,7 @@ export interface Env {
   // MiniMax TTS API credentials
   MINIMAX_API_KEY?: string;
   MINIMAX_GROUP_ID?: string;
+  MINIMAX_DEFAULT_VOICE_ID?: string;
 }
 
 export interface PolishRequest {
