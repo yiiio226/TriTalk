@@ -52,6 +52,7 @@ import {
 import {
   buildChatSystemPrompt,
   buildVoiceChatSystemPrompt,
+  buildStreamingVoiceChatSystemPrompt,
   buildHintPrompt,
   buildOptimizePrompt,
   buildAnalyzePrompt,
@@ -237,6 +238,47 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
 });
 
 // POST /chat/send-voice - Voice message handling (requires auth)
+/**
+ * HANDLER: Voice Message & Multimodal Interaction
+ *
+ * Purpose:
+ *   Processes an audio file uploaded by the user, generating both a conversational reply
+ *   and structured metadata (transcription, analysis) in a single streaming response.
+ *
+ * Input (Multipart/Form-Data):
+ *   - 'audio': The user's recorded audio file (blob).
+ *   - 'scene_context': Context description of the current roleplay.
+ *   - 'history': Prior conversation JSON string.
+ *   - 'native_language': User's L1 language.
+ *   - 'target_language': Target L2 language.
+ *
+ * Processing Logic:
+ *   1. Receives audio and converts to Base64.
+ *   2. Constructs a Multimodal Prompt using `buildStreamingVoiceChatSystemPrompt`.
+ *   3. Sends Audio + Prompt to a Multimodal LLM (e.g. Gemini 2.0 Flash) via OpenRouter.
+ *
+ * Output (Streaming NDJSON):
+ *   The response is a stream of NDJSON lines.
+ *
+ *   PROTOCOL STRUCTURE:
+ *   1. { type: 'token', content: "..." }
+ *      -> Stream of tokens for the AI's direct reply. Display these immediately.
+ *
+ *   2. { type: 'token', content: "[[METADATA]]" }
+ *      -> A specific separator token sequence indicating the end of the text reply.
+ *
+ *   3. { type: 'token', content: "{\"transcript\": ...}" }
+ *      -> The JSON metadata object (stringified) appearing after the separator.
+ *      -> Fields in Metadata JSON:
+ *         - transcript: (string) The LLM's transcription of the user's audio.
+ *         - translation: (string) Native modification of the AI's reply.
+ *         - analysis: (object)
+ *             - is_perfect: (bool)
+ *             - corrected_text: (string)
+ *             - native_expression: (string)
+ *             - explanation: (string)
+ *             - example_answer: (string)
+ */
 app.post("/chat/send-voice", authMiddleware, async (c) => {
   try {
     const formData = await c.req.formData();
@@ -248,7 +290,7 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
       (formData.get("native_language") as string) || "Chinese (Simplified)";
     const targetLang = (formData.get("target_language") as string) || "English";
 
-    let history = [];
+    let history: any[] = [];
     try {
       history = JSON.parse(historyStr);
     } catch (e) {}
@@ -257,99 +299,105 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
       throw new Error("No audio file uploaded");
     }
 
-    // MOCK TRANSCRIPTION
-    const transcribedText = "I want to live in a hotel.";
+    // Convert audio file to base64
+    const audioBlob = audioFile as File;
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const audioBase64 = arrayBufferToBase64(arrayBuffer);
+    const fileName = audioBlob.name || "audio.wav";
+    const audioFormat = detectAudioFormat(fileName);
 
-    // Process with LLM
-    const systemPrompt = buildVoiceChatSystemPrompt(
+    console.log(
+      `[Send Voice] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
+    );
+
+    // Build System Prompt
+    const systemPrompt = buildStreamingVoiceChatSystemPrompt(
       sceneContext,
       nativeLang,
       targetLang
     );
 
+    // Build Messages
     const messages = [{ role: "system", content: systemPrompt }];
 
+    // Add History
     if (history && history.length > 0) {
-      const recentHistory = history.slice(-10);
+      const recentHistory = history.slice(-5); // Keep context short for voice
+      // Ensure history messages are simple string content for compatibility in this context
+      // OpenRouter can handle mixed checks usually, but let's stick to text for history
       messages.push(...recentHistory);
     }
 
+    // Add User Audio Message (Multimodal)
+    const userMessageContent = [
+      {
+        type: "text",
+        text: "Please listen to my audio and respond.",
+      },
+      {
+        type: "input_audio",
+        input_audio: {
+          data: audioBase64,
+          format: audioFormat,
+        },
+      },
+    ];
+
     messages.push({
       role: "user",
-      content: `<<LATEST_USER_MESSAGE>>${transcribedText}<</LATEST_USER_MESSAGE>>`,
+      content: userMessageContent as any, // Cast to any to bypass strict type check if needed
     });
 
-    const content = await callOpenRouter(
+    // Determine Logic: Use Multimodal Chat Model
+    // Note: OPENROUTER_CHAT_MODEL must support audio input (e.g., gemini-1.5-flash-latest)
+    // If not, we might need a separate model var or fallback.
+    // Assuming Env has OPENROUTER_CHAT_MODEL configured to a multimodal model like gemini-2.0-flash-exp
+    const response = await callOpenRouterStreaming(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
       messages
     );
-    const data = parseJSON(content);
 
-    const replyText = sanitizeText(data.reply || "");
-    const analysisData = data.analysis || {};
+    c.header("Content-Type", "application/x-ndjson");
+    c.header("Content-Encoding", "Identity");
 
-    // MOCK PRONUNCIATION SCORE
-    const pronunciationScore = Math.floor(Math.random() * 15) + 80;
+    return stream(
+      c,
+      async (stream) => {
+        stream.onAbort(() => {
+          console.log("Stream aborted: /chat/send-voice");
+        });
 
-    // Mock sentence breakdown
-    const cleanText = sanitizeText(
-      analysisData.corrected_text || transcribedText
-    ).replace(/[.,!?]/g, "");
-    const words = cleanText.split(/\s+/);
-    const sentenceBreakdown = words.map((word) => {
-      const rand = Math.random();
-      let score;
-      if (word.toLowerCase() === "live") score = 45;
-      else if (rand > 0.3) score = Math.floor(Math.random() * 20) + 81;
-      else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61;
-      else score = Math.floor(Math.random() * 20) + 40;
-      return { word, score };
-    });
-
-    // Identify error focus
-    const lowestScoreWord = sentenceBreakdown.reduce(
-      (prev, curr) => (prev.score < curr.score ? prev : curr),
-      sentenceBreakdown[0] || { word: "none", score: 100 }
-    );
-
-    const errorFocus =
-      lowestScoreWord.score < 80
-        ? {
-            word: lowestScoreWord.word,
-            user_ipa: `/liːv/`,
-            correct_ipa: `/lɪv/`,
-            tip: `/${
-              lowestScoreWord.word === "live" ? "ɪ" : "ə"
-            }/ is a short vowel, relax your mouth.`,
+        for await (const line of iterateStreamLines(response)) {
+          if (line === "data: [DONE]") continue;
+          if (line.startsWith("data: ")) {
+            try {
+              const jsonStr = line.slice(6);
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content || "";
+              if (content) {
+                // Pass through the content directly to the client as specific event or raw text
+                // Since our protocol defines [[METADATA]] separator, we can just stream plain tokens.
+                // However, to make it easier for client to distinguish from errors,
+                // let's wrap it in a JSON structure for the stream line.
+                await stream.writeln(
+                  JSON.stringify({ type: "token", content: content })
+                );
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
           }
-        : null;
-
-    const voiceFeedback = {
-      pronunciation_score: pronunciationScore,
-      corrected_text: sanitizeText(
-        analysisData.corrected_text || transcribedText
-      ),
-      native_expression: sanitizeText(analysisData.native_expression || ""),
-      feedback: sanitizeText(analysisData.explanation || "Good pronunciation!"),
-      sentence_breakdown: sentenceBreakdown,
-      error_focus: errorFocus,
-    };
-
-    const response = {
-      message: replyText,
-      translation: data.translation,
-      voice_feedback: voiceFeedback,
-      review_feedback: {
-        is_perfect: false,
-        corrected_text: voiceFeedback.corrected_text,
-        native_expression: voiceFeedback.native_expression,
-        explanation: voiceFeedback.feedback,
-        example_answer: sanitizeText(analysisData.example_answer || ""),
+        }
+        await stream.writeln(JSON.stringify({ type: "done" }));
       },
-    };
-
-    return c.json(response);
+      async (err, stream) => {
+        console.error("Stream error in /chat/send-voice:", err);
+        await stream.writeln(
+          JSON.stringify({ type: "error", error: String(err) })
+        );
+      }
+    );
   } catch (error) {
     console.error("Error in /chat/send-voice:", error);
     return c.json(

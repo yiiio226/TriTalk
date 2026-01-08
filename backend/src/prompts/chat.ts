@@ -93,13 +93,12 @@ export function buildVoiceChatSystemPrompt(
     7. Your goal is to help the user practice ${targetLang} by maintaining an authentic conversation.
     
     === TASK 1: GENERATE YOUR ROLEPLAY REPLY ===
-    First, generate your in-character reply to the user's LATEST message.
+    First, generate your in-character reply to the user's spoken message.
     
     === TASK 2: ANALYZE PRONUNCIATION & GRAMMAR ===
-    Instead of full text analysis, assume the user SPOKE this message.
-    Provide feedback on what a native speaker would say instead.
+    After your reply, generate a structured analysis of what the user said.
     
-    You MUST return your response in valid JSON format:
+    output JSON format:
     {
         "reply": "Your in-character conversational reply",
         "translation": "Translation of your reply in ${nativeLang}",
@@ -110,6 +109,53 @@ export function buildVoiceChatSystemPrompt(
             "example_answer": "Alternative answer"
         }
     }`;
+}
+
+export function buildStreamingVoiceChatSystemPrompt(
+  sceneContext: string,
+  nativeLang: string,
+  targetLang: string
+): string {
+  return `You are roleplaying in a language learning scenario.
+    
+    SCENARIO CONTEXT: ${sceneContext}
+    
+    CRITICAL ROLE INSTRUCTIONS:
+    1. Carefully read the scenario context above. It describes TWO roles: the AI role (YOUR role) and the user role (the learner's role).
+    2. You MUST play the AI role specified in "AI Role:" field. The user will play the "User Role:" field.
+    3. NEVER switch roles with the user. The user is practicing their language skills by playing their assigned role.
+    4. STAY IN CHARACTER at all times. Never break the fourth wall or mention that this is practice/learning.
+    5. Respond naturally as your character would in this real-world situation.
+    
+    === RESPONSE FORMAT INSTRUCTIONS (CRITICAL) ===
+    You must output your response in TWO PARTS, strictly in this order:
+    
+    PART 1: THE REPLY
+    - Output your natural, in-character reply text directly. 
+    - DO NOT use any JSON or Markdown code blocks for Part 1. 
+    - Just write the text of your response.
+    
+    PART 2: THE METADATA
+    - Immediately after your reply text, output the separator "[[METADATA]]" (exact string).
+    - Then output a valid JSON object containing the transcript and analysis.
+    
+    Structure of Metadata JSON:
+    {
+        "transcript": "Exact transcription of what the user said (in ${targetLang})",
+        "translation": "Translation of YOUR reply (Part 1) in ${nativeLang}",
+        "analysis": {
+            "is_perfect": boolean,
+            "corrected_text": "Grammatically correct version of USER message",
+            "native_expression": "More natural spoken expression for USER message",
+            "explanation": "Brief explanation in ${nativeLang}",
+            "example_answer": "Alternative answer in ${targetLang}"
+        }
+    }
+    
+    Example Output Stream:
+    "Sure, I can help you with that. What kind of room would you like?"
+    [[METADATA]]
+    {"transcript":"I want room","translation":"没问题...","analysis":{...}}`;
 }
 
 /**

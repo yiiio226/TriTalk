@@ -5,6 +5,7 @@
 export {
   buildChatSystemPrompt,
   buildVoiceChatSystemPrompt,
+  buildStreamingVoiceChatSystemPrompt,
   buildHintPrompt,
   buildOptimizePrompt,
 } from "./chat";

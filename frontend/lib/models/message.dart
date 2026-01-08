@@ -4,17 +4,19 @@ class Message {
   final bool isUser;
   final DateTime timestamp;
   final String? translation; // For C-04
-  final ReviewFeedback? feedback;  // For F-01
+  final ReviewFeedback? feedback; // For F-01
   final MessageAnalysis? analysis; // For AI message analysis
   final bool isLoading; // Transient: Loading state for pending messages
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
   final List<String>? hints; // For persisting suggested replies
-  final bool hasPendingError; // Whether this message failed to send and needs retry
-  final bool isSelected; // Transient: Whether this message is selected in multi-select mode
-  
+  final bool
+  hasPendingError; // Whether this message failed to send and needs retry
+  final bool
+  isSelected; // Transient: Whether this message is selected in multi-select mode
+
   // Voice message fields
-  final String? audioPath;  // Local path to audio file
+  final String? audioPath; // Local path to audio file
   final int? audioDuration; // Duration in seconds
   final VoiceFeedback? voiceFeedback; // Pronunciation feedback
 
@@ -36,6 +38,44 @@ class Message {
     this.audioDuration,
     this.voiceFeedback,
   });
+
+  Message copyWith({
+    String? id,
+    String? content,
+    bool? isUser,
+    DateTime? timestamp,
+    String? translation,
+    ReviewFeedback? feedback,
+    MessageAnalysis? analysis,
+    bool? isLoading,
+    bool? isAnimated,
+    bool? isFeedbackLoading,
+    List<String>? hints,
+    bool? hasPendingError,
+    bool? isSelected,
+    String? audioPath,
+    int? audioDuration,
+    VoiceFeedback? voiceFeedback,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      isUser: isUser ?? this.isUser,
+      timestamp: timestamp ?? this.timestamp,
+      translation: translation ?? this.translation,
+      feedback: feedback ?? this.feedback,
+      analysis: analysis ?? this.analysis,
+      isLoading: isLoading ?? this.isLoading,
+      isAnimated: isAnimated ?? this.isAnimated,
+      isFeedbackLoading: isFeedbackLoading ?? this.isFeedbackLoading,
+      hints: hints ?? this.hints,
+      hasPendingError: hasPendingError ?? this.hasPendingError,
+      isSelected: isSelected ?? this.isSelected,
+      audioPath: audioPath ?? this.audioPath,
+      audioDuration: audioDuration ?? this.audioDuration,
+      voiceFeedback: voiceFeedback ?? this.voiceFeedback,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -61,8 +101,8 @@ class Message {
       isUser: json['isUser'],
       timestamp: DateTime.parse(json['timestamp']),
       translation: json['translation'],
-      feedback: json['feedback'] != null 
-          ? ReviewFeedback.fromJson(json['feedback']) 
+      feedback: json['feedback'] != null
+          ? ReviewFeedback.fromJson(json['feedback'])
           : null,
       analysis: json['analysis'] != null
           ? MessageAnalysis.fromJson(json['analysis'])
@@ -76,7 +116,7 @@ class Message {
       hasPendingError: json['hasPendingError'] ?? false,
     );
   }
-  
+
   // Helper method to check if this is a voice message
   bool get isVoiceMessage => audioPath != null && audioPath!.isNotEmpty;
 }
@@ -239,23 +279,28 @@ class MessageAnalysis {
 
   factory MessageAnalysis.fromJson(Map<String, dynamic> json) {
     return MessageAnalysis(
-      grammarPoints: (json['grammar_points'] as List<dynamic>?)
+      grammarPoints:
+          (json['grammar_points'] as List<dynamic>?)
               ?.map((g) => GrammarPoint.fromJson(g))
               .toList() ??
           [],
-      vocabulary: (json['vocabulary'] as List<dynamic>?)
+      vocabulary:
+          (json['vocabulary'] as List<dynamic>?)
               ?.map((v) => VocabularyItem.fromJson(v))
               .toList() ??
           [],
       sentenceStructure: json['sentence_structure'] ?? '',
-      sentenceBreakdown: (json['sentence_breakdown'] as List<dynamic>?)
+      sentenceBreakdown:
+          (json['sentence_breakdown'] as List<dynamic>?)
               ?.map((s) => StructureSegment.fromJson(s))
               .toList() ??
           [],
       overallSummary: json['overall_summary'] ?? '',
       pragmaticAnalysis: json['pragmatic_analysis'],
-      emotionTags: (json['emotion_tags'] as List<dynamic>?)?.cast<String>() ?? [],
-      idioms: (json['idioms_slang'] as List<dynamic>?)
+      emotionTags:
+          (json['emotion_tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      idioms:
+          (json['idioms_slang'] as List<dynamic>?)
               ?.map((i) => IdiomItem.fromJson(i))
               .toList() ??
           [],
@@ -270,17 +315,11 @@ class StructureSegment {
   StructureSegment({required this.text, required this.tag});
 
   Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'tag': tag,
-    };
+    return {'text': text, 'tag': tag};
   }
 
   factory StructureSegment.fromJson(Map<String, dynamic> json) {
-    return StructureSegment(
-      text: json['text'] ?? '',
-      tag: json['tag'] ?? '',
-    );
+    return StructureSegment(text: json['text'] ?? '', tag: json['tag'] ?? '');
   }
 }
 
@@ -296,11 +335,7 @@ class IdiomItem {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'explanation': explanation,
-      'type': type,
-    };
+    return {'text': text, 'explanation': explanation, 'type': type};
   }
 
   factory IdiomItem.fromJson(Map<String, dynamic> json) {
@@ -339,13 +374,11 @@ class ShadowResult {
 class VoiceWord {
   final String word;
   final int score;
-  
+
   VoiceWord({required this.word, required this.score});
-  
-  factory VoiceWord.fromJson(Map<String, dynamic> json) => VoiceWord(
-    word: json['word'] ?? '',
-    score: json['score'] ?? 0,
-  );
+
+  factory VoiceWord.fromJson(Map<String, dynamic> json) =>
+      VoiceWord(word: json['word'] ?? '', score: json['score'] ?? 0);
 
   Map<String, dynamic> toJson() => {'word': word, 'score': score};
 }
@@ -356,7 +389,12 @@ class ErrorFocus {
   final String correctIpa;
   final String tip;
 
-  ErrorFocus({required this.word, required this.userIpa, required this.correctIpa, required this.tip});
+  ErrorFocus({
+    required this.word,
+    required this.userIpa,
+    required this.correctIpa,
+    required this.tip,
+  });
 
   factory ErrorFocus.fromJson(Map<String, dynamic> json) => ErrorFocus(
     word: json['word'] ?? '',
@@ -366,15 +404,18 @@ class ErrorFocus {
   );
 
   Map<String, dynamic> toJson() => {
-    'word': word, 'user_ipa': userIpa, 'correct_ipa': correctIpa, 'tip': tip,
+    'word': word,
+    'user_ipa': userIpa,
+    'correct_ipa': correctIpa,
+    'tip': tip,
   };
 }
 
 class VoiceFeedback {
-  final int pronunciationScore;  // 0-100
-  final String correctedText;     // Corrected pronunciation text
-  final String nativeExpression;  // Native way to say it
-  final String feedback;          // Detailed feedback
+  final int pronunciationScore; // 0-100
+  final String correctedText; // Corrected pronunciation text
+  final String nativeExpression; // Native way to say it
+  final String feedback; // Detailed feedback
   final List<VoiceWord>? sentenceBreakdown;
   final ErrorFocus? errorFocus;
 
@@ -407,10 +448,9 @@ class VoiceFeedback {
       sentenceBreakdown: (json['sentence_breakdown'] as List?)
           ?.map((e) => VoiceWord.fromJson(e))
           .toList(),
-      errorFocus: json['error_focus'] != null 
-          ? ErrorFocus.fromJson(json['error_focus']) 
+      errorFocus: json['error_focus'] != null
+          ? ErrorFocus.fromJson(json['error_focus'])
           : null,
     );
   }
 }
-
