@@ -477,17 +477,30 @@ class ApiService {
           if (line.trim().isEmpty) continue;
 
           String? content;
+
           try {
+            // Try to parse as JSON first
             final json = jsonDecode(line);
-            if (json['type'] == 'token') {
-              content = json['content'];
-            } else if (json['type'] == 'error') {
-              throw Exception(json['error']);
+
+            if (json is Map<String, dynamic>) {
+              if (json['type'] == 'token') {
+                content = json['content'];
+              } else if (json['type'] == 'error') {
+                // RETHROW server errors so they are caught by the outer stream handler
+                throw Exception(json['error']);
+              }
+            } else {
+              // Not a map, treat as raw content if needed, or ignore
             }
-          } catch (_) {
-            // In case of any raw text leak or parse error, treat as content if not json
-            // content = line; // Safer to ignore or log
+          } on FormatException {
+            // Not JSON, treat as raw text content (fallback for mixed modes)
+            // content = line;
+            // For now, we expect strict JSON protocol, so we might ignore non-JSON lines
+            // or log them.
           }
+
+          // Note: Any Exception thrown above (like the 'error' type) will propagate
+          // out of the 'await for' loop because we are not catching generic Exception here anymore.
 
           if (content == null) continue;
 

@@ -454,6 +454,13 @@ class _ChatScreenState extends State<ChatScreen>
             _messages.removeAt(aiIndex);
           }
         });
+
+        // Sync error state to cloud (outside setState)
+        try {
+          await ChatHistoryService().syncMessages(widget.scene.id, _messages);
+        } catch (syncError) {
+          debugPrint("Failed to sync error state: $syncError");
+        }
       }
     }
   }
