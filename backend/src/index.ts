@@ -298,7 +298,7 @@ app.post("/chat/send", authMiddleware, async (c) => {
 
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
@@ -409,7 +409,7 @@ Return ONLY a JSON object in this exact format:
           "X-Title": "TriTalk",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-lite-001",
+          model: env.OPENROUTER_TRANSCRIBE_MODEL,
           messages: [
             {
               role: "system",
@@ -538,7 +538,7 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
 
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
@@ -644,7 +644,7 @@ app.post("/chat/hint", authMiddleware, async (c) => {
 
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
@@ -745,7 +745,7 @@ app.post("/chat/analyze", authMiddleware, async (c) => {
           "X-Title": "TriTalk",
         },
         body: JSON.stringify({
-          model: env.OPENROUTER_MODEL,
+          model: env.OPENROUTER_CHAT_MODEL,
           messages,
           stream: true,
         }),
@@ -877,7 +877,7 @@ app.post("/scene/generate", authMiddleware, async (c) => {
 
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     let data = parseJSON(content);
@@ -930,7 +930,7 @@ app.post("/scene/polish", authMiddleware, async (c) => {
     const messages = [{ role: "user", content: prompt }];
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
@@ -965,7 +965,7 @@ app.post("/common/translate", authMiddleware, async (c) => {
     const messages = [{ role: "user", content: prompt }];
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
@@ -1064,7 +1064,7 @@ app.post("/chat/optimize", authMiddleware, async (c) => {
 
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
-      env.OPENROUTER_MODEL,
+      env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
