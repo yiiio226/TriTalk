@@ -128,7 +128,7 @@ npm run tail
 ```
 backend/
 ├── src/
-│   ├── index.ts          # 路由定义和请求处理
+│   ├── server.ts          # 路由定义和请求处理
 │   ├── types.ts          # TypeScript 类型定义
 │   ├── utils/
 │   │   ├── index.ts      # 工具函数导出
