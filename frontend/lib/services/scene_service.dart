@@ -100,25 +100,23 @@ class SceneService extends ChangeNotifier {
           .timeout(const Duration(seconds: 5));
 
       List<Scene> cloudCustomScenes = [];
-      if (customResponse != null && customResponse is List) {
-        cloudCustomScenes = customResponse.map((e) {
-            return Scene(
-              id: e['id'],
-              title: e['title'] ?? '',
-              description: e['description'] ?? '',
-              emoji: e['emoji'] ?? '🎭', 
-              aiRole: e['ai_role'] ?? '',
-              userRole: e['user_role'] ?? '',
-              initialMessage: e['initial_message'] ?? 'Start chatting!',
-              category: e['category'] ?? 'Custom',
-              difficulty: e['difficulty'] ?? 'Easy',
-              goal: e['goal'] ?? '',
-              iconPath: e['icon_path'] ?? 'assets/images/user_avatar_male.png',
-              color: e['color'] ?? 0xFF000000,
-            );
-        }).toList();
-      }
-
+      cloudCustomScenes = customResponse.map((e) {
+          return Scene(
+            id: e['id'],
+            title: e['title'] ?? '',
+            description: e['description'] ?? '',
+            emoji: e['emoji'] ?? '🎭', 
+            aiRole: e['ai_role'] ?? '',
+            userRole: e['user_role'] ?? '',
+            initialMessage: e['initial_message'] ?? 'Start chatting!',
+            category: e['category'] ?? 'Custom',
+            difficulty: e['difficulty'] ?? 'Easy',
+            goal: e['goal'] ?? '',
+            iconPath: e['icon_path'] ?? 'assets/images/user_avatar_male.png',
+            color: e['color'] ?? 0xFF000000,
+          );
+      }).toList();
+    
       // 2. Fetch Hidden Standard Scenes
       final hiddenResponse = await _supabase
           .from('user_hidden_scenes')
@@ -127,10 +125,8 @@ class SceneService extends ChangeNotifier {
           .timeout(const Duration(seconds: 5));
       
       Set<String> hiddenIds = {};
-      if (hiddenResponse != null && hiddenResponse is List) {
-        hiddenIds = hiddenResponse.map((e) => e['scene_id'] as String).toSet();
-      }
-
+      hiddenIds = hiddenResponse.map((e) => e['scene_id'] as String).toSet();
+    
       // 3. Fetch Scene Order from Cloud
       try {
         final orderResponse = await _supabase

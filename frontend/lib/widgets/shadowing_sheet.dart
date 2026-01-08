@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
-import 'dart:io';
 import '../models/message.dart';
 import '../services/api_service.dart';
 
 class ShadowingSheet extends StatefulWidget {
   final String targetText;
 
-  const ShadowingSheet({Key? key, required this.targetText}) : super(key: key);
+  const ShadowingSheet({super.key, required this.targetText});
 
   @override
   State<ShadowingSheet> createState() => _ShadowingSheetState();

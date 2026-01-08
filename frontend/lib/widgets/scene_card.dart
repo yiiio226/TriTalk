@@ -8,12 +8,12 @@ class SceneCard extends StatelessWidget {
   final bool showRole;
 
   const SceneCard({
-    Key? key,
+    super.key,
     required this.scene,
     required this.onTap,
     this.onLongPress,
     this.showRole = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

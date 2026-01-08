@@ -7,7 +7,7 @@ import 'top_toast.dart';
 import 'styled_drawer.dart';
 
 class CustomSceneDialog extends StatefulWidget {
-  const CustomSceneDialog({Key? key}) : super(key: key);
+  const CustomSceneDialog({super.key});
 
   @override
   State<CustomSceneDialog> createState() => _CustomSceneDialogState();
@@ -16,8 +16,8 @@ class CustomSceneDialog extends StatefulWidget {
 class _CustomSceneDialogState extends State<CustomSceneDialog> {
   final _uuid = const Uuid();
   final TextEditingController _scenarioController = TextEditingController();
-  String _selectedTone = 'Casual'; // Formal, Casual
-  String _selectedLength = 'Brief'; // Brief, Detailed
+  final String _selectedTone = 'Casual'; // Formal, Casual
+  final String _selectedLength = 'Brief'; // Brief, Detailed
   bool _isLoading = false;
   bool _isPolishing = false;
 

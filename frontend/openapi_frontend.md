@@ -251,13 +251,15 @@ Fetches the code from the `main` branch deployment.
 
 ```bash
 ./sync-spec.sh
-./generate-client.sh
 ```
+
+_Successfully syncing will automatically trigger `./generate-client.sh`._
 
 **Option 2: Release/Stable Mode (Specific Version)**
 Fetches a specific version derived from the backend's `package.json`.
 
 ```bash
 ./sync-spec.sh v0.1.0
-./generate-client.sh
 ```
+
+_Successfully syncing will automatically trigger `./generate-client.sh`._

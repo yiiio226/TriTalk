@@ -16,14 +16,14 @@ class AnalysisSheet extends StatefulWidget {
   final Function(MessageAnalysis)? onAnalysisComplete;
 
   const AnalysisSheet({
-    Key? key,
+    super.key,
     required this.message,
     this.analysis,
     this.isLoading = false,
     this.sceneId,
     this.analysisStream,
     this.onAnalysisComplete,
-  }) : super(key: key);
+  });
 
   @override
   State<AnalysisSheet> createState() => _AnalysisSheetState();
@@ -673,7 +673,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                           firstSentenceEnd,
                         );
                       } else if (explanation.length > 40) {
-                        displayTitle = explanation.substring(0, 40) + '...';
+                        displayTitle = '${explanation.substring(0, 40)}...';
                       } else {
                         displayTitle = explanation;
                       }

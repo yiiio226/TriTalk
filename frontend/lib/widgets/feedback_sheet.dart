@@ -9,10 +9,10 @@ class FeedbackSheet extends StatefulWidget {
   final String sceneId;
 
   const FeedbackSheet({
-    Key? key, 
+    super.key, 
     required this.message, 
     required this.sceneId
-  }) : super(key: key);
+  });
 
   @override
   State<FeedbackSheet> createState() => _FeedbackSheetState();

@@ -6,7 +6,7 @@ import 'empty_state_widget.dart';
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;
 
-  const FavoritesSheet({Key? key, required this.scenarioId}) : super(key: key);
+  const FavoritesSheet({super.key, required this.scenarioId});
 
   @override
   Widget build(BuildContext context) {

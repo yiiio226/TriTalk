@@ -88,25 +88,23 @@ class VocabService extends ChangeNotifier {
           .order('created_at', ascending: false) // Sort by newest first
           .timeout(const Duration(seconds: 5));
 
-      if (response != null && response is List) {
-        final cloudItems = response.map((e) {
-             return VocabItem(
-               phrase: e['word'] ?? '', 
-               translation: e['translation'] ?? '', 
-               tag: e['tag'] ?? '',
-               scenarioId: e['scenario_id'],
-               createdAt: e['created_at'] != null ? DateTime.parse(e['created_at']) : null,
-             );
-        }).toList();
-        
-        // Simple merge strategy: Cloud wins.
-        _items = cloudItems.cast<VocabItem>();
-        notifyListeners();
-        
-        // Update local cache
-        await _saveLocal();
-      }
-    } catch (e) {
+      final cloudItems = response.map((e) {
+           return VocabItem(
+             phrase: e['word'] ?? '', 
+             translation: e['translation'] ?? '', 
+             tag: e['tag'] ?? '',
+             scenarioId: e['scenario_id'],
+             createdAt: e['created_at'] != null ? DateTime.parse(e['created_at']) : null,
+           );
+      }).toList();
+      
+      // Simple merge strategy: Cloud wins.
+      _items = cloudItems.cast<VocabItem>();
+      notifyListeners();
+      
+      // Update local cache
+      await _saveLocal();
+        } catch (e) {
       debugPrint('Error fetching cloud vocab (non-critical): $e');
     }
   }

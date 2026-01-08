@@ -6,12 +6,13 @@ class StyledDrawer extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   const StyledDrawer({
-    Key? key,
+    super.key,
     required this.child,
     this.height,
     this.padding = const EdgeInsets.all(24.0),
-  }) : super(key: key);
+  });
 
+  @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../models/scene.dart';
-import '../data/mock_scenes.dart';
 import '../widgets/scene_card.dart';
 import '../widgets/custom_scene_dialog.dart';
 import '../widgets/scene_options_drawer.dart';
@@ -15,7 +14,7 @@ import 'profile_screen.dart';
 import 'scenario_configuration_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -262,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 child: DragTarget<Scene>(
-                                  onAccept: (draggedScene) async {
+                                  onAcceptWithDetails: (draggedScene) async {
                                     // Find the indices of the dragged and target scenes
                                     final oldIndex = scenes.indexWhere((s) => s.id == draggedScene.id);
                                     final newIndex = index;
@@ -429,8 +428,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-      onWillAccept: (scene) => true,
-      onAccept: onAccept,
+      onWillAcceptWithDetails: (scene) => true,
+      onAcceptWithDetails: onAccept,
     );
   }
 

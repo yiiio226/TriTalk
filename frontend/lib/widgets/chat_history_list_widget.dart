@@ -7,7 +7,7 @@ import '../screens/archived_chat_screen.dart';
 class ChatHistoryListWidget extends StatefulWidget {
   final String? sceneId;
 
-  const ChatHistoryListWidget({Key? key, this.sceneId}) : super(key: key);
+  const ChatHistoryListWidget({super.key, this.sceneId});
 
   @override
   State<ChatHistoryListWidget> createState() => _ChatHistoryListWidgetState();
