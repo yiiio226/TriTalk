@@ -15,5 +15,8 @@ Listen to the audio and perform these tasks:
 4. Polish the phrasing for better flow while strictly preserving the original meaning.
 
 Return ONLY a JSON object in this exact format:
-{ "optimized_text": "the polished transcription here" }`;
+{
+  "raw_text": "The transcription with filler words (um, uh, er) REMOVED, but STRICTLY PRESERVING all grammatical errors, wrong word choices, and sentence structure issues. Do NOT correct the user's English here.",
+  "optimized_text": "The fully corrected, grammatically checked, and polished version of what the user intended to say."
+}`;
 }

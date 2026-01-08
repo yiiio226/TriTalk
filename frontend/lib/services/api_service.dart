@@ -377,7 +377,7 @@ class ApiService {
     }
   }
 
-  Future<String> transcribeAudio(String audioPath) async {
+  Future<TranscriptionResponse> transcribeAudio(String audioPath) async {
     try {
       final prefs = PreferencesService();
       final targetLang = await prefs.getTargetLanguage();
@@ -403,8 +403,7 @@ class ApiService {
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['text'] ?? '';
+        return TranscriptionResponse.fromJson(jsonDecode(response.body));
       } else {
         throw Exception('Failed to transcribe audio: ${response.statusCode}');
       }
@@ -731,4 +730,18 @@ class TTSStreamChunk {
   /// Combine all collected chunks into a single base64 string
   String? get combinedAudioBase64 =>
       allChunksBase64?.isNotEmpty == true ? allChunksBase64!.join('') : null;
+}
+
+class TranscriptionResponse {
+  final String text; // Optimized text
+  final String rawText; // Original raw transcription
+
+  TranscriptionResponse({required this.text, required this.rawText});
+
+  factory TranscriptionResponse.fromJson(Map<String, dynamic> json) {
+    return TranscriptionResponse(
+      text: json['text'] ?? '',
+      rawText: json['raw_text'] ?? '',
+    );
+  }
 }
