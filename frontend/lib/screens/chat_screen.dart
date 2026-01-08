@@ -293,11 +293,14 @@ class _ChatScreenState extends State<ChatScreen>
         return;
       }
 
-      final transcribedText = await _apiService.transcribeAudio(audioPath);
+      final transcription = await _apiService.transcribeAudio(audioPath);
 
-      if (mounted && transcribedText.isNotEmpty) {
+      if (mounted &&
+          (transcription.rawText.isNotEmpty || transcription.text.isNotEmpty)) {
         setState(() {
-          _textController.text = transcribedText;
+          _textController.text = transcription.rawText.isNotEmpty
+              ? transcription.rawText
+              : transcription.text;
           _isTranscribing = false;
         });
         showTopToast(context, 'Voice transcribed & optimized', isError: false);

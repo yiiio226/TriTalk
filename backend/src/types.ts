@@ -160,4 +160,5 @@ export interface TTSResponse {
 // Uses Gemini 2.0 Flash Lite multimodal for direct audio-to-text transcription and optimization
 export interface TranscribeResponse {
   text: string; // The optimized/refined transcription
+  raw_text?: string; // The original transcription
 }
