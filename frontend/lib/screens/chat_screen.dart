@@ -380,7 +380,7 @@ class _ChatScreenState extends State<ChatScreen>
           'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}';
 
       // Call API (Streaming)
-      String fullAiResponse = '';
+      final fullAiResponse = StringBuffer();
 
       await for (final event in _apiService.sendVoiceMessage(
         audioPath,
@@ -388,14 +388,14 @@ class _ChatScreenState extends State<ChatScreen>
         history,
       )) {
         if (event.type == VoiceStreamEventType.token && event.content != null) {
-          fullAiResponse += event.content!;
+          fullAiResponse.write(event.content!);
 
           // Find and update AI message
           final index = _messages.indexWhere((m) => m.id == aiMessageId);
           if (index != -1) {
             setState(() {
               _messages[index] = _messages[index].copyWith(
-                content: fullAiResponse,
+                content: fullAiResponse.toString(),
                 isLoading: false, // Started streaming
               );
             });
@@ -431,6 +431,9 @@ class _ChatScreenState extends State<ChatScreen>
 
           // Sync after metadata update
           ChatHistoryService().syncMessages(widget.scene.id, _messages);
+
+          // Force scroll to bottom to prevent the expanded transcript from pushing AI message off-screen
+          _scrollToBottom();
         }
       }
     } catch (e) {
