@@ -238,6 +238,47 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
 });
 
 // POST /chat/send-voice - Voice message handling (requires auth)
+/**
+ * HANDLER: Voice Message & Multimodal Interaction
+ *
+ * Purpose:
+ *   Processes an audio file uploaded by the user, generating both a conversational reply
+ *   and structured metadata (transcription, analysis) in a single streaming response.
+ *
+ * Input (Multipart/Form-Data):
+ *   - 'audio': The user's recorded audio file (blob).
+ *   - 'scene_context': Context description of the current roleplay.
+ *   - 'history': Prior conversation JSON string.
+ *   - 'native_language': User's L1 language.
+ *   - 'target_language': Target L2 language.
+ *
+ * Processing Logic:
+ *   1. Receives audio and converts to Base64.
+ *   2. Constructs a Multimodal Prompt using `buildStreamingVoiceChatSystemPrompt`.
+ *   3. Sends Audio + Prompt to a Multimodal LLM (e.g. Gemini 2.0 Flash) via OpenRouter.
+ *
+ * Output (Streaming NDJSON):
+ *   The response is a stream of NDJSON lines.
+ *
+ *   PROTOCOL STRUCTURE:
+ *   1. { type: 'token', content: "..." }
+ *      -> Stream of tokens for the AI's direct reply. Display these immediately.
+ *
+ *   2. { type: 'token', content: "[[METADATA]]" }
+ *      -> A specific separator token sequence indicating the end of the text reply.
+ *
+ *   3. { type: 'token', content: "{\"transcript\": ...}" }
+ *      -> The JSON metadata object (stringified) appearing after the separator.
+ *      -> Fields in Metadata JSON:
+ *         - transcript: (string) The LLM's transcription of the user's audio.
+ *         - translation: (string) Native modification of the AI's reply.
+ *         - analysis: (object)
+ *             - is_perfect: (bool)
+ *             - corrected_text: (string)
+ *             - native_expression: (string)
+ *             - explanation: (string)
+ *             - example_answer: (string)
+ */
 app.post("/chat/send-voice", authMiddleware, async (c) => {
   try {
     const formData = await c.req.formData();
