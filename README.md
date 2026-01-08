@@ -48,7 +48,7 @@ TriTalk/
 │   ├── lib/              # Client-side code, UI, State Management
 │   └── pubspec.yaml      # Dependencies
 │
-├── backend-cloudflare/   # ⚡️ EDGE FUNCTIONS (AI PROXY)
+├── backend/   # ⚡️ EDGE FUNCTIONS (AI PROXY)
 │   ├── src/              # TypeScript worker logic
 │   └── wrangler.toml     # Cloudflare deployment config
 │
@@ -99,7 +99,7 @@ The database schema is managed via SQL files. To set up a new environment:
 ### 2. Backend Setup
 
 ```bash
-cd backend-cloudflare
+cd backend
 npm install
 # Local development
 npm run dev
