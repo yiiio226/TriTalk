@@ -2,19 +2,10 @@ name = "tritalk-backend"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
-[vars]
-OPENROUTER_MODEL = "google/gemini-3-flash-preview"
 
-# Environment variables for local development
-# For production, use wrangler secret:
-#   wrangler secret put OPENROUTER_API_KEY
-#   wrangler secret put SUPABASE_URL
-#   wrangler secret put SUPABASE_ANON_KEY
-#   wrangler secret put MINIMAX_API_KEY
-#   wrangler secret put MINIMAX_GROUP_ID
-# 
-# MiniMax API: Get credentials from https://www.minimax.chat/
-# Last updated: 2026-01-07
+# All environment variables are managed in Cloudflare Dashboard:
+# Settings -> Variables and Secrets
+
 
 [observability]
 enabled = true
