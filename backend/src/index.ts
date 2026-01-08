@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { stream } from "hono/streaming";
 import {
   ChatRequest,
   ChatResponse,
@@ -31,7 +32,7 @@ import {
   arrayBufferToBase64,
   detectAudioFormat,
   ALLOWED_ORIGINS,
-  getStreamingCorsHeaders,
+  iterateStreamLines,
 } from "./utils";
 
 // Services
@@ -418,72 +419,40 @@ app.post("/chat/analyze", authMiddleware, async (c) => {
       messages
     );
 
-    // Create a transform stream to parse SSE and emit raw text chunks (NDJSON)
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
+    c.header("Content-Type", "application/x-ndjson");
+    c.header("Content-Encoding", "Identity");
 
-    // Process the stream
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
+    return stream(
+      c,
+      async (stream) => {
+        stream.onAbort(() => {
+          console.log("Stream aborted: /chat/analyze");
+        });
 
-    let buffer = "";
-    let accumulatedContent = "";
-
-    (async () => {
-      try {
-        if (!reader) throw new Error("No response body");
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || trimmed === "data: [DONE]") continue;
-
-            if (trimmed.startsWith("data: ")) {
-              try {
-                const jsonStr = trimmed.slice(6);
-                const parsed = JSON.parse(jsonStr);
-                const content = parsed.choices?.[0]?.delta?.content || "";
-                if (content) {
-                  accumulatedContent += content;
-
-                  let cleanContent = content;
-                  if (content.includes("```")) {
-                    continue;
-                  }
-
-                  await writer.write(new TextEncoder().encode(cleanContent));
+        for await (const line of iterateStreamLines(response)) {
+          if (line === "data: [DONE]") continue;
+          if (line.startsWith("data: ")) {
+            try {
+              const jsonStr = line.slice(6);
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content || "";
+              if (content) {
+                if (content.includes("```")) {
+                  continue;
                 }
-              } catch (e) {
-                // Ignore parse errors
+                await stream.write(content);
               }
+            } catch (e) {
+              // Ignore parse errors
             }
           }
         }
-        await writer.close();
-      } catch (e) {
-        console.error("Stream processing error:", e);
-        await writer.abort(e);
-      }
-    })();
-
-    // For streaming responses, we need to manually add CORS headers
-    const origin = c.req.header("Origin") || "";
-
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "application/x-ndjson",
-        ...getStreamingCorsHeaders(origin),
       },
-    });
+      async (err, stream) => {
+        console.error("Stream error in /chat/analyze:", err);
+        await stream.write(JSON.stringify({ error: String(err) }));
+      }
+    );
   } catch (error) {
     console.error("Error in /chat/analyze:", error);
     return c.json(
@@ -752,111 +721,69 @@ app.post("/tts/generate", authMiddleware, async (c) => {
     }
 
     // Create a streaming response
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    const encoder = new TextEncoder();
+    c.header("Content-Type", "application/x-ndjson");
+    c.header("Content-Encoding", "Identity");
 
-    (async () => {
-      try {
-        const reader = ttsResponse.body?.getReader();
-        if (!reader) {
-          await writer.write(
-            encoder.encode(
-              JSON.stringify({ type: "error", error: "No response body" }) +
-                "\n"
-            )
-          );
-          await writer.close();
-          return;
-        }
+    return stream(
+      c,
+      async (stream) => {
+        stream.onAbort(() => {
+          console.log("Stream aborted: /tts/generate");
+        });
 
-        const decoder = new TextDecoder();
-        let buffer = "";
         let chunkIndex = 0;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        for await (const line of iterateStreamLines(ttsResponse)) {
+          if (!line.startsWith("data:")) continue;
 
-          buffer += decoder.decode(value, { stream: true });
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
 
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+          try {
+            const chunkData = JSON.parse(jsonStr);
 
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine || !trimmedLine.startsWith("data:")) continue;
-
-            const jsonStr = trimmedLine.slice(5).trim();
-            if (!jsonStr || jsonStr === "[DONE]") continue;
-
-            try {
-              const chunkData = JSON.parse(jsonStr);
-
-              if (
-                chunkData.base_resp &&
-                chunkData.base_resp.status_code !== 0
-              ) {
-                await writer.write(
-                  encoder.encode(
-                    JSON.stringify({
-                      type: "error",
-                      error:
-                        chunkData.base_resp.status_msg ||
-                        "TTS generation failed",
-                    }) + "\n"
-                  )
-                );
-                continue;
-              }
-
-              const audioHex = chunkData.data?.audio;
-              if (audioHex) {
-                const audioBase64 = hexToBase64(audioHex);
-                const chunkResponse = {
-                  type: "audio_chunk",
-                  chunk_index: chunkIndex++,
-                  audio_base64: audioBase64,
-                };
-                await writer.write(
-                  encoder.encode(JSON.stringify(chunkResponse) + "\n")
-                );
-              }
-
-              if (chunkData.extra_info?.audio_length) {
-                const infoResponse = {
-                  type: "info",
-                  duration_ms: chunkData.extra_info.audio_length,
-                };
-                await writer.write(
-                  encoder.encode(JSON.stringify(infoResponse) + "\n")
-                );
-              }
-            } catch (e) {
-              console.error("Error parsing TTS chunk:", e);
+            if (chunkData.base_resp && chunkData.base_resp.status_code !== 0) {
+              const errorPayload = {
+                type: "error",
+                error:
+                  chunkData.base_resp.status_msg || "TTS generation failed",
+              };
+              await stream.writeln(JSON.stringify(errorPayload));
+              continue;
             }
+
+            const audioHex = chunkData.data?.audio;
+            if (audioHex) {
+              const audioBase64 = hexToBase64(audioHex);
+              const chunkResponse = {
+                type: "audio_chunk",
+                chunk_index: chunkIndex++,
+                audio_base64: audioBase64,
+              };
+              await stream.writeln(JSON.stringify(chunkResponse));
+            }
+
+            if (chunkData.extra_info?.audio_length) {
+              const infoResponse = {
+                type: "info",
+                duration_ms: chunkData.extra_info.audio_length,
+              };
+              await stream.writeln(JSON.stringify(infoResponse));
+            }
+          } catch (e) {
+            console.error("Error parsing TTS chunk:", e);
           }
         }
 
-        await writer.write(
-          encoder.encode(JSON.stringify({ type: "done" }) + "\n")
-        );
-        await writer.close();
-      } catch (e) {
-        console.error("Stream processing error:", e);
-        await writer.abort(e);
-      }
-    })();
-
-    // For streaming responses, we need to manually add CORS headers
-    const origin = c.req.header("Origin") || "";
-
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "application/x-ndjson",
-        ...getStreamingCorsHeaders(origin),
+        await stream.writeln(JSON.stringify({ type: "done" }));
       },
-    });
+      async (err, stream) => {
+        console.error("Stream error in /tts/generate:", err);
+        await stream.writeln(
+          JSON.stringify({ type: "error", error: String(err) })
+        );
+      }
+    );
   } catch (error) {
     console.error("Error in /tts/generate:", error);
     return c.json(
