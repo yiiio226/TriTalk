@@ -2,7 +2,7 @@
   "name": "tritalk-backend",
   "version": "1.0.0",
   "description": "TriTalk backend on Cloudflare Workers",
-  "main": "src/index.ts",
+  "main": "src/server.ts",
   "scripts": {
     "dev": "wrangler dev --ip 0.0.0.0",
     "deploy": "wrangler deploy",

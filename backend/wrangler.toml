@@ -1,5 +1,5 @@
 name = "tritalk-backend"
-main = "src/index.ts"
+main = "src/server.ts"
 compatibility_date = "2024-12-01"
 
 
