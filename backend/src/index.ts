@@ -338,8 +338,6 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
     const formData = await c.req.formData();
     const env = c.env as Env;
     const audioFile = formData.get("audio");
-    const targetLanguage =
-      (formData.get("target_language") as string) || "English";
 
     if (!audioFile || typeof audioFile === "string") {
       throw new Error("No audio file uploaded");
@@ -389,7 +387,7 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
     const transcribePrompt = `You are a professional transcription and editing assistant.
 
 Listen to the audio and perform these tasks:
-1. Transcribe the speech accurately in ${targetLanguage}.
+1. Transcribe the speech accurately in the language spoken.
 2. Correct any grammatical and spelling errors.
 3. Remove filler words (e.g., 'uh', 'um', 'well', 'you know', 'like').
 4. Polish the phrasing for better flow while strictly preserving the original meaning.
