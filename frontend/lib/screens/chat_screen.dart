@@ -326,8 +326,7 @@ class _ChatScreenState extends State<ChatScreen>
     // Add user voice message immediately (optimistic UI)
     final userMessage = Message(
       id: userMessageId,
-      content:
-          '', // Voice connection doesn't necessarily have text content immediately
+      content: '', // Will be filled with transcript later
       isUser: true,
       timestamp: DateTime.now(),
       audioPath: audioPath,
@@ -335,12 +334,25 @@ class _ChatScreenState extends State<ChatScreen>
       isFeedbackLoading: true,
     );
 
+    // Placeholder AI message (will be streamed)
+    final aiMessage = Message(
+      id: aiMessageId,
+      content: '', // Start empty
+      isUser: false,
+      timestamp: DateTime.now(),
+      isAnimated:
+          true, // Optional, can enable typing animation effect if supported
+      isLoading:
+          true, // Show loading initially until first token? Or just empty.
+    );
+
     setState(() {
       _messages.add(userMessage);
+      _messages.add(aiMessage); // Add AI message immediately
       _isRecordingVoice = false;
     });
 
-    // Save initial state (user message + loading)
+    // Save initial state
     ChatHistoryService().syncMessages(widget.scene.id, _messages);
 
     _scrollToBottom();
@@ -350,7 +362,10 @@ class _ChatScreenState extends State<ChatScreen>
       final history = _messages
           .where(
             (m) =>
-                !m.isLoading && m.id != userMessageId && m.content.isNotEmpty,
+                !m.isLoading &&
+                m.id != userMessageId &&
+                m.id != aiMessageId &&
+                m.content.isNotEmpty,
           )
           .map(
             (m) => <String, String>{
@@ -364,49 +379,60 @@ class _ChatScreenState extends State<ChatScreen>
       final sceneContext =
           'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}';
 
-      // Call API
-      final response = await _apiService.sendVoiceMessage(
+      // Call API (Streaming)
+      String fullAiResponse = '';
+
+      await for (final event in _apiService.sendVoiceMessage(
         audioPath,
         sceneContext,
         history,
-      );
+      )) {
+        if (event.type == VoiceStreamEventType.token && event.content != null) {
+          fullAiResponse += event.content!;
 
-      // Update UI with response
-      setState(() {
-        // Update user message with feedback if available (and maybe transcribed text if provided)
-        final index = _messages.indexWhere((m) => m.id == userMessageId);
-        if (index != -1) {
-          _messages[index] = Message(
-            id: userMessage.id,
-            content:
-                '', // Keep empty or use transcribed text if API returns it in future
-            isUser: true,
-            timestamp: userMessage.timestamp,
-            audioPath: audioPath,
-            audioDuration:
-                userMessage.audioDuration, // Keep placeholder or update
-            voiceFeedback: response.voiceFeedback,
-            feedback: response.reviewFeedback,
-            isFeedbackLoading: false,
-          );
+          // Find and update AI message
+          final index = _messages.indexWhere((m) => m.id == aiMessageId);
+          if (index != -1) {
+            setState(() {
+              _messages[index] = _messages[index].copyWith(
+                content: fullAiResponse,
+                isLoading: false, // Started streaming
+              );
+            });
+          }
+        } else if (event.type == VoiceStreamEventType.metadata &&
+            event.metadata != null) {
+          final metadata = event.metadata!;
+
+          setState(() {
+            // Update User Message (Transcript + Feedback)
+            final userIndex = _messages.indexWhere(
+              (m) => m.id == userMessageId,
+            );
+            if (userIndex != -1) {
+              _messages[userIndex] = _messages[userIndex].copyWith(
+                content: metadata.transcript ?? '', // Fill transcript!
+                voiceFeedback: metadata.voiceFeedback,
+                feedback: metadata.reviewFeedback,
+                isFeedbackLoading: false,
+              );
+            }
+
+            // Update AI Message (Translation + Final content if needed)
+            final aiIndex = _messages.indexWhere((m) => m.id == aiMessageId);
+            if (aiIndex != -1) {
+              _messages[aiIndex] = _messages[aiIndex].copyWith(
+                // content: metadata.message, // Usually same as streamed, but metadata might have cleaner version? Keep streamed for now.
+                translation: metadata.translation,
+                isLoading: false,
+              );
+            }
+          });
+
+          // Sync after metadata update
+          ChatHistoryService().syncMessages(widget.scene.id, _messages);
         }
-
-        // Add real AI message
-        final aiMessage = Message(
-          id: aiMessageId,
-          content: response.message,
-          isUser: false,
-          timestamp: DateTime.now(),
-          translation: response.translation,
-          isAnimated: true,
-        );
-        _messages.add(aiMessage);
-      });
-
-      // Save final state (AI response + feedback)
-      ChatHistoryService().syncMessages(widget.scene.id, _messages);
-
-      _scrollToBottom();
+      }
     } catch (e) {
       if (mounted) {
         showTopToast(
@@ -415,19 +441,17 @@ class _ChatScreenState extends State<ChatScreen>
           isError: true,
         );
         setState(() {
-          // Optionally mark user message as failed
-          final index = _messages.indexWhere((m) => m.id == userMessageId);
-          if (index != -1) {
-            _messages[index] = Message(
-              id: userMessage.id,
-              content: userMessage.content,
-              isUser: true,
-              timestamp: userMessage.timestamp,
-              audioPath: userMessage.audioPath,
-              audioDuration: userMessage.audioDuration,
-              isFeedbackLoading: false, // Stop loading
-              // Error state could be handled here
+          // Mark user message as failed or stop loading
+          final userIndex = _messages.indexWhere((m) => m.id == userMessageId);
+          if (userIndex != -1) {
+            _messages[userIndex] = _messages[userIndex].copyWith(
+              isFeedbackLoading: false,
             );
+          }
+          // Remove or error AI message?
+          final aiIndex = _messages.indexWhere((m) => m.id == aiMessageId);
+          if (aiIndex != -1 && _messages[aiIndex].content.isEmpty) {
+            _messages.removeAt(aiIndex);
           }
         });
       }
