@@ -24,16 +24,28 @@ jobs:
       - run: npm ci
       - run: npm run gen:spec
 
-      - name: Upload to R2 (via Wrangler)
+      - name: Get Version
+        id: get_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Upload to R2 (Latest & Versioned)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler r2 object put lib/tritalk/swagger.json --file=swagger.json --remote
+        run: |
+          # 1. Upload Latest
+          echo "Uploading latest version..."
+          npx wrangler r2 object put lib/tritalk/latest/swagger.json --file=swagger.json --remote
+
+          # 2. Upload Specific Version
+          echo "Uploading version v${{ env.VERSION }}..."
+          npx wrangler r2 object put lib/tritalk/v${{ env.VERSION }}/swagger.json --file=swagger.json --remote
 
       - name: Deployment Summary
         if: success()
         run: |
           echo "✅ OpenAPI Spec deployed successfully to R2!"
-          echo "🚀 Location: r2://lib/tritalk/swagger.json"
-          echo "📦 Deployment triggered by: ${{ github.actor }}"
+          echo "🚀 Latest:   r2://lib/tritalk/latest/swagger.json"
+          echo "📌 Version:  r2://lib/tritalk/v${{ env.VERSION }}/swagger.json"
+          echo "📦 Triggered by: ${{ github.actor }}"
           echo "📝 Commit: ${{ github.sha }}"
