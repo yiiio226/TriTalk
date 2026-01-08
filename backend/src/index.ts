@@ -420,27 +420,39 @@ app.post("/chat/analyze", authMiddleware, async (c) => {
     );
 
     c.header("Content-Type", "application/x-ndjson");
+    c.header("Content-Encoding", "Identity");
 
-    return stream(c, async (stream) => {
-      for await (const line of iterateStreamLines(response)) {
-        if (line === "data: [DONE]") continue;
-        if (line.startsWith("data: ")) {
-          try {
-            const jsonStr = line.slice(6);
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content || "";
-            if (content) {
-              if (content.includes("```")) {
-                continue;
+    return stream(
+      c,
+      async (stream) => {
+        stream.onAbort(() => {
+          console.log("Stream aborted: /chat/analyze");
+        });
+
+        for await (const line of iterateStreamLines(response)) {
+          if (line === "data: [DONE]") continue;
+          if (line.startsWith("data: ")) {
+            try {
+              const jsonStr = line.slice(6);
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content || "";
+              if (content) {
+                if (content.includes("```")) {
+                  continue;
+                }
+                await stream.write(content);
               }
-              await stream.write(content);
+            } catch (e) {
+              // Ignore parse errors
             }
-          } catch (e) {
-            // Ignore parse errors
           }
         }
+      },
+      async (err, stream) => {
+        console.error("Stream error in /chat/analyze:", err);
+        await stream.write(JSON.stringify({ error: String(err) }));
       }
-    });
+    );
   } catch (error) {
     console.error("Error in /chat/analyze:", error);
     return c.json(
@@ -710,53 +722,68 @@ app.post("/tts/generate", authMiddleware, async (c) => {
 
     // Create a streaming response
     c.header("Content-Type", "application/x-ndjson");
+    c.header("Content-Encoding", "Identity");
 
-    return stream(c, async (stream) => {
-      let chunkIndex = 0;
+    return stream(
+      c,
+      async (stream) => {
+        stream.onAbort(() => {
+          console.log("Stream aborted: /tts/generate");
+        });
 
-      for await (const line of iterateStreamLines(ttsResponse)) {
-        if (!line.startsWith("data:")) continue;
+        let chunkIndex = 0;
 
-        const jsonStr = line.slice(5).trim();
-        if (!jsonStr || jsonStr === "[DONE]") continue;
+        for await (const line of iterateStreamLines(ttsResponse)) {
+          if (!line.startsWith("data:")) continue;
 
-        try {
-          const chunkData = JSON.parse(jsonStr);
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
 
-          if (chunkData.base_resp && chunkData.base_resp.status_code !== 0) {
-            const errorPayload = {
-              type: "error",
-              error: chunkData.base_resp.status_msg || "TTS generation failed",
-            };
-            await stream.writeln(JSON.stringify(errorPayload));
-            continue;
+          try {
+            const chunkData = JSON.parse(jsonStr);
+
+            if (chunkData.base_resp && chunkData.base_resp.status_code !== 0) {
+              const errorPayload = {
+                type: "error",
+                error:
+                  chunkData.base_resp.status_msg || "TTS generation failed",
+              };
+              await stream.writeln(JSON.stringify(errorPayload));
+              continue;
+            }
+
+            const audioHex = chunkData.data?.audio;
+            if (audioHex) {
+              const audioBase64 = hexToBase64(audioHex);
+              const chunkResponse = {
+                type: "audio_chunk",
+                chunk_index: chunkIndex++,
+                audio_base64: audioBase64,
+              };
+              await stream.writeln(JSON.stringify(chunkResponse));
+            }
+
+            if (chunkData.extra_info?.audio_length) {
+              const infoResponse = {
+                type: "info",
+                duration_ms: chunkData.extra_info.audio_length,
+              };
+              await stream.writeln(JSON.stringify(infoResponse));
+            }
+          } catch (e) {
+            console.error("Error parsing TTS chunk:", e);
           }
-
-          const audioHex = chunkData.data?.audio;
-          if (audioHex) {
-            const audioBase64 = hexToBase64(audioHex);
-            const chunkResponse = {
-              type: "audio_chunk",
-              chunk_index: chunkIndex++,
-              audio_base64: audioBase64,
-            };
-            await stream.writeln(JSON.stringify(chunkResponse));
-          }
-
-          if (chunkData.extra_info?.audio_length) {
-            const infoResponse = {
-              type: "info",
-              duration_ms: chunkData.extra_info.audio_length,
-            };
-            await stream.writeln(JSON.stringify(infoResponse));
-          }
-        } catch (e) {
-          console.error("Error parsing TTS chunk:", e);
         }
-      }
 
-      await stream.writeln(JSON.stringify({ type: "done" }));
-    });
+        await stream.writeln(JSON.stringify({ type: "done" }));
+      },
+      async (err, stream) => {
+        console.error("Stream error in /tts/generate:", err);
+        await stream.writeln(
+          JSON.stringify({ type: "error", error: String(err) })
+        );
+      }
+    );
   } catch (error) {
     console.error("Error in /tts/generate:", error);
     return c.json(
