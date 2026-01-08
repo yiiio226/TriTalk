@@ -431,6 +431,9 @@ class _ChatScreenState extends State<ChatScreen>
 
           // Sync after metadata update
           ChatHistoryService().syncMessages(widget.scene.id, _messages);
+
+          // Force scroll to bottom to prevent the expanded transcript from pushing AI message off-screen
+          _scrollToBottom();
         }
       }
     } catch (e) {
