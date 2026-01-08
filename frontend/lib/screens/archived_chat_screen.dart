@@ -6,7 +6,7 @@ import '../services/chat_history_service.dart';
 class ArchivedChatScreen extends StatelessWidget {
   final BookmarkedConversation bookmark;
 
-  const ArchivedChatScreen({Key? key, required this.bookmark}) : super(key: key);
+  const ArchivedChatScreen({super.key, required this.bookmark});
 
   @override
   Widget build(BuildContext context) {

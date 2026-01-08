@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../services/revenue_cat_service.dart';
 
 class PaywallScreen extends StatelessWidget {
-  const PaywallScreen({Key? key}) : super(key: key);
+  const PaywallScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

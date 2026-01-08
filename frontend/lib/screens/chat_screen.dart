@@ -27,7 +27,7 @@ import 'paywall_screen.dart';
 class ChatScreen extends StatefulWidget {
   final Scene scene;
 
-  const ChatScreen({Key? key, required this.scene}) : super(key: key);
+  const ChatScreen({super.key, required this.scene});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -39,7 +39,7 @@ class _ChatScreenState extends State<ChatScreen>
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<Message> _messages = [];
-  bool _isAnalyzing = false;
+  final bool _isAnalyzing = false;
   String? _analyzingMessageId;
   Timer? _autoScrollTimer; // Timer for continuous scrolling during animation
 
@@ -61,7 +61,7 @@ class _ChatScreenState extends State<ChatScreen>
   // Audio playback state
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? _playingMessageId;
-  bool _isPlaying = false;
+  final bool _isPlaying = false;
 
   // Multi-select mode state
   bool _isMultiSelectMode = false;

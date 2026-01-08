@@ -6,11 +6,11 @@ class EmptyStateWidget extends StatelessWidget {
   final double imageSize;
 
   const EmptyStateWidget({
-    Key? key,
+    super.key,
     required this.message,
     required this.imagePath,
     this.imageSize = 200,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

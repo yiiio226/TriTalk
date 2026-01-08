@@ -6,7 +6,7 @@ import '../widgets/vocab_skeleton_loader.dart';
 class VocabListWidget extends StatelessWidget {
   final String? sceneId;
   
-  const VocabListWidget({Key? key, this.sceneId}) : super(key: key);
+  const VocabListWidget({super.key, this.sceneId});
 
   @override
   Widget build(BuildContext context) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 class VocabSkeletonLoader extends StatelessWidget {
-  const VocabSkeletonLoader({Key? key}) : super(key: key);
+  const VocabSkeletonLoader({super.key});
 
   @override
   Widget build(BuildContext context) {

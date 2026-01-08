@@ -5,7 +5,7 @@ import '../widgets/empty_state_widget.dart';
 class SavedSentenceListWidget extends StatelessWidget {
   final String? sceneId;
 
-  const SavedSentenceListWidget({Key? key, this.sceneId}) : super(key: key);
+  const SavedSentenceListWidget({super.key, this.sceneId});
 
   @override
   Widget build(BuildContext context) {

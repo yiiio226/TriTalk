@@ -5,7 +5,7 @@ import 'chat_screen.dart';
 class ScenarioConfigurationScreen extends StatefulWidget {
   final Scene scene;
 
-  const ScenarioConfigurationScreen({Key? key, required this.scene}) : super(key: key);
+  const ScenarioConfigurationScreen({super.key, required this.scene});
 
   @override
   State<ScenarioConfigurationScreen> createState() => _ScenarioConfigurationScreenState();
