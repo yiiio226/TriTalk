@@ -12,3 +12,4 @@ export {
   getAllowedOrigin,
   getStreamingCorsHeaders,
 } from "./cors";
+export { iterateStreamLines } from "./streaming";
