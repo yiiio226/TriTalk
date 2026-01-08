@@ -359,19 +359,29 @@ class _ChatBubbleState extends State<ChatBubble>
                 children: [
                   widget.message.isLoading
                       ? _buildLoadingIndicator()
-                      : widget.message.isVoiceMessage
-                      ? _buildVoiceBubbleContent(isUser)
-                      : MarkdownBody(
-                          data: _displayedText,
-                          styleSheet: MarkdownStyleSheet(
-                            p: const TextStyle(fontSize: 16, height: 1.4),
-                            strong: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            em: const TextStyle(fontStyle: FontStyle.italic),
-                          ),
-                          selectable: !widget
-                              .isMultiSelectMode, // Disable selection in multi-select mode
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (widget.message.isVoiceMessage)
+                              _buildVoiceBubbleContent(isUser),
+                            if (widget.message.content.isNotEmpty) ...[
+                              if (widget.message.isVoiceMessage)
+                                const SizedBox(height: 8),
+                              MarkdownBody(
+                                data: _displayedText,
+                                styleSheet: MarkdownStyleSheet(
+                                  p: const TextStyle(fontSize: 16, height: 1.4),
+                                  strong: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  em: const TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                selectable: !widget.isMultiSelectMode,
+                              ),
+                            ],
+                          ],
                         ),
                   if (hasFeedback) ...[
                     const SizedBox(height: 6),
