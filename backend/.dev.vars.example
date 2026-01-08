@@ -4,5 +4,6 @@
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 OPENROUTER_CHAT_MODEL=google/gemini-3-flash-preview
 OPENROUTER_TRANSCRIBE_MODEL=google/gemini-2.0-flash-lite-001
+MINIMAX_DEFAULT_VOICE_ID=English_Trustworthy_Man
 SUPABASE_URL=your_supabase_url_here
 SUPABASE_ANON_KEY=your_supabase_anon_key_here

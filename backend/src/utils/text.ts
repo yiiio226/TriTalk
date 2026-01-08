@@ -9,6 +9,9 @@
 export function sanitizeText(text: string): string {
   if (!text) return "";
   return text
-    .replace(/[\uD800-\uDFFF]/g, "")
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+    .replace(
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+      ""
+    )
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
 }

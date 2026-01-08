@@ -74,7 +74,11 @@ export async function callOpenRouterStreaming(
   );
 
   if (!response.ok) {
-    throw new Error(`OpenRouter API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error("OpenRouter API Response:", errorText);
+    throw new Error(
+      `OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`
+    );
   }
 
   return response;
@@ -123,5 +127,20 @@ export async function callOpenRouterMultimodal(
   }
 
   const data = (await response.json()) as any;
+
+  if (
+    !data ||
+    !data.choices ||
+    !Array.isArray(data.choices) ||
+    data.choices.length === 0 ||
+    !data.choices[0].message ||
+    typeof data.choices[0].message.content === "undefined"
+  ) {
+    throw new Error(
+      "OpenRouter: missing choices or content in response: " +
+        JSON.stringify(data)
+    );
+  }
+
   return data.choices[0].message.content;
 }

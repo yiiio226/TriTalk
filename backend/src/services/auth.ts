@@ -60,7 +60,7 @@ export const authMiddleware = async (c: Context, next: any) => {
   if (!user) {
     return c.json(
       {
-        error: "Unauthorized: Invalid User Token or Subscription",
+        error: "Unauthorized: Invalid User Token",
       },
       401
     );
