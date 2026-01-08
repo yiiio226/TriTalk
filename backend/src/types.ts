@@ -102,7 +102,8 @@ export interface SceneGenerationResponse {
 
 export interface Env {
   OPENROUTER_API_KEY: string;
-  OPENROUTER_MODEL: string;
+  OPENROUTER_CHAT_MODEL: string; // Model for chat, hint, analyze, etc.
+  OPENROUTER_TRANSCRIBE_MODEL: string; // Model for audio transcription (multimodal)
   // Removed TRITALK_API_KEY as we are moving to Supabase Auth
   // TRITALK_API_KEY: string;
   SUPABASE_URL: string;
