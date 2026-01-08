@@ -4,6 +4,8 @@
 
 import type { Env } from "../types";
 
+// ... (imports remain the same)
+
 export interface TTSRequestOptions {
   text: string;
   voiceId?: string;
@@ -15,21 +17,29 @@ export interface TTSRequestOptions {
 export interface TTSConfig {
   apiKey: string;
   groupId: string;
+  defaultVoiceId?: string;
 }
 
 /**
  * Build TTS request body for MiniMax API.
  */
-export function buildTTSRequestBody(options: TTSRequestOptions) {
+export function buildTTSRequestBody(
+  options: TTSRequestOptions,
+  defaultVoiceId: string = "English_Trustworthy_Man"
+) {
+  if (options.text.length > 2000) {
+    throw new Error("TTS text exceeds 2000 characters");
+  }
+
   return {
     model: "speech-2.6-turbo",
-    text: options.text.slice(0, 2000), // Max 2000 chars
+    text: options.text,
     stream: true,
     stream_options: {
       exclude_aggregated_audio: true,
     },
     voice_setting: {
-      voice_id: options.voiceId || "English_Trustworthy_Man",
+      voice_id: options.voiceId || defaultVoiceId,
       speed: options.speed || 1.0,
       vol: options.vol || 1.0,
       pitch: options.pitch || 0,
@@ -52,7 +62,7 @@ export async function callMiniMaxTTS(
   options: TTSRequestOptions
 ): Promise<Response> {
   const apiUrl = `https://api.minimax.chat/v1/t2a_v2?GroupId=${config.groupId}`;
-  const requestBody = buildTTSRequestBody(options);
+  const requestBody = buildTTSRequestBody(options, config.defaultVoiceId);
 
   const response = await fetch(apiUrl, {
     method: "POST",
@@ -62,6 +72,13 @@ export async function callMiniMaxTTS(
     },
     body: JSON.stringify(requestBody),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `MiniMax API error: ${response.status} ${response.statusText} - ${errorText}`
+    );
+  }
 
   return response;
 }
@@ -81,5 +98,6 @@ export function getTTSConfig(env: Env): TTSConfig {
   return {
     apiKey: env.MINIMAX_API_KEY!,
     groupId: env.MINIMAX_GROUP_ID!,
+    defaultVoiceId: env.MINIMAX_DEFAULT_VOICE_ID,
   };
 }
