@@ -1,0 +1,36 @@
+name: Deploy OpenAPI Spec
+on:
+  push:
+    branches: [main]
+    paths: ["backend/src/**", "backend/scripts/**"]
+
+jobs:
+  deploy-spec:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+      - run: npm run gen:spec
+
+      - name: Upload to R2 (via Wrangler)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler r2 object put lib/tritalk/swagger.json --file=swagger.json
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "✅ OpenAPI Spec deployed successfully to R2!"
+          echo "🚀 Location: s3://lib/tritalk/swagger.json"
+          echo "📦 Deployment triggered by: ${{ github.actor }}"
+          echo "📝 Commit: ${{ github.sha }}"
