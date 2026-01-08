@@ -1,0 +1,204 @@
+import { z } from "@hono/zod-openapi";
+
+// --- Chat Schemas ---
+
+export const ChatRequestSchema = z.object({
+  message: z.string().openapi({ example: "Hello, how are you?" }),
+  history: z
+    .array(
+      z.object({
+        role: z.string(),
+        content: z.string(),
+      })
+    )
+    .optional()
+    .openapi({ example: [{ role: "user", content: "Hi" }] }),
+  scene_context: z.string().openapi({ example: "Coffee shop ordering" }),
+  native_language: z
+    .string()
+    .optional()
+    .openapi({ example: "Chinese (Simplified)" }),
+  target_language: z.string().optional().openapi({ example: "English" }),
+});
+
+export const ReviewFeedbackSchema = z.object({
+  is_perfect: z.boolean().openapi({ example: false }),
+  corrected_text: z.string().openapi({ example: "Hello, how are you doing?" }),
+  native_expression: z.string().openapi({ example: "Chinese expression" }),
+  explanation: z
+    .string()
+    .openapi({ example: "Added 'doing' for continuous aspect." }),
+  example_answer: z.string().openapi({ example: "I am doing well." }),
+});
+
+export const ChatResponseSchema = z.object({
+  message: z.string().openapi({ example: "I am fine, thanks." }),
+  translation: z.string().optional().openapi({ example: "我很好，谢谢。" }),
+  review_feedback: ReviewFeedbackSchema.optional(),
+});
+
+// --- Hint Schemas ---
+
+export const HintRequestSchema = z.object({
+  message: z.string().optional().openapi({ example: "I want a coffee." }),
+  history: z
+    .array(
+      z.object({
+        role: z.string(),
+        content: z.string(),
+      })
+    )
+    .optional(),
+  scene_context: z.string().openapi({ example: "Ordering at a cafe" }),
+  target_language: z.string().optional().openapi({ example: "English" }),
+});
+
+export const HintResponseSchema = z.object({
+  hints: z
+    .array(z.string())
+    .openapi({ example: ["Could I have a latte?", "I would like a coffee."] }),
+});
+
+// --- Analyze Schemas ---
+
+export const AnalyzeRequestSchema = z.object({
+  message: z.string().openapi({ example: "I want coffee." }),
+  native_language: z
+    .string()
+    .optional()
+    .openapi({ example: "Chinese (Simplified)" }),
+});
+
+export const GrammarPointSchema = z.object({
+  structure: z.string(),
+  explanation: z.string(),
+  example: z.string(),
+});
+
+export const VocabularyItemSchema = z.object({
+  word: z.string(),
+  definition: z.string(),
+  example: z.string(),
+  level: z.string().optional(),
+  part_of_speech: z.string().optional(),
+});
+
+export const AnalyzeResponseSchema = z.object({
+  grammar_points: z.array(GrammarPointSchema),
+  vocabulary: z.array(VocabularyItemSchema),
+  sentence_structure: z.string(),
+  sentence_breakdown: z
+    .array(z.object({ text: z.string(), tag: z.string() }))
+    .optional(),
+  overall_summary: z.string(),
+  pragmatic_analysis: z.string().optional(),
+  emotion_tags: z.array(z.string()).optional(),
+  idioms_slang: z
+    .array(
+      z.object({
+        text: z.string(),
+        explanation: z.string(),
+        type: z.enum(["Idiom", "Slang", "Common Phrase"]),
+      })
+    )
+    .optional(),
+});
+
+// --- Scene Schemas ---
+
+export const SceneGenerationRequestSchema = z.object({
+  description: z.string().openapi({ example: "Booking a flight ticket." }),
+  tone: z.string().optional().openapi({ example: "Polite" }),
+});
+
+export const SceneGenerationResponseSchema = z.object({
+  title: z.string(),
+  ai_role: z.string(),
+  user_role: z.string(),
+  goal: z.string(),
+  description: z.string(),
+  initial_message: z.string(),
+  emoji: z.string(),
+});
+
+export const PolishRequestSchema = z.object({
+  description: z.string().openapi({ example: "ordering food" }),
+});
+
+export const PolishResponseSchema = z.object({
+  polished_text: z
+    .string()
+    .openapi({ example: "Ordering food at a fine dining restaurant." }),
+});
+
+// --- Translate Schemas ---
+
+export const TranslateRequestSchema = z.object({
+  text: z.string().openapi({ example: "Hello" }),
+  target_language: z.string().openapi({ example: "Spanish" }),
+});
+
+export const TranslateResponseSchema = z.object({
+  translation: z.string().openapi({ example: "Hola" }),
+});
+
+// --- Shadow Schemas ---
+
+export const ShadowRequestSchema = z.object({
+  target_text: z.string().openapi({ example: "Hello World" }),
+  user_audio_text: z.string().openapi({ example: "Hello Ward" }),
+});
+
+export const ShadowResponseSchema = z.object({
+  score: z.number().openapi({ example: 85 }),
+  details: z.object({
+    intonation_score: z.number(),
+    pronunciation_score: z.number(),
+    feedback: z.string(),
+  }),
+});
+
+// --- Optimize Schemas ---
+
+export const OptimizeRequestSchema = z.object({
+  message: z.string(),
+  scene_context: z.string(),
+  history: z
+    .array(z.object({ role: z.string(), content: z.string() }))
+    .optional(),
+  target_language: z.string().optional(),
+});
+
+export const OptimizeResponseSchema = z.object({
+  optimized_text: z.string(),
+});
+
+// --- TTS Schemas ---
+
+export const TTSRequestSchema = z.object({
+  text: z.string().openapi({ example: "Hello world" }),
+  message_id: z.string().optional(),
+  voice_id: z.string().optional(),
+});
+
+export const TTSResponseSchema = z.object({
+  audio_url: z.string().optional(),
+  audio_base64: z.string().optional(),
+  duration_ms: z.number().optional(),
+  error: z.string().optional(),
+});
+
+// --- Transcribe Schemas ---
+
+export const TranscribeResponseSchema = z.object({
+  text: z.string().openapi({ example: "Hello world" }),
+  raw_text: z.string().optional(),
+});
+
+// --- Error Schema ---
+export const ErrorSchema = z.object({
+  error: z.string().optional(),
+  message: z.string().optional(),
+  debug_error: z.string().optional(),
+  details: z.string().optional(),
+});

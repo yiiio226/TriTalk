@@ -1,6 +1,6 @@
 # OpenAPI Backend Migration Manual
 
-Status: `[ ] Not Started`
+Status: `[x] Complete`
 
 Follow this guide step-by-step to migrate the TriTalk backend to a strictly typed OpenAPI system.
 This document is designed to be executable by you (the developer) and context-aware for AI assistants (like Cursor).
@@ -9,18 +9,18 @@ This document is designed to be executable by you (the developer) and context-aw
 
 ## Phase 1: Setup
 
-- [ ] **Install Dependencies**
+- [x] **Install Dependencies**
       Run the following commands in the `backend/` directory:
   ```bash
-  npm install @hono/zod-openapi zod
-  npm install -D tsx
+  npm install @hono/zod-openapi zod @hono/swagger-ui
+  npm install -D tsx @types/node
   ```
 
 ---
 
 ## Phase 2: Code Refactoring (AI Assisted)
 
-- [ ] **Refactor `src/server.ts`**
+- [x] **Refactor `src/server.ts`**
       Copy the following prompt and send it to your AI assistant (Cursor), keeping `src/server.ts` open.
 
   ```markdown
@@ -82,14 +82,14 @@ This document is designed to be executable by you (the developer) and context-aw
   3. Rewrite the app initialization and handlers.
   ```
 
-- [ ] **Verify Application**
+- [x] **Verify Application**
       Run `npm run dev` and visit `http://localhost:8787/ui`. You should see the Swagger UI.
 
 ---
 
 ## Phase 3: Spec Generation Script
 
-- [ ] **Create Extraction Script**
+- [x] **Create Extraction Script**
       Create `backend/scripts/generate-openapi.ts`:
 
   ```typescript
@@ -108,7 +108,7 @@ This document is designed to be executable by you (the developer) and context-aw
   console.log("✅ string generated to ./swagger.json");
   ```
 
-- [ ] **Update `package.json`**
+- [x] **Update `package.json`**
       Add string script:
 
   ```json
@@ -117,7 +117,7 @@ This document is designed to be executable by you (the developer) and context-aw
   }
   ```
 
-- [ ] **Test Generation**
+- [x] **Test Generation**
       Run: `npm run gen:spec` -> Check if `swagger.json` is created.
 
 ---
@@ -166,4 +166,4 @@ This document is designed to be executable by you (the developer) and context-aw
 
 Mark the task as done when you can successfully access the Swagger UI and the JSON is auto-deployed to R2.
 
-Status: `[ ] Complete`
+Status: `[x] Complete`

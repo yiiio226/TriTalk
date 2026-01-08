@@ -1,28 +1,8 @@
-import { Hono } from "hono";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from "hono/cors";
 import { stream } from "hono/streaming";
-import {
-  ChatRequest,
-  ChatResponse,
-  HintRequest,
-  HintResponse,
-  SceneGenerationRequest,
-  SceneGenerationResponse,
-  AnalyzeRequest,
-  ReviewFeedback,
-  PolishRequest,
-  PolishResponse,
-  TranslateRequest,
-  TranslateResponse,
-  ShadowRequest,
-  ShadowResponse,
-  OptimizeRequest,
-  OptimizeResponse,
-  TTSRequest,
-  TTSResponse,
-  TranscribeResponse,
-  Env,
-} from "./types";
+import { Env } from "./types";
 
 // Utils
 import {
@@ -62,8 +42,32 @@ import {
   buildTranslatePrompt,
 } from "./prompts";
 
-// Initialize Hono app with Env bindings
-const app = new Hono<{ Bindings: Env; Variables: { user: any } }>();
+// Schemas
+import {
+  ChatRequestSchema,
+  ChatResponseSchema,
+  ErrorSchema,
+  TranscribeResponseSchema,
+  HintRequestSchema,
+  HintResponseSchema,
+  AnalyzeRequestSchema,
+  AnalyzeResponseSchema,
+  SceneGenerationRequestSchema,
+  SceneGenerationResponseSchema,
+  PolishRequestSchema,
+  PolishResponseSchema,
+  TranslateRequestSchema,
+  TranslateResponseSchema,
+  ShadowRequestSchema,
+  ShadowResponseSchema,
+  OptimizeRequestSchema,
+  OptimizeResponseSchema,
+  TTSRequestSchema,
+  TTSResponseSchema,
+} from "./schemas";
+
+// Initialize OpenAPIHono app
+const app = new OpenAPIHono<{ Bindings: Env; Variables: { user: any } }>();
 
 // ============================================
 // CORS Middleware (Global)
@@ -72,7 +76,6 @@ app.use(
   "/*",
   cors({
     origin: (origin) => {
-      // Allow localhost and specific domains
       if (
         ALLOWED_ORIGINS.includes(origin) ||
         origin.startsWith("http://localhost:") ||
@@ -88,26 +91,64 @@ app.use(
   })
 );
 
+// Apply auth middleware to protected routes
+app.use("/chat/*", authMiddleware);
+app.use("/scene/*", authMiddleware);
+app.use("/common/*", authMiddleware);
+app.use("/tts/*", authMiddleware);
+
 // ============================================
 // Routes
 // ============================================
 
 // GET / - Root
 app.get("/", (c) => {
-  return c.json({
-    message: "TriTalk Backend Running on Cloudflare Workers with Hono",
-  });
+  return c.json(
+    {
+      message: "TriTalk Backend Running on Cloudflare Workers with OpenAPIHono",
+    },
+    200
+  );
 });
 
-// GET /health - Health check (no auth required)
-app.get("/health", (c) => {
-  return c.json({ status: "ok" });
+// GET /health - Health check
+const healthRoute = createRoute({
+  method: "get",
+  path: "/health",
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: z.object({ status: z.string() }) },
+      },
+      description: "Health status",
+    },
+  },
 });
+app.openapi(healthRoute, (c) => c.json({ status: "ok" }, 200));
 
-// POST /chat/send - Main chat logic (requires auth)
-app.post("/chat/send", authMiddleware, async (c) => {
+// POST /chat/send
+const chatSendRoute = createRoute({
+  method: "post",
+  path: "/chat/send",
+  request: {
+    body: {
+      content: { "application/json": { schema: ChatRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: ChatResponseSchema } },
+      description: "Chat response",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+app.openapi(chatSendRoute, async (c) => {
   try {
-    const body: ChatRequest = await c.req.json();
+    const body = c.req.valid("json");
     const env = c.env as Env;
     const nativeLang = body.native_language || "Chinese (Simplified)";
     const targetLang = body.target_language || "English";
@@ -120,13 +161,11 @@ app.post("/chat/send", authMiddleware, async (c) => {
 
     const messages = [{ role: "system", content: systemPrompt }];
 
-    // Add conversation history (limit to last 10 messages to avoid token limits)
     if (body.history && body.history.length > 0) {
       const recentHistory = body.history.slice(-10);
       messages.push(...recentHistory);
     }
 
-    // Add current user message with EXPLICIT marker to help AI identify it
     messages.push({
       role: "user",
       content: `<<LATEST_USER_MESSAGE>>${body.message}<</LATEST_USER_MESSAGE>>`,
@@ -142,7 +181,7 @@ app.post("/chat/send", authMiddleware, async (c) => {
     const replyText = sanitizeText(data.reply || "");
     const analysisData = data.analysis || {};
 
-    const feedback: ReviewFeedback = {
+    const feedback = {
       is_perfect: analysisData.is_perfect || false,
       corrected_text: sanitizeText(analysisData.corrected_text || body.message),
       native_expression: sanitizeText(analysisData.native_expression || ""),
@@ -150,12 +189,13 @@ app.post("/chat/send", authMiddleware, async (c) => {
       example_answer: sanitizeText(analysisData.example_answer || ""),
     };
 
-    const response: ChatResponse = {
-      message: replyText,
-      review_feedback: feedback,
-    };
-
-    return c.json(response);
+    return c.json(
+      {
+        message: replyText,
+        review_feedback: feedback,
+      },
+      200
+    );
   } catch (error) {
     console.error("Error in /chat/send:", error);
     return c.json(
@@ -168,8 +208,35 @@ app.post("/chat/send", authMiddleware, async (c) => {
   }
 });
 
-// POST /chat/transcribe - Audio transcription (requires auth)
-app.post("/chat/transcribe", authMiddleware, async (c) => {
+// POST /chat/transcribe
+const transcribeRoute = createRoute({
+  method: "post",
+  path: "/chat/transcribe",
+  request: {
+    body: {
+      content: {
+        "multipart/form-data": {
+          schema: z.object({
+            audio: z
+              .instanceof(File)
+              .openapi({ type: "string", format: "binary" }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: TranscribeResponseSchema } },
+      description: "Transcription result",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+app.openapi(transcribeRoute, async (c) => {
   try {
     const formData = await c.req.formData();
     const env = c.env as Env;
@@ -179,12 +246,9 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
       throw new Error("No audio file uploaded");
     }
 
-    // Convert audio file to base64 with improved binary handling
     const audioBlob = audioFile as File;
     const arrayBuffer = await audioBlob.arrayBuffer();
     const audioBase64 = arrayBufferToBase64(arrayBuffer);
-
-    // Determine audio format from file extension
     const fileName = audioBlob.name || "audio.wav";
     const audioFormat = detectAudioFormat(fileName);
 
@@ -192,10 +256,8 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
       `[Transcribe] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
     );
 
-    // Build the multimodal prompt for Gemini
     const transcribePrompt = buildTranscribePrompt();
 
-    // Call OpenRouter with multimodal content (audio + text)
     const content = await callOpenRouterMultimodal(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_TRANSCRIBE_MODEL,
@@ -216,70 +278,24 @@ app.post("/chat/transcribe", authMiddleware, async (c) => {
     );
 
     const parsedData = parseJSON(content);
-    const optimizedText = parsedData.optimized_text || "";
-    const rawText = parsedData.raw_text || "";
-
-    const transcribeResponse: TranscribeResponse = {
-      text: optimizedText,
-      raw_text: rawText,
-    };
-
-    return c.json(transcribeResponse);
+    return c.json(
+      {
+        text: parsedData.optimized_text || "",
+        raw_text: parsedData.raw_text || "",
+      },
+      200
+    );
   } catch (error) {
     console.error("Error in /chat/transcribe:", error);
     return c.json(
-      {
-        error: "Failed to transcribe audio",
-        details: String(error),
-      },
+      { error: "Failed to transcribe audio", details: String(error) },
       500
     );
   }
 });
 
-// POST /chat/send-voice - Voice message handling (requires auth)
-/**
- * HANDLER: Voice Message & Multimodal Interaction
- *
- * Purpose:
- *   Processes an audio file uploaded by the user, generating both a conversational reply
- *   and structured metadata (transcription, analysis) in a single streaming response.
- *
- * Input (Multipart/Form-Data):
- *   - 'audio': The user's recorded audio file (blob).
- *   - 'scene_context': Context description of the current roleplay.
- *   - 'history': Prior conversation JSON string.
- *   - 'native_language': User's L1 language.
- *   - 'target_language': Target L2 language.
- *
- * Processing Logic:
- *   1. Receives audio and converts to Base64.
- *   2. Constructs a Multimodal Prompt using `buildStreamingVoiceChatSystemPrompt`.
- *   3. Sends Audio + Prompt to a Multimodal LLM (e.g. Gemini 2.0 Flash) via OpenRouter.
- *
- * Output (Streaming NDJSON):
- *   The response is a stream of NDJSON lines.
- *
- *   PROTOCOL STRUCTURE:
- *   1. { type: 'token', content: "..." }
- *      -> Stream of tokens for the AI's direct reply. Display these immediately.
- *
- *   2. { type: 'token', content: "[[METADATA]]" }
- *      -> A specific separator token sequence indicating the end of the text reply.
- *
- *   3. { type: 'token', content: "{\"transcript\": ...}" }
- *      -> The JSON metadata object (stringified) appearing after the separator.
- *      -> Fields in Metadata JSON:
- *         - transcript: (string) The LLM's transcription of the user's audio.
- *         - translation: (string) Native modification of the AI's reply.
- *         - analysis: (object)
- *             - is_perfect: (bool)
- *             - corrected_text: (string)
- *             - native_expression: (string)
- *             - explanation: (string)
- *             - example_answer: (string)
- */
-app.post("/chat/send-voice", authMiddleware, async (c) => {
+// POST /chat/send-voice
+app.post("/chat/send-voice", async (c) => {
   try {
     const formData = await c.req.formData();
     const env = c.env as Env;
@@ -299,7 +315,6 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
       throw new Error("No audio file uploaded");
     }
 
-    // Convert audio file to base64
     const audioBlob = audioFile as File;
     const arrayBuffer = await audioBlob.arrayBuffer();
     const audioBase64 = arrayBufferToBase64(arrayBuffer);
@@ -310,25 +325,19 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
       `[Send Voice] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
     );
 
-    // Build System Prompt
     const systemPrompt = buildStreamingVoiceChatSystemPrompt(
       sceneContext,
       nativeLang,
       targetLang
     );
 
-    // Build Messages
     const messages = [{ role: "system", content: systemPrompt }];
 
-    // Add History
     if (history && history.length > 0) {
-      const recentHistory = history.slice(-5); // Keep context short for voice
-      // Ensure history messages are simple string content for compatibility in this context
-      // OpenRouter can handle mixed checks usually, but let's stick to text for history
+      const recentHistory = history.slice(-5);
       messages.push(...recentHistory);
     }
 
-    // Add User Audio Message (Multimodal)
     const userMessageContent = [
       {
         type: "text",
@@ -345,13 +354,9 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
 
     messages.push({
       role: "user",
-      content: userMessageContent as any, // Cast to any to bypass strict type check if needed
+      content: userMessageContent as any,
     });
 
-    // Determine Logic: Use Multimodal Chat Model
-    // Note: OPENROUTER_CHAT_MODEL must support audio input (e.g., gemini-1.5-flash-latest)
-    // If not, we might need a separate model var or fallback.
-    // Assuming Env has OPENROUTER_CHAT_MODEL configured to a multimodal model like gemini-2.0-flash-exp
     const response = await callOpenRouterStreaming(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
@@ -376,17 +381,11 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
               const parsed = JSON.parse(jsonStr);
               const content = parsed.choices?.[0]?.delta?.content || "";
               if (content) {
-                // Pass through the content directly to the client as specific event or raw text
-                // Since our protocol defines [[METADATA]] separator, we can just stream plain tokens.
-                // However, to make it easier for client to distinguish from errors,
-                // let's wrap it in a JSON structure for the stream line.
                 await stream.writeln(
                   JSON.stringify({ type: "token", content: content })
                 );
               }
-            } catch (e) {
-              // Ignore parse errors
-            }
+            } catch (e) {}
           }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
@@ -410,10 +409,29 @@ app.post("/chat/send-voice", authMiddleware, async (c) => {
   }
 });
 
-// POST /chat/hint - Get conversation hints (requires auth)
-app.post("/chat/hint", authMiddleware, async (c) => {
+// POST /chat/hint
+const hintRoute = createRoute({
+  method: "post",
+  path: "/chat/hint",
+  request: {
+    body: {
+      content: { "application/json": { schema: HintRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: HintResponseSchema } },
+      description: "Hints",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Error",
+    },
+  },
+});
+app.openapi(hintRoute, async (c) => {
   try {
-    const body: HintRequest = await c.req.json();
+    const body = c.req.valid("json");
     const env = c.env as Env;
     const targetLang = body.target_language || "English";
 
@@ -436,8 +454,7 @@ app.post("/chat/hint", authMiddleware, async (c) => {
       hints = ["Yes, please.", "No, thank you.", "Could you repeat that?"];
     }
 
-    const response: HintResponse = { hints };
-    return c.json(response);
+    return c.json({ hints }, 200);
   } catch (error) {
     console.error("Error in /chat/hint:", error);
     return c.json(
@@ -453,10 +470,10 @@ app.post("/chat/hint", authMiddleware, async (c) => {
   }
 });
 
-// POST /chat/analyze - Analyze message (requires auth, streaming)
-app.post("/chat/analyze", authMiddleware, async (c) => {
+// POST /chat/analyze - Streaming
+app.post("/chat/analyze", async (c) => {
   try {
-    const body: AnalyzeRequest = await c.req.json();
+    const body = (await c.req.json()) as any;
     const env = c.env as Env;
     const nativeLang = body.native_language || "Chinese (Simplified)";
 
@@ -475,10 +492,7 @@ app.post("/chat/analyze", authMiddleware, async (c) => {
     return stream(
       c,
       async (stream) => {
-        stream.onAbort(() => {
-          console.log("Stream aborted: /chat/analyze");
-        });
-
+        stream.onAbort(() => console.log("Stream aborted: /chat/analyze"));
         for await (const line of iterateStreamLines(response)) {
           if (line === "data: [DONE]") continue;
           if (line.startsWith("data: ")) {
@@ -487,14 +501,10 @@ app.post("/chat/analyze", authMiddleware, async (c) => {
               const parsed = JSON.parse(jsonStr);
               const content = parsed.choices?.[0]?.delta?.content || "";
               if (content) {
-                if (content.includes("```")) {
-                  continue;
-                }
+                if (content.includes("```")) continue;
                 await stream.write(content);
               }
-            } catch (e) {
-              // Ignore parse errors
-            }
+            } catch (e) {}
           }
         }
       },
@@ -518,16 +528,35 @@ app.post("/chat/analyze", authMiddleware, async (c) => {
   }
 });
 
-// POST /scene/generate - Generate scene (requires auth)
-app.post("/scene/generate", authMiddleware, async (c) => {
-  let body: SceneGenerationRequest | undefined;
+// POST /scene/generate
+const sceneGenerateRoute = createRoute({
+  method: "post",
+  path: "/scene/generate",
+  request: {
+    body: {
+      content: { "application/json": { schema: SceneGenerationRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: SceneGenerationResponseSchema },
+      },
+      description: "Scene",
+    },
+    500: {
+      content: {
+        "application/json": { schema: SceneGenerationResponseSchema },
+      },
+      description: "Error fallback",
+    },
+  },
+});
+app.openapi(sceneGenerateRoute, async (c) => {
+  let body: any;
   try {
-    body = await c.req.json();
+    body = c.req.valid("json");
     const env = c.env as Env;
-    if (!body) {
-      throw new Error("Invalid request body");
-    }
-
     const { description, tone } = body;
     const prompt = buildSceneGeneratePrompt(description, tone);
     const messages = [{ role: "user", content: prompt }];
@@ -538,22 +567,20 @@ app.post("/scene/generate", authMiddleware, async (c) => {
       messages
     );
     let data = parseJSON(content);
+    if (Array.isArray(data) && data.length > 0) data = data[0];
 
-    if (Array.isArray(data) && data.length > 0) {
-      data = data[0];
-    }
-
-    const response: SceneGenerationResponse = {
-      title: data.title || "Custom Scene",
-      ai_role: data.ai_role || "Assistant",
-      user_role: data.user_role || "Learner",
-      goal: data.goal || "Practice English",
-      description: data.description || description,
-      initial_message: data.initial_message || "Hello! Ready to practice?",
-      emoji: data.emoji || "✨",
-    };
-
-    return c.json(response);
+    return c.json(
+      {
+        title: data.title || "Custom Scene",
+        ai_role: data.ai_role || "Assistant",
+        user_role: data.user_role || "Learner",
+        goal: data.goal || "Practice English",
+        description: data.description || description,
+        initial_message: data.initial_message || "Hello! Ready to practice?",
+        emoji: data.emoji || "✨",
+      },
+      200
+    );
   } catch (error) {
     console.error("Error in /scene/generate:", error);
     return c.json(
@@ -571,12 +598,30 @@ app.post("/scene/generate", authMiddleware, async (c) => {
   }
 });
 
-// POST /scene/polish - Polish scene description (requires auth)
-app.post("/scene/polish", authMiddleware, async (c) => {
+// POST /scene/polish
+const scenePolishRoute = createRoute({
+  method: "post",
+  path: "/scene/polish",
+  request: {
+    body: {
+      content: { "application/json": { schema: PolishRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: PolishResponseSchema } },
+      description: "Polished text",
+    },
+    500: {
+      content: { "application/json": { schema: PolishResponseSchema } },
+      description: "Error",
+    },
+  },
+});
+app.openapi(scenePolishRoute, async (c) => {
   try {
-    const body: PolishRequest = await c.req.json();
+    const body = c.req.valid("json");
     const env = c.env as Env;
-
     const prompt = buildScenePolishPrompt(body.description);
     const messages = [{ role: "user", content: prompt }];
     const content = await callOpenRouter(
@@ -585,29 +630,43 @@ app.post("/scene/polish", authMiddleware, async (c) => {
       messages
     );
     const data = parseJSON(content);
-
-    const response: PolishResponse = {
-      polished_text: data.polished_text || body.description,
-    };
-
-    return c.json(response);
+    return c.json(
+      { polished_text: data.polished_text || body.description },
+      200
+    );
   } catch (error) {
     console.error("Error in /scene/polish:", error);
     return c.json(
-      {
-        polished_text: "Could not polish text at this time.",
-      },
+      { polished_text: "Could not polish text at this time." },
       500
     );
   }
 });
 
-// POST /common/translate - Translate text (requires auth)
-app.post("/common/translate", authMiddleware, async (c) => {
+// POST /common/translate
+const translateRoute = createRoute({
+  method: "post",
+  path: "/common/translate",
+  request: {
+    body: {
+      content: { "application/json": { schema: TranslateRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: TranslateResponseSchema } },
+      description: "Translation",
+    },
+    500: {
+      content: { "application/json": { schema: TranslateResponseSchema } },
+      description: "Error",
+    },
+  },
+});
+app.openapi(translateRoute, async (c) => {
   try {
-    const body: TranslateRequest = await c.req.json();
+    const body = c.req.valid("json");
     const env = c.env as Env;
-
     const prompt = buildTranslatePrompt(body.text, body.target_language);
     const messages = [{ role: "user", content: prompt }];
     const content = await callOpenRouter(
@@ -616,39 +675,44 @@ app.post("/common/translate", authMiddleware, async (c) => {
       messages
     );
     const data = parseJSON(content);
-
-    const response: TranslateResponse = {
-      translation: data.translation || body.text,
-    };
-
-    return c.json(response);
+    return c.json({ translation: data.translation || body.text }, 200);
   } catch (error) {
     console.error("Error in /common/translate:", error);
-    return c.json(
-      {
-        translation: "Translation unavailable.",
-      },
-      500
-    );
+    return c.json({ translation: "Translation unavailable." }, 500);
   }
 });
 
-// POST /chat/shadow - Shadow analysis (requires auth)
-app.post("/chat/shadow", authMiddleware, async (c) => {
+// POST /chat/shadow
+const shadowRoute = createRoute({
+  method: "post",
+  path: "/chat/shadow",
+  request: {
+    body: {
+      content: { "application/json": { schema: ShadowRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: ShadowResponseSchema } },
+      description: "Shadow result",
+    },
+    500: {
+      content: { "application/json": { schema: ShadowResponseSchema } },
+      description: "Error",
+    },
+  },
+});
+app.openapi(shadowRoute, async (c) => {
   try {
-    const body: ShadowRequest = await c.req.json();
-
-    // SIMULATION: Compare texts for a rough score
+    const body = c.req.valid("json");
     const target = body.target_text.toLowerCase().replace(/[^\w\s]/g, "");
     const user = body.user_audio_text.toLowerCase().replace(/[^\w\s]/g, "");
-
     const targetWords = target.split(/\s+/);
     const userWords = user.split(/\s+/);
     const matchCount = userWords.filter((w) => targetWords.includes(w)).length;
     let score = Math.round(
       (matchCount / Math.max(targetWords.length, 1)) * 100
     );
-
     score = Math.max(0, Math.min(100, score));
 
     let feedback = "Good effort!";
@@ -659,16 +723,17 @@ app.post("/chat/shadow", authMiddleware, async (c) => {
       feedback = "You're getting there. Try to mimic the stress on verbs.";
     else feedback = "Keep practicing! Listen closely to the original audio.";
 
-    const response: ShadowResponse = {
-      score: score,
-      details: {
-        intonation_score: Math.max(0, score - 10),
-        pronunciation_score: score,
-        feedback: feedback,
+    return c.json(
+      {
+        score,
+        details: {
+          intonation_score: Math.max(0, score - 10),
+          pronunciation_score: score,
+          feedback,
+        },
       },
-    };
-
-    return c.json(response);
+      200
+    );
   } catch (error) {
     console.error("Error in /chat/shadow:", error);
     return c.json(
@@ -685,12 +750,30 @@ app.post("/chat/shadow", authMiddleware, async (c) => {
   }
 });
 
-// POST /chat/optimize - Optimize message (requires auth)
-app.post("/chat/optimize", authMiddleware, async (c) => {
+// POST /chat/optimize
+const optimizeRoute = createRoute({
+  method: "post",
+  path: "/chat/optimize",
+  request: {
+    body: {
+      content: { "application/json": { schema: OptimizeRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: OptimizeResponseSchema } },
+      description: "Optimized text",
+    },
+    500: {
+      content: { "application/json": { schema: OptimizeResponseSchema } },
+      description: "Error",
+    },
+  },
+});
+app.openapi(optimizeRoute, async (c) => {
   try {
-    const body: OptimizeRequest = await c.req.json();
+    const body = c.req.valid("json");
     const env = c.env as Env;
-
     const targetLang = body.target_language || "English";
     const prompt = buildOptimizePrompt(
       body.scene_context,
@@ -698,133 +781,91 @@ app.post("/chat/optimize", authMiddleware, async (c) => {
       targetLang
     );
     const messages = [{ role: "system", content: prompt }];
-
     if (body.history && body.history.length > 0) {
       messages.push(...body.history.slice(-5));
     }
-
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
       messages
     );
     const data = parseJSON(content);
-
-    const response: OptimizeResponse = {
-      optimized_text: data.optimized_text || body.message,
-    };
-
-    return c.json(response);
+    return c.json({ optimized_text: data.optimized_text || body.message }, 200);
   } catch (error) {
     console.error("Error in /chat/optimize:", error);
-    return c.json(
-      {
-        optimized_text: "Optimization unavailable.",
-      },
-      500
-    );
+    return c.json({ optimized_text: "Optimization unavailable." }, 500);
   }
 });
 
-// POST /tts/generate - Generate TTS (requires auth, streaming)
-app.post("/tts/generate", authMiddleware, async (c) => {
+// POST /tts/generate - Streaming
+app.post("/tts/generate", async (c) => {
   try {
     const env = c.env as Env;
-
-    // Check if MiniMax credentials are configured
     if (!isTTSConfigured(env)) {
-      return c.json(
-        {
-          error:
-            "TTS service not configured. Please set MINIMAX_API_KEY and MINIMAX_GROUP_ID.",
-        } as TTSResponse,
-        503
-      );
+      return c.json({ error: "TTS service not configured." }, 503);
     }
-
-    const body: TTSRequest = await c.req.json();
-
+    const body = (await c.req.json()) as any;
     if (!body.text || body.text.trim().length === 0) {
-      return c.json(
-        {
-          error: "Text is required for TTS generation.",
-        } as TTSResponse,
-        400
-      );
+      return c.json({ error: "Text is required." }, 400);
     }
-
     const ttsConfig = getTTSConfig(env);
     const ttsResponse = await callMiniMaxTTS(ttsConfig, {
       text: body.text,
       voiceId: body.voice_id,
     });
-
     if (!ttsResponse.ok) {
       const errorText = await ttsResponse.text();
       console.error("MiniMax TTS API Error:", errorText);
       return c.json(
-        {
-          error: `TTS generation failed: ${ttsResponse.status}`,
-        } as TTSResponse,
+        { error: `TTS generation failed: ${ttsResponse.status}` },
         502
       );
     }
 
-    // Create a streaming response
     c.header("Content-Type", "application/x-ndjson");
     c.header("Content-Encoding", "Identity");
 
     return stream(
       c,
       async (stream) => {
-        stream.onAbort(() => {
-          console.log("Stream aborted: /tts/generate");
-        });
-
+        stream.onAbort(() => console.log("Stream aborted: /tts/generate"));
         let chunkIndex = 0;
-
         for await (const line of iterateStreamLines(ttsResponse)) {
           if (!line.startsWith("data:")) continue;
-
           const jsonStr = line.slice(5).trim();
           if (!jsonStr || jsonStr === "[DONE]") continue;
-
           try {
             const chunkData = JSON.parse(jsonStr);
-
             if (chunkData.base_resp && chunkData.base_resp.status_code !== 0) {
-              const errorPayload = {
-                type: "error",
-                error:
-                  chunkData.base_resp.status_msg || "TTS generation failed",
-              };
-              await stream.writeln(JSON.stringify(errorPayload));
+              await stream.writeln(
+                JSON.stringify({
+                  type: "error",
+                  error: chunkData.base_resp.status_msg,
+                })
+              );
               continue;
             }
-
             const audioHex = chunkData.data?.audio;
             if (audioHex) {
               const audioBase64 = hexToBase64(audioHex);
-              const chunkResponse = {
-                type: "audio_chunk",
-                chunk_index: chunkIndex++,
-                audio_base64: audioBase64,
-              };
-              await stream.writeln(JSON.stringify(chunkResponse));
+              await stream.writeln(
+                JSON.stringify({
+                  type: "audio_chunk",
+                  chunk_index: chunkIndex++,
+                  audio_base64: audioBase64,
+                })
+              );
             }
-
             if (chunkData.extra_info?.audio_length) {
-              const infoResponse = {
-                type: "info",
-                duration_ms: chunkData.extra_info.audio_length,
-              };
-              await stream.writeln(JSON.stringify(infoResponse));
+              await stream.writeln(
+                JSON.stringify({
+                  type: "info",
+                  duration_ms: chunkData.extra_info.audio_length,
+                })
+              );
             }
-          } catch (e) {
-            console.error("Error parsing TTS chunk:", e);
-          }
+          } catch (e) {}
         }
-
         await stream.writeln(JSON.stringify({ type: "done" }));
       },
       async (err, stream) => {
@@ -836,36 +877,64 @@ app.post("/tts/generate", authMiddleware, async (c) => {
     );
   } catch (error) {
     console.error("Error in /tts/generate:", error);
-    return c.json(
-      {
-        error: "TTS generation failed.",
-      } as TTSResponse,
-      500
-    );
+    return c.json({ error: "TTS generation failed." }, 500);
   }
 });
 
-// DELETE /chat/messages - Delete messages (requires auth)
-app.delete("/chat/messages", authMiddleware, async (c) => {
+// DELETE /chat/messages
+const deleteMessagesRoute = createRoute({
+  method: "delete",
+  path: "/chat/messages",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            scene_key: z.string(),
+            message_ids: z.array(z.string()),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({ success: z.boolean(), deleted_count: z.number() }),
+        },
+      },
+      description: "Deleted",
+    },
+    400: {
+      content: {
+        "application/json": { schema: z.object({ error: z.string() }) },
+      },
+      description: "Bad Request",
+    },
+    500: {
+      content: {
+        "application/json": { schema: z.object({ error: z.string() }) },
+      },
+      description: "Error",
+    },
+  },
+});
+app.openapi(deleteMessagesRoute, async (c) => {
   try {
-    const body: any = await c.req.json();
+    const body = c.req.valid("json");
     const env = c.env as Env;
     const sceneKey = body.scene_key;
-    const messageIds: string[] = body.message_ids || [];
+    const messageIds = body.message_ids;
 
     if (!sceneKey || !messageIds || messageIds.length === 0) {
       return c.json({ error: "Missing scene_key or message_ids" }, 400);
     }
-
-    // Get authenticated user from context (already authenticated by authMiddleware)
     const user = c.get("user");
-
-    // Create Supabase client with user's token for RLS
     const authHeader = c.req.header("Authorization");
     const token = extractToken(authHeader)!;
     const supabase = createSupabaseClient(env, token);
 
-    // Fetch current messages for this scene
     const { data: chatHistory, error: fetchError } = await supabase
       .from("chat_history")
       .select("messages")
@@ -874,22 +943,17 @@ app.delete("/chat/messages", authMiddleware, async (c) => {
       .maybeSingle();
 
     if (fetchError) {
-      console.error("Error fetching chat history:", fetchError);
       return c.json({ error: "Failed to fetch chat history" }, 500);
     }
-
     if (!chatHistory || !chatHistory.messages) {
-      return c.json({ success: true, deleted_count: 0 });
+      return c.json({ success: true, deleted_count: 0 }, 200);
     }
-
-    // Filter out messages with IDs in the messageIds array
     const currentMessages = chatHistory.messages as any[];
     const filteredMessages = currentMessages.filter(
       (msg) => !messageIds.includes(msg.id)
     );
     const deletedCount = currentMessages.length - filteredMessages.length;
 
-    // Update the chat_history record with filtered messages
     const { error: updateError } = await supabase
       .from("chat_history")
       .update({
@@ -900,38 +964,56 @@ app.delete("/chat/messages", authMiddleware, async (c) => {
       .eq("scene_key", sceneKey);
 
     if (updateError) {
-      console.error("Error updating chat history:", updateError);
       return c.json({ error: "Failed to delete messages" }, 500);
     }
-
-    return c.json({ success: true, deleted_count: deletedCount });
+    return c.json({ success: true, deleted_count: deletedCount }, 200);
   } catch (error) {
-    console.error("Error in /chat/messages DELETE:", error);
     return c.json({ error: "Failed to delete messages" }, 500);
   }
 });
 
-// POST /user/sync - User sync (no auth required)
-app.post("/user/sync", async (c) => {
-  try {
-    const body: any = await c.req.json();
-
-    console.log("Received user sync:", body.id, body.email);
-
-    return c.json({
-      status: "success",
-      synced_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Error in /user/sync:", error);
-    return c.json({ error: "Failed to sync user data" }, 500);
-  }
+// POST /user/sync
+const userSyncRoute = createRoute({
+  method: "post",
+  path: "/user/sync",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({ id: z.string(), email: z.string().optional() }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({ status: z.string(), synced_at: z.string() }),
+        },
+      },
+      description: "Synced",
+    },
+  },
+});
+app.openapi(userSyncRoute, async (c) => {
+  const body = c.req.valid("json");
+  console.log("Received user sync:", body.id, body.email);
+  return c.json(
+    { status: "success", synced_at: new Date().toISOString() },
+    200
+  );
 });
 
-// 404 handler
-app.notFound((c) => {
-  return c.json({ error: "Not Found" }, 404);
+// API Docs
+app.doc("/doc", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "TriTalk API",
+  },
 });
 
-// Export for Cloudflare Workers
+app.get("/ui", swaggerUI({ url: "/doc" }));
+
 export default app;
