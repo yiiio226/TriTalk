@@ -89,6 +89,7 @@ npm run deploy
 ```
 
 部署成功后，你会得到一个 Workers URL，类似：
+
 ```
 https://tritalk-backend.your-subdomain.workers.dev
 ```
@@ -111,7 +112,7 @@ class ApiService {
   // 开发环境使用本地地址
   // 生产环境使用 Cloudflare Workers URL
   static const String baseUrl = 'https://tritalk-backend.your-subdomain.workers.dev';
-  
+
   // ...
 }
 ```
@@ -125,21 +126,42 @@ npm run tail
 ## 项目结构
 
 ```
-backend-cloudflare/
+backend/
 ├── src/
-│   ├── index.ts          # 主 Worker 代码
-│   └── types.ts          # TypeScript 类型定义
+│   ├── index.ts          # 路由定义和请求处理
+│   ├── types.ts          # TypeScript 类型定义
+│   ├── utils/
+│   │   ├── index.ts      # 工具函数导出
+│   │   ├── json.ts       # JSON 解析工具 (parseJSON)
+│   │   ├── text.ts       # 文本处理工具 (sanitizeText)
+│   │   ├── encoding.ts   # 编码工具 (hexToBase64, arrayBufferToBase64)
+│   │   ├── audio.ts      # 音频处理工具 (detectAudioFormat)
+│   │   └── cors.ts       # CORS 工具 (流式响应头)
+│   ├── services/
+│   │   ├── index.ts      # 服务导出
+│   │   ├── openrouter.ts # OpenRouter API 客户端
+│   │   ├── minimax.ts    # MiniMax TTS API 客户端
+│   │   ├── supabase.ts   # Supabase 客户端工具
+│   │   └── auth.ts       # 认证服务和中间件
+│   └── prompts/
+│       ├── index.ts      # Prompt 模板导出
+│       ├── chat.ts       # 对话相关 prompts
+│       ├── analyze.ts    # 分析相关 prompts
+│       ├── scene.ts      # 场景生成 prompts
+│       ├── transcribe.ts # 转录相关 prompts
+│       └── translate.ts  # 翻译相关 prompts
 ├── wrangler.toml         # Cloudflare 配置
 ├── package.json          # 依赖配置
 ├── tsconfig.json         # TypeScript 配置
 ├── .dev.vars.example     # 环境变量示例
-├── .gitignore           # Git 忽略文件
-└── README.md            # 本文档
+├── .gitignore            # Git 忽略文件
+└── README.md             # 本文档
 ```
 
 ## 费用说明
 
 Cloudflare Workers 免费计划：
+
 - 每天 100,000 次请求
 - 10ms CPU 时间/请求
 - 完全够用于个人项目和小型应用
@@ -155,6 +177,7 @@ Cloudflare Workers 免费计划：
 ### 部署后 API 返回错误
 
 检查是否正确设置了生产环境密钥：
+
 ```bash
 npx wrangler secret list
 ```
