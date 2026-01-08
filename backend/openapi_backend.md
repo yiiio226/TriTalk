@@ -1,169 +1,72 @@
-# OpenAPI Backend Migration Manual
+# OpenAPI 后端指南
 
-Status: `[x] Complete`
-
-Follow this guide step-by-step to migrate the TriTalk backend to a strictly typed OpenAPI system.
-This document is designed to be executable by you (the developer) and context-aware for AI assistants (like Cursor).
+本文档描述 TriTalk 后端如何通过 `@hono/zod-openapi` 实现类型安全的 API，并自动生成 OpenAPI 规范。
 
 ---
 
-## Phase 1: Setup
+## 📁 核心文件结构
 
-- [x] **Install Dependencies**
-      Run the following commands in the `backend/` directory:
-  ```bash
-  npm install @hono/zod-openapi zod @hono/swagger-ui
-  npm install -D tsx @types/node
-  ```
-
----
-
-## Phase 2: Code Refactoring (AI Assisted)
-
-- [x] **Refactor `src/server.ts`**
-      Copy the following prompt and send it to your AI assistant (Cursor), keeping `src/server.ts` open.
-
-  ```markdown
-  # Role
-
-  You are an expert Backend Engineer specializing in Cloudflare Workers, Hono, and OpenAPI.
-
-  # Task
-
-  Refactor the existing `backend/src/server.ts` to use `@hono/zod-openapi`.
-
-  # Context
-
-  - Current File: `backend/src/server.ts`
-  - Existing Imports: We have `services/*`, `prompts/*`, `utils/*`, and `types.ts`. Keep these integrations intact.
-  - Global Middleware: We use `cors` and `authMiddleware`.
-
-  # Requirements
-
-  1.  **Switch to OpenAPIHono**:
-      Replace `new Hono(...)` with `new OpenAPIHono(...)`.
-
-  2.  **Define Zod Schemas**:
-
-      - Create a new file `src/schemas.ts` (or define in `server.ts` if short) to map our existing interfaces from `src/types.ts` to Zod schemas.
-      - Example: `ChatRequest` -> `z.object({ message: z.string(), ... })`.
-      - Ensure all Zod schemas use `.openapi({ example: ... })` for documentation.
-
-  3.  **Route Configuration**:
-
-      - For each existing route (`/chat/send`, `/chat/transcribe`, etc.), create a `const routeConfig = createRoute({...})`.
-      - Define strictly typed `request.json` (or `request.body.content` for file uploads) and `responses`.
-
-  4.  **Implementation**:
-
-      - Use `app.openapi(routeConfig, async (c) => { ... })`.
-      - Inside the handler, utilize `c.req.valid('json')` to get validated data.
-      - **Crucial**: Preserve the existing business logic (calling `services`, `prompts`, etc.) inside the new handlers. Do not delete logic, only re-wrap it.
-
-  5.  **Documentation Endpoints**:
-      - Add `app.doc('/doc', ...)` for the OpenAPI spec.
-      - Add `app.get('/ui', swaggerUI({ url: '/doc' }))` for visualization.
-
-  # Execution Steps
-
-  1. Define the Zod schemas first.
-  2. Create the route configs for all endpoints:
-     - `/chat/send`
-     - `/chat/transcribe` (Note: This is multipart/form-data)
-     - `/chat/send-voice` (Note: Multipart + Streaming response)
-     - `/chat/hint`
-     - `/chat/analyze`
-     - `/scene/generate`
-     - `/scene/polish`
-     - `/common/translate`
-     - `/chat/shadow`
-     - `/chat/optimize`
-     - `/tts/generate`
-  3. Rewrite the app initialization and handlers.
-  ```
-
-- [x] **Verify Application**
-      Run `npm run dev` and visit `http://localhost:8787/ui`. You should see the Swagger UI.
+| 文件                          | 描述                                  |
+| ----------------------------- | ------------------------------------- |
+| `src/server.ts`               | Hono OpenAPI 主服务，包含所有路由定义 |
+| `src/schemas.ts`              | Zod 请求/响应验证模式                 |
+| `scripts/generate-openapi.ts` | 规范生成脚本                          |
 
 ---
 
-## Phase 3: Spec Generation Script
+## 🔧 本地开发
 
-- [x] **Create Extraction Script**
-      Create `backend/scripts/generate-openapi.ts`:
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-  ```typescript
-  import { writeFileSync } from "fs";
-  import app from "../src/server"; // Ensure server.ts exports 'app'
+验证：
 
-  const doc = app.getOpenAPI31Document({
-    openapi: "3.1.0",
-    info: {
-      version: "1.0.0",
-      title: "TriTalk API",
-    },
-  });
-
-  writeFileSync("swagger.json", JSON.stringify(doc, null, 2));
-  console.log("✅ string generated to ./swagger.json");
-  ```
-
-- [x] **Update `package.json`**
-      Add string script:
-
-  ```json
-  "scripts": {
-    "gen:spec": "tsx scripts/generate-openapi.ts"
-  }
-  ```
-
-- [x] **Test Generation**
-      Run: `npm run gen:spec` -> Check if `swagger.json` is created.
+- **Swagger UI**: [http://localhost:8787/ui](http://localhost:8787/ui)
+- **JSON Spec**: [http://localhost:8787/doc](http://localhost:8787/doc)
 
 ---
 
-## Phase 4: CI/CD Pipeline
+## 📤 生成与发布流程
 
-- [x] **Configure GitHub Actions**
-      Create/Update `.github/workflows/deploy-spec.yml`:
+### 本地生成
 
-  ```yaml
-  name: Deploy OpenAPI Spec
-  on:
-    push:
-      branches: [main]
-      paths: ["backend/src/**", "backend/scripts/**"]
+```bash
+npm run gen:spec
+# 输出: backend/swagger.json
+```
 
-  jobs:
-    deploy-spec:
-      runs-on: ubuntu-latest
-      defaults:
-        run:
-          working-directory: ./backend
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-node@v4
-          with:
-            node-version: "20"
-            cache: "npm"
-            cache-dependency-path: backend/package-lock.json
+### 自动 CI/CD
 
-        - run: npm ci
-        - run: npm run gen:spec
+当代码推送到 `main` 分支时，GitHub Actions 自动执行：
 
-        - name: Upload to R2
-          uses: ryand56/r2-upload-action@v1.2
-          with:
-            r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
-            r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
-            r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-            r2-bucket: "lib"
-            source-file: "./backend/swagger.json"
-            destination-file: "tritalk/swagger.json"
-  ```
+1. **触发条件**: `backend/src/**` 或 `backend/scripts/**` 文件变更
+2. **执行步骤**:
+   - 安装依赖 → 生成 `swagger.json`
+   - 上传到 R2: `tritalk/latest/swagger.json`
+   - 上传版本快照: `tritalk/v{version}/swagger.json`
 
-## Phase 5: Complete
+> 📌 版本号读取自 `backend/package.json` 的 `version` 字段
 
-Mark the task as done when you can successfully access the Swagger UI and the JSON is auto-deployed to R2.
+### 配置文件
 
-Status: `[x] Complete`
+- **Workflow**: `.github/workflows/deploy-client.yml`
+- **所需 Secrets**:
+  - `CLOUDFLARE_API_TOKEN`
+  - `CLOUDFLARE_ACCOUNT_ID`
+
+---
+
+## 🔄 版本管理
+
+更新 API 时，请同步更新 `package.json` 中的版本号：
+
+```json
+{
+  "version": "1.0.1" // 修改此处
+}
+```
+
+这样 CI 会自动创建对应版本的快照，前端可以锁定特定版本使用。
