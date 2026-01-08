@@ -6,20 +6,26 @@
   "scripts": {
     "dev": "wrangler dev --ip 0.0.0.0",
     "deploy": "wrangler deploy",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "gen:spec": "tsx scripts/generate-openapi.ts"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "wrangler": "^4.56.0"
   },
   "dependencies": {
+    "@hono/swagger-ui": "^0.5.3",
+    "@hono/zod-openapi": "^1.2.0",
     "@supabase/supabase-js": "^2.89.0",
     "hono": "^4.11.3",
     "jose": "^6.1.3",
-    "openai": "^6.15.0"
+    "openai": "^6.15.0",
+    "zod": "^4.3.5"
   }
 }
