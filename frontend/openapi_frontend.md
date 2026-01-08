@@ -1,50 +1,51 @@
 # Flutter Swagger Client Generation Guide
 
-This guide outlines the end-to-end process for generating Dart/Flutter client code from a `swagger.json` file using `swagger_dart_code_generator` and `chopper`.
+This guide outlines the **Hybrid Strategy** for managing network requests in TriTalk. We use automated code generation for standard REST endpoints while retaining manual control for complex streaming and audio features.
+
+## 🏗 Architecture: The Hybrid Strategy
+
+We use a two-pronged approach to balance **Type Safety** with **Flexibility**:
+
+| Feature Type                                                     | Solution                                   | Why?                                                                                     |
+| :--------------------------------------------------------------- | :----------------------------------------- | :--------------------------------------------------------------------------------------- |
+| **Standard REST**<br>(Text Chat, Hints, Translations, Scene Gen) | **Generated Client**<br>(Swagger/Chopper)  | ✅ Strict Type Safety<br>✅ Single Source of Truth<br>✅ Zero Boilerplate                |
+| **Streaming / Real-time**<br>(Voice Chat, Analysis Stream, TTS)  | **Manual Service**<br>(`StreamingService`) | ✅ Complex NDJSON parsing<br>✅ Audio Stream handling<br>✅ Multipart/Form Customization |
+
+---
 
 ## Prerequisites
 
 - **Flutter SDK / Dart SDK** installed.
-- A valid **`swagger.json`** file from your backend.
+- A valid **`swagger.json`** file from your backend (synced via `sync-spec.sh`).
+- Packages: `swagger_dart_code_generator`, `chopper`, `json_serializable`, `build_runner`.
 
 ---
 
-## Step 1: Add Dependencies
+## Step 1: Configuration
 
-Add the necessary packages to your `pubspec.yaml` file. This setup uses **Chopper** as the HTTP client, which is robust and widely used.
+### 1. `pubspec.yaml`
+
+Ensure these dependencies are present:
 
 ```yaml
 dependencies:
-  flutter:
-    sdk: flutter
-  # Core generator package
-  swagger_dart_code_generator: ^4.0.2
-  # HTTP Client
+  # HTTP Client (runtime dependency)
   chopper: ^8.0.0
-  # JSON handling
+  # JSON handling (runtime dependency)
   json_annotation: ^4.8.1
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   # Build system
   build_runner: ^2.4.6
-  # Generators
+  # Code generators (only needed during build)
+  swagger_dart_code_generator: ^4.0.2
   chopper_generator: ^8.0.0
   json_serializable: ^6.7.1
 ```
 
-Run the following command to install dependencies:
+### 2. `build.yaml`
 
-```bash
-flutter pub get
-```
-
----
-
-## Step 2: Configure `build.yaml`
-
-Create a `build.yaml` file in the root of your project (same level as `pubspec.yaml`) if it doesn't already exist. This file tells the generator where to look for the Swagger file and how to configure the output.
+Located in the project root. This file tells the generator how to map `swagger.json` to Dart code.
 
 ```yaml
 targets:
@@ -54,20 +55,13 @@ targets:
       - swagger/**
       - $package$
     builders:
-      # Configure the swagger code generator
       swagger_dart_code_generator:
         options:
-          # Directory containing your swagger.json
           input_folder: "swagger/"
-          # Target directory for generated code
           output_folder: "lib/swagger_generated_code/"
-          # Use Chopper for HTTP requests
           with_converter: true
           separate_models: true
-          # Optional: Null safety and overriding toString
           override_to_string: false
-
-      # Ensure other builders work correctly
       json_serializable:
         options:
           explicit_to_json: true
@@ -75,191 +69,178 @@ targets:
 
 ---
 
-## Step 3: Prepare the Swagger File
+## Step 2: Implementation Details
 
-1.  Create a directory named `swagger` in your project root (matching the `input_folder` in `build.yaml`).
-2.  Place your `swagger.json` file inside this directory.
+### 1. The Auth Interceptor
 
-**Directory Structure:**
+Since the generated client doesn't know about Supabase, we must inject the Auth Token manually.
 
-```
-project_root/
-├── pubspec.yaml
-├── build.yaml
-├── swagger/
-│   └── swagger.json
-└── lib/
-```
-
----
-
-## Step 4: Create a Generation Script
-
-It is best practice to wrap the generation commands in a shell script for consistency. Create a file named `generate-client.sh` in your project root.
-
-```bash
-#!/bin/bash
-
-# 1. Clean previous generated code to avoid conflicts
-echo "Cleaning old generated code..."
-rm -rf lib/swagger_generated_code/*
-
-# 2. Run the build runner
-# --delete-conflicting-outputs ensures that old files don't block the build
-echo "Generating new client code..."
-dart run build_runner build --delete-conflicting-outputs
-
-# 3. Optional: formatting and fixing
-echo "Formatting code..."
-dart fix --apply
-
-echo "Done!"
-```
-
-**Make the script executable:**
-
-```bash
-chmod +x generate-client.sh
-```
-
----
-
-## Step 5: Execute Generation
-
-Run the script you just created:
-
-```bash
-./generate-client.sh
-```
-
-After the script finishes, check `lib/swagger_generated_code/`. You should see several files, including:
-
-- `swagger.swagger.dart`: The main entry point for the client.
-- `swagger.models.swagger.dart`: Data models.
-- `swagger.swagger.chopper.dart`: Chopper service implementation.
-
-_(Note: The main class name `Swagger` depends on your input filename. If your file is `api.json`, the class will be `Api`.)_
-
----
-
-## Step 6: Usage Example
-
-Here is how to initialize and use the generated client in your Flutter app.
-
-### 1. Initialization
-
-Create a global or scoped instance of the client.
+**File:** `lib/services/auth_interceptor.dart`
 
 ```dart
+import 'dart:async';
 import 'package:chopper/chopper.dart';
-import 'package:your_app/swagger_generated_code/swagger.swagger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Create the client instance using the factory method
-final validationService = Swagger.create(
-  baseUrl: Uri.parse('https://api.yourdomain.com'),
+class AuthInterceptor implements Interceptor {
+  @override
+  FutureOr<Response<BodyType>> intercept<BodyType>(Chain<BodyType> chain) async {
+    // 1. Get current session
+    final session = Supabase.instance.client.auth.currentSession;
+    final token = session?.accessToken;
 
-  // Optional: Add interceptors for auth tokens, logging, etc.
-  interceptors: [
-    (Request request) async {
-      // Add Auth Header example
-      return request.copyWith(headers: {
+    // 2. Inject Authorization header if token exists
+    if (token != null && token.isNotEmpty) {
+      final request = chain.request;
+      final modifiedRequest = request.copyWith(headers: {
         ...request.headers,
-        'Authorization': 'Bearer YOUR_TOKEN'
+        'Authorization': 'Bearer $token',
       });
-    },
-    HttpLoggingInterceptor(),
-  ],
-);
+      return chain.proceed(modifiedRequest);
+    }
+
+    return chain.proceed(chain.request);
+  }
+}
 ```
 
-### 2. Making API Calls
+### 2. Initializing the Client
 
-The generated methods return a `Response<T>`, which wraps the actual data and HTTP status.
+Create a singleton provider for the generated `Swagger` client with environment-aware configuration.
+
+**File:** `lib/services/client_provider.dart`
+
+````dart
+import 'package:chopper/chopper.dart';
+import 'package:flutter/foundation.dart';
+import '../swagger_generated_code/swagger.swagger.dart';
+import 'auth_interceptor.dart';
+import '../env.dart';
+
+/// Provides a singleton instance of the generated Swagger API client.
+///
+/// Environment switching:
+/// - Debug mode (flutter run): Uses [Env.localBackendUrl]
+/// - Release mode (flutter build): Uses [Env.prodBackendUrl]
+///
+/// To force production URL in debug mode, use:
+/// ```bash
+/// flutter run --dart-define=USE_PROD=true
+/// ```
+class ClientProvider {
+  static Swagger? _instance;
+
+  static const bool _useProd = bool.fromEnvironment('USE_PROD', defaultValue: false);
+
+  static String get _baseUrl {
+    if (kReleaseMode || _useProd) {
+      return Env.prodBackendUrl;
+    }
+    return Env.localBackendUrl;
+  }
+
+  static Swagger get client {
+    _instance ??= Swagger.create(
+      baseUrl: Uri.parse(_baseUrl),
+      interceptors: [
+        AuthInterceptor(),
+        if (kDebugMode) HttpLoggingInterceptor(),
+      ],
+    );
+    return _instance!;
+  }
+}
+````
+
+---
+
+## Step 3: Usage Guide
+
+### ✅ Scenario A: Standard Request (Use Generated Client)
+
+**Use for:** `/chat/hint`, `/scene/generate`, `/common/translate`, `/chat/shadow`
 
 ```dart
-Future<void> fetchUserData() async {
-  // Call the endpoint (method names match your Swagger Operation IDs)
-  final response = await validationService.apiUserGetProfileGet();
+import 'package:frontend/services/client_provider.dart';
+import 'package:frontend/swagger_generated_code/swagger.swagger.dart';
 
+Future<void> getHints() async {
+  // 1. Use the generated 'ChatHintPost$RequestBody' (generated name for inline schema)
+  final requestBody = ChatHintPost$RequestBody(
+    sceneContext: "Ordering coffee",
+    targetLanguage: "English",
+    history: [],
+  );
+
+  // 2. Call the API using the singleton client
+  final response = await ClientProvider.client.chatHintPost(body: requestBody);
+
+  // 3. Handle Result (Type-Safe!)
   if (response.isSuccessful) {
-    // Access the parsed model directly
-    final userProfile = response.body;
-    print("User Name: ${userProfile?.name}");
+    // response.body is ALREADY a typed object
+    final hints = response.body?.hints ?? [];
+    print("Hints: $hints");
   } else {
-    // Handle errors
     print("Error: ${response.error}");
   }
 }
 ```
 
----
+### ⚠️ Scenario B: Streaming/Audio (Use Manual Service)
 
-## Best Practices
+**Use for:** `/chat/analyze`, `/chat/send-voice`, `/tts/generate`
 
-1.  **Git Integration**: It is generally recommended to **commit** the generated code so that the project is immediately runnable after cloning without needing to run generators. However, if you prefer a cleaner repo, add `lib/swagger_generated_code/` to `.gitignore`.
-2.  **Updating the API**: When your backend API updates, simply replace `swagger/swagger.json` with the new version and run `./generate-client.sh` again.
-3.  **Operation IDs**: Ensure your Backend Swagger/OpenAPI spec has unique and meaningful `operationId` fields for each endpoint. This results in clean Dart method names (e.g., `getUser` instead of `api_v1_user_get`).
+Continue using your existing `ApiService` (rename it to `StreamingService` to be clear).
 
----
+```dart
+// lib/services/streaming_service.dart
 
-## Step 7: Syncing Schema from Backend
+// ... standard http imports ...
 
-With the dual-upload strategy in place, you can choose to sync the latest development schema or a stable versioned schema.
-
-### Prerequisites
-
-Create a sync script `sync-spec.sh` in your project root:
-
-```bash
-#!/bin/bash
-
-# Configuration
-# TODO: Replace with your actual R2 public domain or access URL
-BASE_URL="https://[YOUR_R2_DOMAIN]/lib/tritalk"
-TARGET_FILE="swagger/swagger.json"
-
-VERSION=$1
-
-if [ -z "$VERSION" ]; then
-  # Default to latest if no version is provided
-  URL="$BASE_URL/latest/swagger.json"
-  echo "📥 Fetching LATEST schema from: $URL"
-else
-  # Fetch specific version
-  URL="$BASE_URL/$VERSION/swagger.json"
-  echo "📥 Fetching version $VERSION schema from: $URL"
-fi
-
-# Download file
-curl -s -o "$TARGET_FILE" "$URL"
-
-if [ $? -eq 0 ]; then
-  echo "✅ Automatically updated $TARGET_FILE"
-  echo "🚀 You can now run ./generate-client.sh"
-else
-  echo "❌ Failed to download schema. Please check the URL or version."
-  exit 1
-fi
+Stream<VoiceStreamEvent> sendVoiceMessage(...) async* {
+    // Current manual implementation handles:
+    // - NDJSON parsing ({"type":"token"}...)
+    // - Complex Multipart uploads
+    // - Custom Stream Controllers
+}
 ```
 
-Make it executable: `chmod +x sync-spec.sh`
+---
 
-### Usage
+## Step 4: Workflows
 
-**Option 1: Development Mode (Latest)**
-Fetches the code from the `main` branch deployment.
+### 1. Syncing Schema
+
+When backend updates, pull the latest spec:
 
 ```bash
 ./sync-spec.sh
 ```
 
-_Successfully syncing will automatically trigger `./generate-client.sh`._
+### 2. Generating Code
 
-**Option 2: Release/Stable Mode (Specific Version)**
-Fetches a specific version derived from the backend's `package.json`.
+After syncing, regenerate the Dart files:
 
 ```bash
-./sync-spec.sh v0.1.0
+./generate-client.sh
 ```
 
-_Successfully syncing will automatically trigger `./generate-client.sh`._
+### 3. File Uploads (Transcribe)
+
+The generator supports file uploads if defined as `binary` in Swagger.
+
+```dart
+// Example for /chat/transcribe
+// You may need to wrap your file bytes into a format Chopper accepts
+// depending on the generated method signature (usually List<int> or MultipartFile).
+```
+
+_Note: If the generated transcribe method is clunky, feel free to keep it in the Manual Service for now._
+
+---
+
+## Troubleshooting
+
+- **"Field not found"**: Run `./sync-spec.sh` then `./generate-client.sh`.
+- **"Conflict" errors**: The script `./generate-client.sh` includes `--delete-conflicting-outputs` to handle this.
+- **Null safety errors**: Check `swagger.json`. If a field is required in JSON but missing in runtime, parsing will fail.

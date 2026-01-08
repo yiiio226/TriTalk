@@ -2,7 +2,7 @@ name: frontend
 description: "TriTalk - Your AI Language Practice Companion."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -49,6 +49,11 @@ dependencies:
   google_sign_in: ^7.2.0
 
   uuid: any
+  # HTTP Client (runtime dependency)
+  chopper: ^8.0.0
+  # JSON handling (runtime dependency)
+  json_annotation: ^4.8.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -60,6 +65,12 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
+  # Build system
+  build_runner: ^2.4.6
+  # Code generators
+  swagger_dart_code_generator: ^4.0.2
+  chopper_generator: ^8.0.0
+  json_serializable: ^6.7.1
 
 flutter_launcher_icons:
   android: "launcher_icon"
@@ -73,7 +84,6 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
