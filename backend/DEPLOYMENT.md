@@ -32,6 +32,7 @@
 7. 复制生成的 token
 
 **在 GitHub 中添加：**
+
 - Name: `CLOUDFLARE_API_TOKEN`
 - Secret: 粘贴你的 API token
 
@@ -45,6 +46,7 @@
 4. 或者在 URL 中找到：`https://dash.cloudflare.com/<account-id>/...`
 
 **在 GitHub 中添加：**
+
 - Name: `CLOUDFLARE_ACCOUNT_ID`
 - Secret: 粘贴你的 Account ID
 
@@ -57,14 +59,17 @@
 3. 创建或复制现有的 API key
 
 **在 GitHub 中添加：**
+
 - Name: `OPENROUTER_API_KEY`
 - Secret: 粘贴你的 OpenRouter API key
 
 #### 4. SUPABASE_URL
+
 - Name: `SUPABASE_URL`
 - Secret: 你的 Supabase URL (例如 https://xyz.supabase.co)
 
 #### 5. SUPABASE_ANON_KEY
+
 - Name: `SUPABASE_ANON_KEY`
 - Secret: 你的 Supabase Anon Key
 
@@ -72,7 +77,7 @@
 
 自动部署会在以下情况触发：
 
-1. **自动触发**：推送代码到 `main` 分支，且 `backend-cloudflare/` 目录下有文件变更
+1. **自动触发**：推送代码到 `main` 分支，且 `backend/` 目录下有文件变更
 2. **手动触发**：在 GitHub Actions 页面手动运行 workflow
 
 ### 部署流程
@@ -94,7 +99,7 @@ git push origin main
 如果需要手动从本地部署：
 
 ```bash
-cd backend-cloudflare
+cd backend
 
 # 部署到生产环境
 npm run deploy
@@ -117,13 +122,14 @@ wrangler secret put SUPABASE_ANON_KEY
 ### Cloudflare Workers 日志
 
 ```bash
-cd backend-cloudflare
+cd backend
 
 # 实时查看 worker 日志
 npm run tail
 ```
 
 或在 [Cloudflare Dashboard](https://dash.cloudflare.com/) 中：
+
 1. 进入 **Workers & Pages**
 2. 选择 **tritalk-backend**
 3. 查看 **Logs** 标签页
@@ -172,6 +178,7 @@ OPENROUTER_API_KEY=your-dev-key-here
 生产环境的环境变量通过两种方式配置：
 
 1. **Secrets**（敏感信息）：通过 GitHub Actions 或 `wrangler secret put` 设置
+
    - `OPENROUTER_API_KEY`
 
 2. **Variables**（非敏感配置）：在 `wrangler.toml` 中配置
@@ -182,6 +189,7 @@ OPENROUTER_API_KEY=your-dev-key-here
 如果需要回滚到之前的版本：
 
 1. 在 Cloudflare Dashboard 中：
+
    - 进入 **Workers & Pages** > **tritalk-backend**
    - 选择 **Deployments** 标签页
    - 找到之前的部署版本，点击 **Rollback**

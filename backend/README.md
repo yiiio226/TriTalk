@@ -22,7 +22,7 @@ TriTalk 后端服务，部署在 Cloudflare Workers 上，提供全球边缘计�
 ### 1. 安装依赖
 
 ```bash
-cd backend-cloudflare
+cd backend
 npm install
 ```
 
