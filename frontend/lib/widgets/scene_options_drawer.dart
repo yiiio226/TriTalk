@@ -8,12 +8,12 @@ class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onShowFavorites; // New: Show Favorites List
 
   const SceneOptionsDrawer({
-    Key? key,
+    super.key,
     this.onClear,
     this.onDelete,
     this.onBookmark,
     this.onShowFavorites,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

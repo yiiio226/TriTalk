@@ -7,10 +7,10 @@ class SaveNoteSheet extends StatefulWidget {
   final String? sceneId; // Add sceneId to link to conversation
 
   const SaveNoteSheet({
-    Key? key, 
+    super.key, 
     required this.originalSentence,
     this.sceneId,
-  }) : super(key: key);
+  });
 
   @override
   State<SaveNoteSheet> createState() => _SaveNoteSheetState();

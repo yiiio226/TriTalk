@@ -10,13 +10,13 @@ class HintsSheet extends StatefulWidget {
   final Function(List<String>)? onHintsCached; // Callback to save hints
 
   const HintsSheet({
-    Key? key,
+    super.key,
     required this.sceneDescription,
     required this.history,
     required this.onHintSelected,
     this.cachedHints,
     this.onHintsCached,
-  }) : super(key: key);
+  });
 
   @override
   State<HintsSheet> createState() => _HintsSheetState();

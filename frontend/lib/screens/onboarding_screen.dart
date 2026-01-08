@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
-import '../models/user.dart';
 import '../data/language_constants.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();

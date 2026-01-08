@@ -232,7 +232,7 @@ class _ChatBubbleState extends State<ChatBubble>
   Widget _buildVoiceBubbleContent(bool isUser) {
     // Duration formatting: e.g. 3"
     final duration = widget.message.audioDuration ?? 0;
-    final durationText = '${duration}"';
+    final durationText = '$duration"';
 
     return GestureDetector(
       onTap: _playPauseVoice,

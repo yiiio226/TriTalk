@@ -7,7 +7,7 @@ import 'paywall_screen.dart';
 import 'splash_screen.dart'; // For logout navigation
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();

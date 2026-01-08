@@ -7,7 +7,7 @@ import '../widgets/chat_history_list_widget.dart';
 class UnifiedFavoritesScreen extends StatefulWidget {
   final String? sceneId; // Optional filter
   
-  const UnifiedFavoritesScreen({Key? key, this.sceneId}) : super(key: key);
+  const UnifiedFavoritesScreen({super.key, this.sceneId});
 
   @override
   State<UnifiedFavoritesScreen> createState() => _UnifiedFavoritesScreenState();

@@ -48,6 +48,7 @@ dependencies:
   audioplayers: ^5.0.0
   google_sign_in: ^7.2.0
 
+  uuid: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

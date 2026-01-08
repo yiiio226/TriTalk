@@ -23,11 +23,10 @@ class _TopToastWidget extends StatefulWidget {
   final VoidCallback onDismiss;
 
   const _TopToastWidget({
-    Key? key,
     required this.message,
     required this.isError,
     required this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   State<_TopToastWidget> createState() => _TopToastWidgetState();
