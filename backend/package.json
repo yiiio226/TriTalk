@@ -1,6 +1,6 @@
 {
   "name": "tritalk-backend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "TriTalk backend on Cloudflare Workers",
   "main": "src/server.ts",
   "scripts": {
