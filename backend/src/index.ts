@@ -1,3 +1,6 @@
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import type { Context } from "hono";
 import {
   ChatRequest,
   ChatResponse,
@@ -23,6 +26,9 @@ import {
 } from "./types";
 import { createClient } from "@supabase/supabase-js";
 
+// Initialize Hono app with Env bindings
+const app = new Hono<{ Bindings: Env; Variables: { user: any } }>();
+
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "http://localhost:8080",
@@ -33,18 +39,44 @@ const ALLOWED_ORIGINS = [
   // 'https://yourdomain.com',
 ];
 
+// ============================================
+// CORS Middleware (Global)
+// ============================================
+app.use(
+  "/*",
+  cors({
+    origin: (origin) => {
+      // Allow localhost and specific domains
+      if (
+        ALLOWED_ORIGINS.includes(origin) ||
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:")
+      ) {
+        return origin;
+      }
+      return "null";
+    },
+    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+    exposeHeaders: ["Content-Length"],
+  })
+);
+
+// ============================================
+// Helper Functions
+// ============================================
+
 // Helper to authenticate user via Supabase
-async function authenticateUser(request: Request, env: Env): Promise<any> {
-  const authHeader = request.headers.get("Authorization");
+async function authenticateUser(c: Context): Promise<any> {
+  const authHeader = c.req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return null;
   }
 
   const token = authHeader.split(" ")[1];
+  const env = c.env as Env;
 
   try {
-    // Create a Supabase client with the user's token.
-    // This ensures that subsequent DB queries respect RLS (Row Level Security).
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
       global: {
         headers: {
@@ -53,7 +85,6 @@ async function authenticateUser(request: Request, env: Env): Promise<any> {
       },
     });
 
-    // 1. Verify Token
     const {
       data: { user },
       error,
@@ -64,8 +95,7 @@ async function authenticateUser(request: Request, env: Env): Promise<any> {
       return null;
     }
 
-    // 2. Check Subscription/Balance (Optional/Extensible)
-    // Since we are now authenticated as the user (via the client headers), we can access RLS-protected data.
+    // Optional: Check profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
@@ -74,8 +104,7 @@ async function authenticateUser(request: Request, env: Env): Promise<any> {
 
     if (profileError || !profile) {
       console.error("Profile Error:", profileError);
-      // If strict mode, return null. For now, we allow if Auth is valid.
-      // return null;
+      // Allow if Auth is valid even if profile fetch fails
     }
 
     return user;
@@ -83,22 +112,6 @@ async function authenticateUser(request: Request, env: Env): Promise<any> {
     console.error("Auth Exception:", e);
     return null;
   }
-}
-
-// Helper to create CORS headers
-function corsHeaders(origin: string | null) {
-  // Check if origin is allowed
-  const allowedOrigin =
-    origin &&
-    (ALLOWED_ORIGINS.includes(origin) ||
-      origin.startsWith("http://localhost:") ||
-      origin.startsWith("http://127.0.0.1:"));
-
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin ? origin : "null",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
-  };
 }
 
 // Helper to parse JSON from LLM response (handles markdown wrapping)
@@ -160,10 +173,52 @@ async function callOpenRouter(
   return data.choices[0].message.content;
 }
 
-// Handle /chat/send endpoint
-async function handleChatSend(request: Request, env: Env): Promise<Response> {
+// Helper to sanitize text (remove invalid UTF-16 characters)
+function sanitizeText(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/[\uD800-\uDFFF]/g, "")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+}
+
+// ============================================
+// Authentication Middleware
+// ============================================
+const authMiddleware = async (c: Context, next: any) => {
+  const user = await authenticateUser(c);
+  if (!user) {
+    return c.json(
+      {
+        error: "Unauthorized: Invalid User Token or Subscription",
+      },
+      401
+    );
+  }
+  c.set("user", user);
+  await next();
+};
+
+// ============================================
+// Routes
+// ============================================
+
+// GET / - Root
+app.get("/", (c) => {
+  return c.json({
+    message: "TriTalk Backend Running on Cloudflare Workers with Hono",
+  });
+});
+
+// GET /health - Health check (no auth required)
+app.get("/health", (c) => {
+  return c.json({ status: "ok" });
+});
+
+// POST /chat/send - Main chat logic (requires auth)
+app.post("/chat/send", authMiddleware, async (c) => {
   try {
-    const body: ChatRequest = await request.json();
+    const body: ChatRequest = await c.req.json();
+    const env = c.env as Env;
     const nativeLang = body.native_language || "Chinese (Simplified)";
     const targetLang = body.target_language || "English";
 
@@ -248,15 +303,6 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
     );
     const data = parseJSON(content);
 
-    // Helper to sanitize text (remove invalid UTF-16 characters)
-    const sanitizeText = (text: string): string => {
-      if (!text) return "";
-      // Remove any invalid UTF-16 surrogate pairs and control characters
-      return text
-        .replace(/[\uD800-\uDFFF]/g, "")
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-    };
-
     const replyText = sanitizeText(data.reply || "");
     const analysisData = data.analysis || {};
 
@@ -273,38 +319,24 @@ async function handleChatSend(request: Request, env: Env): Promise<Response> {
       review_feedback: feedback,
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /chat/send:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         message: "Sorry, I'm having trouble connecting to the AI right now.",
         debug_error: String(error),
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /chat/transcribe endpoint
-// Smart Voice Input: Uses Gemini 2.0 Flash Lite's multimodal capability for direct audio transcription + optimization
-async function handleChatTranscribe(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /chat/transcribe - Audio transcription (requires auth)
+app.post("/chat/transcribe", authMiddleware, async (c) => {
   try {
-    const formData = await request.formData();
+    const formData = await c.req.formData();
+    const env = c.env as Env;
     const audioFile = formData.get("audio");
     const targetLanguage =
       (formData.get("target_language") as string) || "English";
@@ -319,7 +351,6 @@ async function handleChatTranscribe(
     const uint8Array = new Uint8Array(arrayBuffer);
 
     // Convert to base64 using a chunked approach to handle large files
-    // This prevents issues with String.fromCharCode on large arrays
     const CHUNK_SIZE = 65536; // 64KB chunks
     let binary = "";
     for (let i = 0; i < uint8Array.length; i += CHUNK_SIZE) {
@@ -333,7 +364,7 @@ async function handleChatTranscribe(
 
     // Determine audio format from file extension
     const fileName = audioBlob.name || "audio.wav";
-    let audioFormat = "wav"; // default - changed to wav
+    let audioFormat = "wav"; // default
     if (fileName.endsWith(".mp3")) {
       audioFormat = "mp3";
     } else if (fileName.endsWith(".wav")) {
@@ -350,13 +381,11 @@ async function handleChatTranscribe(
       audioFormat = "m4a";
     }
 
-    // Log basic audio file information
     console.log(
       `[Transcribe] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
     );
 
     // Build the multimodal prompt for Gemini
-    // Gemini 2.0 Flash Lite can directly process audio and output text
     const transcribePrompt = `You are a professional transcription and editing assistant.
 
 Listen to the audio and perform these tasks:
@@ -369,7 +398,6 @@ Return ONLY a JSON object in this exact format:
 { "optimized_text": "the polished transcription here" }`;
 
     // Call OpenRouter with multimodal content (audio + text)
-    // Using input_audio format as per OpenRouter API spec
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -426,37 +454,24 @@ Return ONLY a JSON object in this exact format:
       text: optimizedText,
     };
 
-    return new Response(JSON.stringify(transcribeResponse), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(transcribeResponse);
   } catch (error) {
     console.error("Error in /chat/transcribe:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         error: "Failed to transcribe audio",
         details: String(error),
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /chat/send-voice endpoint
-async function handleChatSendVoice(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /chat/send-voice - Voice message handling (requires auth)
+app.post("/chat/send-voice", authMiddleware, async (c) => {
   try {
-    const formData = await request.formData();
+    const formData = await c.req.formData();
+    const env = c.env as Env;
     const audioFile = formData.get("audio");
     const sceneContext = (formData.get("scene_context") as string) || "";
     const historyStr = (formData.get("history") as string) || "[]";
@@ -473,11 +488,10 @@ async function handleChatSendVoice(
       throw new Error("No audio file uploaded");
     }
 
-    // 1. MOCK TRANSCRIPTION
-    // In production, send audio to STT service
+    // MOCK TRANSCRIPTION
     const transcribedText = "I want to live in a hotel.";
 
-    // 2. Process with LLM (Reusing logic structure from handleChatSend)
+    // Process with LLM
     const systemPrompt = `You are roleplaying in a language learning scenario.
     
     SCENARIO CONTEXT: ${sceneContext}
@@ -529,20 +543,11 @@ async function handleChatSendVoice(
     );
     const data = parseJSON(content);
 
-    // Helper to sanitize text
-    const sanitizeText = (text: string): string => {
-      if (!text) return "";
-      return text
-        .replace(/[\uD800-\uDFFF]/g, "")
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-    };
-
     const replyText = sanitizeText(data.reply || "");
     const analysisData = data.analysis || {};
 
-    // 3. MOCK PRONUNCIATION SCORE
-    // In production, get this from the STT service or audio analysis model
-    const pronunciationScore = Math.floor(Math.random() * 15) + 80; // Random score 80-95
+    // MOCK PRONUNCIATION SCORE
+    const pronunciationScore = Math.floor(Math.random() * 15) + 80;
 
     // Mock sentence breakdown
     const cleanText = sanitizeText(
@@ -552,12 +557,10 @@ async function handleChatSendVoice(
     const sentenceBreakdown = words.map((word) => {
       const rand = Math.random();
       let score;
-      // Force 'live' to be low score if present (for demo)
       if (word.toLowerCase() === "live") score = 45;
-      else if (rand > 0.3)
-        score = Math.floor(Math.random() * 20) + 81; // 81-100
-      else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61; // 61-80
-      else score = Math.floor(Math.random() * 20) + 40; // 40-59
+      else if (rand > 0.3) score = Math.floor(Math.random() * 20) + 81;
+      else if (rand > 0.1) score = Math.floor(Math.random() * 20) + 61;
+      else score = Math.floor(Math.random() * 20) + 40;
       return { word, score };
     });
 
@@ -594,7 +597,6 @@ async function handleChatSendVoice(
       message: replyText,
       translation: data.translation,
       voice_feedback: voiceFeedback,
-      // Also include standard review feedback structure if needed by frontend
       review_feedback: {
         is_perfect: false,
         corrected_text: voiceFeedback.corrected_text,
@@ -604,34 +606,24 @@ async function handleChatSendVoice(
       },
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /chat/send-voice:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         message: "Sorry, I'm having trouble processing your voice message.",
         debug_error: String(error),
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /chat/hint endpoint
-async function handleChatHint(request: Request, env: Env): Promise<Response> {
+// POST /chat/hint - Get conversation hints (requires auth)
+app.post("/chat/hint", authMiddleware, async (c) => {
   try {
-    const body: HintRequest = await request.json();
+    const body: HintRequest = await c.req.json();
+    const env = c.env as Env;
     const targetLang = body.target_language || "English";
 
     const hintPrompt = `You are a helpful conversation tutor teaching ${targetLang}.
@@ -646,7 +638,6 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
 
     const messages = [{ role: "system", content: hintPrompt }];
 
-    // Add recent history (last 5 messages)
     if (body.history && body.history.length > 0) {
       messages.push(...body.history.slice(-5));
     }
@@ -664,42 +655,27 @@ async function handleChatHint(request: Request, env: Env): Promise<Response> {
     }
 
     const response: HintResponse = { hints };
-
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /chat/hint:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         hints: [
           "Could you help me?",
           "I don't understand.",
           "Please continue.",
         ],
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /chat/analyze endpoint
-// Handle /chat/analyze endpoint
-async function handleChatAnalyze(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /chat/analyze - Analyze message (requires auth, streaming)
+app.post("/chat/analyze", authMiddleware, async (c) => {
   try {
-    const body: AnalyzeRequest = await request.json();
+    const body: AnalyzeRequest = await c.req.json();
+    const env = c.env as Env;
     const nativeLang = body.native_language || "Chinese (Simplified)";
 
     const analyzePrompt = `Act as a language tutor. Analyze this sentence: "${body.message}"
@@ -771,7 +747,7 @@ async function handleChatAnalyze(
         body: JSON.stringify({
           model: env.OPENROUTER_MODEL,
           messages,
-          stream: true, // Enable streaming
+          stream: true,
         }),
       }
     );
@@ -789,7 +765,7 @@ async function handleChatAnalyze(
     const decoder = new TextDecoder();
 
     let buffer = "";
-    let accumulatedContent = ""; // Accumulate content to detect and strip markdown blocks
+    let accumulatedContent = "";
 
     (async () => {
       try {
@@ -803,7 +779,7 @@ async function handleChatAnalyze(
           buffer += chunk;
 
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep the incomplete line
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
             const trimmed = line.trim();
@@ -817,18 +793,15 @@ async function handleChatAnalyze(
                 if (content) {
                   accumulatedContent += content;
 
-                  // Clean up markdown code blocks
                   let cleanContent = content;
-                  // Don't write if it's part of a markdown fence
                   if (content.includes("```")) {
-                    // Skip writing markdown fences
                     continue;
                   }
 
                   await writer.write(new TextEncoder().encode(cleanContent));
                 }
               } catch (e) {
-                // Ignore parse errors for intermediate chunks
+                // Ignore parse errors
               }
             }
           }
@@ -840,46 +813,50 @@ async function handleChatAnalyze(
       }
     })();
 
+    // For streaming responses, we need to manually add CORS headers
+    // since Hono's CORS middleware doesn't automatically apply to raw Response objects
+    const origin = c.req.header("Origin") || "";
+    const allowedOrigin =
+      ALLOWED_ORIGINS.includes(origin) ||
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:")
+        ? origin
+        : "null";
+
     return new Response(readable, {
       headers: {
         "Content-Type": "application/x-ndjson",
-        ...corsHeaders(request.headers.get("Origin")),
+        "Access-Control-Allow-Origin": allowedOrigin,
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, X-API-Key",
       },
     });
   } catch (error) {
     console.error("Error in /chat/analyze:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         grammar_points: [],
         vocabulary: [],
         sentence_structure: "Analysis unavailable (Server Error)",
         overall_summary: "Description unavailable.",
         debug_error: String(error),
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /scene/generate endpoint
-async function handleSceneGenerate(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /scene/generate - Generate scene (requires auth)
+app.post("/scene/generate", authMiddleware, async (c) => {
   let body: SceneGenerationRequest | undefined;
   try {
-    body = await request.json();
+    body = await c.req.json();
+    const env = c.env as Env;
     if (!body) {
       throw new Error("Invalid request body");
     }
 
-    // At this point body is guaranteed to be defined
     const { description, tone } = body;
 
     const prompt = `Act as a creative educational scenario designer.
@@ -905,7 +882,6 @@ async function handleSceneGenerate(
     );
     let data = parseJSON(content);
 
-    // Handle list response (some models return [{}])
     if (Array.isArray(data) && data.length > 0) {
       data = data[0];
     }
@@ -920,16 +896,11 @@ async function handleSceneGenerate(
       emoji: data.emoji || "✨",
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /scene/generate:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         title: "Custom Scene",
         ai_role: "Assistant",
         user_role: "User",
@@ -937,25 +908,17 @@ async function handleSceneGenerate(
         description: body?.description || "Custom scenario",
         initial_message: "Hi! Let's start practicing.",
         emoji: "📝",
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /scene/polish endpoint
-async function handleScenePolish(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /scene/polish - Polish scene description (requires auth)
+app.post("/scene/polish", authMiddleware, async (c) => {
   try {
-    const body: PolishRequest = await request.json();
+    const body: PolishRequest = await c.req.json();
+    const env = c.env as Env;
 
     const prompt = `Refine and expand the following scenario description for an English roleplay practice session. 
     User Input: "${body.description}"
@@ -976,33 +939,23 @@ async function handleScenePolish(
       polished_text: data.polished_text || body.description,
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /scene/polish:", error);
-    return new Response(
-      JSON.stringify({
-        polished_text: "Could not polish text at this time.",
-      }),
+    return c.json(
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+        polished_text: "Could not polish text at this time.",
+      },
+      500
     );
   }
-}
+});
 
-// Handle /common/translate endpoint
-async function handleTranslate(request: Request, env: Env): Promise<Response> {
+// POST /common/translate - Translate text (requires auth)
+app.post("/common/translate", authMiddleware, async (c) => {
   try {
-    const body: TranslateRequest = await request.json();
+    const body: TranslateRequest = await c.req.json();
+    const env = c.env as Env;
 
     const prompt = `Translate the following text to ${body.target_language}.
     Text: "${body.text}"
@@ -1021,42 +974,27 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
       translation: data.translation || body.text,
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /common/translate:", error);
-    return new Response(
-      JSON.stringify({
-        translation: "Translation unavailable.",
-      }),
+    return c.json(
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+        translation: "Translation unavailable.",
+      },
+      500
     );
   }
-}
+});
 
-// Handle /chat/shadow endpoint (Simulated for MVP)
-async function handleShadowAnalysis(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /chat/shadow - Shadow analysis (requires auth)
+app.post("/chat/shadow", authMiddleware, async (c) => {
   try {
-    const body: ShadowRequest = await request.json();
+    const body: ShadowRequest = await c.req.json();
 
     // SIMULATION: Compare texts for a rough score
     const target = body.target_text.toLowerCase().replace(/[^\w\s]/g, "");
     const user = body.user_audio_text.toLowerCase().replace(/[^\w\s]/g, "");
 
-    // Simple Levenshtein-like ratio or word match (Simplified for speed)
     const targetWords = target.split(/\s+/);
     const userWords = user.split(/\s+/);
     const matchCount = userWords.filter((w) => targetWords.includes(w)).length;
@@ -1064,10 +1002,8 @@ async function handleShadowAnalysis(
       (matchCount / Math.max(targetWords.length, 1)) * 100
     );
 
-    // Cap and floor
     score = Math.max(0, Math.min(100, score));
 
-    // Generate heuristic feedback
     let feedback = "Good effort!";
     if (score > 90) feedback = "Excellent! Your pronunciation is very clear.";
     else if (score > 70)
@@ -1079,47 +1015,34 @@ async function handleShadowAnalysis(
     const response: ShadowResponse = {
       score: score,
       details: {
-        intonation_score: Math.max(0, score - 10), // Simulated variety
+        intonation_score: Math.max(0, score - 10),
         pronunciation_score: score,
         feedback: feedback,
       },
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /chat/shadow:", error);
-    return new Response(
-      JSON.stringify({
+    return c.json(
+      {
         score: 0,
         details: {
           intonation_score: 0,
           pronunciation_score: 0,
           feedback: "Analysis failed.",
         },
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+      },
+      500
     );
   }
-}
+});
 
-// Handle /chat/optimize endpoint
-async function handleChatOptimize(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /chat/optimize - Optimize message (requires auth)
+app.post("/chat/optimize", authMiddleware, async (c) => {
   try {
-    const body: OptimizeRequest = await request.json();
+    const body: OptimizeRequest = await c.req.json();
+    const env = c.env as Env;
 
     const targetLang = body.target_language || "English";
 
@@ -1135,7 +1058,6 @@ async function handleChatOptimize(
 
     const messages = [{ role: "system", content: prompt }];
 
-    // Add recent history for context if available
     if (body.history && body.history.length > 0) {
       messages.push(...body.history.slice(-5));
     }
@@ -1151,86 +1073,55 @@ async function handleChatOptimize(
       optimized_text: data.optimized_text || body.message,
     };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json(response);
   } catch (error) {
     console.error("Error in /chat/optimize:", error);
-    return new Response(
-      JSON.stringify({
-        optimized_text: "Optimization unavailable.",
-      }),
+    return c.json(
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+        optimized_text: "Optimization unavailable.",
+      },
+      500
     );
   }
-}
+});
 
-// Handle /tts/generate endpoint
-// Generates speech audio from text using MiniMax T2A V2 API with streaming
-async function handleTTSGenerate(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// POST /tts/generate - Generate TTS (requires auth, streaming)
+app.post("/tts/generate", authMiddleware, async (c) => {
   try {
+    const env = c.env as Env;
+
     // Check if MiniMax credentials are configured
     if (!env.MINIMAX_API_KEY || !env.MINIMAX_GROUP_ID) {
-      return new Response(
-        JSON.stringify({
+      return c.json(
+        {
           error:
             "TTS service not configured. Please set MINIMAX_API_KEY and MINIMAX_GROUP_ID.",
-        } as TTSResponse),
-        {
-          status: 503,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
+        } as TTSResponse,
+        503
       );
     }
 
-    const body: TTSRequest = await request.json();
+    const body: TTSRequest = await c.req.json();
 
     if (!body.text || body.text.trim().length === 0) {
-      return new Response(
-        JSON.stringify({
-          error: "Text is required for TTS generation.",
-        } as TTSResponse),
+      return c.json(
         {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
+          error: "Text is required for TTS generation.",
+        } as TTSResponse,
+        400
       );
     }
 
-    // Limit text length to avoid excessive API costs
     const text = body.text.slice(0, 2000);
-
-    // MiniMax T2A V2 API endpoint
     const apiUrl = `https://api.minimax.chat/v1/t2a_v2?GroupId=${env.MINIMAX_GROUP_ID}`;
+    const voiceId = body.voice_id || "English_Trustworthy_Man";
 
-    // Default voice settings - using a natural English voice
-    const voiceId = body.voice_id || "English_Trustworthy_Man"; // Default voice
-
-    // Enable streaming for lower latency
     const ttsRequestBody = {
-      model: "speech-2.6-turbo", // Fast, low-latency model
+      model: "speech-2.6-turbo",
       text: text,
-      stream: true, // Enable streaming output
+      stream: true,
       stream_options: {
-        exclude_aggregated_audio: true, // Don't include full audio in last chunk
+        exclude_aggregated_audio: true,
       },
       voice_setting: {
         voice_id: voiceId,
@@ -1258,17 +1149,11 @@ async function handleTTSGenerate(
     if (!ttsResponse.ok) {
       const errorText = await ttsResponse.text();
       console.error("MiniMax TTS API Error:", errorText);
-      return new Response(
-        JSON.stringify({
-          error: `TTS generation failed: ${ttsResponse.status}`,
-        } as TTSResponse),
+      return c.json(
         {
-          status: 502,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
+          error: `TTS generation failed: ${ttsResponse.status}`,
+        } as TTSResponse,
+        502
       );
     }
 
@@ -1287,7 +1172,6 @@ async function handleTTSGenerate(
     const writer = writable.getWriter();
     const encoder = new TextEncoder();
 
-    // Process the streaming response in the background
     (async () => {
       try {
         const reader = ttsResponse.body?.getReader();
@@ -1312,21 +1196,19 @@ async function handleTTSGenerate(
 
           buffer += decoder.decode(value, { stream: true });
 
-          // Process complete lines (SSE format: data: {...}\n\n)
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
             const trimmedLine = line.trim();
             if (!trimmedLine || !trimmedLine.startsWith("data:")) continue;
 
-            const jsonStr = trimmedLine.slice(5).trim(); // Remove "data:" prefix
+            const jsonStr = trimmedLine.slice(5).trim();
             if (!jsonStr || jsonStr === "[DONE]") continue;
 
             try {
               const chunkData = JSON.parse(jsonStr);
 
-              // Check for API errors
               if (
                 chunkData.base_resp &&
                 chunkData.base_resp.status_code !== 0
@@ -1344,7 +1226,6 @@ async function handleTTSGenerate(
                 continue;
               }
 
-              // Extract audio hex data from chunk
               const audioHex = chunkData.data?.audio;
               if (audioHex) {
                 const audioBase64 = hexToBase64(audioHex);
@@ -1358,7 +1239,6 @@ async function handleTTSGenerate(
                 );
               }
 
-              // Check for extra info (duration) in the final chunk
               if (chunkData.extra_info?.audio_length) {
                 const infoResponse = {
                   type: "info",
@@ -1369,13 +1249,11 @@ async function handleTTSGenerate(
                 );
               }
             } catch (e) {
-              // Ignore parse errors for intermediate chunks
               console.error("Error parsing TTS chunk:", e);
             }
           }
         }
 
-        // Send completion signal
         await writer.write(
           encoder.encode(JSON.stringify({ type: "done" }) + "\n")
         );
@@ -1386,65 +1264,53 @@ async function handleTTSGenerate(
       }
     })();
 
+    // For streaming responses, we need to manually add CORS headers
+    const origin = c.req.header("Origin") || "";
+    const allowedOrigin =
+      ALLOWED_ORIGINS.includes(origin) ||
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:")
+        ? origin
+        : "null";
+
     return new Response(readable, {
       headers: {
         "Content-Type": "application/x-ndjson",
-        ...corsHeaders(request.headers.get("Origin")),
+        "Access-Control-Allow-Origin": allowedOrigin,
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, X-API-Key",
       },
     });
   } catch (error) {
     console.error("Error in /tts/generate:", error);
-    return new Response(
-      JSON.stringify({
-        error: "TTS generation failed.",
-      } as TTSResponse),
+    return c.json(
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
+        error: "TTS generation failed.",
+      } as TTSResponse,
+      500
     );
   }
-}
+});
 
-// Handle /chat/messages DELETE endpoint
-async function handleDeleteMessages(
-  request: Request,
-  env: Env
-): Promise<Response> {
+// DELETE /chat/messages - Delete messages (requires auth)
+app.delete("/chat/messages", authMiddleware, async (c) => {
   try {
-    const body: any = await request.json();
+    const body: any = await c.req.json();
+    const env = c.env as Env;
     const sceneKey = body.scene_key;
     const messageIds: string[] = body.message_ids || [];
 
     if (!sceneKey || !messageIds || messageIds.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Missing scene_key or message_ids" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
-      );
+      return c.json({ error: "Missing scene_key or message_ids" }, 400);
     }
 
-    // Get authenticated user
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      });
-    }
+    // Get authenticated user from context (already authenticated by authMiddleware)
+    const user = c.get("user");
 
-    const token = authHeader.split(" ")[1];
+    // Create Supabase client with user's token for RLS
+    const authHeader = c.req.header("Authorization");
+    const token = authHeader!.split(" ")[1];
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
       global: {
         headers: {
@@ -1452,20 +1318,6 @@ async function handleDeleteMessages(
         },
       },
     });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      });
-    }
 
     // Fetch current messages for this scene
     const { data: chatHistory, error: fetchError } = await supabase
@@ -1477,26 +1329,11 @@ async function handleDeleteMessages(
 
     if (fetchError) {
       console.error("Error fetching chat history:", fetchError);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch chat history" }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
-      );
+      return c.json({ error: "Failed to fetch chat history" }, 500);
     }
 
     if (!chatHistory || !chatHistory.messages) {
-      // No messages to delete
-      return new Response(JSON.stringify({ success: true, deleted_count: 0 }), {
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      });
+      return c.json({ success: true, deleted_count: 0 });
     }
 
     // Filter out messages with IDs in the messageIds array
@@ -1518,189 +1355,37 @@ async function handleDeleteMessages(
 
     if (updateError) {
       console.error("Error updating chat history:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to delete messages" }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
-      );
+      return c.json({ error: "Failed to delete messages" }, 500);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, deleted_count: deletedCount }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
-    );
+    return c.json({ success: true, deleted_count: deletedCount });
   } catch (error) {
     console.error("Error in /chat/messages DELETE:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to delete messages" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
-    );
+    return c.json({ error: "Failed to delete messages" }, 500);
   }
-}
+});
 
-// Handle /user/sync endpoint
-async function handleUserSync(request: Request, env: Env): Promise<Response> {
+// POST /user/sync - User sync (no auth required)
+app.post("/user/sync", async (c) => {
   try {
-    const body: any = await request.json();
+    const body: any = await c.req.json();
 
-    // In a real application, you would valid the user data and store it in a database (D1, KV, Supabase, etc)
-    // For now, we just log it (in production logs) and return success.
     console.log("Received user sync:", body.id, body.email);
 
-    return new Response(
-      JSON.stringify({
-        status: "success",
-        synced_at: new Date().toISOString(),
-      }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      }
-    );
+    return c.json({
+      status: "success",
+      synced_at: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("Error in /user/sync:", error);
-    return new Response(JSON.stringify({ error: "Failed to sync user data" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
+    return c.json({ error: "Failed to sync user data" }, 500);
   }
-}
+});
 
-// Main worker handler
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const origin = request.headers.get("Origin");
+// 404 handler
+app.notFound((c) => {
+  return c.json({ error: "Not Found" }, 404);
+});
 
-    // Handle CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders(origin) });
-    }
-
-    // Validate User Authentication (Option C - Most Thorough)
-    if (url.pathname !== "/health" && url.pathname !== "/user/sync") {
-      const user = await authenticateUser(request, env);
-      if (!user) {
-        return new Response(
-          JSON.stringify({
-            error: "Unauthorized: Invalid User Token or Subscription",
-          }),
-          {
-            status: 401,
-            headers: {
-              "Content-Type": "application/json",
-              ...corsHeaders(origin),
-            },
-          }
-        );
-      }
-      // Request is authenticated, proceed
-    }
-
-    // Route requests
-    if (url.pathname === "/" && request.method === "GET") {
-      return new Response(
-        JSON.stringify({
-          message: "TriTalk Backend Running on Cloudflare Workers",
-        }),
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders(request.headers.get("Origin")),
-          },
-        }
-      );
-    }
-
-    if (url.pathname === "/health" && request.method === "GET") {
-      return new Response(JSON.stringify({ status: "ok" }), {
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(request.headers.get("Origin")),
-        },
-      });
-    }
-
-    if (url.pathname === "/chat/send" && request.method === "POST") {
-      return handleChatSend(request, env);
-    }
-
-    if (url.pathname === "/chat/transcribe" && request.method === "POST") {
-      return handleChatTranscribe(request, env);
-    }
-
-    if (url.pathname === "/chat/send-voice" && request.method === "POST") {
-      return handleChatSendVoice(request, env);
-    }
-
-    if (url.pathname === "/user/sync" && request.method === "POST") {
-      return handleUserSync(request, env);
-    }
-
-    if (url.pathname === "/chat/hint" && request.method === "POST") {
-      return handleChatHint(request, env);
-    }
-
-    if (url.pathname === "/chat/analyze" && request.method === "POST") {
-      return handleChatAnalyze(request, env);
-    }
-
-    if (url.pathname === "/scene/generate" && request.method === "POST") {
-      return handleSceneGenerate(request, env);
-    }
-
-    if (url.pathname === "/scene/polish" && request.method === "POST") {
-      return handleScenePolish(request, env);
-    }
-
-    if (url.pathname === "/common/translate" && request.method === "POST") {
-      return handleTranslate(request, env);
-    }
-
-    if (url.pathname === "/chat/shadow" && request.method === "POST") {
-      return handleShadowAnalysis(request, env);
-    }
-
-    if (url.pathname === "/chat/optimize" && request.method === "POST") {
-      return handleChatOptimize(request, env);
-    }
-
-    if (url.pathname === "/chat/messages" && request.method === "DELETE") {
-      return handleDeleteMessages(request, env);
-    }
-
-    if (url.pathname === "/tts/generate" && request.method === "POST") {
-      return handleTTSGenerate(request, env);
-    }
-
-    // 404 for unknown routes
-    return new Response(JSON.stringify({ error: "Not Found" }), {
-      status: 404,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(request.headers.get("Origin")),
-      },
-    });
-  },
-};
+// Export for Cloudflare Workers
+export default app;
