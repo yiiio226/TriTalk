@@ -124,7 +124,7 @@ This document is designed to be executable by you (the developer) and context-aw
 
 ## Phase 4: CI/CD Pipeline
 
-- [ ] **Configure GitHub Actions**
+- [x] **Configure GitHub Actions**
       Create/Update `.github/workflows/deploy-spec.yml`:
 
   ```yaml
@@ -157,7 +157,7 @@ This document is designed to be executable by you (the developer) and context-aw
             r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
             r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
             r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-            r2-bucket: "api-docs"
+            r2-bucket: "lib"
             source-file: "./backend/swagger.json"
             destination-file: "tritalk/swagger.json"
   ```
