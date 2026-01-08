@@ -1,0 +1,24 @@
+targets:
+  $default:
+    sources:
+      - lib/**
+      - swagger/**
+      - $package$
+    builders:
+      # Configure the swagger code generator
+      swagger_dart_code_generator:
+        options:
+          # Directory containing your swagger.json
+          input_folder: "swagger/"
+          # Target directory for generated code
+          output_folder: "lib/swagger_generated_code/"
+          # Use Chopper for HTTP requests
+          with_converter: true
+          separate_models: true
+          # Optional: Null safety and overriding toString
+          override_to_string: false
+
+      # Ensure other builders work correctly
+      json_serializable:
+        options:
+          explicit_to_json: true

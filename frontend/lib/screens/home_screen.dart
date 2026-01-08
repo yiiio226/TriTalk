@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Listen to changes in SceneService
     SceneService().addListener(_onScenesChanged);
   }
-  
+
   @override
   void dispose() {
     SceneService().removeListener(_onScenesChanged);
@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final scenes = SceneService().scenes;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: _isDragging
@@ -138,21 +138,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const ProfileScreen(),
+                                      builder: (context) =>
+                                          const ProfileScreen(),
                                     ),
                                   ).then((_) => setState(() {}));
                                 },
-                                  child: Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.grey[100],
-                                    ),
-                                    child: ClipOval(
-                                      child: _buildAvatar(),
-                                    ),
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey[100],
                                   ),
+                                  child: ClipOval(child: _buildAvatar()),
+                                ),
                               ),
                             ],
                           ),
@@ -161,10 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Choose a scenario to practice your ${AuthService().currentUser?.targetLanguage ?? "English"}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -174,159 +170,207 @@ class _HomeScreenState extends State<HomeScreen> {
                 // 2. Scrollable Content Area with Refresh
                 Expanded(
                   child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
                     slivers: [
                       // Refresh Control inside standard scroll view (appears below header)
-                      CupertinoSliverRefreshControl(
-                        onRefresh: _onRefresh,
-                      ),
-                      
+                      CupertinoSliverRefreshControl(onRefresh: _onRefresh),
+
                       SliverPadding(
                         padding: const EdgeInsets.all(20),
                         sliver: SliverGrid(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: _isGridView ? 2 : 1,
-                            childAspectRatio: _isGridView ? 0.75 : 2.4,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final scene = scenes[index];
-                              return LongPressDraggable<Scene>(
-                                data: scene,
-                                delay: const Duration(milliseconds: 300),
-                                onDragStarted: () {
-                                  setState(() {
-                                    _isDragging = true;
-                                  });
-                                },
-                                onDragUpdate: (details) {
-                                  _dragPosition.value = details.globalPosition;
-                                },
-                                onDragEnd: (details) {
-                                  setState(() {
-                                    _isDragging = false;
-                                  });
-                                },
-                                onDraggableCanceled: (velocity, offset) {
-                                  setState(() {
-                                    _isDragging = false;
-                                  });
-                                },
-                                feedback: ValueListenableBuilder<Offset>(
-                                  valueListenable: _dragPosition,
-                                  builder: (context, currentPosition, child) {
-                                    final screenSize = MediaQuery.of(context).size;
-                                    final targetPos = Offset(
-                                      screenSize.width - 52,
-                                      screenSize.height - 132
-                                    );
-                                    
-                                    final distance = (currentPosition - targetPos).distance;
-                                    final scale = (distance / 300).clamp(0.4, 1.05);
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: _isGridView ? 2 : 1,
+                                childAspectRatio: _isGridView ? 0.75 : 2.4,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final scene = scenes[index];
+                            return LongPressDraggable<Scene>(
+                              data: scene,
+                              delay: const Duration(milliseconds: 300),
+                              onDragStarted: () {
+                                setState(() {
+                                  _isDragging = true;
+                                });
+                              },
+                              onDragUpdate: (details) {
+                                _dragPosition.value = details.globalPosition;
+                              },
+                              onDragEnd: (details) {
+                                setState(() {
+                                  _isDragging = false;
+                                });
+                              },
+                              onDraggableCanceled: (velocity, offset) {
+                                setState(() {
+                                  _isDragging = false;
+                                });
+                              },
+                              feedback: ValueListenableBuilder<Offset>(
+                                valueListenable: _dragPosition,
+                                builder: (context, currentPosition, child) {
+                                  final screenSize = MediaQuery.of(
+                                    context,
+                                  ).size;
+                                  final targetPos = Offset(
+                                    screenSize.width - 52,
+                                    screenSize.height - 132,
+                                  );
 
-                                    return Transform.scale(
-                                      scale: scale,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: SizedBox(
-                                          width: _isGridView
-                                              ? (MediaQuery.of(context).size.width - 56) / 2
-                                              : MediaQuery.of(context).size.width - 40,
-                                          height: _isGridView
-                                              ? ((MediaQuery.of(context).size.width - 56) / 2) / 0.75
-                                              : (MediaQuery.of(context).size.width - 40) / 2.4,
-                                          child: Opacity(
-                                            opacity: 0.9,
-                                            child: SceneCard(
-                                              scene: scene,
-                                              showRole: !_isGridView,
-                                              onTap: () {},
-                                              onLongPress: null,
-                                            ),
+                                  final distance =
+                                      (currentPosition - targetPos).distance;
+                                  final scale = (distance / 300).clamp(
+                                    0.4,
+                                    1.05,
+                                  );
+
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: SizedBox(
+                                        width: _isGridView
+                                            ? (MediaQuery.of(
+                                                        context,
+                                                      ).size.width -
+                                                      56) /
+                                                  2
+                                            : MediaQuery.of(
+                                                    context,
+                                                  ).size.width -
+                                                  40,
+                                        height: _isGridView
+                                            ? ((MediaQuery.of(
+                                                            context,
+                                                          ).size.width -
+                                                          56) /
+                                                      2) /
+                                                  0.75
+                                            : (MediaQuery.of(
+                                                        context,
+                                                      ).size.width -
+                                                      40) /
+                                                  2.4,
+                                        child: Opacity(
+                                          opacity: 0.9,
+                                          child: SceneCard(
+                                            scene: scene,
+                                            showRole: !_isGridView,
+                                            onTap: () {},
+                                            onLongPress: null,
                                           ),
                                         ),
                                       ),
-                                    );
-                                  },
+                                    ),
+                                  );
+                                },
+                              ),
+                              childWhenDragging: Opacity(
+                                opacity: 0.3,
+                                child: SceneCard(
+                                  scene: scene,
+                                  showRole: !_isGridView,
+                                  onTap: () {},
+                                  onLongPress: null,
                                 ),
-                                childWhenDragging: Opacity(
-                                  opacity: 0.3,
-                                  child: SceneCard(
-                                    scene: scene,
-                                    showRole: !_isGridView,
-                                    onTap: () {},
-                                    onLongPress: null,
-                                  ),
-                                ),
-                                child: DragTarget<Scene>(
-                                  onAcceptWithDetails: (draggedScene) async {
-                                    // Find the indices of the dragged and target scenes
-                                    final oldIndex = scenes.indexWhere((s) => s.id == draggedScene.id);
-                                    final newIndex = index;
-                                    
-                                    if (oldIndex != -1 && oldIndex != newIndex) {
-                                      // Reorder via service
-                                      await SceneService().reorderScenes(oldIndex, newIndex);
-                                    }
-                                  },
-                                  builder: (context, candidateData, rejectedData) {
-                                    final isHovering = candidateData.isNotEmpty;
-                                    return AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(24),
-                                        border: isHovering
-                                            ? Border.all(
-                                                color: Colors.black,
-                                                width: 1,
-                                              )
-                                            : null,
-                                      ),
-                                      child: SceneCard(
-                                        scene: scene,
-                                        showRole: !_isGridView,
-                                        onTap: () async {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ChatScreen(scene: scene),
-                                            ),
-                                          );
+                              ),
+                              child: DragTarget<Scene>(
+                                onAcceptWithDetails: (details) async {
+                                  final draggedScene = details.data;
+                                  // Find the indices of the dragged and target scenes
+                                  final oldIndex = scenes.indexWhere(
+                                    (s) => s.id == draggedScene.id,
+                                  );
+                                  final newIndex = index;
 
-                                          if (result == 'delete') {
-                                             if (SceneService().isCustomScene(scene)) {
-                                                await SceneService().deleteScene(scene.id);
-                                             }
-                                          }
-                                        },
-                                        onLongPress: () {
-                                          if (!_isDragging) {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              backgroundColor: Colors.transparent,
-                                              barrierColor: Colors.white.withOpacity(0.5),
-                                              builder: (context) => SceneOptionsDrawer(
-                                                onClear: () => _showClearConfirmation(context, scene),
-                                                onDelete: () => _showDeleteConfirmation(context, scene),
-                                                onBookmark: () => _bookmarkConversation(context, scene),
-                                              ),
+                                  if (oldIndex != -1 && oldIndex != newIndex) {
+                                    // Reorder via service
+                                    await SceneService().reorderScenes(
+                                      oldIndex,
+                                      newIndex,
+                                    );
+                                  }
+                                },
+                                builder: (context, candidateData, rejectedData) {
+                                  final isHovering = candidateData.isNotEmpty;
+                                  return AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: isHovering
+                                          ? Border.all(
+                                              color: Colors.black,
+                                              width: 1,
+                                            )
+                                          : null,
+                                    ),
+                                    child: SceneCard(
+                                      scene: scene,
+                                      showRole: !_isGridView,
+                                      onTap: () async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ChatScreen(scene: scene),
+                                          ),
+                                        );
+
+                                        if (result == 'delete') {
+                                          if (SceneService().isCustomScene(
+                                            scene,
+                                          )) {
+                                            await SceneService().deleteScene(
+                                              scene.id,
                                             );
                                           }
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                            childCount: scenes.length,
-                          ),
+                                        }
+                                      },
+                                      onLongPress: () {
+                                        if (!_isDragging) {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            backgroundColor: Colors.transparent,
+                                            barrierColor: Colors.white
+                                                .withOpacity(0.5),
+                                            builder: (context) =>
+                                                SceneOptionsDrawer(
+                                                  onClear: () =>
+                                                      _showClearConfirmation(
+                                                        context,
+                                                        scene,
+                                                      ),
+                                                  onDelete: () =>
+                                                      _showDeleteConfirmation(
+                                                        context,
+                                                        scene,
+                                                      ),
+                                                  onBookmark: () =>
+                                                      _bookmarkConversation(
+                                                        context,
+                                                        scene,
+                                                      ),
+                                                ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }, childCount: scenes.length),
                         ),
                       ),
-                      
-                       // Bottom Padding
+
+                      // Bottom Padding
                       const SliverToBoxAdapter(
                         child: SizedBox(height: 100), // Space for FAB
                       ),
@@ -336,7 +380,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
 
-            
             // Side Action Panel
             if (_isDragging)
               Positioned(
@@ -378,11 +421,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static Future<void> _onRefresh() async {
-     // Min wait time for better UX
-     await Future.wait([
-        SceneService().refreshScenes(),
-        Future.delayed(const Duration(milliseconds: 800)),
-     ]);
+    // Min wait time for better UX
+    await Future.wait([
+      SceneService().refreshScenes(),
+      Future.delayed(const Duration(milliseconds: 800)),
+    ]);
   }
 
   Widget _buildDragTarget({
@@ -428,33 +471,37 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-      onWillAcceptWithDetails: (scene) => true,
-      onAcceptWithDetails: onAccept,
+      onWillAcceptWithDetails: (details) => true,
+      onAcceptWithDetails: (details) => onAccept(details.data),
     );
   }
 
   void _bookmarkConversation(BuildContext context, Scene scene) async {
     final sceneKey = scene.id;
     final history = await ChatHistoryService().getMessages(sceneKey);
-    final nonEmptyMessages = history.where((m) => m.content.isNotEmpty && !m.isLoading).toList();
-    
+    final nonEmptyMessages = history
+        .where((m) => m.content.isNotEmpty && !m.isLoading)
+        .toList();
+
     if (nonEmptyMessages.isEmpty) {
       showTopToast(context, "No messages to bookmark", isError: true);
       return;
     }
 
     final lastMessage = nonEmptyMessages.last.content;
-    final preview = lastMessage.length > 50 ? '${lastMessage.substring(0, 50)}...' : lastMessage;
-    
+    final preview = lastMessage.length > 50
+        ? '${lastMessage.substring(0, 50)}...'
+        : lastMessage;
+
     final now = DateTime.now();
-    final dateStr = "${now.month}/${now.day}"; 
+    final dateStr = "${now.month}/${now.day}";
 
     ChatHistoryService().addBookmark(
-      scene.title, 
-      preview, 
-      dateStr, 
-      sceneKey, 
-      nonEmptyMessages
+      scene.title,
+      preview,
+      dateStr,
+      sceneKey,
+      nonEmptyMessages,
     );
 
     if (mounted) {
@@ -475,10 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Text(
               'Clear Conversation',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -491,10 +535,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
                 TextButton(
@@ -503,7 +544,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     await ChatHistoryService().clearHistory(sceneKey);
                     if (mounted) {
                       setState(() {});
-                      showTopToast(context, 'Conversation cleared', isError: false);
+                      showTopToast(
+                        context,
+                        'Conversation cleared',
+                        isError: false,
+                      );
                       Navigator.pop(context);
                     }
                   },
@@ -534,10 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Text(
               'Delete Conversation',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -550,10 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(width: 12),
                 TextButton(
@@ -561,12 +600,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.pop(context);
                     final sceneKey = scene.id;
                     ChatHistoryService().clearHistory(sceneKey);
-                    
-                     // Delete scene (Standard scenes will be hidden, Custom scenes deleted)
-                     await SceneService().deleteScene(scene.id);
-                     if (mounted) {
-                       showTopToast(context, 'Scene deleted', isError: false);
-                     }
+
+                    // Delete scene (Standard scenes will be hidden, Custom scenes deleted)
+                    await SceneService().deleteScene(scene.id);
+                    if (mounted) {
+                      showTopToast(context, 'Scene deleted', isError: false);
+                    }
                   },
                   child: const Text(
                     'Delete',
@@ -585,9 +624,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAvatar() {
     final user = AuthService().currentUser;
     final avatarUrl = user?.avatarUrl;
-    
+
     // Priority: Google avatar > Gender-based avatar > Default
-    if (avatarUrl != null && avatarUrl.isNotEmpty && !avatarUrl.startsWith('assets/')) {
+    if (avatarUrl != null &&
+        avatarUrl.isNotEmpty &&
+        !avatarUrl.startsWith('assets/')) {
       // Use Google profile picture
       return Image.network(
         avatarUrl,
@@ -607,13 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final assetPath = gender == 'female'
         ? 'assets/images/user_avatar_female.png'
         : 'assets/images/user_avatar_male.png';
-    
-    return Image.asset(
-      assetPath,
-      fit: BoxFit.cover,
-    );
+
+    return Image.asset(assetPath, fit: BoxFit.cover);
   }
 }
-
-
-

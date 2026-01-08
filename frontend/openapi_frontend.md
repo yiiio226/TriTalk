@@ -1,265 +1,107 @@
-# Flutter Swagger Client Generation Guide
+# OpenAPI 前端指南
 
-This guide outlines the end-to-end process for generating Dart/Flutter client code from a `swagger.json` file using `swagger_dart_code_generator` and `chopper`.
-
-## Prerequisites
-
-- **Flutter SDK / Dart SDK** installed.
-- A valid **`swagger.json`** file from your backend.
+本文档描述 Flutter 前端如何使用自动生成的 API 客户端，以及与后端同步的工作流程。
 
 ---
 
-## Step 1: Add Dependencies
+## 🏗 架构：混合策略
 
-Add the necessary packages to your `pubspec.yaml` file. This setup uses **Chopper** as the HTTP client, which is robust and widely used.
+| 类型          | 方案                  | 适用场景                      |
+| ------------- | --------------------- | ----------------------------- |
+| **标准 REST** | 生成的 Swagger Client | 请求/响应为 JSON，无流式传输  |
+| **流式/音频** | 手动 `ApiService`     | NDJSON 流、音频上传、实时响应 |
 
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-  # Core generator package
-  swagger_dart_code_generator: ^4.0.2
-  # HTTP Client
-  chopper: ^8.0.0
-  # JSON handling
-  json_annotation: ^4.8.1
+---
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  # Build system
-  build_runner: ^2.4.6
-  # Generators
-  chopper_generator: ^8.0.0
-  json_serializable: ^6.7.1
-```
+## 📋 API 端点分类
 
-Run the following command to install dependencies:
+### ✅ 使用生成客户端 (Swagger Client)
+
+| 端点                | 方法   | 描述                       |
+| ------------------- | ------ | -------------------------- |
+| `/chat/send`        | POST   | 发送文本消息，获取 AI 回复 |
+| `/chat/hint`        | POST   | 获取对话提示建议           |
+| `/chat/transcribe`  | POST   | 音频转文字（非流式）       |
+| `/chat/shadow`      | POST   | 跟读评分                   |
+| `/chat/optimize`    | POST   | 优化用户消息               |
+| `/chat/messages`    | DELETE | 删除消息                   |
+| `/scene/generate`   | POST   | 生成新场景                 |
+| `/scene/polish`     | POST   | 润色场景描述               |
+| `/common/translate` | POST   | 文本翻译                   |
+
+### ⚡ 使用手动服务 (ApiService)
+
+| 端点               | 方法 | 描述                    | 原因                  |
+| ------------------ | ---- | ----------------------- | --------------------- |
+| `/chat/send-voice` | POST | 语音消息 + 流式 AI 回复 | Multipart + NDJSON 流 |
+| `/chat/analyze`    | POST | 流式语法分析            | NDJSON 流             |
+| `/tts/generate`    | POST | 流式语音合成            | 音频流分块传输        |
+
+---
+
+## 📁 核心文件结构
+
+| 文件                                 | 描述                           |
+| ------------------------------------ | ------------------------------ |
+| `swagger/swagger.json`               | OpenAPI 规范文件（从 R2 同步） |
+| `lib/swagger_generated_code/`        | 自动生成的客户端代码           |
+| `lib/services/client_provider.dart`  | 客户端单例封装                 |
+| `lib/services/auth_interceptor.dart` | Supabase Token 注入            |
+| `sync-spec.sh`                       | 同步 OpenAPI 规范脚本          |
+| `generate-client.sh`                 | 生成客户端代码脚本             |
+
+---
+
+## 🔄 同步与生成工作流
+
+### 拉取最新规范
 
 ```bash
-flutter pub get
+cd frontend
+./sync-spec.sh
 ```
 
----
+> 此脚本会自动下载最新的 `swagger.json` 并触发代码生成。
 
-## Step 2: Configure `build.yaml`
-
-Create a `build.yaml` file in the root of your project (same level as `pubspec.yaml`) if it doesn't already exist. This file tells the generator where to look for the Swagger file and how to configure the output.
-
-```yaml
-targets:
-  $default:
-    sources:
-      - lib/**
-      - swagger/**
-      - $package$
-    builders:
-      # Configure the swagger code generator
-      swagger_dart_code_generator:
-        options:
-          # Directory containing your swagger.json
-          input_folder: "swagger/"
-          # Target directory for generated code
-          output_folder: "lib/swagger_generated_code/"
-          # Use Chopper for HTTP requests
-          with_converter: true
-          separate_models: true
-          # Optional: Null safety and overriding toString
-          override_to_string: false
-
-      # Ensure other builders work correctly
-      json_serializable:
-        options:
-          explicit_to_json: true
-```
-
----
-
-## Step 3: Prepare the Swagger File
-
-1.  Create a directory named `swagger` in your project root (matching the `input_folder` in `build.yaml`).
-2.  Place your `swagger.json` file inside this directory.
-
-**Directory Structure:**
-
-```
-project_root/
-├── pubspec.yaml
-├── build.yaml
-├── swagger/
-│   └── swagger.json
-└── lib/
-```
-
----
-
-## Step 4: Create a Generation Script
-
-It is best practice to wrap the generation commands in a shell script for consistency. Create a file named `generate-client.sh` in your project root.
+### 拉取指定版本
 
 ```bash
-#!/bin/bash
-
-# 1. Clean previous generated code to avoid conflicts
-echo "Cleaning old generated code..."
-rm -rf lib/swagger_generated_code/*
-
-# 2. Run the build runner
-# --delete-conflicting-outputs ensures that old files don't block the build
-echo "Generating new client code..."
-dart run build_runner build --delete-conflicting-outputs
-
-# 3. Optional: formatting and fixing
-echo "Formatting code..."
-dart fix --apply
-
-echo "Done!"
+./sync-spec.sh 1.0.0
 ```
 
-**Make the script executable:**
+### 仅重新生成代码
 
-```bash
-chmod +x generate-client.sh
-```
-
----
-
-## Step 5: Execute Generation
-
-Run the script you just created:
+如果 `swagger.json` 已存在，可以单独运行：
 
 ```bash
 ./generate-client.sh
 ```
 
-After the script finishes, check `lib/swagger_generated_code/`. You should see several files, including:
-
-- `swagger.swagger.dart`: The main entry point for the client.
-- `swagger.models.swagger.dart`: Data models.
-- `swagger.swagger.chopper.dart`: Chopper service implementation.
-
-_(Note: The main class name `Swagger` depends on your input filename. If your file is `api.json`, the class will be `Api`.)_
-
 ---
 
-## Step 6: Usage Example
+## 🎯 使用方式
 
-Here is how to initialize and use the generated client in your Flutter app.
-
-### 1. Initialization
-
-Create a global or scoped instance of the client.
+### 标准请求（使用生成的客户端）
 
 ```dart
-import 'package:chopper/chopper.dart';
-import 'package:your_app/swagger_generated_code/swagger.swagger.dart';
+import 'package:frontend/services/client_provider.dart';
 
-// Create the client instance using the factory method
-final validationService = Swagger.create(
-  baseUrl: Uri.parse('https://api.yourdomain.com'),
-
-  // Optional: Add interceptors for auth tokens, logging, etc.
-  interceptors: [
-    (Request request) async {
-      // Add Auth Header example
-      return request.copyWith(headers: {
-        ...request.headers,
-        'Authorization': 'Bearer YOUR_TOKEN'
-      });
-    },
-    HttpLoggingInterceptor(),
-  ],
-);
-```
-
-### 2. Making API Calls
-
-The generated methods return a `Response<T>`, which wraps the actual data and HTTP status.
-
-```dart
-Future<void> fetchUserData() async {
-  // Call the endpoint (method names match your Swagger Operation IDs)
-  final response = await validationService.apiUserGetProfileGet();
-
-  if (response.isSuccessful) {
-    // Access the parsed model directly
-    final userProfile = response.body;
-    print("User Name: ${userProfile?.name}");
-  } else {
-    // Handle errors
-    print("Error: ${response.error}");
-  }
+final response = await ClientProvider.client.chatHintPost(body: requestBody);
+if (response.isSuccessful) {
+  final hints = response.body?.hints ?? [];
 }
 ```
 
----
+### 流式/音频请求（使用手动服务）
 
-## Best Practices
-
-1.  **Git Integration**: It is generally recommended to **commit** the generated code so that the project is immediately runnable after cloning without needing to run generators. However, if you prefer a cleaner repo, add `lib/swagger_generated_code/` to `.gitignore`.
-2.  **Updating the API**: When your backend API updates, simply replace `swagger/swagger.json` with the new version and run `./generate-client.sh` again.
-3.  **Operation IDs**: Ensure your Backend Swagger/OpenAPI spec has unique and meaningful `operationId` fields for each endpoint. This results in clean Dart method names (e.g., `getUser` instead of `api_v1_user_get`).
+继续使用 `StreamingService` 处理复杂的流式和音频接口。
 
 ---
 
-## Step 7: Syncing Schema from Backend
+## ⚠️ 常见问题
 
-With the dual-upload strategy in place, you can choose to sync the latest development schema or a stable versioned schema.
-
-### Prerequisites
-
-Create a sync script `sync-spec.sh` in your project root:
-
-```bash
-#!/bin/bash
-
-# Configuration
-# TODO: Replace with your actual R2 public domain or access URL
-BASE_URL="https://[YOUR_R2_DOMAIN]/lib/tritalk"
-TARGET_FILE="swagger/swagger.json"
-
-VERSION=$1
-
-if [ -z "$VERSION" ]; then
-  # Default to latest if no version is provided
-  URL="$BASE_URL/latest/swagger.json"
-  echo "📥 Fetching LATEST schema from: $URL"
-else
-  # Fetch specific version
-  URL="$BASE_URL/$VERSION/swagger.json"
-  echo "📥 Fetching version $VERSION schema from: $URL"
-fi
-
-# Download file
-curl -s -o "$TARGET_FILE" "$URL"
-
-if [ $? -eq 0 ]; then
-  echo "✅ Automatically updated $TARGET_FILE"
-  echo "🚀 You can now run ./generate-client.sh"
-else
-  echo "❌ Failed to download schema. Please check the URL or version."
-  exit 1
-fi
-```
-
-Make it executable: `chmod +x sync-spec.sh`
-
-### Usage
-
-**Option 1: Development Mode (Latest)**
-Fetches the code from the `main` branch deployment.
-
-```bash
-./sync-spec.sh
-```
-
-_Successfully syncing will automatically trigger `./generate-client.sh`._
-
-**Option 2: Release/Stable Mode (Specific Version)**
-Fetches a specific version derived from the backend's `package.json`.
-
-```bash
-./sync-spec.sh v0.1.0
-```
-
-_Successfully syncing will automatically trigger `./generate-client.sh`._
+| 问题          | 解决方案                                                           |
+| ------------- | ------------------------------------------------------------------ |
+| 字段找不到    | 运行 `./sync-spec.sh`                                              |
+| 构建冲突      | 运行 `./generate-client.sh`（包含 `--delete-conflicting-outputs`） |
+| Null 安全错误 | 检查 `swagger.json` 中字段是否正确标记为 required                  |
