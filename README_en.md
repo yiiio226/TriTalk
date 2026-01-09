@@ -6,7 +6,7 @@ TriTalk is a modern, AI-powered language learning application designed to help u
 
 ## 🏗 System Architecture
 
-The project follows a **Modern Serverless Architecture**, leveraging Flutter for a rich client experience, Cloudflare Workers for global low-latency AI processing, and Supabase as a Backend-as-a-Service (BaaS) solution.
+The project follows a **Modern Serverless Architecture**, leveraging Flutter for a rich client experience, Cloudflare Workers for global low-latency AI processing, and Supabase as a Backend-as-a-Service (BaaS) solution
 
 ```mermaid
 graph TD
