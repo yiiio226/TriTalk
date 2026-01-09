@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
 import 'scene_service.dart';
+import 'storage_key_service.dart';
 
 enum SyncStatus { synced, syncing, offline }
 
@@ -35,7 +36,8 @@ class ChatHistoryService {
     // Try to load from local storage first
     try {
       final prefs = await SharedPreferences.getInstance();
-      final key = 'chat_history_$sceneKey';
+      final storageKey = StorageKeyService();
+      final key = storageKey.getUserScopedKey('chat_history_$sceneKey');
       final jsonString = prefs.getString(key);
 
       if (jsonString != null) {
@@ -75,7 +77,8 @@ class ChatHistoryService {
       // Load from SharedPreferences if not in memory cache
       try {
         final prefs = await SharedPreferences.getInstance();
-        final key = 'chat_history_$sceneKey';
+        final storageKey = StorageKeyService();
+        final key = storageKey.getUserScopedKey('chat_history_$sceneKey');
         final jsonString = prefs.getString(key);
 
         if (jsonString != null) {
@@ -149,8 +152,9 @@ class ChatHistoryService {
 
         // Get local update timestamp from SharedPreferences
         final prefs = await SharedPreferences.getInstance();
+        final storageKey = StorageKeyService();
         final localUpdatedAtStr = prefs.getString(
-          'chat_history_${sceneKey}_updated_at',
+          storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
         );
         final localUpdatedAt = localUpdatedAtStr != null
             ? DateTime.parse(localUpdatedAtStr)
@@ -169,7 +173,9 @@ class ChatHistoryService {
             _histories[sceneKey] = cloudMessages;
             await _saveToLocal(sceneKey, cloudMessages);
             await prefs.setString(
-              'chat_history_${sceneKey}_updated_at',
+              storageKey.getUserScopedKey(
+                'chat_history_${sceneKey}_updated_at',
+              ),
               cloudUpdatedAt.toIso8601String(),
             );
             debugPrint(
@@ -185,8 +191,11 @@ class ChatHistoryService {
           _histories[sceneKey] = cloudMessages;
           await _saveToLocal(sceneKey, cloudMessages);
           if (cloudUpdatedAt != null) {
+            final storageKeyForTimestamp = StorageKeyService();
             await prefs.setString(
-              'chat_history_${sceneKey}_updated_at',
+              storageKeyForTimestamp.getUserScopedKey(
+                'chat_history_${sceneKey}_updated_at',
+              ),
               cloudUpdatedAt.toIso8601String(),
             );
           }
@@ -211,8 +220,13 @@ class ChatHistoryService {
           // Clear local data to sync with cloud deletion
           _histories.remove(sceneKey);
           await _saveToLocal(sceneKey, []);
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('chat_history_${sceneKey}_updated_at');
+          final prefsForDelete = await SharedPreferences.getInstance();
+          final storageKeyForDelete = StorageKeyService();
+          await prefsForDelete.remove(
+            storageKeyForDelete.getUserScopedKey(
+              'chat_history_${sceneKey}_updated_at',
+            ),
+          );
           debugPrint(
             'Cloud has no record - clearing local data (explicit deletion)',
           );
@@ -262,7 +276,8 @@ class ChatHistoryService {
   Future<void> _saveToLocal(String sceneKey, List<Message> messages) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final key = 'chat_history_$sceneKey';
+      final storageKey = StorageKeyService();
+      final key = storageKey.getUserScopedKey('chat_history_$sceneKey');
       final messagesJson = messages.map((m) => m.toJson()).toList();
       await prefs.setString(key, json.encode(messagesJson));
     } catch (e) {
@@ -333,8 +348,11 @@ class ChatHistoryService {
     // Clear from local storage including timestamp
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('chat_history_$sceneKey');
-      await prefs.remove('chat_history_${sceneKey}_updated_at');
+      final storageKey = StorageKeyService();
+      await prefs.remove(storageKey.getUserScopedKey('chat_history_$sceneKey'));
+      await prefs.remove(
+        storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error clearing local storage: $e');
@@ -422,8 +440,9 @@ class ChatHistoryService {
 
           // Save timestamp locally for conflict resolution
           final prefs = await SharedPreferences.getInstance();
+          final storageKey = StorageKeyService();
           await prefs.setString(
-            'chat_history_${sceneKey}_updated_at',
+            storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
             now.toIso8601String(),
           );
 
@@ -463,8 +482,9 @@ class ChatHistoryService {
 
       // Save timestamp locally for conflict resolution
       final prefs = await SharedPreferences.getInstance();
+      final storageKey = StorageKeyService();
       await prefs.setString(
-        'chat_history_${sceneKey}_updated_at',
+        storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
         now.toIso8601String(),
       );
     } catch (e) {
@@ -525,7 +545,10 @@ class ChatHistoryService {
     // 1. Load from local storage immediately for UI
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString('bookmarked_conversations');
+      final storageKey = StorageKeyService();
+      final jsonString = prefs.getString(
+        storageKey.getUserScopedKey('bookmarked_conversations'),
+      );
       if (jsonString != null) {
         final List<dynamic> list = json.decode(jsonString);
         final loaded = list
@@ -562,10 +585,14 @@ class ChatHistoryService {
   Future<void> _saveBookmarksToLocal() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final storageKey = StorageKeyService();
       final jsonString = json.encode(
         _bookmarks.map((e) => e.toJson()).toList(),
       );
-      await prefs.setString('bookmarked_conversations', jsonString);
+      await prefs.setString(
+        storageKey.getUserScopedKey('bookmarked_conversations'),
+        jsonString,
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error saving bookmarks locally: $e');

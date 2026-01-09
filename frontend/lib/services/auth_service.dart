@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../env.dart';
 
 import '../models/user.dart' as app_models;
+import 'storage_key_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -87,6 +88,9 @@ class AuthService {
 
         // Cache user data locally
         await _saveUserToLocal(_currentUser!, true);
+
+        // Migrate old data to user-scoped keys
+        await StorageKeyService().migrateOldDataIfNeeded();
       } else {
         // Profile doesn't exist or gender not set in database
         // Only set to false if we don't have cached confirmation from a previous successful load

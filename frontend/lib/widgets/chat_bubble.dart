@@ -12,6 +12,7 @@ import '../widgets/save_note_sheet.dart';
 import '../widgets/voice_feedback_sheet.dart';
 import '../services/api_service.dart';
 import '../services/preferences_service.dart';
+import '../services/storage_key_service.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -909,9 +910,12 @@ class _ChatBubbleState extends State<ChatBubble>
       final combinedBase64 = audioChunks.join('');
       final audioBytes = base64Decode(combinedBase64);
 
-      // Save to cache
+      // Save to cache with user-scoped path
       final cacheDir = await getApplicationDocumentsDirectory();
-      final ttsCacheDir = Directory('${cacheDir.path}/tts_cache');
+      final storageKey = StorageKeyService();
+      final ttsCacheDir = Directory(
+        storageKey.getUserScopedPath(cacheDir.path, 'tts_cache'),
+      );
       if (!await ttsCacheDir.exists()) {
         await ttsCacheDir.create(recursive: true);
       }
