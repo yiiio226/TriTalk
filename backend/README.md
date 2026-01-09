@@ -1,5 +1,14 @@
 # TriTalk Backend - Cloudflare Workers
 
+> ⚠️ **IMPORTANT TODO: Production Setup**
+>
+> 目前 Production 环境尚未配置！在部署 Production 之前，必须在 GitHub Secrets 中配置以下变量：
+>
+> - `SUPABASE_PROD_PROJECT_REF` (Prod 项目 ID)
+> - `SUPABASE_PROD_DB_PASSWORD` (Prod 数据库密码)
+>
+> 详见 [database_migration.md](docs/database_migration.md#自动化部署-cicd) 的自动化部署章节。
+
 TriTalk 后端服务，部署在 Cloudflare Workers 上，提供全球边缘计算能力。
 
 ## 功能特性
@@ -42,111 +51,41 @@ TriTalk 后端服务，部署在 Cloudflare Workers 上，提供全球边缘计�
 | `/doc`    | GET  | OpenAPI JSON 规范 |
 | `/ui`     | GET  | Swagger UI        |
 
-## 本地开发
+## 💻 开发与部署指南
 
-### 1. 安装依赖
+关于 **本地开发**、**环境变量配置**、**API 测试** 以及 **Deploy 到 Cloudflare** 的详细步骤，请移步至：
 
-```bash
-cd backend
-npm install
-```
+👉 **[development_guide.md](docs/development_guide.md)**
 
-### 2. 配置环境变量
+---
 
-```bash
-cp .dev.vars.example .dev.vars
-```
+## 🔄 OpenAPI 工作流程
 
-编辑 `.dev.vars` 文件，填入你的 OpenRouter API Key：
+TriTalk 使用 OpenAPI 规范实现前后端类型安全的 API 契约。
 
-```
-OPENROUTER_API_KEY=your_actual_api_key_here
-OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
-```
+> 📖 详细文档：[openapi_backend.md](docs/openapi_backend.md)
 
-### 3. 本地运行
+---
 
-```bash
-npm run dev
-```
+## 🗄️ 数据库 Migration
 
-服务将在 `http://localhost:8787` 启动。
+TriTalk 使用 **Supabase Migration** 管理数据库 schema 变更。
 
-### 4. 测试 API
+关于 **Migration 创建**、**应用**、**CI/CD 自动化** 以及 **故障排查**，请移步至：
 
-```bash
-# 测试健康检查
-curl http://localhost:8787/health
+👉 **[database_migration.md](docs/database_migration.md)**
 
-# 测试聊天
-curl -X POST http://localhost:8787/chat/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "I want coffee",
-    "scene_context": "You are a barista at a coffee shop"
-  }'
-```
+---
 
-## 部署到 Cloudflare
+---
 
-### 1. 登录 Cloudflare
+## 🔐 安全 (Security)
 
-```bash
-npx wrangler login
-```
+关于 API 安全机制、认证流程 (Supabase Auth) 的详细说明，请见：
 
-### 2. 配置生产环境密钥
+👉 **[security.md](docs/security.md)**
 
-```bash
-# 设置 OpenRouter API Key
-npx wrangler secret put OPENROUTER_API_KEY
-# 输入你的 API key
-
-# 设置模型（可选，默认使用 wrangler.toml 中的配置）
-npx wrangler secret put OPENROUTER_MODEL
-# 输入: google/gemini-2.0-flash-exp:free
-```
-
-### 3. 部署
-
-```bash
-npm run deploy
-```
-
-部署成功后，你会得到一个 Workers URL，类似：
-
-```
-https://tritalk-backend.your-subdomain.workers.dev
-```
-
-### 4. 验证部署
-
-```bash
-# 测试生产环境
-curl https://tritalk-backend.your-subdomain.workers.dev/health
-```
-
-## 更新前端配置
-
-部署成功后，需要更新 Flutter 前端的 API 地址：
-
-编辑 `frontend/lib/services/api_service.dart`：
-
-```dart
-class ApiService {
-  // 开发环境使用本地地址
-  // 生产环境使用 Cloudflare Workers URL
-  static const String baseUrl = 'https://tritalk-backend.your-subdomain.workers.dev';
-
-  // ...
-}
-```
-
-## 查看日志
-
-```bash
-npm run tail
-```
+---
 
 ## 项目结构
 
@@ -177,12 +116,19 @@ backend/
 │       ├── scene.ts       # 场景生成 prompts
 │       ├── transcribe.ts  # 转录相关 prompts
 │       └── translate.ts   # 翻译相关 prompts
+├── supabase/
+│   ├── config.toml        # Supabase CLI 配置
+│   └── migrations/        # 数据库 Migration 文件
 ├── scripts/
 │   └── generate-openapi.ts # OpenAPI 规范生成脚本
 ├── wrangler.toml          # Cloudflare 配置
 ├── package.json           # 依赖配置
 ├── tsconfig.json          # TypeScript 配置
-├── openapi_backend.md     # OpenAPI 后端指南
+├── docs/                  # [新] 文档文件夹
+│   ├── openapi_backend.md     # OpenAPI 后端指南
+│   ├── development_guide.md   # 开发与部署指南
+│   ├── database_migration.md  # 数据库迁移指南
+│   └── security.md            # 安全文档
 ├── .dev.vars.example      # 环境变量示例
 └── README.md              # 本文档
 ```
@@ -197,26 +143,9 @@ Cloudflare Workers 免费计划：
 
 如需更多配额，可升级到付费计划（$5/月起）。
 
-## 故障排查
-
-### 本地开发时连接失败
-
-确保 `.dev.vars` 文件存在且包含正确的 API key。
-
-### 部署后 API 返回错误
-
-检查是否正确设置了生产环境密钥：
-
-```bash
-npx wrangler secret list
-```
-
-### CORS 错误
-
-代码已包含 CORS 头，如果仍有问题，检查前端请求是否正确。
-
 ## 相关链接
 
 - [Cloudflare Workers 文档](https://developers.cloudflare.com/workers/)
 - [Wrangler CLI 文档](https://developers.cloudflare.com/workers/wrangler/)
 - [OpenRouter API 文档](https://openrouter.ai/docs)
+- [Supabase Migration 文档](https://supabase.com/docs/guides/cli/local-development#database-migrations)
