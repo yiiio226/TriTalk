@@ -363,11 +363,11 @@ class _ChatBubbleState extends State<ChatBubble>
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            // If it's a voice message, only show voice bubble
                             if (widget.message.isVoiceMessage)
-                              _buildVoiceBubbleContent(isUser),
-                            if (widget.message.content.isNotEmpty) ...[
-                              if (widget.message.isVoiceMessage)
-                                const SizedBox(height: 8),
+                              _buildVoiceBubbleContent(isUser)
+                            // Otherwise, show text content
+                            else if (widget.message.content.isNotEmpty)
                               MarkdownBody(
                                 data: _displayedText,
                                 styleSheet: MarkdownStyleSheet(
@@ -381,7 +381,6 @@ class _ChatBubbleState extends State<ChatBubble>
                                 ),
                                 selectable: !widget.isMultiSelectMode,
                               ),
-                            ],
                           ],
                         ),
                   if (hasFeedback) ...[
