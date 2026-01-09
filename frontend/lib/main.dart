@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/splash_screen.dart';
 import 'components/supabase_config.dart';
+import 'design/app_design_system.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,11 +22,9 @@ class TriTalkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TriTalk',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: Colors.grey[50],
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light, // You can change this to ThemeMode.system for automatic switching
       home: const SplashScreen(),
       routes: {
         '/login-callback': (context) => const Scaffold(body: Center(child: CircularProgressIndicator())),

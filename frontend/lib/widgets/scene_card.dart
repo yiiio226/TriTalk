@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/scene.dart';
+import '../design/app_design_system.dart';
 
 class SceneCard extends StatelessWidget {
   final Scene scene;
@@ -20,21 +21,15 @@ class SceneCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Color(scene.color).withOpacity(0.6), // Use scene color
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: AppShadows.sm,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -66,10 +61,9 @@ class SceneCard extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: AppTypography.subtitle2.copyWith(
+                          color: AppColors.textPrimaryLight,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
                           height: 1.2,
                         ),
                       ),
@@ -77,9 +71,8 @@ class SceneCard extends StatelessWidget {
                         const SizedBox(height: 2), // Tighter spacing
                         Text(
                           'With: ${scene.aiRole}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondaryLight,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,

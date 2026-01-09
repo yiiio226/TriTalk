@@ -13,6 +13,7 @@ import '../widgets/voice_feedback_sheet.dart';
 import '../services/api_service.dart';
 import '../services/preferences_service.dart';
 import '../services/storage_key_service.dart';
+import '../design/app_design_system.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -294,24 +295,18 @@ class _ChatBubbleState extends State<ChatBubble>
 
     // Color logic: User messages are white until feedback received (yellow). AI messages are white.
     final Color color = isUser
-        ? (hasFeedback ? const Color(0xFFFFF3CD) : Colors.white)
+        ? (hasFeedback ? AppColors.warningBackgroundLight : Colors.white)
         : Colors.white;
 
     // Increased radius
-    final radius = BorderRadius.circular(20);
+    final radius = BorderRadius.circular(AppRadius.lg);
 
     BoxDecoration bubbleDecoration = BoxDecoration(
       color: color,
       borderRadius: isUser
           ? radius.copyWith(bottomRight: Radius.zero)
           : radius.copyWith(bottomLeft: Radius.zero),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 5,
-          offset: const Offset(0, 2),
-        ),
-      ],
+      boxShadow: AppShadows.xs,
     );
 
     if (isPerfect) {
@@ -325,8 +320,11 @@ class _ChatBubbleState extends State<ChatBubble>
       );
     } else if (isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
+        gradient: LinearGradient(
+          colors: [
+            AppColors.feedbackGradientStart,
+            AppColors.feedbackGradientEnd,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

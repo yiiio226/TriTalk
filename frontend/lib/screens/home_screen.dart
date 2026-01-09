@@ -9,6 +9,7 @@ import '../services/chat_history_service.dart';
 import '../services/auth_service.dart';
 import '../services/scene_service.dart';
 import '../widgets/top_toast.dart';
+import '../design/app_design_system.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'scenario_configuration_screen.dart';
@@ -99,12 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'TriTalk',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
+                            style: AppTypography.headline1.copyWith(
+                              color: AppColors.textPrimaryLight,
                             ),
                           ),
                           Row(
@@ -127,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     _isGridView
                                         ? Icons.view_agenda_rounded
                                         : Icons.grid_view_rounded,
-                                    color: const Color(0xFF1A1A1A),
+                                    color: AppColors.iconLight,
                                     size: 24,
                                   ),
                                 ),
