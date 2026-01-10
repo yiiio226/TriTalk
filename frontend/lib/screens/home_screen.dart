@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             'TriTalk',
                             style: AppTypography.headline1.copyWith(
-                              color: AppColors.textPrimaryLight,
+                              color: AppColors.lightTextPrimary,
                             ),
                           ),
                           Row(
@@ -126,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     _isGridView
                                         ? Icons.view_agenda_rounded
                                         : Icons.grid_view_rounded,
-                                    color: AppColors.iconLight,
+                                    color: AppColors.lightTextPrimary,
                                     size: 24,
                                   ),
                                 ),

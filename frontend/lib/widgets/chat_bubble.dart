@@ -295,7 +295,7 @@ class _ChatBubbleState extends State<ChatBubble>
 
     // Color logic: User messages are white until feedback received (yellow). AI messages are white.
     final Color color = isUser
-        ? (hasFeedback ? AppColors.warningBackgroundLight : Colors.white)
+        ? (hasFeedback ? AppColors.lightWarningBackground : Colors.white)
         : Colors.white;
 
     // Increased radius

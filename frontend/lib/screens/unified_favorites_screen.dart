@@ -56,7 +56,7 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimaryLight,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                 ],

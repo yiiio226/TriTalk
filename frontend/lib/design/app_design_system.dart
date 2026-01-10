@@ -21,78 +21,52 @@ import 'package:flutter/material.dart';
 /// Defines all colors used throughout the app for both light and dark modes.
 /// Colors are organized by purpose (primary, secondary, background, etc.)
 class AppColors {
-  AppColors._(); // Private constructor to prevent instantiation
+  AppColors._(); // Private constructor
 
-  // -------------------- Light Mode Colors --------------------
-  
-  /// Primary brand color - iOS blue, used for main actions, highlights, and branding
-  /// Example: Primary buttons, active states, links, selected items
-  static const Color primaryLight = Color(0xFF007AFF);
-  
-  /// Darker shade of primary - used for hover states and pressed states
-  static const Color primaryDarkLight = Color(0xFF0051D5);
-  
-  /// Lighter shade of primary - used for backgrounds and subtle highlights
-  /// Example: Selected item backgrounds, hover states
-  static const Color primaryLightLight = Color(0xFFF2F8FF);
-  
-  /// Secondary accent color - Premium/Pro color (Indigo)
-  /// Example: Premium features, paywall, special badges
-  static const Color secondaryLight = Color(0xFF4F46E5);
-  
-  /// Darker shade of secondary
-  static const Color secondaryDarkLight = Color(0xFF4338CA);
-  
-  /// Lighter shade of secondary
-  static const Color secondaryLightLight = Color(0xFFEEF2FF);
-  
-  /// Main background color - used for app background
-  static const Color backgroundLight = Color(0xFFFAFAFA);
-  
-  /// Secondary background - pure white for cards and surfaces
-  static const Color backgroundSecondaryLight = Color(0xFFFFFFFF);
-  
-  /// Surface color - used for cards, sheets, and elevated components
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  
-  /// Error color - iOS red, used for error states, destructive actions
-  static const Color errorLight = Color(0xFFFF3B30);
-  
-  /// Success color - used for success states and positive feedback
-  static const Color successLight = Color(0xFF34C759);
-  
-  /// Warning color - used for warning states and caution indicators
-  /// Example: Feedback highlights, important notices
-  static const Color warningLight = Color(0xFFFFCC00);
-  
-  /// Warning background - light yellow for warning/feedback backgrounds
-  static const Color warningBackgroundLight = Color(0xFFFFF3CD);
-  
-  /// Info color - used for informational messages and neutral highlights
-  static const Color infoLight = Color(0xFF007AFF);
-  
-  /// Primary text color - dark gray/black used throughout the app
-  static const Color textPrimaryLight = Color(0xFF1A1A1A);
-  
-  /// Secondary text color - used for less important text
-  static const Color textSecondaryLight = Color(0xFF8E8E93);
-  
-  /// Disabled text color - used for disabled states
-  static const Color textDisabledLight = Color(0xFFC7C7CC);
-  
-  /// Hint text color - used for placeholder text and hints
-  static const Color textHintLight = Color(0xFFAEAEB2);
-  
-  /// Divider color - used for separators and borders
-  static const Color dividerLight = Color(0xFFE5E5EA);
-  
-  /// Icon color - default icon color (matches primary text)
-  static const Color iconLight = Color(0xFF1A1A1A);
-  
-  /// Icon color secondary - for less prominent icons
-  static const Color iconSecondaryLight = Color(0xFF8E8E93);
-  
-  // -------------------- Analysis Card Colors --------------------
+  // =============================
+  // Color Palette (Semantic)
+  // =============================
+  // Named by usage for direct reference in components.
+  static const Color primary = Color(0xFFB5D0CC); // Main Brand Color (Buttons, Emphasis)
+  static const Color secondary = Color(0xFFE8F7F5); // Secondary Brand Color (Auxiliary Emphasis)
+
+  // Light Theme Base Colors
+  static const Color lightBackground = Color(0xFFF8FAFC); // Page Background
+  static const Color lightSurface = Color(0xFFFFFFFF); // Card/Container Background
+  static const Color lightDivider = Color(0xFFE2E8F0); // Divider/Border
+
+  // Light Theme State Colors
+  static const Color lightError = Color(0xFFEF4444); // Error
+  static const Color lightSuccess = Color(0xFF10B981); // Success
+  static const Color lightWarning = Color(0xFFF59E0B); // Warning
+  static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
+
+  // Light Theme Text Colors
+  static const Color lightTextPrimary = Color(0xFF0F172A); // Primary Text
+  static const Color lightTextSecondary = Color(0xFF475569); // Secondary Text
+  static const Color lightTextDisabled = Color(0xFF9CA3AF); // Placeholder/Disabled
+
+  // Dark Theme Base Colors
+  static const Color darkBackground = Color(0xFF0B1220);
+  static const Color darkSurface = Color(0xFF111827); //
+  static const Color darkDivider = Color(0xFF273042); // Divider/Border
+
+  // Dark Theme State Colors
+  static const Color darkError = Color(0xFFF87171);
+  static const Color darkSuccess = Color(0xFF34D399);
+  static const Color darkWarning = Color(0xFFF59E0B);
+  static const Color darkWarningBackground = Color(0xFF451A03);
+
+  // Dark Theme Text Colors
+  static const Color darkTextPrimary = Color(0xFFF8FAFC);
+  static const Color darkTextSecondary = Color(0xFFCBD5E1);
+  static const Color darkTextDisabled = Color(0xFF9CA3AF); // Placeholder/Disabled
+
+  // Shadows / Overlays
+  static const Color lightShadow = Color(0x14000000);
+  static const Color darkShadow = Color(0x66000000);
+
+  // -------------------- Analysis Card Colors (Preserved) --------------------
   
   /// Purple background for analysis cards (e.g., grammar explanations)
   static const Color analysisPurpleLight = Color(0xFFF3E5F5);
@@ -109,73 +83,6 @@ class AppColors {
   /// Yellow gradient end for chat bubbles with feedback
   static const Color feedbackGradientEnd = Color(0xFFFFECB3);
 
-  // -------------------- Dark Mode Colors --------------------
-  
-  /// Primary brand color - iOS blue for dark mode
-  static const Color primaryDark = Color(0xFF0A84FF);
-  
-  /// Darker shade of primary - dark mode
-  static const Color primaryDarkDark = Color(0xFF007AFF);
-  
-  /// Lighter shade of primary - dark mode
-  static const Color primaryLightDark = Color(0xFF1F2937);
-  
-  /// Secondary accent color - Premium indigo for dark mode
-  static const Color secondaryDark = Color(0xFF6366F1);
-  
-  /// Darker shade of secondary - dark mode
-  static const Color secondaryDarkDark = Color(0xFF4F46E5);
-  
-  /// Lighter shade of secondary - dark mode
-  static const Color secondaryLightDark = Color(0xFF312E81);
-  
-  /// Main background color - dark mode
-  static const Color backgroundDark = Color(0xFF000000);
-  
-  /// Secondary background - dark mode
-  static const Color backgroundSecondaryDark = Color(0xFF1C1C1E);
-  
-  /// Surface color - dark mode
-  static const Color surfaceDark = Color(0xFF1C1C1E);
-  
-  /// Error color - iOS red for dark mode
-  static const Color errorDark = Color(0xFFFF453A);
-  
-  /// Success color - iOS green for dark mode
-  static const Color successDark = Color(0xFF32D74B);
-  
-  /// Warning color - dark mode variant
-  static const Color warningDark = Color(0xFFFFD60A);
-  
-  /// Warning background - dark mode
-  static const Color warningBackgroundDark = Color(0xFF3A3A1C);
-  
-  /// Info color - dark mode variant
-  static const Color infoDark = Color(0xFF0A84FF);
-  
-  /// Primary text color - dark mode
-  static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  
-  /// Secondary text color - dark mode
-  static const Color textSecondaryDark = Color(0xFF98989D);
-  
-  /// Disabled text color - dark mode
-  static const Color textDisabledDark = Color(0xFF48484A);
-  
-  /// Hint text color - dark mode
-  static const Color textHintDark = Color(0xFF636366);
-  
-  /// Divider color - dark mode
-  static const Color dividerDark = Color(0xFF38383A);
-  
-  /// Icon color - dark mode
-  static const Color iconDark = Color(0xFFFFFFFF);
-  
-  /// Icon color secondary - dark mode
-  static const Color iconSecondaryDark = Color(0xFF98989D);
-  
-  // -------------------- Analysis Card Colors (Dark Mode) --------------------
-  
   /// Purple background for analysis cards - dark mode
   static const Color analysisPurpleDark = Color(0xFF2D1B3D);
   
@@ -191,6 +98,7 @@ class AppColors {
   /// Yellow gradient end for chat bubbles with feedback - dark mode
   static const Color feedbackGradientEndDark = Color(0xFF4A4A2C);
 }
+
 
 // ============================================================================
 // TYPOGRAPHY
@@ -520,7 +428,7 @@ class AppCardTheme {
   /// Default card decoration - Light mode
   /// Features: White background, medium shadow, medium border radius
   static BoxDecoration defaultCardLight = BoxDecoration(
-    color: AppColors.surfaceLight,
+    color: AppColors.lightSurface,
     borderRadius: BorderRadius.circular(AppRadius.md),
     boxShadow: AppShadows.md,
   );
@@ -528,7 +436,7 @@ class AppCardTheme {
   /// Default card decoration - Dark mode
   /// Features: Dark surface background, medium shadow, medium border radius
   static BoxDecoration defaultCardDark = BoxDecoration(
-    color: AppColors.surfaceDark,
+    color: AppColors.darkSurface,
     borderRadius: BorderRadius.circular(AppRadius.md),
     boxShadow: AppShadows.md,
   );
@@ -537,14 +445,14 @@ class AppCardTheme {
   /// Features: White background, large shadow, large border radius
   /// Use for: Important cards, featured content
   static BoxDecoration elevatedCardLight = BoxDecoration(
-    color: AppColors.surfaceLight,
+    color: AppColors.lightSurface,
     borderRadius: BorderRadius.circular(AppRadius.lg),
     boxShadow: AppShadows.lg,
   );
   
   /// Elevated card decoration - Dark mode
   static BoxDecoration elevatedCardDark = BoxDecoration(
-    color: AppColors.surfaceDark,
+    color: AppColors.darkSurface,
     borderRadius: BorderRadius.circular(AppRadius.lg),
     boxShadow: AppShadows.lg,
   );
@@ -553,20 +461,20 @@ class AppCardTheme {
   /// Features: White background, no shadow, medium border radius, subtle border
   /// Use for: Minimal cards, list items
   static BoxDecoration flatCardLight = BoxDecoration(
-    color: AppColors.surfaceLight,
+    color: AppColors.lightSurface,
     borderRadius: BorderRadius.circular(AppRadius.md),
     border: Border.all(
-      color: AppColors.dividerLight,
+      color: AppColors.lightDivider,
       width: 1,
     ),
   );
   
   /// Flat card decoration - Dark mode
   static BoxDecoration flatCardDark = BoxDecoration(
-    color: AppColors.surfaceDark,
+    color: AppColors.darkSurface,
     borderRadius: BorderRadius.circular(AppRadius.md),
     border: Border.all(
-      color: AppColors.dividerDark,
+      color: AppColors.darkDivider,
       width: 1,
     ),
   );
@@ -612,39 +520,39 @@ class AppTheme {
     
     // Color scheme
     colorScheme: ColorScheme.light(
-      primary: AppColors.primaryLight,
-      primaryContainer: AppColors.primaryLightLight,
-      secondary: AppColors.secondaryLight,
-      secondaryContainer: AppColors.secondaryLightLight,
-      surface: AppColors.surfaceLight,
-      error: AppColors.errorLight,
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: AppColors.textPrimaryLight,
+      primary: AppColors.primary,
+      primaryContainer: AppColors.secondary,
+      secondary: AppColors.secondary,
+      secondaryContainer: AppColors.secondary,
+      surface: AppColors.lightSurface,
+      error: AppColors.lightError,
+      onPrimary: AppColors.lightTextPrimary, // Dark text on light brand color
+      onSecondary: AppColors.lightTextPrimary,
+      onSurface: AppColors.lightTextPrimary,
       onError: Colors.white,
     ),
     
     // Scaffold
-    scaffoldBackgroundColor: AppColors.backgroundLight,
+    scaffoldBackgroundColor: AppColors.lightBackground,
     
     // App bar
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.surfaceLight,
-      foregroundColor: AppColors.textPrimaryLight,
+      backgroundColor: AppColors.lightSurface,
+      foregroundColor: AppColors.lightTextPrimary,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: AppTypography.headline4.copyWith(
-        color: AppColors.textPrimaryLight,
+        color: AppColors.lightTextPrimary,
       ),
       iconTheme: IconThemeData(
-        color: AppColors.iconLight,
+        color: AppColors.lightTextPrimary,
         size: 24,
       ),
     ),
     
     // Card
     cardTheme: CardThemeData(
-      color: AppColors.surfaceLight,
+      color: AppColors.lightSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -655,8 +563,8 @@ class AppTheme {
     // Elevated button
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.lightTextPrimary, // Text color on primary
         elevation: 2,
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
@@ -672,7 +580,7 @@ class AppTheme {
     // Text button
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.primaryLight,
+        foregroundColor: AppColors.primary,
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm,
@@ -687,8 +595,8 @@ class AppTheme {
     // Outlined button
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primaryLight,
-        side: BorderSide(color: AppColors.primaryLight, width: 1.5),
+        foregroundColor: AppColors.primary,
+        side: BorderSide(color: AppColors.primary, width: 1.5),
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
@@ -703,60 +611,60 @@ class AppTheme {
     // Input decoration
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.surfaceLight,
+      fillColor: AppColors.lightSurface,
       contentPadding: EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.md,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.dividerLight),
+        borderSide: BorderSide(color: AppColors.lightDivider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.dividerLight),
+        borderSide: BorderSide(color: AppColors.lightDivider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.primaryLight, width: 2),
+        borderSide: BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.errorLight),
+        borderSide: BorderSide(color: AppColors.lightError),
       ),
       labelStyle: AppTypography.body2.copyWith(
-        color: AppColors.textSecondaryLight,
+        color: AppColors.lightTextSecondary,
       ),
       hintStyle: AppTypography.body2.copyWith(
-        color: AppColors.textHintLight,
+        color: AppColors.lightTextDisabled,
       ),
     ),
     
     // Icon
     iconTheme: IconThemeData(
-      color: AppColors.iconLight,
+      color: AppColors.lightTextPrimary,
       size: 24,
     ),
     
     // Divider
     dividerTheme: DividerThemeData(
-      color: AppColors.dividerLight,
+      color: AppColors.lightDivider,
       thickness: 1,
       space: AppSpacing.md,
     ),
     
     // Text theme
     textTheme: TextTheme(
-      displayLarge: AppTypography.headline1.copyWith(color: AppColors.textPrimaryLight),
-      displayMedium: AppTypography.headline2.copyWith(color: AppColors.textPrimaryLight),
-      displaySmall: AppTypography.headline3.copyWith(color: AppColors.textPrimaryLight),
-      headlineMedium: AppTypography.headline4.copyWith(color: AppColors.textPrimaryLight),
-      titleLarge: AppTypography.subtitle1.copyWith(color: AppColors.textPrimaryLight),
-      titleMedium: AppTypography.subtitle2.copyWith(color: AppColors.textPrimaryLight),
-      bodyLarge: AppTypography.body1.copyWith(color: AppColors.textPrimaryLight),
-      bodyMedium: AppTypography.body2.copyWith(color: AppColors.textPrimaryLight),
-      bodySmall: AppTypography.caption.copyWith(color: AppColors.textSecondaryLight),
-      labelLarge: AppTypography.button.copyWith(color: AppColors.textPrimaryLight),
+      displayLarge: AppTypography.headline1.copyWith(color: AppColors.lightTextPrimary),
+      displayMedium: AppTypography.headline2.copyWith(color: AppColors.lightTextPrimary),
+      displaySmall: AppTypography.headline3.copyWith(color: AppColors.lightTextPrimary),
+      headlineMedium: AppTypography.headline4.copyWith(color: AppColors.lightTextPrimary),
+      titleLarge: AppTypography.subtitle1.copyWith(color: AppColors.lightTextPrimary),
+      titleMedium: AppTypography.subtitle2.copyWith(color: AppColors.lightTextPrimary),
+      bodyLarge: AppTypography.body1.copyWith(color: AppColors.lightTextPrimary),
+      bodyMedium: AppTypography.body2.copyWith(color: AppColors.lightTextPrimary),
+      bodySmall: AppTypography.caption.copyWith(color: AppColors.lightTextSecondary),
+      labelLarge: AppTypography.button.copyWith(color: AppColors.lightTextPrimary),
     ),
     
     // Font family
@@ -771,39 +679,39 @@ class AppTheme {
     
     // Color scheme
     colorScheme: ColorScheme.dark(
-      primary: AppColors.primaryDark,
-      primaryContainer: AppColors.primaryDarkDark,
-      secondary: AppColors.secondaryDark,
-      secondaryContainer: AppColors.secondaryDarkDark,
-      surface: AppColors.surfaceDark,
-      error: AppColors.errorDark,
-      onPrimary: AppColors.textPrimaryDark,
-      onSecondary: AppColors.textPrimaryDark,
-      onSurface: AppColors.textPrimaryDark,
-      onError: AppColors.textPrimaryDark,
+      primary: AppColors.primary,
+      primaryContainer: AppColors.primary,
+      secondary: AppColors.secondary,
+      secondaryContainer: AppColors.secondary,
+      surface: AppColors.darkSurface,
+      error: AppColors.darkError,
+      onPrimary: AppColors.darkBackground, // Dark background on light primary
+      onSecondary: AppColors.darkBackground,
+      onSurface: AppColors.darkTextPrimary,
+      onError: AppColors.darkTextPrimary,
     ),
     
     // Scaffold
-    scaffoldBackgroundColor: AppColors.backgroundDark,
+    scaffoldBackgroundColor: AppColors.darkBackground,
     
     // App bar
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.surfaceDark,
-      foregroundColor: AppColors.textPrimaryDark,
+      backgroundColor: AppColors.darkSurface,
+      foregroundColor: AppColors.darkTextPrimary,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: AppTypography.headline4.copyWith(
-        color: AppColors.textPrimaryDark,
+        color: AppColors.darkTextPrimary,
       ),
       iconTheme: IconThemeData(
-        color: AppColors.iconDark,
+        color: AppColors.darkTextPrimary,
         size: 24,
       ),
     ),
     
     // Card
     cardTheme: CardThemeData(
-      color: AppColors.surfaceDark,
+      color: AppColors.darkSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -814,8 +722,8 @@ class AppTheme {
     // Elevated button
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryDark,
-        foregroundColor: AppColors.textPrimaryDark,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.darkTextPrimary,
         elevation: 2,
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
@@ -831,7 +739,7 @@ class AppTheme {
     // Text button
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.primaryDark,
+        foregroundColor: AppColors.primary,
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm,
@@ -846,8 +754,8 @@ class AppTheme {
     // Outlined button
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primaryDark,
-        side: BorderSide(color: AppColors.primaryDark, width: 1.5),
+        foregroundColor: AppColors.primary,
+        side: BorderSide(color: AppColors.primary, width: 1.5),
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
@@ -862,60 +770,60 @@ class AppTheme {
     // Input decoration
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.surfaceDark,
+      fillColor: AppColors.darkSurface,
       contentPadding: EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.md,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.dividerDark),
+        borderSide: BorderSide(color: AppColors.darkDivider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.dividerDark),
+        borderSide: BorderSide(color: AppColors.darkDivider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.primaryDark, width: 2),
+        borderSide: BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: AppColors.errorDark),
+        borderSide: BorderSide(color: AppColors.darkError),
       ),
       labelStyle: AppTypography.body2.copyWith(
-        color: AppColors.textSecondaryDark,
+        color: AppColors.darkTextSecondary,
       ),
       hintStyle: AppTypography.body2.copyWith(
-        color: AppColors.textHintDark,
+        color: AppColors.darkTextDisabled,
       ),
     ),
     
     // Icon
     iconTheme: IconThemeData(
-      color: AppColors.iconDark,
+      color: AppColors.darkTextPrimary,
       size: 24,
     ),
     
     // Divider
     dividerTheme: DividerThemeData(
-      color: AppColors.dividerDark,
+      color: AppColors.darkDivider,
       thickness: 1,
       space: AppSpacing.md,
     ),
     
     // Text theme
     textTheme: TextTheme(
-      displayLarge: AppTypography.headline1.copyWith(color: AppColors.textPrimaryDark),
-      displayMedium: AppTypography.headline2.copyWith(color: AppColors.textPrimaryDark),
-      displaySmall: AppTypography.headline3.copyWith(color: AppColors.textPrimaryDark),
-      headlineMedium: AppTypography.headline4.copyWith(color: AppColors.textPrimaryDark),
-      titleLarge: AppTypography.subtitle1.copyWith(color: AppColors.textPrimaryDark),
-      titleMedium: AppTypography.subtitle2.copyWith(color: AppColors.textPrimaryDark),
-      bodyLarge: AppTypography.body1.copyWith(color: AppColors.textPrimaryDark),
-      bodyMedium: AppTypography.body2.copyWith(color: AppColors.textPrimaryDark),
-      bodySmall: AppTypography.caption.copyWith(color: AppColors.textSecondaryDark),
-      labelLarge: AppTypography.button.copyWith(color: AppColors.textPrimaryDark),
+      displayLarge: AppTypography.headline1.copyWith(color: AppColors.darkTextPrimary),
+      displayMedium: AppTypography.headline2.copyWith(color: AppColors.darkTextPrimary),
+      displaySmall: AppTypography.headline3.copyWith(color: AppColors.darkTextPrimary),
+      headlineMedium: AppTypography.headline4.copyWith(color: AppColors.darkTextPrimary),
+      titleLarge: AppTypography.subtitle1.copyWith(color: AppColors.darkTextPrimary),
+      titleMedium: AppTypography.subtitle2.copyWith(color: AppColors.darkTextPrimary),
+      bodyLarge: AppTypography.body1.copyWith(color: AppColors.darkTextPrimary),
+      bodyMedium: AppTypography.body2.copyWith(color: AppColors.darkTextPrimary),
+      bodySmall: AppTypography.caption.copyWith(color: AppColors.darkTextSecondary),
+      labelLarge: AppTypography.button.copyWith(color: AppColors.darkTextPrimary),
     ),
     
     // Font family

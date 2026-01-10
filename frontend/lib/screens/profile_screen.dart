@@ -80,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String title, String currentLanguage, Function(String) onSelect) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceLight,
+      backgroundColor: AppColors.lightSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
@@ -94,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.dividerLight,
+                color: AppColors.lightDivider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               title,
               style: AppTypography.headline4.copyWith(
-                color: AppColors.textPrimaryLight,
+                color: AppColors.lightTextPrimary,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -122,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: AppColors.dividerLight,
+                            color: AppColors.lightDivider,
                             width: 1,
                           ),
                         ),
@@ -137,12 +137,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: isSelected
-                                  ? AppColors.primaryLight
-                                  : AppColors.textPrimaryLight,
+                                  ? AppColors.primary
+                                  : AppColors.lightTextPrimary,
                             ),
                           ),
                           if (isSelected)
-                            const Icon(Icons.check, color: AppColors.primaryLight, size: 24),
+                            const Icon(Icons.check, color: AppColors.primary, size: 24),
                         ],
                       ),
                     ),
@@ -160,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.lightBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -172,14 +172,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    color: AppColors.iconLight,
+                    color: AppColors.lightTextPrimary,
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     'Profile',
                     style: AppTypography.headline1.copyWith(
-                      color: AppColors.textPrimaryLight,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                 ],
@@ -197,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.primaryLightLight,
+                      color: AppColors.secondary,
                     ),
                     child: ClipOval(
                       child: _avatarUrl.startsWith('assets/') 
@@ -226,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                          Text(
                           _name,
                           style: AppTypography.headline3.copyWith(
-                            color: AppColors.textPrimaryLight,
+                            color: AppColors.lightTextPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -234,7 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Text(
                           _email,
                           style: AppTypography.body2.copyWith(
-                            color: AppColors.textSecondaryLight,
+                            color: AppColors.lightTextSecondary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -256,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Language Settings',
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondaryLight,
+                      color: AppColors.lightTextSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -265,7 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Native Language',
                     subtitle: _nativeLanguage,
                     icon: Icons.language,
-                    iconColor: AppColors.primaryLight,
+                    iconColor: AppColors.primary,
                     onTap: () {
                       _showLanguageDialog(
                           'Select Native Language', _nativeLanguage, _updateNativeLanguage);
@@ -277,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Learning Language',
                     subtitle: _targetLanguage,
                     icon: Icons.school,
-                    iconColor: AppColors.secondaryLight,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog('Select Learning Language', _targetLanguage,
                           _updateTargetLanguage);
@@ -288,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Tools',
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondaryLight,
+                      color: AppColors.lightTextSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -297,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Favorites', // Unified title
                     subtitle: 'Vocabulary, Sentences, Chat History',
                     icon: Icons.bookmark,
-                    iconColor: AppColors.warningLight,
+                    iconColor: AppColors.lightWarning,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -311,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Upgrade to Pro',
                     subtitle: 'Get unlimited chats and advanced feedback',
                     icon: Icons.star_border,
-                    iconColor: AppColors.secondaryDarkLight, // Slightly different to distinguish
+                    iconColor: AppColors.lightWarning, // Slightly different to distinguish
                     onTap: () {
                       Navigator.push(
                         context,
@@ -327,7 +327,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context,
                     title: 'Log Out',
                     icon: Icons.logout,
-                    iconColor: AppColors.errorLight,
+                    iconColor: AppColors.lightError,
                     onTap: _handleLogout,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -350,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.sm,
       ),
@@ -380,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title,
                         style: AppTypography.subtitle2.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimaryLight,
+                          color: AppColors.lightTextPrimary,
                         ),
                       ),
                       if (subtitle != null) ...[
@@ -388,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Text(
                           subtitle,
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondaryLight,
+                            color: AppColors.lightTextSecondary,
                             fontWeight: FontWeight.w500, // Make subtitle slightly more visible
                           ),
                         ),
@@ -396,7 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.iconSecondaryLight),
+                const Icon(Icons.chevron_right, color: AppColors.lightTextSecondary),
               ],
             ),
           ),

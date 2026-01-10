@@ -1245,7 +1245,7 @@ class _ChatScreenState extends State<ChatScreen>
               alignment: Alignment.center,
               child: Icon(
                 Icons.arrow_back_rounded,
-                color: AppColors.iconLight,
+                color: AppColors.lightTextPrimary,
                 size: 24,
               ),
             ),
@@ -1284,7 +1284,7 @@ class _ChatScreenState extends State<ChatScreen>
                       case SyncStatus.synced:
                         return Icon(
                           Icons.circle,
-                          color: AppColors.successLight,
+                          color: AppColors.lightSuccess,
                           size: 12,
                         );
                       case SyncStatus.offline:
@@ -1344,7 +1344,7 @@ class _ChatScreenState extends State<ChatScreen>
                 alignment: Alignment.center,
                 child: Icon(
                   Icons.more_horiz_rounded,
-                  color: AppColors.iconLight,
+                  color: AppColors.lightTextPrimary,
                   size: 24,
                 ),
               ),
@@ -1631,7 +1631,7 @@ class _ChatScreenState extends State<ChatScreen>
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimaryLight,
+                color: AppColors.lightTextPrimary,
               ),
             ),
             onPressed: () => _stopVoiceRecording(convertToText: true),
@@ -1790,7 +1790,7 @@ class _ChatScreenState extends State<ChatScreen>
         child: IconButton(
           icon: Icon(
             Icons.mic_rounded,
-            color: AppColors.iconLight,
+            color: AppColors.lightTextPrimary,
             size: 20,
           ),
           onPressed: _startVoiceRecording,

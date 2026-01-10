@@ -136,7 +136,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 'TriTalk',
                 style: AppTypography.headline1.copyWith(
                   fontSize: 40,
-                  color: AppColors.textPrimaryLight,
+                  color: AppColors.lightTextPrimary,
                   letterSpacing: 1.5,
                 ),
               ),

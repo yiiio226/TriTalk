@@ -62,7 +62,7 @@ class SceneCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.subtitle2.copyWith(
-                          color: AppColors.textPrimaryLight,
+                          color: AppColors.lightTextPrimary,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
                         ),
@@ -72,7 +72,7 @@ class SceneCard extends StatelessWidget {
                         Text(
                           'With: ${scene.aiRole}',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondaryLight,
+                            color: AppColors.lightTextSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,

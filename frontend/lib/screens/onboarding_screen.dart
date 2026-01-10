@@ -183,7 +183,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimaryLight,
+              color: AppColors.lightTextPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -359,7 +359,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: AppColors.textPrimaryLight,
+                  color: AppColors.lightTextPrimary,
                 ),
               ),
             ),
