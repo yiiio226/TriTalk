@@ -3,6 +3,7 @@ import '../widgets/vocab_list_widget.dart';
 import '../widgets/grammar_list_widget.dart'; // Transformed from sentence_list_widget
 import '../widgets/saved_sentence_list_widget.dart'; // For full sentences
 import '../widgets/chat_history_list_widget.dart';
+import '../design/app_design_system.dart';
 
 class UnifiedFavoritesScreen extends StatefulWidget {
   final String? sceneId; // Optional filter
@@ -50,12 +51,12 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Favorites',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.textPrimaryLight,
                     ),
                   ),
                 ],

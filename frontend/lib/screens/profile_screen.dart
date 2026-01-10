@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../data/language_constants.dart';
+import '../design/app_design_system.dart';
 import 'unified_favorites_screen.dart'; // Import UnifiedFavoritesScreen
 import 'paywall_screen.dart';
 import 'splash_screen.dart'; // For logout navigation
@@ -100,10 +101,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+                color: AppColors.textPrimaryLight,
               ),
             ),
             const SizedBox(height: 16),
@@ -140,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   : FontWeight.normal,
                               color: isSelected
                                   ? Colors.blue
-                                  : const Color(0xFF1A1A1A),
+                                  : AppColors.textPrimaryLight,
                             ),
                           ),
                           if (isSelected)
@@ -182,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.textPrimaryLight,
                     ),
                   ),
                 ],
@@ -228,10 +229,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                          Text(
                           _name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A),
+                            color: AppColors.textPrimaryLight,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -393,10 +394,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                          color: AppColors.textPrimaryLight,
                         ),
                       ),
                       if (subtitle != null) ...[

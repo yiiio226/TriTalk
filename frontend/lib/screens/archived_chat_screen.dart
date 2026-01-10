@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../services/chat_history_service.dart';
+import '../design/app_design_system.dart';
 
 class ArchivedChatScreen extends StatelessWidget {
   final BookmarkedConversation bookmark;
@@ -44,10 +45,10 @@ class ArchivedChatScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       bookmark.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1A1A),
+                        color: AppColors.textPrimaryLight,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

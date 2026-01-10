@@ -50,19 +50,26 @@
   - 红色背景：使用 `AppColors.analysisRedLight` (#FFEBEE)
   - 圆角：使用 `AppRadius.lg`, `AppRadius.md`, `AppRadius.sm`
 
+### 屏幕 (Screens) - 第二批
+- ✅ **chat_screen.dart** - 聊天屏幕 ⭐ **新**
+  - 图标颜色：使用 `AppColors.iconLight`
+  - 文本颜色：使用 `AppColors.textPrimaryLight`
+  - 成功状态：使用 `AppColors.successLight`
+
+- ✅ **login_screen.dart** - 登录屏幕 ⭐ **新**
+  - 标题文本：使用 `AppColors.textPrimaryLight`
+
+- ✅ **splash_screen.dart** - 启动屏幕 ⭐ **新**
+  - 标题：使用 `AppTypography.headline1`
+  - 文本颜色：使用 `AppColors.textPrimaryLight`
+
 ## ⏳ 待迁移的文件
 
 ### 高优先级屏幕
-- ⏳ **chat_screen.dart** - 聊天屏幕 (5 处硬编码颜色)
-  - `Color(0xFF1A1A1A)` - 文本颜色
-  - `Color(0xFF34C759)` - 成功绿色
-
 - ⏳ **profile_screen.dart** - 个人资料屏幕 (5 处硬编码颜色)
   - `Color(0xFF1A1A1A)` - 文本颜色
 
-- ⏳ **login_screen.dart** - 登录屏幕 (1 处)
 - ⏳ **onboarding_screen.dart** - 引导屏幕 (4 处)
-- ⏳ **splash_screen.dart** - 启动屏幕 (1 处)
 - ⏳ **archived_chat_screen.dart** - 归档聊天屏幕 (1 处)
 - ⏳ **unified_favorites_screen.dart** - 收藏屏幕 (1 处)
 
@@ -73,40 +80,32 @@
 ## 📊 迁移统计
 
 ### 已完成
-- **文件数**: 7 个
-- **替换的颜色**: ~40 处
-- **替换的字体样式**: ~20 处
+- **文件数**: 10 个
+- **替换的颜色**: ~50 处
+- **替换的字体样式**: ~25 处
 - **替换的间距**: ~15 处
 - **替换的圆角**: ~12 处
 - **替换的阴影**: ~5 处
 
 ### 待完成
-- **剩余文件**: ~8 个
-- **剩余硬编码颜色**: ~15 处
+- **剩余文件**: ~5 个
+- **剩余硬编码颜色**: ~12 处
 
 ## 🎯 下一步建议
 
-### 优先级 1: 聊天相关
-```bash
-# 迁移聊天界面的核心组件
-- chat_screen.dart
-- chat_bubble.dart
-- analysis_sheet.dart
-```
-
-### 优先级 2: 用户界面
+### 优先级 1: 用户相关
 ```bash
 # 迁移用户相关屏幕
-- profile_screen.dart
-- login_screen.dart
-- onboarding_screen.dart
+- profile_screen.dart (5 处)
+- onboarding_screen.dart (4 处)
 ```
 
-### 优先级 3: 其他组件
+### 优先级 2: 其他
 ```bash
-# 迁移剩余的小组件
-- chat_history_list_widget.dart
-- 其他 widgets
+# 迁移剩余的小组件和屏幕
+- archived_chat_screen.dart (1 处)
+- unified_favorites_screen.dart (1 处)
+- chat_history_list_widget.dart (1 处)
 ```
 
 ## 🔄 迁移模式参考
@@ -179,5 +178,5 @@ borderRadius: BorderRadius.circular(AppRadius.md)
 
 ---
 
-**最后更新**: 2026-01-09
-**迁移进度**: 47% (7/15 文件)
+**最后更新**: 2026-01-10
+**迁移进度**: 67% (10/15 文件)
