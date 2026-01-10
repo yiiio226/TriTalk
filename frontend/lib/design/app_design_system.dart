@@ -443,11 +443,12 @@ class AppShadows {
   
   /// Small shadow - Elevation 2
   /// Use for: Buttons, chips, small cards
+  /// Updated to be softer and cleaner
   static const List<BoxShadow> sm = [
     BoxShadow(
-      color: Color(0x0F000000), // 6% opacity
-      offset: Offset(0, 2),
-      blurRadius: 4,
+      color: Color(0x0A000000), // 4% opacity (was 6%)
+      offset: Offset(0, 4),     // was (0, 2)
+      blurRadius: 12,           // was 4
       spreadRadius: 0,
     ),
   ];
