@@ -523,10 +523,10 @@ class _ChatBubbleState extends State<ChatBubble>
                             children: [
                               if (widget.message.isAnalyzing)
                                 const SizedBox(
-                                  width: 14,
-                                  height: 14,
+                                  width: 10,
+                                  height: 10,
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                    strokeWidth: 1,
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       Colors.black,
                                     ),
@@ -618,10 +618,10 @@ class _ChatBubbleState extends State<ChatBubble>
                               children: [
                                 if (_isTTSLoading)
                                   const SizedBox(
-                                    width: 14,
-                                    height: 14,
+                                    width: 10,
+                                    height: 10,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 1,
                                       valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.black,
                                       ),
@@ -713,10 +713,10 @@ class _ChatBubbleState extends State<ChatBubble>
                               children: [
                                 if (_isTranslating)
                                   const SizedBox(
-                                    width: 14,
-                                    height: 14,
+                                    width: 10,
+                                    height: 10,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 1,
                                       valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.black,
                                       ),
