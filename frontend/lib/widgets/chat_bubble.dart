@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:frontend/design/app_design_system.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/message.dart';
 import '../widgets/shadowing_sheet.dart';
@@ -298,20 +299,14 @@ class _ChatBubbleState extends State<ChatBubble>
         : Colors.white;
 
     // Increased radius
-    final radius = BorderRadius.circular(20);
+    final radius = BorderRadius.circular(AppRadius.lg);
 
     BoxDecoration bubbleDecoration = BoxDecoration(
       color: color,
       borderRadius: isUser
           ? radius.copyWith(bottomRight: Radius.zero)
           : radius.copyWith(bottomLeft: Radius.zero),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 5,
-          offset: const Offset(0, 2),
-        ),
-      ],
+      boxShadow: AppShadows.xs,
     );
 
     if (isPerfect) {

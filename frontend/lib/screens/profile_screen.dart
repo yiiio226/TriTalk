@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../data/language_constants.dart';
+import '../design/app_design_system.dart';
 import 'unified_favorites_screen.dart'; // Import UnifiedFavoritesScreen
 import 'paywall_screen.dart';
 import 'splash_screen.dart'; // For logout navigation
@@ -79,34 +80,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String title, String currentLanguage, Function(String) onSelect) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             // Handle bar
             Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.lightDivider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+              style: AppTypography.headline4.copyWith(
+                color: AppColors.lightTextPrimary,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Flexible(
               child: ListView(
                 shrinkWrap: true,
@@ -119,11 +118,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
+                          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.grey.shade100,
+                            color: AppColors.lightDivider,
                             width: 1,
                           ),
                         ),
@@ -133,18 +132,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             lang,
-                            style: TextStyle(
-                              fontSize: 16,
+                            style: AppTypography.body1.copyWith(
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: isSelected
-                                  ? Colors.blue
-                                  : const Color(0xFF1A1A1A),
+                                  ? AppColors.primary
+                                  : AppColors.lightTextPrimary,
                             ),
                           ),
                           if (isSelected)
-                            const Icon(Icons.check, color: Colors.blue, size: 24),
+                            const Icon(Icons.check, color: AppColors.primary, size: 24),
                         ],
                       ),
                     ),
@@ -152,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -162,37 +160,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightBackground,
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
             // Custom Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
+                    color: AppColors.lightTextPrimary,
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
                     'Profile',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                    style: AppTypography.headline1.copyWith(
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: AppSpacing.xl),
             
             // Profile Info
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Row(
                 children: [
                    Container(
@@ -200,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.grey[100],
+                      color: AppColors.secondary,
                     ),
                     child: ClipOval(
                       child: _avatarUrl.startsWith('assets/') 
@@ -221,26 +218,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                          Text(
                           _name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A),
+                          style: AppTypography.headline3.copyWith(
+                            color: AppColors.lightTextPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           _email,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                          style: AppTypography.body2.copyWith(
+                            color: AppColors.lightTextSecondary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -251,61 +245,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: AppSpacing.xl),
 
             // Menu Items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 children: [
                   Text(
                     'Language Settings',
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                      color: AppColors.lightTextSecondary,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
                     title: 'Native Language',
                     subtitle: _nativeLanguage,
                     icon: Icons.language,
-                    iconColor: Colors.teal,
+                    iconColor: AppColors.primary,
                     onTap: () {
                       _showLanguageDialog(
                           'Select Native Language', _nativeLanguage, _updateNativeLanguage);
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
                     title: 'Learning Language',
                     subtitle: _targetLanguage,
                     icon: Icons.school,
-                    iconColor: Colors.indigo,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog('Select Learning Language', _targetLanguage,
                           _updateTargetLanguage);
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(
                     'Tools',
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                      color: AppColors.lightTextSecondary,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
                     title: 'Favorites', // Unified title
                     subtitle: 'Vocabulary, Sentences, Chat History',
                     icon: Icons.bookmark,
-                    iconColor: Colors.amber,
+                    iconColor: AppColors.lightWarning,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -313,13 +305,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
                     title: 'Upgrade to Pro',
                     subtitle: 'Get unlimited chats and advanced feedback',
                     icon: Icons.star_border,
-                    iconColor: Colors.purple,
+                    iconColor: AppColors.lightWarning, // Slightly different to distinguish
                     onTap: () {
                       Navigator.push(
                         context,
@@ -329,16 +321,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xl),
                   // Logout Button
                    _buildMenuCard(
                     context,
                     title: 'Log Out',
                     icon: Icons.logout,
-                    iconColor: Colors.red,
+                    iconColor: AppColors.lightError,
                     onTap: _handleLogout,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
               ),
             ),
@@ -358,54 +350,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.sm,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
                     color: iconColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: iconColor),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: AppTypography.subtitle2.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                          color: AppColors.lightTextPrimary,
                         ),
                       ),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.lightTextSecondary,
                             fontWeight: FontWeight.w500, // Make subtitle slightly more visible
                           ),
                         ),
@@ -413,7 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Colors.grey),
+                const Icon(Icons.chevron_right, color: AppColors.lightTextSecondary),
               ],
             ),
           ),

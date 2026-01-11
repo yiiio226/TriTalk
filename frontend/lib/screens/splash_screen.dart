@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import '../design/app_design_system.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
 import 'home_screen.dart';
@@ -131,12 +132,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'TriTalk',
-                style: TextStyle(
+                style: AppTypography.headline1.copyWith(
                   fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                  color: AppColors.lightTextPrimary,
                   letterSpacing: 1.5,
                 ),
               ),

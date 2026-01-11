@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
 import '../data/language_constants.dart';
+import '../design/app_design_system.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -182,7 +183,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+              color: AppColors.lightTextPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -358,7 +359,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.lightTextPrimary,
                 ),
               ),
             ),

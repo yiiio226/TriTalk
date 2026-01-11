@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import '../design/app_design_system.dart';
 import 'onboarding_screen.dart';
 import 'home_screen.dart';
 
@@ -24,34 +24,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _setupAuthListener() {
     // Listen for auth state changes (OAuth callback)
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      if (!mounted || _navigated) return;
+    // Supabase.instance.client.auth.onAuthStateChange.listen((data) async { // This line will cause an error if supabase_flutter is removed
+    //   if (!mounted || _navigated) return;
       
-      final session = data.session;
-      if (session != null) {
-        // User logged in successfully
-        _navigated = true;
+    //   final session = data.session;
+    //   if (session != null) {
+    //     // User logged in successfully
+    //     _navigated = true;
         
-        // Wait a bit for profile to load
-        await Future.delayed(const Duration(milliseconds: 500));
-        await AuthService().init();
+    //     // Wait a bit for profile to load
+    //     await Future.delayed(const Duration(milliseconds: 500));
+    //     await AuthService().init();
         
-        if (!mounted) return;
+    //     if (!mounted) return;
         
-        // Navigate based on whether user needs onboarding
-        if (AuthService().currentUser == null || AuthService().needsOnboarding) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
-      }
-    });
+    //     // Navigate based on whether user needs onboarding
+    //     if (AuthService().currentUser == null || AuthService().needsOnboarding) {
+    //       Navigator.pushReplacement(
+    //         context,
+    //         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+    //       );
+    //     } else {
+    //       Navigator.pushReplacement(
+    //         context,
+    //         MaterialPageRoute(builder: (context) => const HomeScreen()),
+    //       );
+    //     }
+    //   }
+    // });
   }
 
   Future<void> _handleGoogleLogin() async {
@@ -142,9 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'Welcome to TriTalk',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                  color: AppColors.lightTextPrimary,
                 ),
               ),
               const SizedBox(height: 12),

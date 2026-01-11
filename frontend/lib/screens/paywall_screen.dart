@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import '../design/app_design_system.dart';
 import '../services/revenue_cat_service.dart';
 
 class PaywallScreen extends StatelessWidget {
@@ -12,12 +13,11 @@ class PaywallScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const BackButton(color: Color(0xFF1A1A1A)),
-        title: const Text(
+        leading: BackButton(color: AppColors.lightTextPrimary),
+        title: Text(
           'Upgrade to Pro',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontWeight: FontWeight.bold,
+          style: AppTypography.headline4.copyWith(
+            color: AppColors.lightTextPrimary,
           ),
         ),
       ),
@@ -42,14 +42,10 @@ class PaywallScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     
-                    // Title and Description
-                    const Text(
+                    Text(
                       'Unlock Full Potential',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1A1A),
-                        letterSpacing: -0.5,
+                      style: AppTypography.headline1.copyWith(
+                        color: AppColors.lightTextPrimary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -57,9 +53,8 @@ class PaywallScreen extends StatelessWidget {
                     Text(
                       'Get unlimited conversations, advanced grammar analysis, and access to all premium scenarios.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.grey[600],
+                      style: AppTypography.body1.copyWith(
+                        color: AppColors.lightTextSecondary,
                         height: 1.5,
                       ),
                     ),
@@ -91,17 +86,18 @@ class PaywallScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        backgroundColor: const Color(0xFF4F46E5), // Indigo/Purple premium color
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg - 6),
+                        backgroundColor: AppColors.primary,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Start 7-Day Free Trial',
-                        style: TextStyle(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold, 
-                          color: Colors.white,
+                        style: AppTypography.button.copyWith(
+                          fontSize: 18,
+                          color: AppColors.lightTextPrimary,
                         ),
                       ),
                     ),
@@ -117,9 +113,9 @@ class PaywallScreen extends StatelessWidget {
                     },
                     child: Text(
                       'Restore Purchases',
-                      style: TextStyle(
+                      style: AppTypography.body2.copyWith(
                         fontSize: 15,
-                        color: Colors.grey[600],
+                        color: AppColors.lightTextSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -135,20 +131,19 @@ class PaywallScreen extends StatelessWidget {
 
   Widget _buildFeatureItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
-          const Icon(
-            CupertinoIcons.checkmark_alt_circle_fill, 
-            color: Color(0xFF4F46E5),
+          Icon(
+            CupertinoIcons.checkmark_alt_circle_fill,
+            color: AppColors.primary,
             size: 24,
           ),
           const SizedBox(width: 16),
           Text(
-            text, 
-            style: const TextStyle(
-              fontSize: 17,
-              color: Color(0xFF1A1A1A),
+            text,
+            style: AppTypography.body1.copyWith(
+              color: AppColors.lightTextPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),

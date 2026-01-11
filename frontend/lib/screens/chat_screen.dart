@@ -18,6 +18,7 @@ import '../services/revenue_cat_service.dart';
 import '../services/chat_history_service.dart';
 import '../services/preferences_service.dart';
 import '../services/auth_service.dart'; // Added // Added
+import '../design/app_design_system.dart';
 import 'unified_favorites_screen.dart'; // Added for scene-specific favorites
 import '../widgets/top_toast.dart';
 import '../widgets/scene_options_drawer.dart';
@@ -1242,9 +1243,9 @@ class _ChatScreenState extends State<ChatScreen>
                 color: Colors.grey[100],
               ),
               alignment: Alignment.center,
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_rounded,
-                color: Color(0xFF1A1A1A),
+                color: AppColors.lightTextPrimary,
                 size: 24,
               ),
             ),
@@ -1341,9 +1342,9 @@ class _ChatScreenState extends State<ChatScreen>
                   color: Colors.grey[100],
                 ),
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   Icons.more_horiz_rounded,
-                  color: Color(0xFF1A1A1A),
+                  color: AppColors.lightTextPrimary,
                   size: 24,
                 ),
               ),
@@ -1630,7 +1631,7 @@ class _ChatScreenState extends State<ChatScreen>
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+                color: AppColors.lightTextPrimary,
               ),
             ),
             onPressed: () => _stopVoiceRecording(convertToText: true),
@@ -1708,17 +1709,24 @@ class _ChatScreenState extends State<ChatScreen>
             decoration: BoxDecoration(
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.transparent, width: 0),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _textController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Type a message...',
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       isDense: true,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
                     ),
                     minLines: 1,
                     maxLines: 4,
@@ -1780,9 +1788,9 @@ class _ChatScreenState extends State<ChatScreen>
           color: Colors.grey[100],
         ),
         child: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.mic_rounded,
-            color: Color(0xFF1A1A1A),
+            color: AppColors.lightTextPrimary,
             size: 20,
           ),
           onPressed: _startVoiceRecording,

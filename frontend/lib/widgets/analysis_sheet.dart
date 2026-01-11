@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/message.dart';
 import '../services/vocab_service.dart';
+import '../design/app_design_system.dart';
 import 'top_toast.dart';
 import 'styled_drawer.dart';
 
@@ -305,8 +306,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3E5F5), // Purple 50 equivalent
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.analysisPurpleLight,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 displayAnalysis.overallSummary,
@@ -352,8 +353,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
+<<<<<<< HEAD
+                        color: AppColors.analysisBlueLight,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+=======
                         color: const Color(0xFFE3F2FD), // Blue 50
                         borderRadius: BorderRadius.circular(12),
+>>>>>>> main
                         border: Border.all(color: Colors.blue.shade100),
                       ),
                       child: Column(
@@ -862,8 +868,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEBEE), // Red 50
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.analysisRedLight,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: Colors.red.shade100),
       ),
       child: Column(

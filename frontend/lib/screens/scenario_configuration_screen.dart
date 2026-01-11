@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/scene.dart';
+import '../design/app_design_system.dart';
 import 'chat_screen.dart';
 
 class ScenarioConfigurationScreen extends StatefulWidget {
@@ -78,10 +79,16 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007AFF),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
                 ),
-                child: const Text('Start Practice', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text(
+                  'Start Practice',
+                  style: AppTypography.button.copyWith(
+                    fontSize: 18,
+                    color: AppColors.lightTextPrimary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -94,9 +101,15 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: const Color(0xFF1A1A1A)),
+        Icon(icon, color: AppColors.lightTextPrimary),
         const SizedBox(width: 8),
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        Text(
+          title,
+          style: AppTypography.subtitle1.copyWith(
+            color: AppColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -107,16 +120,25 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF2F8FF) : Colors.white,
-          border: Border.all(color: isSelected ? const Color(0xFF007AFF) : Colors.grey.shade300, width: isSelected ? 2 : 1),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? AppColors.secondary : Colors.white,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.lightDivider,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(emoji, style: const TextStyle(fontSize: 24)),
             const SizedBox(width: 8),
-            Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: isSelected ? const Color(0xFF007AFF) : Colors.black87)),
+            Text(
+              title,
+              style: AppTypography.subtitle2.copyWith(
+                color: AppColors.lightTextPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -127,21 +149,34 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF2F8FF) : Colors.white,
-          border: Border.all(color: isSelected ? const Color(0xFF007AFF) : Colors.grey.shade300, width: isSelected ? 2 : 1),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? AppColors.secondary : Colors.white,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.lightDivider,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.black87),
+            Icon(icon, color: AppColors.lightTextPrimary),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                Text(
+                  title,
+                  style: AppTypography.subtitle2.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: AppTypography.body2.copyWith(
+                    color: AppColors.lightTextSecondary,
+                  ),
+                ),
               ],
             ),
           ],
