@@ -37,13 +37,13 @@ _Target: Introduce dependency injection and global state management without brea
 
 _Target: Decouple Data logic from UI logic. UI should never import `http` or `supabase` directly._
 
-- [ ] **2.1. Define Repository Interface**
-  - [ ] Create `features/chat/domain/repositories/chat_repository.dart`.
-  - [ ] Define abstract methods: `sendMessage`, `fetchHistory`, `analyzeMessage`.
-- [ ] **2.2. Implement Data Sources (API + Local)**
-  - [ ] Refactor `ApiService` (split into `ChatApi`, `VoiceApi` if needed) - _Wait, keep logic simple first_.
-  - [ ] Create `ChatRepositoryImpl` to coordinate between `ApiService` (Remote) and `ChatHistoryService` (Local).
-  - [ ] Create a Provider for the Repository: `chatRepositoryProvider`.
+- [x] **2.1. Define Repository Interface**
+  - [x] Create `features/chat/domain/repositories/chat_repository.dart`.
+  - [x] Define abstract methods: `sendMessage`, `fetchHistory`, `analyzeMessage`.
+- [x] **2.2. Implement Data Sources (API + Local)**
+  - [x] Refactor `ApiService` (split into `ChatApi`, `VoiceApi` if needed) - _Kept as-is, repository delegates to ApiService_.
+  - [x] Create `ChatRepositoryImpl` to coordinate between `ApiService` (Remote) and `ChatHistoryService` (Local).
+  - [x] Create a Provider for the Repository: `chatRepositoryProvider`.
 
 ### Phase 3: View Logic Extraction (Notifier Pattern)
 
