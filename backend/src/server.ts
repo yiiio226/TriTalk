@@ -309,7 +309,7 @@ app.post("/chat/send-voice", async (c) => {
     let history: any[] = [];
     try {
       history = JSON.parse(historyStr);
-    } catch (e) {}
+    } catch (e) { }
 
     if (!audioFile || typeof audioFile === "string") {
       throw new Error("No audio file uploaded");
@@ -385,7 +385,7 @@ app.post("/chat/send-voice", async (c) => {
                   JSON.stringify({ type: "token", content: content })
                 );
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
@@ -465,7 +465,7 @@ app.openapi(hintRoute, async (c) => {
           "Please continue.",
         ],
       },
-      500
+      200
     );
   }
 });
@@ -504,7 +504,7 @@ app.post("/chat/analyze", async (c) => {
                 if (content.includes("```")) continue;
                 await stream.write(content);
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       },
@@ -864,7 +864,7 @@ app.post("/tts/generate", async (c) => {
                 })
               );
             }
-          } catch (e) {}
+          } catch (e) { }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
       },

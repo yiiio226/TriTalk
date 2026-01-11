@@ -484,7 +484,7 @@ class _ChatBubbleState extends State<ChatBubble>
                       ],
                     ),
                   ],
-                  if (widget.message.isFeedbackLoading) ...[
+                  if (widget.message.isFeedbackLoading) ...[ 
                     const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -496,6 +496,65 @@ class _ChatBubbleState extends State<ChatBubble>
                         ),
                       ],
                     ),
+                  ],
+                  // Analyze button for user messages (only show when no feedback exists)
+                  if (isUser &&
+                      !widget.message.isLoading &&
+                      !hasFeedback &&
+                      !widget.message.isFeedbackLoading) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: () => widget.onShowFeedback?.call(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: widget.message.isAnalyzing
+                                ? Colors.grey[200]
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.message.isAnalyzing)
+                                const SizedBox(
+                                  width: 10,
+                                  height: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.black,
+                                    ),
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 14,
+                                  color: Colors.black,
+                                ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.message.isAnalyzing
+                                    ? "Analyzing..."
+                                    : "Analyze",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
                   ],
                   // Analysis icon for AI messages (only show when animation is complete)
                   if (!isUser &&
@@ -559,10 +618,10 @@ class _ChatBubbleState extends State<ChatBubble>
                               children: [
                                 if (_isTTSLoading)
                                   const SizedBox(
-                                    width: 14,
-                                    height: 14,
+                                    width: 10,
+                                    height: 10,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 1,
                                       valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.black,
                                       ),
@@ -654,10 +713,10 @@ class _ChatBubbleState extends State<ChatBubble>
                               children: [
                                 if (_isTranslating)
                                   const SizedBox(
-                                    width: 14,
-                                    height: 14,
+                                    width: 10,
+                                    height: 10,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 1,
                                       valueColor: AlwaysStoppedAnimation<Color>(
                                         Colors.black,
                                       ),
