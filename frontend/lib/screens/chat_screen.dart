@@ -667,7 +667,6 @@ class _ChatScreenState extends State<ChatScreen>
       content: text,
       isUser: true,
       timestamp: DateTime.now(),
-      isFeedbackLoading: true, // Show loading indicator for feedback
     );
 
     final sceneKey = widget.scene.id;
@@ -685,6 +684,23 @@ class _ChatScreenState extends State<ChatScreen>
     RevenueCatService().incrementMessageCount();
 
     _textController.clear();
+    _scrollToBottom();
+
+    // Add loading message for AI response immediately
+    setState(() {
+      _messages.add(
+        Message(
+          id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+          content: '',
+          isUser: false,
+          timestamp: DateTime.now(),
+          isLoading: true,
+        ),
+      );
+    });
+
+    // Sync entire message list to cloud
+    ChatHistoryService().syncMessages(sceneKey, _messages);
     _scrollToBottom();
 
     try {
@@ -706,44 +722,6 @@ class _ChatScreenState extends State<ChatScreen>
             history,
           )
           .timeout(const Duration(seconds: 10));
-
-      if (!mounted) return;
-
-      // 1. Update user message with feedback (Turns it Yellow)
-      final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
-      if (userMsgIndex != -1) {
-        final updatedMessage = Message(
-          id: newMessage.id,
-          content: newMessage.content,
-          isUser: true,
-          timestamp: newMessage.timestamp,
-          feedback: response.feedback,
-          isFeedbackLoading: false,
-        );
-
-        setState(() {
-          _messages[userMsgIndex] = updatedMessage;
-
-          // 2. Add loading message for AI response NOW (after feedback)
-          _messages.add(
-            Message(
-              id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
-              content: '',
-              isUser: false,
-              timestamp: DateTime.now(),
-              isLoading: true,
-            ),
-          );
-        });
-
-        // Sync entire message list to cloud
-        ChatHistoryService().syncMessages(sceneKey, _messages);
-      }
-
-      _scrollToBottom();
-
-      // 3. Simulated "thinking" delay for AI (1.5 seconds)
-      await Future.delayed(const Duration(milliseconds: 1500));
 
       if (!mounted) return;
 
@@ -793,7 +771,6 @@ class _ChatScreenState extends State<ChatScreen>
           content: newMessage.content,
           isUser: true,
           timestamp: newMessage.timestamp,
-          isFeedbackLoading: false, // Stop loading indicator
         );
 
         final failedMessage = Message(
@@ -826,20 +803,11 @@ class _ChatScreenState extends State<ChatScreen>
       // Find and update the user message to stop loading
       final userMsgIndex = _messages.indexWhere((m) => m.id == newMessage.id);
       if (userMsgIndex != -1) {
-        final updatedMessage = Message(
-          id: newMessage.id,
-          content: newMessage.content,
-          isUser: true,
-          timestamp: newMessage.timestamp,
-          isFeedbackLoading: false, // Stop loading indicator
-        );
-
         final failedMessage = Message(
           id: newMessage.id,
           content: newMessage.content,
           isUser: true,
           timestamp: newMessage.timestamp,
-          isFeedbackLoading: false,
           hasPendingError: true, // Mark as failed
         );
 
@@ -880,7 +848,6 @@ class _ChatScreenState extends State<ChatScreen>
         content: failedMsg.content,
         isUser: true,
         timestamp: failedMsg.timestamp,
-        isFeedbackLoading: true,
         hasPendingError: false, // Clear error state
       );
     });
@@ -894,6 +861,22 @@ class _ChatScreenState extends State<ChatScreen>
     int msgIndex,
     String sceneKey,
   ) async {
+    // Add loading message for AI response immediately
+    setState(() {
+      _messages.add(
+        Message(
+          id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
+          content: '',
+          isUser: false,
+          timestamp: DateTime.now(),
+          isLoading: true,
+        ),
+      );
+    });
+
+    ChatHistoryService().syncMessages(sceneKey, _messages);
+    _scrollToBottom();
+
     try {
       final history = _messages
           .where((m) => !m.isLoading && m.content.isNotEmpty)
@@ -915,40 +898,17 @@ class _ChatScreenState extends State<ChatScreen>
 
       if (!mounted) return;
 
-      // Update user message with feedback
+      // Update user message (no feedback in new flow)
       final updatedMessage = Message(
         id: originalMsg.id,
         content: originalMsg.content,
         isUser: true,
         timestamp: originalMsg.timestamp,
-        feedback: response.feedback,
-        isFeedbackLoading: false,
         hasPendingError: false,
       );
 
       setState(() {
         _messages[msgIndex] = updatedMessage;
-
-        // Add loading message for AI response
-        _messages.add(
-          Message(
-            id: 'loading_${DateTime.now().millisecondsSinceEpoch}',
-            content: '',
-            isUser: false,
-            timestamp: DateTime.now(),
-            isLoading: true,
-          ),
-        );
-      });
-
-      ChatHistoryService().syncMessages(sceneKey, _messages);
-      _scrollToBottom();
-
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      if (!mounted) return;
-
-      setState(() {
         _isSending = false;
         _messages.removeWhere((m) => m.isLoading);
 
@@ -985,7 +945,6 @@ class _ChatScreenState extends State<ChatScreen>
         content: originalMsg.content,
         isUser: true,
         timestamp: originalMsg.timestamp,
-        isFeedbackLoading: false,
         hasPendingError: true,
       );
 
@@ -1006,7 +965,6 @@ class _ChatScreenState extends State<ChatScreen>
         content: originalMsg.content,
         isUser: true,
         timestamp: originalMsg.timestamp,
-        isFeedbackLoading: false,
         hasPendingError: true,
       );
 
@@ -1032,24 +990,7 @@ class _ChatScreenState extends State<ChatScreen>
       // Update message selection state
       final index = _messages.indexWhere((m) => m.id == messageId);
       if (index != -1) {
-        _messages[index] = Message(
-          id: _messages[index].id,
-          content: _messages[index].content,
-          isUser: _messages[index].isUser,
-          timestamp: _messages[index].timestamp,
-          translation: _messages[index].translation,
-          feedback: _messages[index].feedback,
-          analysis: _messages[index].analysis,
-          isLoading: _messages[index].isLoading,
-          isAnimated: _messages[index].isAnimated,
-          isFeedbackLoading: _messages[index].isFeedbackLoading,
-          hints: _messages[index].hints,
-          hasPendingError: _messages[index].hasPendingError,
-          isSelected: true,
-          audioPath: _messages[index].audioPath,
-          audioDuration: _messages[index].audioDuration,
-          voiceFeedback: _messages[index].voiceFeedback,
-        );
+        _messages[index] = _messages[index].copyWith(isSelected: true);
       }
     });
   }
@@ -1061,24 +1002,7 @@ class _ChatScreenState extends State<ChatScreen>
       // Clear all selections
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].isSelected) {
-          _messages[i] = Message(
-            id: _messages[i].id,
-            content: _messages[i].content,
-            isUser: _messages[i].isUser,
-            timestamp: _messages[i].timestamp,
-            translation: _messages[i].translation,
-            feedback: _messages[i].feedback,
-            analysis: _messages[i].analysis,
-            isLoading: _messages[i].isLoading,
-            isAnimated: _messages[i].isAnimated,
-            isFeedbackLoading: _messages[i].isFeedbackLoading,
-            hints: _messages[i].hints,
-            hasPendingError: _messages[i].hasPendingError,
-            isSelected: false,
-            audioPath: _messages[i].audioPath,
-            audioDuration: _messages[i].audioDuration,
-            voiceFeedback: _messages[i].voiceFeedback,
-          );
+          _messages[i] = _messages[i].copyWith(isSelected: false);
         }
       }
 
@@ -1100,23 +1024,8 @@ class _ChatScreenState extends State<ChatScreen>
       }
 
       // Update message selection state
-      _messages[index] = Message(
-        id: _messages[index].id,
-        content: _messages[index].content,
-        isUser: _messages[index].isUser,
-        timestamp: _messages[index].timestamp,
-        translation: _messages[index].translation,
-        feedback: _messages[index].feedback,
-        analysis: _messages[index].analysis,
-        isLoading: _messages[index].isLoading,
-        isAnimated: _messages[index].isAnimated,
-        isFeedbackLoading: _messages[index].isFeedbackLoading,
-        hints: _messages[index].hints,
-        hasPendingError: _messages[index].hasPendingError,
+      _messages[index] = _messages[index].copyWith(
         isSelected: !isCurrentlySelected,
-        audioPath: _messages[index].audioPath,
-        audioDuration: _messages[index].audioDuration,
-        voiceFeedback: _messages[index].voiceFeedback,
       );
 
       // Exit multi-select mode if no messages are selected
@@ -1408,7 +1317,13 @@ class _ChatScreenState extends State<ChatScreen>
                             _handleAnalyze(msg);
                           }
                         },
-                        onShowFeedback: () => _showFeedbackSheet(msg),
+                        onShowFeedback: () {
+                          if (msg.isUser) {
+                            _handleUserMessageAnalysis(msg);
+                          } else {
+                            _showFeedbackSheet(msg);
+                          }
+                        },
                       ),
                     ),
                   );
@@ -2057,6 +1972,77 @@ class _ChatScreenState extends State<ChatScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _handleUserMessageAnalysis(Message message) async {
+    if (!message.isUser) return;
+    
+    // If feedback already exists, show it directly
+    if (message.feedback != null) {
+      _showFeedbackSheet(message);
+      return;
+    }
+
+    // Start analyzing
+    final messageIndex = _messages.indexWhere((m) => m.id == message.id);
+    if (messageIndex == -1) return;
+
+    setState(() {
+      _messages[messageIndex] = message.copyWith(isAnalyzing: true);
+    });
+
+    try {
+      // Build conversation history
+      final history = _messages
+          .where((m) => !m.isLoading && m.content.isNotEmpty && m.id != message.id)
+          .map(
+            (m) => <String, String>{
+              'role': m.isUser ? 'user' : 'assistant',
+              'content': m.content,
+            },
+          )
+          .toList();
+
+      final response = await _apiService
+          .sendMessage(
+            message.content,
+            'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
+            history,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (!mounted) return;
+
+      // Update message with feedback
+      final updatedMessage = message.copyWith(
+        feedback: response.feedback,
+        isAnalyzing: false,
+      );
+
+      setState(() {
+        _messages[messageIndex] = updatedMessage;
+      });
+
+      // Sync to cloud
+      final sceneKey = widget.scene.id;
+      ChatHistoryService().syncMessages(sceneKey, _messages);
+
+      // Automatically open feedback sheet
+      _showFeedbackSheet(updatedMessage);
+    } catch (e) {
+      if (!mounted) return;
+
+      // Stop analyzing on error
+      setState(() {
+        _messages[messageIndex] = message.copyWith(isAnalyzing: false);
+      });
+
+      showTopToast(
+        context,
+        'Failed to analyze message: $e',
+        isError: true,
+      );
+    }
   }
 
   void _handleAnalyze(Message message) {

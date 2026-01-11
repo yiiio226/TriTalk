@@ -9,6 +9,7 @@ class Message {
   final bool isLoading; // Transient: Loading state for pending messages
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
+  final bool isAnalyzing; // Transient: Whether user message is being analyzed (for manual analysis trigger)
   final List<String>? hints; // For persisting suggested replies
   final bool
   hasPendingError; // Whether this message failed to send and needs retry
@@ -31,6 +32,7 @@ class Message {
     this.isLoading = false,
     this.isAnimated = false,
     this.isFeedbackLoading = false,
+    this.isAnalyzing = false,
     this.hints,
     this.hasPendingError = false,
     this.isSelected = false,
@@ -50,6 +52,7 @@ class Message {
     bool? isLoading,
     bool? isAnimated,
     bool? isFeedbackLoading,
+    bool? isAnalyzing,
     List<String>? hints,
     bool? hasPendingError,
     bool? isSelected,
@@ -68,6 +71,7 @@ class Message {
       isLoading: isLoading ?? this.isLoading,
       isAnimated: isAnimated ?? this.isAnimated,
       isFeedbackLoading: isFeedbackLoading ?? this.isFeedbackLoading,
+      isAnalyzing: isAnalyzing ?? this.isAnalyzing,
       hints: hints ?? this.hints,
       hasPendingError: hasPendingError ?? this.hasPendingError,
       isSelected: isSelected ?? this.isSelected,
