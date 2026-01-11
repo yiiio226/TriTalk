@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:frontend/design/app_design_system.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/message.dart';
 import '../widgets/shadowing_sheet.dart';
@@ -13,7 +14,6 @@ import '../widgets/voice_feedback_sheet.dart';
 import '../services/api_service.dart';
 import '../services/preferences_service.dart';
 import '../services/storage_key_service.dart';
-import '../design/app_design_system.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -295,7 +295,7 @@ class _ChatBubbleState extends State<ChatBubble>
 
     // Color logic: User messages are white until feedback received (yellow). AI messages are white.
     final Color color = isUser
-        ? (hasFeedback ? AppColors.lightWarningBackground : Colors.white)
+        ? (hasFeedback ? const Color(0xFFFFF3CD) : Colors.white)
         : Colors.white;
 
     // Increased radius
@@ -320,11 +320,8 @@ class _ChatBubbleState extends State<ChatBubble>
       );
     } else if (isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.feedbackGradientStart,
-            AppColors.feedbackGradientEnd,
-          ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -361,11 +358,11 @@ class _ChatBubbleState extends State<ChatBubble>
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // If it's a voice message, only show voice bubble
                             if (widget.message.isVoiceMessage)
-                              _buildVoiceBubbleContent(isUser)
-                            // Otherwise, show text content
-                            else if (widget.message.content.isNotEmpty)
+                              _buildVoiceBubbleContent(isUser),
+                            if (widget.message.content.isNotEmpty) ...[
+                              if (widget.message.isVoiceMessage)
+                                const SizedBox(height: 8),
                               MarkdownBody(
                                 data: _displayedText,
                                 styleSheet: MarkdownStyleSheet(
@@ -379,6 +376,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                 ),
                                 selectable: !widget.isMultiSelectMode,
                               ),
+                            ],
                           ],
                         ),
                   if (hasFeedback) ...[

@@ -1282,9 +1282,9 @@ class _ChatScreenState extends State<ChatScreen>
                           ),
                         );
                       case SyncStatus.synced:
-                        return Icon(
+                        return const Icon(
                           Icons.circle,
-                          color: AppColors.lightSuccess,
+                          color: Color(0xFF34C759),
                           size: 12,
                         );
                       case SyncStatus.offline:

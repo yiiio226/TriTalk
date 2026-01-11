@@ -353,8 +353,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
+<<<<<<< HEAD
                         color: AppColors.analysisBlueLight,
                         borderRadius: BorderRadius.circular(AppRadius.md),
+=======
+                        color: const Color(0xFFE3F2FD), // Blue 50
+                        borderRadius: BorderRadius.circular(12),
+>>>>>>> main
                         border: Border.all(color: Colors.blue.shade100),
                       ),
                       child: Column(
