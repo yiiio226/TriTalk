@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/auth/auth_provider.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../data/language_constants.dart';
@@ -7,17 +10,17 @@ import 'unified_favorites_screen.dart'; // Import UnifiedFavoritesScreen
 import 'paywall_screen.dart';
 import 'splash_screen.dart'; // For logout navigation
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
-  
+
   // Local state for immediate UI updates, reflecting auth service state
   late String _name;
   late String _email;
@@ -45,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } else {
       // Fallback if accessed without auth (shouldn't happen in new flow)
-       setState(() {
+      setState(() {
         _name = 'Guest';
         _email = 'guest@example.com';
         _avatarUrl = 'assets/images/user_avatar_male.png';
@@ -65,9 +68,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _userService.updateUserProfile(targetLanguage: language);
     _loadUserData();
   }
-  
+
   Future<void> _handleLogout() async {
-    await _authService.logout();
+    await ref.read(authProvider.notifier).logout();
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const SplashScreen()),
@@ -77,7 +80,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showLanguageDialog(
-      String title, String currentLanguage, Function(String) onSelect) {
+    String title,
+    String currentLanguage,
+    Function(String) onSelect,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.lightSurface,
@@ -118,7 +124,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
@@ -142,7 +150,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           if (isSelected)
-                            const Icon(Icons.check, color: AppColors.primary, size: 24),
+                            const Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
                         ],
                       ),
                     ),
@@ -186,13 +198,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            
+
             // Profile Info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Row(
                 children: [
-                   Container(
+                  Container(
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
@@ -200,22 +212,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.secondary,
                     ),
                     child: ClipOval(
-                      child: _avatarUrl.startsWith('assets/') 
-                        ? Image.asset(
-                            _avatarUrl,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.network(
-                            _avatarUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              // Fallback to gender-based avatar
-                              final fallbackPath = _gender == 'female'
-                                  ? 'assets/images/user_avatar_female.png'
-                                  : 'assets/images/user_avatar_male.png';
-                              return Image.asset(fallbackPath, fit: BoxFit.cover);
-                            },
-                          ),
+                      child: _avatarUrl.startsWith('assets/')
+                          ? Image.asset(_avatarUrl, fit: BoxFit.cover)
+                          : Image.network(
+                              _avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback to gender-based avatar
+                                final fallbackPath = _gender == 'female'
+                                    ? 'assets/images/user_avatar_female.png'
+                                    : 'assets/images/user_avatar_male.png';
+                                return Image.asset(
+                                  fallbackPath,
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),
@@ -223,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Text(
+                        Text(
                           _name,
                           style: AppTypography.headline3.copyWith(
                             color: AppColors.lightTextPrimary,
@@ -268,7 +280,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     iconColor: AppColors.primary,
                     onTap: () {
                       _showLanguageDialog(
-                          'Select Native Language', _nativeLanguage, _updateNativeLanguage);
+                        'Select Native Language',
+                        _nativeLanguage,
+                        _updateNativeLanguage,
+                      );
                     },
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -279,8 +294,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.school,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
-                      _showLanguageDialog('Select Learning Language', _targetLanguage,
-                          _updateTargetLanguage);
+                      _showLanguageDialog(
+                        'Select Learning Language',
+                        _targetLanguage,
+                        _updateTargetLanguage,
+                      );
                     },
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -301,7 +319,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const UnifiedFavoritesScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const UnifiedFavoritesScreen(),
+                        ),
                       );
                     },
                   ),
@@ -311,7 +331,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Upgrade to Pro',
                     subtitle: 'Get unlimited chats and advanced feedback',
                     icon: Icons.star_border,
-                    iconColor: AppColors.lightWarning, // Slightly different to distinguish
+                    iconColor: AppColors
+                        .lightWarning, // Slightly different to distinguish
                     onTap: () {
                       Navigator.push(
                         context,
@@ -323,7 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   // Logout Button
-                   _buildMenuCard(
+                  _buildMenuCard(
                     context,
                     title: 'Log Out',
                     icon: Icons.logout,
@@ -366,7 +387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
+                    color: iconColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: iconColor),
@@ -389,14 +410,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           subtitle,
                           style: AppTypography.caption.copyWith(
                             color: AppColors.lightTextSecondary,
-                            fontWeight: FontWeight.w500, // Make subtitle slightly more visible
+                            fontWeight: FontWeight
+                                .w500, // Make subtitle slightly more visible
                           ),
                         ),
                       ],
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.lightTextSecondary),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.lightTextSecondary,
+                ),
               ],
             ),
           ),

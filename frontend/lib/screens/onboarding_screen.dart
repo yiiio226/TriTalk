@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/auth/auth_provider.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
 import '../data/language_constants.dart';
 import '../design/app_design_system.dart';
 import 'home_screen.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  
+
   String _selectedGender = 'male';
   String _selectedNativeLang = 'Chinese (Simplified)';
   String _selectedTargetLang = 'English';
-  
+
   bool _isSaving = false;
 
   void _nextPage() {
@@ -31,25 +34,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _completeOnboarding() async {
     setState(() => _isSaving = true);
-    
+
     // Determine avatar based on gender if none exists
     // (In a real app, we might check if user already has a custom avatar)
-    String avatarPath = _selectedGender == 'female' 
-        ? 'assets/images/user_avatar_female.png' 
-        : 'assets/images/user_avatar_male.png'; 
-        // Assuming we have a male avatar logic or asset. 
-        // For now, I'll just use the logic to determine default.
+    String avatarPath = _selectedGender == 'female'
+        ? 'assets/images/user_avatar_female.png'
+        : 'assets/images/user_avatar_male.png';
+    // Assuming we have a male avatar logic or asset.
+    // For now, I'll just use the logic to determine default.
 
     try {
       final user = AuthService().currentUser!;
-      
+
       // Update User Service
       await UserService().updateUserProfile(
         gender: _selectedGender,
         nativeLanguage: _selectedNativeLang,
         targetLanguage: _selectedTargetLang,
-        avatarUrl: user.avatarUrl ?? avatarPath, // Utilize existing if set, else default
+        avatarUrl:
+            user.avatarUrl ??
+            avatarPath, // Utilize existing if set, else default
       );
+
+      // Notify auth provider that onboarding is complete
+      ref.read(authProvider.notifier).onboardingComplete();
+
+      // Also refresh user data in auth provider
+      await ref.read(authProvider.notifier).refreshUser();
 
       if (mounted) {
         Navigator.pushReplacement(
@@ -59,9 +70,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -99,11 +110,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
             ),
-            
+
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // Prevent swipe for strict flow
+                physics:
+                    const NeverScrollableScrollPhysics(), // Prevent swipe for strict flow
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
                   _buildGenderStep(),
@@ -190,25 +202,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             'This helps us personalize your learning experience.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 40),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildGenderOption('male', 'assets/images/user_avatar_male.png', 'Male'),
+              _buildGenderOption(
+                'male',
+                'assets/images/user_avatar_male.png',
+                'Male',
+              ),
               const SizedBox(width: 20),
-              _buildGenderOption('female', 'assets/images/user_avatar_female.png', 'Female'),
+              _buildGenderOption(
+                'female',
+                'assets/images/user_avatar_female.png',
+                'Female',
+              ),
             ],
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildGenderOption(String value, String imagePath, String label) {
     final isSelected = _selectedGender == value;
     return GestureDetector(
@@ -227,10 +244,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2), // Updated to withValues
+                    color: Colors.black.withValues(
+                      alpha: 0.2,
+                    ), // Updated to withValues
                     blurRadius: 15,
                     offset: const Offset(0, 8),
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -243,14 +262,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.grey[100],
-                border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+                border: isSelected
+                    ? Border.all(color: Colors.white, width: 2)
+                    : null,
               ),
-              child: ClipOval(
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              child: ClipOval(child: Image.asset(imagePath, fit: BoxFit.cover)),
             ),
             const SizedBox(height: 16),
             Text(
@@ -273,7 +289,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           const SizedBox(height: 40),
+          const SizedBox(height: 40),
           const Text(
             'What is your native language?',
             style: TextStyle(
@@ -290,9 +306,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               itemBuilder: (context, index) {
                 final lang = LanguageConstants.supportedLanguages[index];
                 return _buildLanguageOption(
-                  lang, 
-                  _selectedNativeLang, 
-                  (val) => setState(() => _selectedNativeLang = val)
+                  lang,
+                  _selectedNativeLang,
+                  (val) => setState(() => _selectedNativeLang = val),
                 );
               },
             ),
@@ -325,9 +341,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               itemBuilder: (context, index) {
                 final lang = LanguageConstants.supportedLanguages[index];
                 return _buildLanguageOption(
-                  lang, 
-                  _selectedTargetLang, 
-                  (val) => setState(() => _selectedTargetLang = val)
+                  lang,
+                  _selectedTargetLang,
+                  (val) => setState(() => _selectedTargetLang = val),
                 );
               },
             ),
@@ -337,7 +353,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildLanguageOption(String lang, String currentSelection, Function(String) onSelect) {
+  Widget _buildLanguageOption(
+    String lang,
+    String currentSelection,
+    Function(String) onSelect,
+  ) {
     final isSelected = lang == currentSelection;
     return GestureDetector(
       onTap: () => onSelect(lang),
@@ -363,8 +383,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-            if (isSelected)
-              const Icon(Icons.check_circle, color: Colors.black),
+            if (isSelected) const Icon(Icons.check_circle, color: Colors.black),
           ],
         ),
       ),

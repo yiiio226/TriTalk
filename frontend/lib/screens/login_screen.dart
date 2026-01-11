@@ -1,175 +1,52 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/auth/auth_provider.dart';
-import '../design/app_design_system.dart';
-import 'onboarding_screen.dart';
-import 'home_screen.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+import '../core/auth/auth_provider.dart';
+import '../core/auth/auth_state.dart';
+import '../design/app_design_system.dart';
+import 'home_screen.dart';
+import 'onboarding_screen.dart';
+
+/// Login screen using Riverpod for state management
+class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  bool _isGoogleLoading = false;
-  bool _isAppleLoading = false;
-
-  Future<void> _handleGoogleLogin() async {
-    if (_isGoogleLoading || _isAppleLoading) return;
-    setState(() => _isGoogleLoading = true);
-    try {
-      final success = await ref.read(authProvider.notifier).loginWithGoogle();
-      if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to initiate Google login. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Login Failed: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
-    }
-  }
-
-  Future<void> _handleAppleLogin() async {
-    if (_isGoogleLoading || _isAppleLoading) return;
-    setState(() => _isAppleLoading = true);
-    try {
-      final success = await ref.read(authProvider.notifier).loginWithApple();
-      if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to initiate Apple login. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Login Failed: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isAppleLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     // Listen for auth state changes to navigate
-    ref.listen(authProvider, (previous, next) {
-      next.when(
-        data: (user) {
-          if (user != null) {
-            if (ref.read(authProvider.notifier).needsOnboarding) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OnboardingScreen(),
-                ),
-              );
-            } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
-              );
-            }
-          }
-        },
-        loading: () {},
-        error: (e, st) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Login Error: $e')));
-        },
-      );
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated) {
+        _navigateAfterLogin(context, next.needsOnboarding);
+      }
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightBackground,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(),
-              // Hero Image or Icon
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25),
-                  child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                'Welcome to TriTalk',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.lightTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Master languages through immersive\nroleplay conversations.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              const Spacer(),
-              _buildSocialButton(
-                text: 'Continue with Google',
-                icon: Icons.g_mobiledata,
-                color: Colors.white,
-                textColor: Colors.black,
-                borderColor: Colors.grey[300],
-                onPressed: _handleGoogleLogin,
-                isLoading: _isGoogleLoading,
-              ),
-              const SizedBox(height: 16),
-              _buildSocialButton(
-                text: 'Continue with Apple',
-                icon: Icons.apple,
-                color: Colors.black,
-                textColor: Colors.white,
-                borderColor: Colors.transparent,
-                onPressed: _handleAppleLogin,
-                isLoading: _isAppleLoading,
-              ),
-              const SizedBox(height: 40),
-              Text(
-                'By continuing, you agree to our Terms & Privacy Policy',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-              ),
-              const SizedBox(height: 20),
+              const Spacer(flex: 2),
+
+              // Header Section
+              _buildHeader(),
+
+              const Spacer(flex: 2),
+
+              // Login Buttons Section
+              _buildLoginButtons(context, ref, authState),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              // Terms and Privacy
+              _buildTermsText(context),
+
+              const SizedBox(height: AppSpacing.xl),
             ],
           ),
         ),
@@ -177,53 +54,256 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildSocialButton({
-    required String text,
-    required IconData icon,
-    required Color color,
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        // App Logo
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Text('👋', style: TextStyle(fontSize: 50)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+
+        // Welcome Text
+        Text(
+          'Welcome to TriTalk',
+          style: AppTypography.headline2.copyWith(
+            color: AppColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Practice conversations with AI to improve your language skills',
+          textAlign: TextAlign.center,
+          style: AppTypography.body1.copyWith(
+            color: AppColors.lightTextSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginButtons(
+    BuildContext context,
+    WidgetRef ref,
+    AuthState authState,
+  ) {
+    final isLoading = authState.isLoading;
+
+    return Column(
+      children: [
+        // Error Message
+        if (authState.error != null) ...[
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.lightError.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: AppColors.lightError,
+                  size: 20,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    authState.error!,
+                    style: AppTypography.body2.copyWith(
+                      color: AppColors.lightError,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  color: AppColors.lightError,
+                  onPressed: () {
+                    ref.read(authProvider.notifier).clearError();
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+
+        // Apple Sign In (iOS only, shown first on iOS)
+        if (Platform.isIOS) ...[
+          _buildLoginButton(
+            icon: Icons.apple,
+            label: 'Continue with Apple',
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+            isLoading: isLoading,
+            onPressed: isLoading
+                ? null
+                : () => ref.read(authProvider.notifier).loginWithApple(),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
+        // Google Sign In
+        _buildLoginButton(
+          icon: null,
+          customIcon: _buildGoogleIcon(),
+          label: 'Continue with Google',
+          backgroundColor: Colors.white,
+          textColor: AppColors.lightTextPrimary,
+          borderColor: AppColors.lightDivider,
+          isLoading: isLoading,
+          onPressed: isLoading
+              ? null
+              : () => ref.read(authProvider.notifier).loginWithGoogle(),
+        ),
+
+        // Apple Sign In (non-iOS platforms, shown after Google)
+        if (!Platform.isIOS) ...[
+          const SizedBox(height: AppSpacing.md),
+          _buildLoginButton(
+            icon: Icons.apple,
+            label: 'Continue with Apple',
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+            isLoading: isLoading,
+            onPressed: isLoading
+                ? null
+                : () => ref.read(authProvider.notifier).loginWithApple(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLoginButton({
+    IconData? icon,
+    Widget? customIcon,
+    required String label,
+    required Color backgroundColor,
     required Color textColor,
-    required Color? borderColor,
-    required VoidCallback onPressed,
-    bool isLoading = false,
+    Color? borderColor,
+    required bool isLoading,
+    VoidCallback? onPressed,
   }) {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: isLoading ? () {} : onPressed,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color,
+          backgroundColor: backgroundColor,
           foregroundColor: textColor,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             side: borderColor != null
-                ? BorderSide(color: borderColor)
+                ? BorderSide(color: borderColor, width: 1)
                 : BorderSide.none,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isLoading)
-              SizedBox(
+        child: isLoading
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
+                  strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(textColor),
                 ),
               )
-            else
-              Icon(icon, size: 24),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ],
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (customIcon != null)
+                    customIcon
+                  else if (icon != null)
+                    Icon(icon, size: 24),
+                  const SizedBox(width: AppSpacing.md),
+                  Text(
+                    label,
+                    style: AppTypography.button.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleIcon() {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Center(
+        child: Text(
+          'G',
+          style: TextStyle(
+            color: Colors.red[600],
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildTermsText(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        text: 'By continuing, you agree to our ',
+        style: AppTypography.caption.copyWith(
+          color: AppColors.lightTextSecondary,
+        ),
+        children: [
+          TextSpan(
+            text: 'Terms of Service',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const TextSpan(text: ' and '),
+          TextSpan(
+            text: 'Privacy Policy',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+
+  void _navigateAfterLogin(BuildContext context, bool needsOnboarding) {
+    final destination = needsOnboarding
+        ? const OnboardingScreen()
+        : const HomeScreen();
+
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (context) => destination));
   }
 }

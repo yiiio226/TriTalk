@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'core/initializer/app_initializer.dart';
 import 'screens/splash_screen.dart';
 import 'design/app_design_system.dart';
@@ -7,38 +8,22 @@ import 'design/app_design_system.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await AppInitializer.init();
+  // Bootstrap app before creating ProviderScope
+  // This initializes Supabase and SharedPreferences
+  await AppBootstrap.initialize();
 
-    runApp(const ProviderScope(child: TriTalkApp()));
-  } catch (e, stack) {
-    debugPrint('Initialization failed: $e\n$stack');
-    runApp(InitializationErrorApp(error: e.toString()));
-  }
+  runApp(
+    ProviderScope(
+      overrides: [
+        // Override SharedPreferences provider with the bootstrapped instance
+        sharedPreferencesProvider.overrideWithValue(AppBootstrap.prefs),
+      ],
+      child: const TriTalkApp(),
+    ),
+  );
 }
 
-class InitializationErrorApp extends StatelessWidget {
-  final String error;
-  const InitializationErrorApp({super.key, required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              'Failed to initialize app: $error',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
+/// Root application widget
 class TriTalkApp extends StatelessWidget {
   const TriTalkApp({super.key});
 
@@ -46,16 +31,49 @@ class TriTalkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TriTalk',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode
-          .light, // You can change this to ThemeMode.system for automatic switching
-      home: const SplashScreen(),
-      routes: {
-        '/login-callback': (context) =>
-            const Scaffold(body: Center(child: CircularProgressIndicator())),
-      },
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: AppColors.lightBackground,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.lightBackground,
+          foregroundColor: AppColors.lightTextPrimary,
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.lightSurface,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+        ),
+      ),
+      home: const SplashScreen(),
     );
   }
 }
