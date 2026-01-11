@@ -1,0 +1,59 @@
+Analyzing frontend...                                           
+
+warning • The value of the field '_isAnalyzing' isn't used • lib/screens/chat_screen.dart:43:14 • unused_field
+warning • The value of the field '_analyzingMessageId' isn't used • lib/screens/chat_screen.dart:44:11 • unused_field
+warning • The value of the field '_pulseAnimation' isn't used • lib/screens/chat_screen.dart:60:26 • unused_field
+warning • The value of the field '_playingMessageId' isn't used • lib/screens/chat_screen.dart:64:11 • unused_field
+warning • The value of the field '_isPlaying' isn't used • lib/screens/chat_screen.dart:65:14 • unused_field
+warning • The value of the local variable 'updatedMessage' isn't used • lib/screens/chat_screen.dart:769:15 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:1045:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:1237:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:1406:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:1736:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:1845:34 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/chat_screen.dart:1877:25 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/chat_screen.dart:1881:37 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:1902:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:2055:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:2074:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/chat_screen.dart:2094:34 • deprecated_member_use
+warning • The declaration '_getFriendlyErrorMessage' isn't referenced • lib/screens/chat_screen.dart:2127:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/home_screen.dart:61:46 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/screens/home_screen.dart:75:21 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/home_screen.dart:341:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/home_screen.dart:452:41 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/screens/home_screen.dart:486:20 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/home_screen.dart:507:20 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/home_screen.dart:515:34 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/home_screen.dart:547:25 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/home_screen.dart:551:37 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/home_screen.dart:572:34 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/home_screen.dart:606:36 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile_screen.dart:369:38 • deprecated_member_use
+warning • The declaration '_buildSection' isn't referenced • lib/widgets/analysis_sheet.dart:617:10 • unused_element
+warning • The value of the local variable 'levelColor' isn't used • lib/widgets/analysis_sheet.dart:762:11 • unused_local_variable
+warning • The value of the field '_duration' isn't used • lib/widgets/chat_bubble.dart:67:12 • unused_field
+warning • The value of the field '_position' isn't used • lib/widgets/chat_bubble.dart:68:12 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/chat_bubble.dart:228:34 • deprecated_member_use
+warning • The value of the local variable 'align' isn't used • lib/widgets/chat_bubble.dart:290:11 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/chat_bubble.dart:396:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/chat_bubble.dart:443:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/chat_bubble.dart:752:58 • deprecated_member_use
+warning • The value of the field '_bookmarks' isn't used • lib/widgets/chat_history_list_widget.dart:17:32 • unused_field
+warning • The value of the field '_selectedLength' isn't used • lib/widgets/custom_scene_dialog.dart:20:16 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/custom_scene_dialog.dart:143:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/custom_scene_dialog.dart:175:61 • deprecated_member_use
+warning • The declaration '_buildOptionChip' isn't referenced • lib/widgets/custom_scene_dialog.dart:237:10 • unused_element
+   info • 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion • lib/widgets/custom_scene_dialog.dart:257:69 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/hints_sheet.dart:206:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/hints_sheet.dart:215:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/save_note_sheet.dart:161:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/scene_card.dart:23:35 • deprecated_member_use
+warning • The value of the field '_audioPath' isn't used • lib/widgets/shadowing_sheet.dart:22:11 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/styled_drawer.dart:45:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/top_toast.dart:86:43 • deprecated_member_use
+warning • The value of the local variable 'icon' isn't used • lib/widgets/voice_feedback_sheet.dart:62:14 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/voice_feedback_sheet.dart:86:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/voice_feedback_sheet.dart:88:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/voice_feedback_sheet.dart:261:41 • deprecated_member_use
+

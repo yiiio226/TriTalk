@@ -1,64 +1,26 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/auth/auth_provider.dart';
 import '../design/app_design_system.dart';
 import 'onboarding_screen.dart';
 import 'home_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
-  bool _navigated = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupAuthListener();
-  }
-
-  void _setupAuthListener() {
-    // Listen for auth state changes (OAuth callback)
-    // Supabase.instance.client.auth.onAuthStateChange.listen((data) async { // This line will cause an error if supabase_flutter is removed
-    //   if (!mounted || _navigated) return;
-      
-    //   final session = data.session;
-    //   if (session != null) {
-    //     // User logged in successfully
-    //     _navigated = true;
-        
-    //     // Wait a bit for profile to load
-    //     await Future.delayed(const Duration(milliseconds: 500));
-    //     await AuthService().init();
-        
-    //     if (!mounted) return;
-        
-    //     // Navigate based on whether user needs onboarding
-    //     if (AuthService().currentUser == null || AuthService().needsOnboarding) {
-    //       Navigator.pushReplacement(
-    //         context,
-    //         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-    //       );
-    //     } else {
-    //       Navigator.pushReplacement(
-    //         context,
-    //         MaterialPageRoute(builder: (context) => const HomeScreen()),
-    //       );
-    //     }
-    //   }
-    // });
-  }
 
   Future<void> _handleGoogleLogin() async {
     if (_isGoogleLoading || _isAppleLoading) return;
     setState(() => _isGoogleLoading = true);
     try {
-      final success = await AuthService().loginWithGoogle();
+      final success = await ref.read(authProvider.notifier).loginWithGoogle();
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -67,12 +29,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
-      // Note: Navigation will happen automatically via auth state listener
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Login Failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
@@ -83,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_isGoogleLoading || _isAppleLoading) return;
     setState(() => _isAppleLoading = true);
     try {
-      final success = await AuthService().loginWithApple();
+      final success = await ref.read(authProvider.notifier).loginWithApple();
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -92,12 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
-      // Note: Navigation will happen automatically via auth state listener
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Login Failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
@@ -106,6 +66,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for auth state changes to navigate
+    ref.listen(authProvider, (previous, next) {
+      next.when(
+        data: (user) {
+          if (user != null) {
+            if (ref.read(authProvider.notifier).needsOnboarding) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OnboardingScreen(),
+                ),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+            }
+          }
+        },
+        loading: () {},
+        error: (e, st) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Login Error: $e')));
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -132,10 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(25),
-                  child: Image.asset(
-                    'assets/icon/icon.png',
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 40),
@@ -160,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Spacer(),
               _buildSocialButton(
                 text: 'Continue with Google',
-                icon: Icons.g_mobiledata, // Replace with asset image in real app
+                icon: Icons.g_mobiledata,
                 color: Colors.white,
                 textColor: Colors.black,
                 borderColor: Colors.grey[300],
@@ -181,10 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'By continuing, you agree to our Terms & Privacy Policy',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[400],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
               ),
               const SizedBox(height: 20),
             ],
@@ -236,10 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(width: 12),
             Text(
               text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),

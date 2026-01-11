@@ -19,19 +19,19 @@ This document outlines the step-by-step plan to migrate TriTalk's current archit
 
 _Target: Introduce dependency injection and global state management without breaking existing features._
 
-- [ ] **1.1. Setup Riverpod**
-  - [ ] Add dependencies: `flutter_riverpod`, `freezed_annotation`, `json_annotation`.
-  - [ ] Add dev dependencies: `build_runner`, `freezed`, `json_serializable`.
-  - [ ] Wrap `TriTalkApp` with `ProviderScope` in `main.dart`.
-- [ ] **1.2. Migrate Auth State**
-  - [ ] Create `core/auth/` directory.
-  - [ ] Create `AuthProvider` (`StateNotifier` or `Notifier`) to replace direct usage of `AuthService`.
-  - [ ] Refactor `LoginScreen` to watch `AuthProvider` instead of managing local loading state.
-  - [ ] Refactor `SplashScreen` to use `AuthProvider` for initialization check.
-- [ ] **1.3. Setup App Initializer**
-  - [ ] Create `core/initializer/app_initializer.dart`.
-  - [ ] Move Supabase init, Prefs init into this class.
-  - [ ] Call Initializer in `main.dart` with error handling.
+- [x] **1.1. Setup Riverpod**
+  - [x] Add dependencies: `flutter_riverpod`, `freezed_annotation`, `json_annotation`.
+  - [x] Add dev dependencies: `build_runner`, `freezed`, `json_serializable`.
+  - [x] Wrap `TriTalkApp` with `ProviderScope` in `main.dart`.
+- [x] **1.2. Migrate Auth State**
+  - [x] Create `core/auth/` directory.
+  - [x] Create `AuthProvider` (`StateNotifier` or `Notifier`) to replace direct usage of `AuthService`.
+  - [x] Refactor `LoginScreen` to watch `AuthProvider` instead of managing local loading state.
+  - [x] Refactor `SplashScreen` to use `AuthProvider` for initialization check.
+- [x] **1.3. Setup App Initializer**
+  - [x] Create `core/initializer/app_initializer.dart`.
+  - [x] Move Supabase init, Prefs init into this class.
+  - [x] Call Initializer in `main.dart` with error handling.
 
 ### Phase 2: Layer Separation (Repository Pattern)
 

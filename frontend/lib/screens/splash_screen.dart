@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/auth/auth_provider.dart';
 import '../design/app_design_system.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
 import 'home_screen.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   bool _navigated = false;
+  bool _animationDone = false;
 
   @override
   void initState() {
@@ -25,67 +27,56 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
-    
-    _setupAuthListener();
-    _checkAuthAndNavigate();
+    _startTimer();
   }
 
-  void _setupAuthListener() {
-    // Listen for auth state changes (e.g., after OAuth redirect)
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (!mounted || _navigated) return;
-      
-      final session = data.session;
-      if (session != null) {
-        _navigateBasedOnProfile();
-      }
-    });
-  }
-
-  Future<void> _checkAuthAndNavigate() async {
-    // Initialize Auth Service
-    await AuthService().init();
-    
-    // Wait for animation
+  void _startTimer() async {
     await Future.delayed(const Duration(seconds: 2));
-    
-    if (!mounted || _navigated) return;
-
-    if (AuthService().isAuthenticated) {
-      _navigateBasedOnProfile();
-    } else {
-      _navigateTo(const LoginScreen());
+    if (mounted) {
+      setState(() {
+        _animationDone = true;
+      });
+      _checkNavigation();
     }
   }
 
-  void _navigateBasedOnProfile() async {
-    // Wait for profile to load with retry logic
-    int attempts = 0;
-    while (attempts < 10 && AuthService().currentUser == null) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      attempts++;
-    }
-    
-    if (!mounted || _navigated) return;
+  void _checkNavigation() {
+    if (!mounted || _navigated || !_animationDone) return;
 
-    // Check if user needs onboarding
-    if (AuthService().currentUser == null || AuthService().needsOnboarding) {
-      _navigateTo(const OnboardingScreen());
-    } else {
-      _navigateTo(const HomeScreen());
-    }
+    final authState = ref.read(authProvider);
+
+    authState.when(
+      data: (user) {
+        if (user != null) {
+          if (ref.read(authProvider.notifier).needsOnboarding) {
+            _navigateTo(const OnboardingScreen());
+          } else {
+            _navigateTo(const HomeScreen());
+          }
+        } else {
+          _navigateTo(const LoginScreen());
+        }
+      },
+      loading: () {
+        // Keep waiting
+      },
+      error: (_, __) {
+        _navigateTo(const LoginScreen());
+      },
+    );
   }
 
   void _navigateTo(Widget screen) {
     if (_navigated) return;
     _navigated = true;
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => screen),
@@ -100,12 +91,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // Listen for state changes
+    ref.listen(authProvider, (previous, next) {
+      if (_animationDone) {
+        _checkNavigation();
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
+            // ... existing UI ...
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Use the app icon if available, or a text logo
@@ -125,10 +124,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(30),
-                  child: Image.asset(
-                    'assets/icon/icon.png',
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset('assets/icon/icon.png', fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 24),
