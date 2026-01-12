@@ -57,7 +57,7 @@ class TriTalkApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light, // Force light mode until dark mode is fully developed
       home: const SplashScreen(),
     );
   }
