@@ -102,6 +102,8 @@ Auto-generated API client code from Swagger/OpenAPI specs using `swagger_dart_co
 
 _The stable heart of the feature._
 
+> **Why "Domain"?** This term comes from [Domain-Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design), a software design approach that focuses on modeling software to match the business domain. The "domain" represents the core business logic and rules — independent of UI frameworks or data storage mechanisms.
+
 - **Responsibility**: Defines "What" the feature does and "What" data it uses.
 - **Contents**:
   - **Models**: Immutable data structures (e.g., `ChatMessage`, `Scene`).

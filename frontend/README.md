@@ -43,5 +43,3 @@ cd frontend
 TriTalk follows a comprehensive Feature-First, Layered architecture utilizing Riverpod for state management.
 
 - **[Current Architecture Guide](guide/Architecture.md)**: Detailed breakdown of the project structure and layers.
-- **[Refactoring Roadmap](guide/Refactoring_Roadmap.md)**: History of the migration from the legacy architecture.
-- **[Recommended Architecture](guide/Architecture_Recomend.md)**: The target design pattern (ApparenceKit) that inspired our current structure.
