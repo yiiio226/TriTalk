@@ -1,3 +1,5 @@
+**中文** | [English](README_en.md)
+
 # TriTalk Backend - Cloudflare Workers
 
 > ⚠️ **IMPORTANT TODO: Production Setup**
@@ -102,7 +104,7 @@ backend/
 │   │   ├── encoding.ts    # 编码工具 (hexToBase64, arrayBufferToBase64)
 │   │   ├── audio.ts       # 音频处理工具 (detectAudioFormat)
 │   │   ├── streaming.ts   # 流式响应工具
-│   │   └── cors.ts        # CORS 工具 (流式响应头)
+│   │   ├── cors.ts        # CORS 工具 (流式响应头)
 │   ├── services/
 │   │   ├── index.ts       # 服务导出
 │   │   ├── openrouter.ts  # OpenRouter API 客户端

@@ -48,14 +48,6 @@ app.*.map.json
 __pycache__/
 *.py[cod]
 *$py.class
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-venv.bak/
-.env
 
 # Node.js
 node_modules/

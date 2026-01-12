@@ -1,0 +1,1156 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:frontend/core/design/app_design_system.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
+import '../../../study/presentation/widgets/shadowing_sheet.dart';
+import '../../../study/presentation/widgets/save_note_sheet.dart';
+import 'voice_feedback_sheet.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../../../../core/data/local/preferences_service.dart';
+import '../../../../core/data/local/storage_key_service.dart';
+
+class ChatBubble extends StatefulWidget {
+  final Message message;
+  final VoidCallback? onTap;
+  final String? sceneId; // Add sceneId to pass to SaveNoteSheet
+  final Function(Message)?
+  onMessageUpdate; // Callback to update message with translation
+  final VoidCallback? onShowFeedback;
+  final bool isMultiSelectMode; // Whether multi-select mode is active
+  final VoidCallback? onLongPress; // Callback to enter multi-select mode
+  final VoidCallback? onSelectionToggle; // Callback to toggle selection
+
+  const ChatBubble({
+    super.key,
+    required this.message,
+    this.onTap,
+    this.sceneId,
+    this.onMessageUpdate,
+    this.onShowFeedback,
+    this.isMultiSelectMode = false,
+    this.onLongPress,
+    this.onSelectionToggle,
+  });
+
+  @override
+  State<ChatBubble> createState() => _ChatBubbleState();
+}
+
+class _ChatBubbleState extends State<ChatBubble>
+    with SingleTickerProviderStateMixin {
+  // Track which messages have STARTED their typewriter animation
+  // This prevents the animation from restarting if the user scrolls away and back
+  static final Set<String> _startedAnimations = {};
+
+  bool _showTranslation = false;
+  bool _showTranscript = false; // Added for voice transcript toggle
+  bool _isTranslating = false;
+  String? _translatedText;
+
+  // Typewriter state
+  String _displayedText = "";
+  Timer? _typewriterTimer;
+  int _currentIndex = 0;
+  bool _isAnimationComplete = false; // Track if typewriter animation is done
+
+  // Loading state
+  late AnimationController _loadingController;
+
+  // Audio Playback
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+
+  // TTS state
+  bool _isTTSLoading = false;
+  bool _isTTSPlaying = false;
+  String? _ttsAudioPath; // Cached TTS audio file path
+  StreamSubscription<void>?
+  _ttsCompleteSubscription; // Single TTS completion listener
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize translation from message if it exists
+    if (widget.message.translation != null) {
+      _translatedText = widget.message.translation;
+    }
+
+    // Setup loading controller
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat();
+
+    // Setup typewriter if needed
+    if (widget.message.isAnimated && !widget.message.isLoading) {
+      // Check if this message has already STARTED animating
+      if (_startedAnimations.contains(widget.message.id)) {
+        // Already started (even if not finished), show full text immediately to avoid restart
+        _displayedText = widget.message.content;
+        _isAnimationComplete = true;
+      } else {
+        // First time, start animation and mark as started
+        _isAnimationComplete = false;
+        _startedAnimations.add(widget.message.id);
+        _startTypewriter();
+      }
+    } else {
+      _displayedText = widget.message.content;
+      _isAnimationComplete = true; // No animation, so it's "complete"
+    }
+
+    // Setup audio player listeners if it's a voice message
+    if (widget.message.isVoiceMessage) {
+      _audioPlayer.onPlayerStateChanged.listen((state) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = state == PlayerState.playing;
+          });
+        }
+      });
+
+      _audioPlayer.onDurationChanged.listen((newDuration) {
+        if (mounted) {
+          setState(() {
+            // _duration = newDuration; // removed unused
+          });
+        }
+      });
+
+      _audioPlayer.onPositionChanged.listen((newPosition) {
+        if (mounted) {
+          setState(() {
+            // _position = newPosition; // removed unused
+          });
+        }
+      });
+
+      _audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            // _position = Duration.zero; // removed unused
+          });
+        }
+      });
+    }
+
+    // Setup TTS completion listener once (to avoid accumulation)
+    _ttsCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          _isTTSPlaying = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(ChatBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Handle text changes or animation toggle
+    if (widget.message.content != oldWidget.message.content) {
+      // Content changed, remove from started animations to allow re-animation
+      _startedAnimations.remove(widget.message.id);
+
+      if (widget.message.isAnimated) {
+        _currentIndex = 0;
+        _displayedText = "";
+        _isAnimationComplete = false; // Animation will restart
+        _startTypewriter();
+      } else {
+        _displayedText = widget.message.content;
+        _isAnimationComplete = true;
+      }
+    }
+  }
+
+  void _startTypewriter() {
+    _typewriterTimer?.cancel();
+
+    _typewriterTimer = Timer.periodic(const Duration(milliseconds: 30), (
+      timer,
+    ) {
+      if (_currentIndex < widget.message.content.length) {
+        if (mounted) {
+          setState(() {
+            _currentIndex++;
+            _displayedText = widget.message.content.substring(0, _currentIndex);
+          });
+        }
+      } else {
+        timer.cancel();
+        // Animation complete, update state to show action buttons
+        if (mounted) {
+          setState(() {
+            _isAnimationComplete = true;
+            // No need to add to set here, we added it at start
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _playPauseVoice() async {
+    if (widget.message.audioPath == null) return;
+
+    try {
+      if (_isPlaying) {
+        await _audioPlayer.pause();
+      } else {
+        await _audioPlayer.play(DeviceFileSource(widget.message.audioPath!));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to play audio: $e')));
+      }
+    }
+  }
+
+  void _showVoiceFeedback() {
+    if (widget.message.voiceFeedback == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withValues(alpha: 0.5),
+      builder: (context) =>
+          VoiceFeedbackSheet(feedback: widget.message.voiceFeedback!),
+    );
+  }
+
+  Widget _buildVoiceBubbleContent(bool isUser) {
+    // Duration formatting: e.g. 3"
+    final duration = widget.message.audioDuration ?? 0;
+    final durationText = '$duration"';
+
+    return GestureDetector(
+      onTap: _playPauseVoice,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: Colors.transparent, // Expand tap area
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              durationText,
+              style: const TextStyle(
+                fontSize: 14, // Reduced from 16
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            _isPlaying
+                ? const Icon(
+                    Icons.pause_rounded,
+                    size: 16,
+                    color: Colors.black87,
+                  )
+                : RotatedBox(
+                    quarterTurns: 1,
+                    child: Icon(
+                      Icons.wifi_rounded,
+                      size: 16,
+                      color: Colors.black87,
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _typewriterTimer?.cancel();
+    _loadingController.dispose();
+    _ttsCompleteSubscription?.cancel(); // Cancel TTS completion listener
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final message = widget.message;
+    final isUser = message.isUser;
+    // final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start; // unused
+
+    final hasFeedback = message.feedback != null;
+    final isPerfect = message.feedback?.isPerfect ?? false;
+    final isMagicWand = hasFeedback && !isPerfect;
+
+    // Color logic: User messages are white until feedback received (yellow). AI messages are white.
+    final Color color = isUser
+        ? (hasFeedback ? const Color(0xFFFFF3CD) : Colors.white)
+        : Colors.white;
+
+    // Increased radius
+    final radius = BorderRadius.circular(AppRadius.lg);
+
+    BoxDecoration bubbleDecoration = BoxDecoration(
+      color: color,
+      borderRadius: isUser
+          ? radius.copyWith(bottomRight: Radius.zero)
+          : radius.copyWith(bottomLeft: Radius.zero),
+      boxShadow: AppShadows.xs,
+    );
+
+    if (isPerfect) {
+      bubbleDecoration = bubbleDecoration.copyWith(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade50, Colors.green.shade100],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.green.shade200, width: 1),
+      );
+    } else if (isMagicWand) {
+      bubbleDecoration = bubbleDecoration.copyWith(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.amber.shade200, width: 1),
+      );
+    } else if (hasFeedback) {
+      bubbleDecoration = bubbleDecoration.copyWith(
+        border: Border.all(color: Colors.orange.shade100, width: 1),
+      );
+    }
+
+    // In multi-select mode, ignore all internal gestures and let parent handle it
+    final child = Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: bubbleDecoration.copyWith(
+            border: message.isSelected
+                ? Border.all(color: Colors.black, width: 1)
+                : bubbleDecoration.border,
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.8,
+          ),
+          child: AbsorbPointer(
+            absorbing: widget
+                .isMultiSelectMode, // Block all internal gestures in multi-select mode
+            child: IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  widget.message.isLoading
+                      ? _buildLoadingIndicator()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (widget.message.isVoiceMessage)
+                              _buildVoiceBubbleContent(isUser),
+                            if (widget.message.content.isNotEmpty &&
+                                !widget.message.isVoiceMessage) ...[
+                              if (widget.message.isVoiceMessage)
+                                const SizedBox(height: 8),
+                              MarkdownBody(
+                                data: _displayedText,
+                                styleSheet: MarkdownStyleSheet(
+                                  p: const TextStyle(fontSize: 16, height: 1.4),
+                                  strong: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  em: const TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                selectable: !widget.isMultiSelectMode,
+                              ),
+                            ],
+                          ],
+                        ),
+                  if (hasFeedback) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Grammar/Perfect Button
+                        GestureDetector(
+                          onTap: () => widget.onShowFeedback?.call(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(
+                                alpha: 0.2,
+                              ), // Increased transparency
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isPerfect
+                                      ? Icons.star_rounded
+                                      : Icons.auto_fix_high_rounded,
+                                  size: 14,
+                                  color: isPerfect
+                                      ? Colors.green[800]
+                                      : Colors
+                                            .orange[600], // Darker for visibility
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isPerfect ? "Perfect" : "Fix",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isPerfect
+                                        ? Colors.green[800]
+                                        : Colors
+                                              .orange[600], // Darker for visibility
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Pronunciation Score (if exists)
+                        if (widget.message.isVoiceMessage &&
+                            widget.message.voiceFeedback != null) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _showVoiceFeedback,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(
+                                  alpha: 0.2,
+                                ), // Increased transparency
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.mic_none_rounded,
+                                    size: 14,
+                                    color:
+                                        widget
+                                                .message
+                                                .voiceFeedback!
+                                                .pronunciationScore >=
+                                            80
+                                        ? Colors.green[800]
+                                        : Colors.orange[900],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${widget.message.voiceFeedback!.pronunciationScore}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          widget
+                                                  .message
+                                                  .voiceFeedback!
+                                                  .pronunciationScore >=
+                                              80
+                                          ? Colors.green[800]
+                                          : Colors.orange[900],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                  if (widget.message.isFeedbackLoading) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 12,
+                          child: _buildSmallLoader(),
+                        ),
+                      ],
+                    ),
+                  ],
+                  // Analyze button for user messages (only show when no feedback exists)
+                  if (isUser &&
+                      !widget.message.isLoading &&
+                      !hasFeedback &&
+                      !widget.message.isFeedbackLoading) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => widget.onShowFeedback?.call(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: widget.message.isAnalyzing
+                                    ? Colors.grey[200]
+                                    : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (widget.message.isAnalyzing)
+                                    const SizedBox(
+                                      width: 10,
+                                      height: 10,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
+                                      ),
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.auto_awesome_rounded,
+                                      size: 14,
+                                      color: Colors.black,
+                                    ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.message.isAnalyzing
+                                        ? "Analyzing..."
+                                        : "Analyze",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (widget.message.isVoiceMessage) ...[
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _showTranscript = !_showTranscript;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _showTranscript
+                                          ? Icons.subtitles_off_rounded
+                                          : Icons.subtitles_rounded,
+                                      size: 14,
+                                      color: Colors.black,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _showTranscript ? "Hide Text" : "Text",
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  // Analysis icon for AI messages (only show when animation is complete)
+                  if (!isUser &&
+                      !widget.message.isLoading &&
+                      _isAnimationComplete) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        // Grammar Analysis
+                        GestureDetector(
+                          onTap: () => widget.onTap?.call(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 14,
+                                  color: Colors.black,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  "Analyze",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Listen / TTS Play
+                        GestureDetector(
+                          onTap: _playTextToSpeech,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _isTTSPlaying
+                                  ? Colors.blue[100]
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_isTTSLoading)
+                                  const SizedBox(
+                                    width: 10,
+                                    height: 10,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.black,
+                                      ),
+                                    ),
+                                  )
+                                else if (_isTTSPlaying)
+                                  const Icon(
+                                    Icons.stop_rounded,
+                                    size: 14,
+                                    color: Colors.blue,
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.volume_up_rounded,
+                                    size: 14,
+                                    color: Colors.black,
+                                  ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _isTTSPlaying ? "Stop" : "Listen",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: _isTTSPlaying
+                                        ? Colors.blue
+                                        : Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Shadowing
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (context) =>
+                                  ShadowingSheet(targetText: message.content),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.mic_none_rounded,
+                                  size: 14,
+                                  color: Colors.black,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  "Shadow",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Translate
+                        GestureDetector(
+                          onTap: _handleTranslate,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_isTranslating)
+                                  const SizedBox(
+                                    width: 10,
+                                    height: 10,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.black,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.translate_rounded,
+                                    size: 14,
+                                    color: Colors.black,
+                                  ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  "Translate",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Save
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              barrierColor: Colors.white.withValues(alpha: 0.5),
+                              builder: (context) => SaveNoteSheet(
+                                originalSentence: message.content,
+                                sceneId: widget.sceneId, // Pass sceneId
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.bookmark_border_rounded,
+                                  size: 14,
+                                  color: Colors.black,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  "Save",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  if (widget.message.isVoiceMessage && _showTranscript) ...[
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    MarkdownBody(
+                      data: widget.message.content.isEmpty
+                          ? "..."
+                          : widget.message.content,
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(fontSize: 14, height: 1.4),
+                        strong: const TextStyle(fontWeight: FontWeight.bold),
+                        em: const TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                      selectable: !widget.isMultiSelectMode,
+                    ),
+                  ],
+                  if (_showTranslation && _translatedText != null) ...[
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      _translatedText!,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ],
+              ), // Close Column
+            ), // Close IntrinsicWidth
+          ), // Close AbsorbPointer
+        ), // Close Container
+        // Selection indicator
+        if (message.isSelected)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(Icons.check, size: 14, color: Colors.white),
+            ),
+          ),
+      ], // Close Stack children
+    ); // Close Stack
+
+    // In multi-select mode, return child directly without gesture handling
+    if (widget.isMultiSelectMode) {
+      return child;
+    }
+
+    // In normal mode, wrap with GestureDetector for translation toggle
+    return GestureDetector(
+      onTap: () {
+        if (!isUser && message.translation != null) {
+          setState(() {
+            _showTranslation = !_showTranslation;
+          });
+        }
+        widget.onTap?.call();
+      },
+      onLongPress: widget.onLongPress,
+      child: child,
+    );
+  }
+
+  Future<void> _handleTranslate() async {
+    // Toggle translation visibility if already translated
+    if (_translatedText != null) {
+      setState(() {
+        _showTranslation = !_showTranslation;
+      });
+      return;
+    }
+
+    // Fetch translation
+    setState(() {
+      _isTranslating = true;
+    });
+
+    try {
+      final prefs = PreferencesService();
+      final nativeLang = await prefs.getNativeLanguage();
+      final apiService = ApiService();
+
+      final translation = await apiService.translateText(
+        widget.message.content,
+        nativeLang,
+      );
+
+      if (mounted) {
+        setState(() {
+          _translatedText = translation;
+          _showTranslation = true;
+          _isTranslating = false;
+        });
+
+        // Save translation to message object
+        if (widget.onMessageUpdate != null) {
+          final updatedMessage = Message(
+            id: widget.message.id,
+            content: widget.message.content,
+            isUser: widget.message.isUser,
+            timestamp: widget.message.timestamp,
+            translation: translation, // Save the translation
+            feedback: widget.message.feedback,
+            analysis: widget.message.analysis,
+          );
+          widget.onMessageUpdate!(updatedMessage);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTranslating = false;
+        });
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Translation failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Play text-to-speech for the message content using streaming API
+  Future<void> _playTextToSpeech() async {
+    // If already playing TTS, stop it
+    if (_isTTSPlaying) {
+      await _audioPlayer.stop();
+      setState(() {
+        _isTTSPlaying = false;
+      });
+      return;
+    }
+
+    // If we have a cached audio file, play it directly
+    if (_ttsAudioPath != null && await File(_ttsAudioPath!).exists()) {
+      await _playTTSAudio(_ttsAudioPath!);
+      return;
+    }
+
+    // Show loading state
+    setState(() {
+      _isTTSLoading = true;
+    });
+
+    try {
+      final apiService = ApiService();
+      final List<String> audioChunks = [];
+
+      // Use streaming API to receive audio chunks
+      await for (final chunk in apiService.generateTTSStream(
+        widget.message.content,
+        messageId: widget.message.id,
+      )) {
+        if (!mounted) break;
+
+        switch (chunk.type) {
+          case TTSChunkType.audioChunk:
+            if (chunk.audioBase64 != null) {
+              audioChunks.add(chunk.audioBase64!);
+            }
+            break;
+          case TTSChunkType.info:
+            // Duration info received (could be used for UI in the future)
+            break;
+          case TTSChunkType.done:
+            // All chunks received, now save and play
+            break;
+          case TTSChunkType.error:
+            throw Exception(chunk.error ?? 'TTS generation failed');
+        }
+      }
+
+      if (!mounted) return;
+
+      if (audioChunks.isEmpty) {
+        throw Exception('No audio received');
+      }
+
+      // Combine all base64 chunks and decode
+      final combinedBase64 = audioChunks.join('');
+      final audioBytes = base64Decode(combinedBase64);
+
+      // Save to cache with user-scoped path
+      final cacheDir = await getApplicationDocumentsDirectory();
+      final storageKey = StorageKeyService();
+      final ttsCacheDir = Directory(
+        storageKey.getUserScopedPath(cacheDir.path, 'tts_cache'),
+      );
+      if (!await ttsCacheDir.exists()) {
+        await ttsCacheDir.create(recursive: true);
+      }
+
+      // Use message ID as filename (sanitized)
+      final safeFileName = widget.message.id.replaceAll(
+        RegExp(r'[^a-zA-Z0-9-_]'),
+        '_',
+      );
+      final audioFile = File('${ttsCacheDir.path}/$safeFileName.mp3');
+      await audioFile.writeAsBytes(audioBytes);
+
+      if (mounted) {
+        setState(() {
+          _ttsAudioPath = audioFile.path;
+          _isTTSLoading = false;
+        });
+
+        // Play the audio immediately
+        await _playTTSAudio(audioFile.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTTSLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate speech: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Play TTS audio from the given file path
+  Future<void> _playTTSAudio(String audioPath) async {
+    try {
+      await _audioPlayer.play(DeviceFileSource(audioPath));
+      if (mounted) {
+        setState(() {
+          _isTTSPlaying = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to play audio: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildLoadingIndicator() {
+    return SizedBox(
+      width: 40,
+      height: 20,
+      child: AnimatedBuilder(
+        animation: _loadingController,
+        builder: (context, child) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index) {
+              return Transform.translate(
+                offset: Offset(
+                  0,
+                  -4 *
+                      sin(
+                        0.5 +
+                            0.5 * DateTime.now().millisecondsSinceEpoch / 200 +
+                            index,
+                      ),
+                ), // Bouncing effect
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSmallLoader() {
+    return AnimatedBuilder(
+      animation: _loadingController,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(3, (index) {
+            return Transform.scale(
+              scale:
+                  0.5 +
+                  0.5 *
+                      sin(DateTime.now().millisecondsSinceEpoch / 200 + index),
+              child: Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+}

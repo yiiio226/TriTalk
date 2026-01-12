@@ -53,6 +53,8 @@ dependencies:
   chopper: ^8.0.0
   # JSON handling (runtime dependency)
   json_annotation: ^4.8.1
+  flutter_riverpod: ^2.6.1
+  freezed_annotation: ^3.1.0
 
 dev_dependencies:
   flutter_test:
@@ -65,12 +67,15 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
+  mockito: ^5.4.4
+  mocktail: ^1.0.4
   # Build system
   build_runner: ^2.4.6
   # Code generators
   swagger_dart_code_generator: ^4.0.2
   chopper_generator: ^8.0.0
   json_serializable: ^6.7.1
+  freezed: ^3.2.3
 
 flutter_launcher_icons:
   android: "launcher_icon"
