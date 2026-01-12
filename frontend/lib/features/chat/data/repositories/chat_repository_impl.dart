@@ -18,6 +18,9 @@ class ChatRepositoryImpl implements ChatRepository {
   final ApiService _apiService;
   final ChatHistoryService _chatHistoryService;
 
+  // Track ownership of services for proper disposal
+  final bool _ownsApiService;
+
   // Stream controller for sync status
   late final StreamController<SyncStatus> _syncStatusController;
 
@@ -25,7 +28,8 @@ class ChatRepositoryImpl implements ChatRepository {
     ApiService? apiService,
     ChatHistoryService? chatHistoryService,
   }) : _apiService = apiService ?? ApiService(),
-       _chatHistoryService = chatHistoryService ?? ChatHistoryService() {
+       _chatHistoryService = chatHistoryService ?? ChatHistoryService(),
+       _ownsApiService = apiService == null {
     // Bridge the existing ValueNotifier to a Stream
     _syncStatusController = StreamController<SyncStatus>.broadcast();
 
@@ -37,10 +41,21 @@ class ChatRepositoryImpl implements ChatRepository {
     _syncStatusController.add(_chatHistoryService.syncStatus.value);
   }
 
-  /// Dispose resources when no longer needed
+  /// Dispose resources when no longer needed.
+  ///
+  /// If [ApiService] or [ChatHistoryService] were created internally
+  /// (not injected via constructor), they will be disposed here.
+  /// Callers who inject their own services are responsible for disposing them.
+  @override
   void dispose() {
     _chatHistoryService.syncStatus.removeListener(_onSyncStatusChanged);
     _syncStatusController.close();
+
+    // Dispose internally-created services to prevent resource leaks
+    // Note: ChatHistoryService is a singleton so we don't dispose it
+    if (_ownsApiService) {
+      _apiService.dispose();
+    }
   }
 
   // ============================================

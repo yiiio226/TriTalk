@@ -14,7 +14,6 @@ class ChatHistoryListWidget extends StatefulWidget {
 }
 
 class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
-  List<BookmarkedConversation> _bookmarks = [];
   bool _isLoading = true;
 
   @override
@@ -31,7 +30,6 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
     if (!mounted) return;
 
     setState(() {
-      _bookmarks = ChatHistoryService().getBookmarks();
       _isLoading = false;
     });
   }

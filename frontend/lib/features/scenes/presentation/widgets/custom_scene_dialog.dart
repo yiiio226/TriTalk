@@ -17,7 +17,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
   final _uuid = const Uuid();
   final TextEditingController _scenarioController = TextEditingController();
   final String _selectedTone = 'Casual'; // Formal, Casual
-  final String _selectedLength = 'Brief'; // Brief, Detailed
+
   bool _isLoading = false;
   bool _isPolishing = false;
 
@@ -147,7 +147,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: Colors.blue.withOpacity(0.3),
+                            color: Colors.blue.withValues(alpha: 0.3),
                           ),
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.grey[50],
@@ -185,7 +185,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: Colors.black.withValues(alpha: 0.1),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -258,21 +258,6 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     );
   }
 
-  Widget _buildOptionChip(
-    String label,
-    String groupValue,
-    Function(String) onSelect,
-  ) {
-    final isSelected = label == groupValue;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) onSelect(label);
-      },
-    );
-  }
-
   int _generateRandomPastelColor() {
     final random = Random();
     // Hue: 0-360
@@ -282,6 +267,6 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     // Value (Brightness): 95% - 100%
     final value = 0.95 + random.nextDouble() * 0.05;
 
-    return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor().value;
+    return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor().toARGB32();
   }
 }

@@ -210,7 +210,7 @@ class _HintsSheetState extends State<HintsSheet>
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[200]!.withOpacity(_animation.value),
+            color: Colors.grey[200]!.withValues(alpha: _animation.value),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -219,7 +219,7 @@ class _HintsSheetState extends State<HintsSheet>
                 child: Container(
                   height: 20,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300]!.withOpacity(_animation.value),
+                    color: Colors.grey[300]!.withValues(alpha: _animation.value),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

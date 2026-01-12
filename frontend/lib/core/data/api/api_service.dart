@@ -768,6 +768,13 @@ class ApiService {
       return TTSResponse(error: e.toString());
     }
   }
+
+  /// Dispose resources
+  void dispose() {
+    // Currently ApiService is stateless (clients are created per request),
+    // so there are no permanent resources to dispose.
+    // This method is kept for consistency and future state management.
+  }
 }
 
 class ChatResponse {

@@ -19,7 +19,7 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
   final ApiService _apiService = ApiService();
 
   bool _isRecording = false;
-  String? _audioPath;
+
   bool _isAnalyzing = false;
   ShadowResult? _result;
   String _errorMessage = '';
@@ -49,7 +49,7 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
 
         setState(() {
           _isRecording = true;
-          _audioPath = null;
+
           _result = null;
           _errorMessage = '';
         });
@@ -64,7 +64,6 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
       final path = await _audioRecorder.stop();
       setState(() {
         _isRecording = false;
-        _audioPath = path;
       });
       if (path != null) {
         _analyzeAudio(path);
@@ -246,7 +245,6 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
           onPressed: () {
             setState(() {
               _result = null;
-              _audioPath = null;
             });
           },
           child: const Row(

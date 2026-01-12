@@ -52,6 +52,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     // Initialize auth after a short delay to show splash animation
     Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
       _initializeAuth();
     });
   }

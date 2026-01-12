@@ -123,4 +123,15 @@ abstract class ChatRepository {
 
   /// Current sync status.
   SyncStatus get currentSyncStatus;
+
+  // ============================================
+  // Resource Cleanup
+  // ============================================
+
+  /// Disposes resources held by this repository.
+  ///
+  /// Implementations should clean up any listeners, stream controllers,
+  /// or other resources to prevent memory leaks.
+  /// Callers must invoke this method when the repository is no longer needed.
+  void dispose();
 }

@@ -614,31 +614,6 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     );
   }
 
-  Widget _buildSection(String label, String text, {bool isHighlight = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            color: isHighlight ? Colors.blue[700] : Colors.black87,
-            fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildGrammarPoint(BuildContext context, GrammarPoint point) {
     final isSaved = _savedGrammarPoints.contains(point.structure);
 
@@ -758,13 +733,6 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
 
   Widget _buildVocabularyItem(BuildContext context, VocabularyItem vocab) {
     final isSaved = _savedVocabulary.contains(vocab.word);
-
-    Color levelColor = Colors.blue;
-    if (vocab.level == 'intermediate') {
-      levelColor = Colors.orange;
-    } else if (vocab.level == 'advanced') {
-      levelColor = Colors.red;
-    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

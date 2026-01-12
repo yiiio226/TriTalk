@@ -44,7 +44,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     // For now, I'll just use the logic to determine default.
 
     try {
-      final user = AuthService().currentUser!;
+      final user = AuthService().currentUser;
+
+      // Handle null user gracefully - show error and abort onboarding
+      if (user == null) {
+        debugPrint(
+          '[OnboardingScreen] Error: currentUser is null, cannot complete onboarding',
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session expired. Please log in again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
 
       // Update User Service
       await UserService().updateUserProfile(

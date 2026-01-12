@@ -49,8 +49,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   // Audio playback state
   final AudioPlayer _audioPlayer = AudioPlayer();
-  String? _playingMessageId;
-  final bool _isPlaying = false;
 
   // ValueNotifier for text input state (triggers rebuild when text changes)
   final ValueNotifier<bool> _hasTextNotifier = ValueNotifier(false);
@@ -449,7 +447,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.transparent,
-                  barrierColor: Colors.white.withOpacity(0.5),
+                  barrierColor: Colors.white.withValues(alpha: 0.5),
                   builder: (context) => SceneOptionsDrawer(
                     onClear: _showClearConfirmation,
                     onBookmark: _bookmarkConversation,
@@ -617,7 +615,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -903,7 +901,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => HintsSheet(
         sceneDescription:
             'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
@@ -991,7 +989,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1048,7 +1046,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1131,7 +1129,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        barrierColor: Colors.white.withOpacity(0.5),
+        barrierColor: Colors.white.withValues(alpha: 0.5),
         builder: (context) => AnalysisSheet(
           message: message,
           analysis: message.analysis,
@@ -1150,7 +1148,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       isScrollControlled: true,
       // isDismissible: false, // Allow dismissal during streaming to cancel
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => AnalysisSheet(
         message: message,
         isLoading: true,
@@ -1170,7 +1168,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) =>
           FeedbackSheet(message: message, sceneId: widget.scene.id),
     );

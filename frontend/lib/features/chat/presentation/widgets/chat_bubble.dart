@@ -65,8 +65,6 @@ class _ChatBubbleState extends State<ChatBubble>
   // Audio Playback
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
 
   // TTS state
   bool _isTTSLoading = false;
@@ -121,7 +119,7 @@ class _ChatBubbleState extends State<ChatBubble>
       _audioPlayer.onDurationChanged.listen((newDuration) {
         if (mounted) {
           setState(() {
-            _duration = newDuration;
+            // _duration = newDuration; // removed unused
           });
         }
       });
@@ -129,7 +127,7 @@ class _ChatBubbleState extends State<ChatBubble>
       _audioPlayer.onPositionChanged.listen((newPosition) {
         if (mounted) {
           setState(() {
-            _position = newPosition;
+            // _position = newPosition; // removed unused
           });
         }
       });
@@ -138,7 +136,7 @@ class _ChatBubbleState extends State<ChatBubble>
         if (mounted) {
           setState(() {
             _isPlaying = false;
-            _position = Duration.zero;
+            // _position = Duration.zero; // removed unused
           });
         }
       });
@@ -226,7 +224,7 @@ class _ChatBubbleState extends State<ChatBubble>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) =>
           VoiceFeedbackSheet(feedback: widget.message.voiceFeedback!),
     );
@@ -288,7 +286,7 @@ class _ChatBubbleState extends State<ChatBubble>
   Widget build(BuildContext context) {
     final message = widget.message;
     final isUser = message.isUser;
-    final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    // final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start; // unused
 
     final hasFeedback = message.feedback != null;
     final isPerfect = message.feedback?.isPerfect ?? false;
@@ -395,8 +393,8 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(
-                                0.2,
+                              color: Colors.white.withValues(
+                                alpha: 0.2,
                               ), // Increased transparency
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -442,8 +440,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(
-                                  0.2,
+                                color: Colors.white.withValues(
+                                  alpha: 0.2,
                                 ), // Increased transparency
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -798,7 +796,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              barrierColor: Colors.white.withOpacity(0.5),
+                              barrierColor: Colors.white.withValues(alpha: 0.5),
                               builder: (context) => SaveNoteSheet(
                                 originalSentence: message.content,
                                 sceneId: widget.sceneId, // Pass sceneId

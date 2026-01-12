@@ -59,20 +59,16 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
     final score = widget.feedback.pronunciationScore;
     Color scoreColor;
     String label;
-    IconData icon;
 
     if (score >= 80) {
       scoreColor = Colors.green;
       label = 'Great Job!';
-      icon = Icons.check_circle;
     } else if (score >= 60) {
       scoreColor = Colors.orange;
       label = 'Needs Work';
-      icon = Icons.info;
     } else {
       scoreColor = Colors.red;
       label = 'Try Again';
-      icon = Icons.warning;
     }
 
     return Row(
@@ -83,9 +79,9 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: scoreColor.withOpacity(0.1),
+                color: scoreColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: scoreColor.withOpacity(0.5)),
+                border: Border.all(color: scoreColor.withValues(alpha: 0.5)),
               ),
               child: Row(
                 children: [
@@ -262,7 +258,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
                   padding: const EdgeInsets.all(12),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.1),
+                    color: Colors.amber.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(

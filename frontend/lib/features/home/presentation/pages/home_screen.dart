@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  barrierColor: Colors.white.withOpacity(0.5),
+                  barrierColor: Colors.white.withValues(alpha: 0.5),
                   builder: (context) => Padding(
                     padding: EdgeInsets.only(
                       bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -71,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Add via service
                   await SceneService().addScene(result);
                   // Navigate to configuration screen
+                  if (!mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -338,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             context: context,
                                             backgroundColor: Colors.transparent,
                                             barrierColor: Colors.white
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: 0.5),
                                             builder: (context) =>
                                                 SceneOptionsDrawer(
                                                   onClear: () =>
@@ -449,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -483,7 +484,9 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
 
     if (nonEmptyMessages.isEmpty) {
-      showTopToast(context, "No messages to bookmark", isError: true);
+      if (mounted) {
+        showTopToast(context, "No messages to bookmark", isError: true);
+      }
       return;
     }
 
@@ -512,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -569,7 +572,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withOpacity(0.5),
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(

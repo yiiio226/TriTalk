@@ -4,21 +4,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/initializer/app_initializer.dart';
 import 'features/onboarding/presentation/pages/splash_screen.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/widgets/error_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Bootstrap app before creating ProviderScope
-  // This initializes Supabase and SharedPreferences
-  await AppBootstrap.initialize();
+  Object? initError;
+
+  try {
+    // Bootstrap app before creating ProviderScope
+    // This initializes Supabase and SharedPreferences
+    await AppBootstrap.initialize();
+  } catch (e, stackTrace) {
+    // Log the initialization error
+    debugPrint('AppBootstrap.initialize() failed: $e');
+    debugPrint('Stack trace: $stackTrace');
+    initError = e;
+  }
+
+  // Build overrides list - only include sharedPreferencesProvider if prefs is available
+  final overrides = <Override>[];
+  try {
+    // Attempt to access AppBootstrap.prefs - this may throw if initialization failed
+    overrides.add(
+      sharedPreferencesProvider.overrideWithValue(AppBootstrap.prefs),
+    );
+  } catch (_) {
+    // AppBootstrap.prefs not available, skip the override
+    debugPrint(
+      'AppBootstrap.prefs not available, skipping sharedPreferencesProvider override',
+    );
+  }
 
   runApp(
     ProviderScope(
-      overrides: [
-        // Override SharedPreferences provider with the bootstrapped instance
-        sharedPreferencesProvider.overrideWithValue(AppBootstrap.prefs),
-      ],
-      child: const TriTalkApp(),
+      overrides: overrides,
+      child: initError != null
+          ? ErrorScreen(error: initError)
+          : const TriTalkApp(),
     ),
   );
 }
@@ -32,47 +55,9 @@ class TriTalkApp extends StatelessWidget {
     return MaterialApp(
       title: 'TriTalk',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: AppColors.lightBackground,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.lightBackground,
-          foregroundColor: AppColors.lightTextPrimary,
-          elevation: 0,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
-            ),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.lightSurface,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const SplashScreen(),
     );
   }

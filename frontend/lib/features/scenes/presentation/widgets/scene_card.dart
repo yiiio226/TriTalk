@@ -20,7 +20,7 @@ class SceneCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(scene.color).withOpacity(0.6), // Use scene color
+        color: Color(scene.color).withValues(alpha: 0.6), // Use scene color
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppShadows.sm,
       ),
