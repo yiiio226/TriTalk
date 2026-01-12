@@ -63,7 +63,6 @@ _Target: Decouple Data logic from UI logic. UI should never import `http` or `su
   - [x] Convert `ChatScreen` from `StatefulWidget` to `ConsumerStatefulWidget` (kept Stateful for animation/controller lifecycle).
   - [x] Replace `setState` calls with `ref.read(chatProvider.notifier).action()`.
   - [x] Replace UI rendering logic to read from `ref.watch(chatProvider)`.
-  - [ ] Extract sub-widgets (e.g., `ChatInputArea`, `AiMessageBubble`) into separate files if not already done.
 
 ### Phase 4: Structural Reorganization (Core/Features)
 
