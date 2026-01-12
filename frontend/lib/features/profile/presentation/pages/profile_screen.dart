@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/auth_provider.dart';
-import '../../../auth/data/services/auth_service.dart';
-import '../../data/services/user_service.dart';
-import '../../../../data/language_constants.dart';
-import '../../../../design/app_design_system.dart';
+import 'package:frontend/features/auth/data/services/auth_service.dart';
+import 'package:frontend/features/profile/data/services/user_service.dart';
+import 'package:frontend/core/data/language_constants.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import 'favorites_screen.dart'; // Import UnifiedFavoritesScreen
 import '../../../subscription/presentation/pages/paywall_screen.dart';
 import '../../../onboarding/presentation/pages/splash_screen.dart'; // For logout navigation

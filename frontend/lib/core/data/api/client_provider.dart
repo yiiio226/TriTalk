@@ -2,7 +2,7 @@ import 'package:chopper/chopper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/swagger_generated_code/swagger.swagger.dart';
 import 'auth_interceptor.dart';
-import '../../env/env.dart';
+import 'package:frontend/core/env/env.dart';
 
 /// Provides a singleton instance of the generated Swagger API client.
 ///

@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../../../../models/scene.dart';
-import '../../../../models/message.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../../../study/presentation/widgets/analysis_sheet.dart';
@@ -16,11 +15,11 @@ import '../widgets/hints_sheet.dart';
 import '../../../../core/data/api/api_service.dart';
 import '../../data/chat_history_service.dart';
 
-import '../../../../core/design/app_design_system.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import '../../../profile/presentation/pages/favorites_screen.dart';
-import '../../../../core/widgets/top_toast.dart';
+import 'package:frontend/core/widgets/top_toast.dart';
 import '../../../scenes/presentation/widgets/scene_options_drawer.dart';
-import '../../../../core/widgets/styled_drawer.dart';
+import 'package:frontend/core/widgets/styled_drawer.dart';
 
 import '../../chat.dart'; // Import feature barrel file
 

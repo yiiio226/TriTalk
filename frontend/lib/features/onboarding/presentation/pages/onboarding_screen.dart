@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/auth_provider.dart';
-import '../../../profile/data/services/user_service.dart';
-import '../../../auth/data/services/auth_service.dart';
-import '../../../../data/language_constants.dart';
-import '../../../../design/app_design_system.dart';
+import 'package:frontend/features/profile/data/services/user_service.dart';
+import 'package:frontend/features/auth/data/services/auth_service.dart';
+import 'package:frontend/core/data/language_constants.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import '../../../home/presentation/pages/home_screen.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {

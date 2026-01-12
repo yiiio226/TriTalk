@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../models/scene.dart';
-import '../../../data/mock_scenes.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
+import 'package:frontend/features/scenes/data/datasources/mock_scenes.dart';
 import '../../../core/data/local/storage_key_service.dart';
 
 class SceneService extends ChangeNotifier {

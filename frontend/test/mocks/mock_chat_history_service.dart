@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:frontend/features/chat/data/chat_history_service.dart';
-import 'package:frontend/models/message.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 
 /// Mock implementation of [ChatHistoryService] for unit testing.
 ///

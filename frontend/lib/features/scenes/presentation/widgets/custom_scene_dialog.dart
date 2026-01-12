@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
-import '../../../../models/scene.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
-import '../../../../core/widgets/top_toast.dart';
-import '../../../../core/widgets/styled_drawer.dart';
+import 'package:frontend/core/widgets/top_toast.dart';
+import 'package:frontend/core/widgets/styled_drawer.dart';
 
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({super.key});

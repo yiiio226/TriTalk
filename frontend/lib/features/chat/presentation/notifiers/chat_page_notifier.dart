@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../models/message.dart';
-import '../../../../models/scene.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
-import '../../../subscription/data/services/revenue_cat_service.dart';
+import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../state/chat_page_state.dart';
 

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import '../../../../models/message.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../data/vocab_service.dart';
-import '../../../../core/design/app_design_system.dart';
-import '../../../../core/widgets/top_toast.dart';
-import '../../../../core/widgets/styled_drawer.dart';
+import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/widgets/top_toast.dart';
+import 'package:frontend/core/widgets/styled_drawer.dart';
 
 class AnalysisSheet extends StatefulWidget {
   final Message message;

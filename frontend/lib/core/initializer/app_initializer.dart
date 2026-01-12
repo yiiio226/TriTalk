@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../env.dart';
+import 'package:frontend/core/env/env.dart';
 import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
 

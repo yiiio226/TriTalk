@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../models/message.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../scenes/data/scene_service.dart';
 import '../../../core/data/local/storage_key_service.dart';
 

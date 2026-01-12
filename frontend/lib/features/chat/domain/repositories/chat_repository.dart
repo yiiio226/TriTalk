@@ -1,4 +1,4 @@
-import '../../../../models/message.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../../../core/data/api/api_service.dart';
 import '../../data/chat_history_service.dart';
 

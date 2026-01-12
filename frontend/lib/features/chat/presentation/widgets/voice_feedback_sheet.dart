@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../../../models/message.dart';
-import '../../../../core/widgets/styled_drawer.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
+import 'package:frontend/core/widgets/styled_drawer.dart';
 
 class VoiceFeedbackSheet extends StatefulWidget {
   final VoiceFeedback feedback;

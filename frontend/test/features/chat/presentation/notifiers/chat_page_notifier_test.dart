@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:frontend/features/chat/presentation/notifiers/chat_page_notifier.dart';
-import 'package:frontend/models/scene.dart';
-import 'package:frontend/models/message.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/core/data/api/api_service.dart';
 import '../../../../mocks/mock_chat_repository.dart';
 

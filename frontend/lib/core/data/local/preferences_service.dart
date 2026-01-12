@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:frontend/data/language_constants.dart';
+import 'package:frontend/core/data/language_constants.dart';
 import 'storage_key_service.dart';
 
 class PreferencesService {

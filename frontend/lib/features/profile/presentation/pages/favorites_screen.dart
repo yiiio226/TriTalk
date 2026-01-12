@@ -3,7 +3,7 @@ import '../../../../features/study/presentation/widgets/vocab_list_widget.dart';
 import '../../../../features/study/presentation/widgets/grammar_list_widget.dart'; // Transformed from sentence_list_widget
 import '../../../../features/study/presentation/widgets/saved_sentence_list_widget.dart'; // For full sentences
 import '../../../../features/chat/presentation/widgets/chat_history_list_widget.dart';
-import '../../../../design/app_design_system.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 class UnifiedFavoritesScreen extends StatefulWidget {
   final String? sceneId; // Optional filter

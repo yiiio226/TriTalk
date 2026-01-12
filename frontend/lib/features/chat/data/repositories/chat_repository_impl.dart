@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
-import '../../../../models/message.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../../../core/data/api/api_service.dart';
 import '../chat_history_service.dart';
 import '../../domain/repositories/chat_repository.dart';

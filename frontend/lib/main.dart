@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/initializer/app_initializer.dart';
 import 'features/onboarding/presentation/pages/splash_screen.dart';
-import 'design/app_design_system.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

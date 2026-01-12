@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../models/scene.dart';
-import '../../../../core/design/app_design_system.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 class SceneCard extends StatelessWidget {
   final Scene scene;

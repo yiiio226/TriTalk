@@ -1,4 +1,4 @@
-import '../env.dart';
+import 'package:frontend/core/env/env.dart';
 
 class SupabaseConfig {
   static const String url = Env.supabaseUrl;

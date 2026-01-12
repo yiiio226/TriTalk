@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/auth_provider.dart';
 import '../../../../core/auth/auth_state.dart';
-import '../../../../design/app_design_system.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import '../../../home/presentation/pages/home_screen.dart';
 import '../../../auth/presentation/pages/login_screen.dart';
 import 'onboarding_screen.dart';

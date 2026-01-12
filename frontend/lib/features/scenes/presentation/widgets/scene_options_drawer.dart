@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/styled_drawer.dart';
+import 'package:frontend/core/widgets/styled_drawer.dart';
 
 class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onClear;

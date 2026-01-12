@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/chat_history_service.dart';
-import '../../../../core/widgets/empty_state_widget.dart';
+import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'history_skeleton_loader.dart';
 import '../pages/archived_chat_screen.dart';
 

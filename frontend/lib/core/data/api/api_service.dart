@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:frontend/models/message.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
 import '../local/preferences_service.dart';
-import '../../env/env.dart';
+import 'package:frontend/core/env/env.dart';
 
 // 环境枚举
 enum Environment {

@@ -1,4 +1,4 @@
-import '../models/scene.dart';
+import 'package:frontend/features/scenes/domain/models/scene.dart';
 
 const List<Scene> mockScenes = [
   Scene(

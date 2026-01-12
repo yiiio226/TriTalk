@@ -9,7 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
 import 'package:frontend/core/env/env.dart';
 
-import 'package:frontend/models/user.dart' as app_models;
+import 'package:frontend/features/auth/domain/models/user.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
 
 class AuthService {
@@ -17,11 +17,11 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  app_models.User? _currentUser;
+  User? _currentUser;
   bool _profileExistsInDatabase =
       false; // Track if user has completed onboarding
 
-  app_models.User? get currentUser => _currentUser;
+  User? get currentUser => _currentUser;
   bool get isAuthenticated => Supabase.instance.client.auth.currentUser != null;
 
   Future<void> init() async {
@@ -76,7 +76,7 @@ class AuthService {
           email = 'Signed in with Apple';
         }
 
-        _currentUser = app_models.User(
+        _currentUser = User(
           id: response['id'],
           name: name,
           email: email,
@@ -121,7 +121,7 @@ class AuthService {
             }
           }
 
-          _currentUser = app_models.User(
+          _currentUser = User(
             id: authUser.id,
             name: displayName,
             email: displayEmail,
@@ -141,10 +141,7 @@ class AuthService {
     }
   }
 
-  Future<void> _saveUserToLocal(
-    app_models.User user,
-    bool profileExists,
-  ) async {
+  Future<void> _saveUserToLocal(User user, bool profileExists) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = {
@@ -171,7 +168,7 @@ class AuthService {
       final userString = prefs.getString('cached_user_profile');
       if (userString != null) {
         final Map<String, dynamic> userMap = json.decode(userString);
-        _currentUser = app_models.User(
+        _currentUser = User(
           id: userMap['id'],
           name: userMap['name'],
           email: userMap['email'],

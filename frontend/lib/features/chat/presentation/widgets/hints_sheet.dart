@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/data/api/api_service.dart';
-import '../../../../core/widgets/styled_drawer.dart';
+import 'package:frontend/core/widgets/styled_drawer.dart';
 
 class HintsSheet extends StatefulWidget {
   final String sceneDescription;

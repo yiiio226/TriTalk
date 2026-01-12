@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/vocab_service.dart';
-import '../../../../core/widgets/empty_state_widget.dart';
+import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'vocab_skeleton_loader.dart';
 
 class VocabListWidget extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../../../../design/app_design_system.dart';
-import '../../data/services/revenue_cat_service.dart';
+import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
