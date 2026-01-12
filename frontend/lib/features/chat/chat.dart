@@ -18,3 +18,4 @@ export 'providers/chat_page_provider.dart';
 // Presentation
 export 'presentation/state/chat_page_state.dart';
 export 'presentation/notifiers/chat_page_notifier.dart';
+export 'presentation/pages/chat_screen.dart';

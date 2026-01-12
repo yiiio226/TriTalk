@@ -68,15 +68,15 @@ _Target: Decouple Data logic from UI logic. UI should never import `http` or `su
 
 _Target: Clean component isolation._
 
-- [ ] **4.1. Establish Directory Structure**
-  - [ ] Create `lib/core` (Shared logic, Env, Theme, Utils).
-  - [ ] Create `lib/features` (Chat, Scenes, Profile, Onboarding).
-- [ ] **4.2. Move Files**
-  - [ ] Move `screens/chat_screen.dart` -> `features/chat/presentation/pages/`.
-  - [ ] Move `services/scene_service.dart` -> `features/scenes/data/`.
-  - [ ] Move `design/` -> `core/design/`.
-- [ ] **4.3. Update Imports**
-  - [ ] Bulk update import paths.
+- [x] **4.1. Establish Directory Structure**
+  - [x] Create `lib/core` (Shared logic, Env, Theme, Utils).
+  - [x] Create `lib/features` (Chat, Scenes, Profile, Onboarding).
+- [x] **4.2. Move Files**
+  - [x] Move `screens/chat_screen.dart` -> `features/chat/presentation/pages/`.
+  - [x] Move `services/scene_service.dart` -> `features/scenes/data/`.
+  - [x] Move `design/` -> `core/design/`.
+- [x] **4.3. Update Imports**
+  - [x] Bulk update import paths (backward-compatible re-exports created).
 
 ### Phase 5: Polish & Testing
 
