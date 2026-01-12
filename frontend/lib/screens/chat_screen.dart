@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -175,16 +176,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _startRecordingTimer();
   }
 
-  void _stopVoiceRecording() async {
-    final path = await _audioRecorder.stop();
-    _stopRecordingTimer();
-    _notifier.setRecording(false);
-
-    if (path != null) {
-      _notifier.sendVoiceMessage(path, _currentRecordingDuration);
-    }
-  }
-
   void _startRecordingTimer() {
     _currentRecordingDuration = 0;
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -200,6 +191,93 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     setState(() {
       _currentRecordingDuration = 0;
     });
+  }
+
+  /// Enhanced voice recording stop with options from main branch
+  /// - convertToText: Transcribe audio to text and put in text field
+  /// - sendDirectly: Send as voice message directly
+  Future<void> _stopVoiceRecordingWithOptions({
+    bool convertToText = false,
+    bool sendDirectly = false,
+  }) async {
+    _stopRecordingTimer();
+
+    // Stop pulsing animation
+    _pulseController.stop();
+    _pulseController.reset();
+
+    try {
+      final path = await _audioRecorder.stop();
+      _notifier.setRecording(false);
+
+      if (path == null) {
+        return;
+      }
+
+      if (sendDirectly) {
+        _notifier.sendVoiceMessage(path, _currentRecordingDuration);
+        _scrollToBottom();
+      } else if (convertToText) {
+        await _transcribeAudio(path);
+      }
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, '录音失败: $e', isError: true);
+        _notifier.setRecording(false);
+      }
+    }
+  }
+
+  /// Transcribe audio to text and populate the text input field
+  /// Note: This stays in the widget because it interacts with _textController
+  Future<void> _transcribeAudio(String audioPath) async {
+    _notifier.setTranscribing(true);
+
+    try {
+      // Check if the audio file exists and has content
+      final file = File(audioPath);
+      if (!await file.exists()) {
+        throw Exception('Audio file does not exist at path: $audioPath');
+      }
+
+      final fileSize = await file.length();
+
+      // iOS Simulator doesn't have real microphone - file will be empty or very small
+      if (fileSize < 1000) {
+        if (mounted) {
+          _notifier.setTranscribing(false);
+          showTopToast(
+            context,
+            'Recording too short or empty (${fileSize}B). Try on a real device.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
+      final transcription = await _apiService.transcribeAudio(audioPath);
+
+      if (mounted &&
+          (transcription.rawText.isNotEmpty || transcription.text.isNotEmpty)) {
+        setState(() {
+          _textController.text = transcription.rawText.isNotEmpty
+              ? transcription.rawText
+              : transcription.text;
+        });
+        _notifier.setTranscribing(false);
+        showTopToast(context, 'Voice transcribed & optimized', isError: false);
+      } else {
+        if (mounted) {
+          _notifier.setTranscribing(false);
+          showTopToast(context, 'Could not recognize speech', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _notifier.setTranscribing(false);
+        showTopToast(context, 'Speech-to-text failed: $e', isError: true);
+      }
+    }
   }
 
   void _sendMessage() {
@@ -635,7 +713,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 color: AppColors.lightTextPrimary,
               ),
             ),
-            onPressed: () => _stopVoiceRecording(),
+            onPressed: () =>
+                _stopVoiceRecordingWithOptions(convertToText: true),
           ),
         ),
         const SizedBox(width: 8),
@@ -651,7 +730,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               color: Colors.white,
               size: 20,
             ),
-            onPressed: () => _stopVoiceRecording(),
+            onPressed: () => _stopVoiceRecordingWithOptions(sendDirectly: true),
           ),
         ),
       ],

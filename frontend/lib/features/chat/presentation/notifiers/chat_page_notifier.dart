@@ -488,4 +488,8 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   void setOptimizing(bool isOptimizing) {
     state = state.copyWith(isOptimizing: isOptimizing);
   }
+
+  void setTranscribing(bool isTranscribing) {
+    state = state.copyWith(isTranscribing: isTranscribing);
+  }
 }
