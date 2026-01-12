@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../features/study/data/vocab_service.dart';
-import '../widgets/empty_state_widget.dart';
+import '../../data/vocab_service.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 
 class GrammarListWidget extends StatelessWidget {
   final String? sceneId;

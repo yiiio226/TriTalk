@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../models/message.dart';
-import 'styled_drawer.dart';
+import '../../../../models/message.dart';
+import '../../../../core/widgets/styled_drawer.dart';
 
 class VoiceFeedbackSheet extends StatefulWidget {
   final VoiceFeedback feedback;
@@ -133,7 +133,8 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
 
   Widget _buildSentenceBreakdown() {
     // If we have detailed breakdown, use it. Otherwise fall back to simple text.
-    if (widget.feedback.sentenceBreakdown == null || widget.feedback.sentenceBreakdown!.isEmpty) {
+    if (widget.feedback.sentenceBreakdown == null ||
+        widget.feedback.sentenceBreakdown!.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -209,7 +210,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
 
   Widget _buildErrorFocus() {
     final error = widget.feedback.errorFocus!;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[50],
@@ -237,7 +238,10 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
                       ),
                       TextSpan(
                         text: '"${error.word}"',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
                       ),
                     ],
                   ),
@@ -264,7 +268,11 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.lightbulb_outline, size: 18, color: Colors.amber),
+                      const Icon(
+                        Icons.lightbulb_outline,
+                        size: 18,
+                        color: Colors.amber,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -302,10 +310,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
                   const Text('🤖 ', style: TextStyle(fontSize: 16)),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
                 ),
               ],
             ),
@@ -347,10 +352,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
       children: [
         const Text(
           '🌊 Intonation (语调):',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Container(
@@ -361,9 +363,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
             color: Colors.blue[50],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: CustomPaint(
-            painter: WavePainter(),
-          ),
+          child: CustomPaint(painter: WavePainter()),
         ),
       ],
     );
@@ -380,31 +380,34 @@ class WavePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
-    
+
     // Draw a smooth wave
     path.moveTo(0, size.height / 2);
-    
+
     for (double x = 0; x <= size.width; x++) {
       // Create a wave that tapers off or changes frequency
       // y = A * sin(kx)
-      double y = size.height / 2 + 
-                15 * math.sin((x / size.width) * 4 * math.pi) * 
-                (1 - (x / size.width) * 0.3); // Slight amplitude decay
+      double y =
+          size.height / 2 +
+          15 *
+              math.sin((x / size.width) * 4 * math.pi) *
+              (1 - (x / size.width) * 0.3); // Slight amplitude decay
       path.lineTo(x, y);
     }
 
     canvas.drawPath(path, paint);
-    
+
     // Draw endpoint indicator (as per user request "show you didn't rise")
     final endX = size.width - 10;
-    final endY = size.height / 2 + 15 * math.sin(4 * math.pi) * 0.7; // Approx end Y
-    
+    final endY =
+        size.height / 2 + 15 * math.sin(4 * math.pi) * 0.7; // Approx end Y
+
     final dotPaint = Paint()
       ..color = Colors.red
       ..style = PaintingStyle.fill;
-      
+
     canvas.drawCircle(Offset(endX, endY), 4, dotPaint);
-    
+
     // Add text label near end
     // (This requires TextPainter)
   }

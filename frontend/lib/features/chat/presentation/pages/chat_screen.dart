@@ -9,18 +9,18 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../../../models/scene.dart';
 import '../../../../models/message.dart';
-import '../../../../widgets/chat_bubble.dart';
-import '../../../../widgets/feedback_sheet.dart';
-import '../../../../widgets/analysis_sheet.dart';
-import '../../../../widgets/hints_sheet.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/chat_history_service.dart';
+import '../widgets/chat_bubble.dart';
+import '../widgets/feedback_sheet.dart';
+import '../../../study/presentation/widgets/analysis_sheet.dart';
+import '../widgets/hints_sheet.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../../data/chat_history_service.dart';
 
 import '../../../../core/design/app_design_system.dart';
 import '../../../profile/presentation/pages/favorites_screen.dart';
-import '../../../../widgets/top_toast.dart';
-import '../../../../widgets/scene_options_drawer.dart';
-import '../../../../widgets/styled_drawer.dart';
+import '../../../../core/widgets/top_toast.dart';
+import '../../../scenes/presentation/widgets/scene_options_drawer.dart';
+import '../../../../core/widgets/styled_drawer.dart';
 
 import '../../chat.dart'; // Import feature barrel file
 

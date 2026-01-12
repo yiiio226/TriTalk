@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
-import '../models/message.dart';
-import '../services/api_service.dart';
+import '../../../../models/message.dart';
+import '../../../../core/data/api/api_service.dart';
 
 class ShadowingSheet extends StatefulWidget {
   final String targetText;

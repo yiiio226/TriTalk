@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import 'styled_drawer.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../../../../core/widgets/styled_drawer.dart';
 
 class HintsSheet extends StatefulWidget {
   final String sceneDescription;
@@ -22,7 +22,8 @@ class HintsSheet extends StatefulWidget {
   State<HintsSheet> createState() => _HintsSheetState();
 }
 
-class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateMixin {
+class _HintsSheetState extends State<HintsSheet>
+    with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   bool _isLoading = true;
   List<String> _hints = [];
@@ -33,7 +34,7 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    
+
     // Use cached hints if available
     if (widget.cachedHints != null && widget.cachedHints!.isNotEmpty) {
       _hints = widget.cachedHints!;
@@ -41,16 +42,17 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
     } else {
       _loadHints();
     }
-    
+
     // Setup pulse animation for skeleton
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..repeat(reverse: true);
-    
-    _animation = Tween<double>(begin: 0.3, end: 0.7).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 0.7,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -61,13 +63,16 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
 
   Future<void> _loadHints() async {
     try {
-      final response = await _apiService.getHints(widget.sceneDescription, widget.history);
+      final response = await _apiService.getHints(
+        widget.sceneDescription,
+        widget.history,
+      );
       if (mounted) {
         setState(() {
           _hints = response.hints;
           _isLoading = false;
         });
-        
+
         // Save hints to cache via callback
         if (widget.onHintsCached != null) {
           widget.onHintsCached!(_hints);
@@ -88,9 +93,7 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
     final screenHeight = MediaQuery.of(context).size.height;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.9,
-      ),
+      constraints: BoxConstraints(maxHeight: screenHeight * 0.9),
       child: StyledDrawer(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -109,17 +112,13 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
-                )
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Scrollable content
-            Flexible(
-              child: SingleChildScrollView(
-                child: _buildContent(),
-              ),
-            ),
+            Flexible(child: SingleChildScrollView(child: _buildContent())),
           ],
         ),
       ),
@@ -157,41 +156,49 @@ class _HintsSheetState extends State<HintsSheet> with SingleTickerProviderStateM
     }
 
     return Column(
-      children: _hints.map((hint) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              widget.onHintSelected(hint);
-              Navigator.pop(context);
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange[200]!, width: 1),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      hint,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.orange[900],
-                      ),
+      children: _hints
+          .map(
+            (hint) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    widget.onHintSelected(hint);
+                    Navigator.pop(context);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange[200]!, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            hint,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.orange[900],
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.orange[400],
+                        ),
+                      ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.orange[400]),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      )).toList(),
+          )
+          .toList(),
     );
   }
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/chat_history_service.dart';
-import '../widgets/empty_state_widget.dart';
-import '../widgets/history_skeleton_loader.dart';
-import '../features/chat/presentation/pages/archived_chat_screen.dart';
+import '../../data/chat_history_service.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import 'history_skeleton_loader.dart';
+import '../pages/archived_chat_screen.dart';
 
 class ChatHistoryListWidget extends StatefulWidget {
   final String? sceneId;

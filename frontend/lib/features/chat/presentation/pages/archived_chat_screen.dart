@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../models/message.dart';
-import '../../../../widgets/chat_bubble.dart';
-import '../../../../services/chat_history_service.dart';
+import '../widgets/chat_bubble.dart';
+import '../../data/chat_history_service.dart';
 import '../../../../design/app_design_system.dart';
 
 class ArchivedChatScreen extends StatelessWidget {

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/user.dart';
-import '../../services/auth_service.dart';
-import '../../services/storage_key_service.dart';
+import '../../features/auth/data/services/auth_service.dart';
+import '../data/local/storage_key_service.dart';
 import 'auth_state.dart';
 
 /// Provider for accessing auth state globally

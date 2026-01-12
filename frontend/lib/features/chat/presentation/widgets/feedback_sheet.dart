@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/message.dart';
-import '../features/study/data/vocab_service.dart';
-import 'styled_drawer.dart';
-import 'top_toast.dart';
+import '../../../../models/message.dart';
+import '../../../study/data/vocab_service.dart';
+import '../../../../core/widgets/styled_drawer.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class FeedbackSheet extends StatefulWidget {
   final Message message;

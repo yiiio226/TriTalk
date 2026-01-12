@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'styled_drawer.dart';
+import '../../../../core/widgets/styled_drawer.dart';
 
 class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onClear;
@@ -23,14 +23,14 @@ class SceneOptionsDrawer extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (onShowFavorites != null)
-             ListTile(
-               leading: const Icon(Icons.star_outline, color: Colors.amber),
-               title: const Text('Favorites'),
-               onTap: () {
-                 Navigator.pop(context);
-                 onShowFavorites!();
-               },
-             ),
+            ListTile(
+              leading: const Icon(Icons.star_outline, color: Colors.amber),
+              title: const Text('Favorites'),
+              onTap: () {
+                Navigator.pop(context);
+                onShowFavorites!();
+              },
+            ),
           if (onClear != null)
             ListTile(
               leading: const Icon(Icons.refresh, color: Colors.black),
@@ -49,11 +49,15 @@ class SceneOptionsDrawer extends StatelessWidget {
                 onBookmark!();
               },
             ),
-          if (onClear != null || onBookmark != null || onShowFavorites != null) const Divider(),
+          if (onClear != null || onBookmark != null || onShowFavorites != null)
+            const Divider(),
           if (onDelete != null)
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete Conversation', style: TextStyle(color: Colors.red)),
+              title: const Text(
+                'Delete Conversation',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 onDelete!();

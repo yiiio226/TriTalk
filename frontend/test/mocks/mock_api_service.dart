@@ -1,5 +1,5 @@
 import 'package:mocktail/mocktail.dart';
-import 'package:frontend/services/api_service.dart';
+import 'package:frontend/core/data/api/api_service.dart';
 
 /// Mock implementation of [ApiService] for unit testing.
 ///

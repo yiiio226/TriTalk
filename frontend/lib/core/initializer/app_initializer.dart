@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../env.dart';
-import '../../services/preferences_service.dart';
+import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
 
 /// Provider for SharedPreferences instance

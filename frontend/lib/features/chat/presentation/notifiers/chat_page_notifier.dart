@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../models/message.dart';
 import '../../../../models/scene.dart';
-import '../../../../services/api_service.dart';
+import '../../../../core/data/api/api_service.dart';
 import '../../../subscription/data/services/revenue_cat_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../state/chat_page_state.dart';

@@ -1,6 +1,6 @@
 import '../../../../models/message.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/chat_history_service.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../../data/chat_history_service.dart';
 
 /// Abstract repository interface for Chat operations.
 ///

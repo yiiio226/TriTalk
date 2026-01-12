@@ -129,14 +129,14 @@ _Target: Move all screens from `lib/screens/` to their respective feature module
 
 _Target: Eliminate root-level `screens`, `services`, and `widgets` folders._
 
-- [ ] **8.1. Standardize Widgets**
-  - [ ] Move generic widgets from `lib/widgets/` -> `core/widgets/`.
-  - [ ] Move feature-specific widgets from `lib/widgets/` -> `features/{feature}/presentation/widgets/`.
-- [ ] **8.2. Directory Cleanup**
-  - [ ] Remove `lib/screens/` directory.
-  - [ ] Remove `lib/services/` directory.
-  - [ ] Remove `lib/widgets/` directory.
-  - [ ] Verify no imports reference the old paths.
+- [x] **8.1. Standardize Widgets**
+  - [x] Move generic widgets from `lib/widgets/` -> `core/widgets/`.
+  - [x] Move feature-specific widgets from `lib/widgets/` -> `features/{feature}/presentation/widgets/`.
+- [x] **8.2. Directory Cleanup**
+  - [x] Remove `lib/screens/` directory.
+  - [x] Remove `lib/services/` directory.
+  - [x] Remove `lib/widgets/` directory.
+  - [x] Verify no imports reference the old paths.
 
 ---
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/scene.dart';
-import '../design/app_design_system.dart';
+import '../../../../models/scene.dart';
+import '../../../../core/design/app_design_system.dart';
 
 class SceneCard extends StatelessWidget {
   final Scene scene;
@@ -39,7 +39,9 @@ class SceneCard extends StatelessWidget {
                   child: scene.iconPath.isNotEmpty
                       ? Image.asset(
                           scene.iconPath,
-                          width: showRole ? 60 : 80, // Smaller icon in list view
+                          width: showRole
+                              ? 60
+                              : 80, // Smaller icon in list view
                           height: showRole ? 60 : 80,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
@@ -91,9 +93,6 @@ class SceneCard extends StatelessWidget {
   }
 
   Widget _buildEmojiFallback(String emoji) {
-    return Text(
-      emoji,
-      style: const TextStyle(fontSize: 60),
-    );
+    return Text(emoji, style: const TextStyle(fontSize: 60));
   }
 }

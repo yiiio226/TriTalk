@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/chat_repository_impl.dart';
 import '../domain/repositories/chat_repository.dart';
-import '../../../services/api_service.dart';
-import '../../../services/chat_history_service.dart';
+import '../../../core/data/api/api_service.dart';
+import '../data/chat_history_service.dart';
 
 /// Provider for the Chat Repository.
 ///

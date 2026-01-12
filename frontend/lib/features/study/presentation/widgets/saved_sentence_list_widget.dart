@@ -1,38 +1,31 @@
 import 'package:flutter/material.dart';
-import '../features/study/data/vocab_service.dart';
-import '../widgets/empty_state_widget.dart';
-import '../widgets/vocab_skeleton_loader.dart';
+import '../../data/vocab_service.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 
-class VocabListWidget extends StatelessWidget {
+class SavedSentenceListWidget extends StatelessWidget {
   final String? sceneId;
 
-  const VocabListWidget({super.key, this.sceneId});
+  const SavedSentenceListWidget({super.key, this.sceneId});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: VocabService(),
       builder: (context, child) {
-        final service = VocabService();
-        if (service.isLoading && service.items.isEmpty) {
-          return const VocabSkeletonLoader();
-        }
-
-        // Filter out Grammar Points AND Analyzed Sentences
-        // AND match sceneId if provided
-        final items = service.items
+        final items = VocabService().items
             .where(
-              (i) =>
-                  i.tag != 'Grammar Point' &&
-                  i.tag != 'Analyzed Sentence' &&
-                  (sceneId == null || i.scenarioId == sceneId),
+              (item) =>
+                  item.tag == 'Analyzed Sentence' &&
+                  (sceneId == null || item.scenarioId == sceneId),
             )
             .toList();
 
         if (items.isEmpty) {
-          return const EmptyStateWidget(
-            message: 'No vocabulary saved yet',
-            imagePath: 'assets/empty_state_pear.png',
+          return const Center(
+            child: EmptyStateWidget(
+              message: 'No analyzed sentences saved yet',
+              imagePath: 'assets/empty_state_pear.png',
+            ),
           );
         }
 
@@ -45,9 +38,9 @@ class VocabListWidget extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: Colors.purple[50],
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue[100]!),
+                border: Border.all(color: Colors.purple[100]!),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,18 +49,19 @@ class VocabListWidget extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          item.phrase,
+                          item.phrase, // The sentence
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue[900],
+                            color: Colors.purple[900],
+                            height: 1.4,
                           ),
                         ),
                       ),
                       IconButton(
                         icon: Icon(
                           Icons.delete_outline,
-                          color: Colors.blue[300],
+                          color: Colors.purple[300],
                         ),
                         onPressed: () {
                           VocabService().remove(item.phrase);
@@ -75,14 +69,15 @@ class VocabListWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (item.translation.isNotEmpty) ...[
+                  if (item.translation.isNotEmpty &&
+                      item.translation != 'Analyzed Sentence') ...[
                     const SizedBox(height: 8),
                     Text(
-                      item.translation,
+                      item.translation, // "AI Message Analysis" or manual
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue[800],
-                        height: 1.5,
+                        fontSize: 12,
+                        color: Colors.purple[700],
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ],

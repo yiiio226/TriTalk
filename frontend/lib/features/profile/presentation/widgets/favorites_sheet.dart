@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../features/study/data/vocab_service.dart';
-import 'styled_drawer.dart';
-import 'empty_state_widget.dart';
+import '../../../study/data/vocab_service.dart';
+import '../../../../core/widgets/styled_drawer.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;

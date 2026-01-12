@@ -7,13 +7,13 @@ import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:frontend/design/app_design_system.dart';
 import 'package:path_provider/path_provider.dart';
-import '../models/message.dart';
-import '../widgets/shadowing_sheet.dart';
-import '../widgets/save_note_sheet.dart';
-import '../widgets/voice_feedback_sheet.dart';
-import '../services/api_service.dart';
-import '../services/preferences_service.dart';
-import '../services/storage_key_service.dart';
+import '../../../../models/message.dart';
+import '../../../study/presentation/widgets/shadowing_sheet.dart';
+import '../../../study/presentation/widgets/save_note_sheet.dart';
+import 'voice_feedback_sheet.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../../../../core/data/local/preferences_service.dart';
+import '../../../../core/data/local/storage_key_service.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -486,7 +486,7 @@ class _ChatBubbleState extends State<ChatBubble>
                       ],
                     ),
                   ],
-                  if (widget.message.isFeedbackLoading) ...[ 
+                  if (widget.message.isFeedbackLoading) ...[
                     const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -532,9 +532,10 @@ class _ChatBubbleState extends State<ChatBubble>
                                       height: 10,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 1,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.black,
-                                        ),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
                                       ),
                                     )
                                   else
@@ -848,12 +849,8 @@ class _ChatBubbleState extends State<ChatBubble>
                           : widget.message.content,
                       styleSheet: MarkdownStyleSheet(
                         p: const TextStyle(fontSize: 14, height: 1.4),
-                        strong: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        em: const TextStyle(
-                          fontStyle: FontStyle.italic,
-                        ),
+                        strong: const TextStyle(fontWeight: FontWeight.bold),
+                        em: const TextStyle(fontStyle: FontStyle.italic),
                       ),
                       selectable: !widget.isMultiSelectMode,
                     ),

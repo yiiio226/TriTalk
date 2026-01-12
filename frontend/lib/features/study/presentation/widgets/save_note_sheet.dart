@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../features/study/data/vocab_service.dart';
-import 'styled_drawer.dart';
+import '../../data/vocab_service.dart';
+import '../../../../core/widgets/styled_drawer.dart';
 
 class SaveNoteSheet extends StatefulWidget {
   final String originalSentence;

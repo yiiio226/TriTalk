@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
-import '../models/scene.dart';
-import '../services/api_service.dart';
-import 'top_toast.dart';
-import 'styled_drawer.dart';
+import '../../../../models/scene.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../../../../core/widgets/top_toast.dart';
+import '../../../../core/widgets/styled_drawer.dart';
 
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({super.key});
@@ -37,8 +37,8 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     // Call API to generate scene
     try {
       final generatedScene = await ApiService().generateScene(
-        _scenarioController.text.trim(), 
-        _selectedTone
+        _scenarioController.text.trim(),
+        _selectedTone,
       );
 
       final newScene = Scene(
@@ -48,14 +48,14 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         aiRole: generatedScene.aiRole,
         userRole: generatedScene.userRole,
         category: 'Custom',
-        difficulty: _selectedTone, 
+        difficulty: _selectedTone,
         initialMessage: generatedScene.initialMessage,
         goal: generatedScene.goal,
         emoji: generatedScene.emoji,
         color: _generateRandomPastelColor(),
-        iconPath: "", 
+        iconPath: "",
       );
-      
+
       if (!mounted) return;
 
       setState(() {
@@ -63,7 +63,6 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
       });
 
       Navigator.of(context).pop(newScene);
-
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -82,9 +81,11 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     });
 
     try {
-      final polished = await ApiService().polishScenario(text).timeout(const Duration(seconds: 30));
+      final polished = await ApiService()
+          .polishScenario(text)
+          .timeout(const Duration(seconds: 30));
       if (!mounted) return;
-      
+
       setState(() {
         _scenarioController.text = polished;
         _isPolishing = false;
@@ -96,7 +97,11 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         _isPolishing = false;
       });
       final errorMessage = e.toString().replaceAll('Exception: ', '');
-      showTopToast(context, 'Failed to polish scenario: $errorMessage', isError: true);
+      showTopToast(
+        context,
+        'Failed to polish scenario: $errorMessage',
+        isError: true,
+      );
     }
   }
 
@@ -108,9 +113,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.minHeight,
-              ),
+              constraints: BoxConstraints(minHeight: constraints.minHeight),
               child: IntrinsicHeight(
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
@@ -122,7 +125,10 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                         const SizedBox(width: 8),
                         const Text(
                           'Create Your Own Scenario',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const Spacer(),
                         IconButton(
@@ -140,7 +146,9 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          border: Border.all(
+                            color: Colors.blue.withOpacity(0.3),
+                          ),
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.grey[50],
                         ),
@@ -157,7 +165,12 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                                 hintText:
                                     'Example: I need to return a defective product, but the store clerk is being difficult...',
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.fromLTRB(16, 16, 40, 16),
+                                contentPadding: EdgeInsets.fromLTRB(
+                                  16,
+                                  16,
+                                  40,
+                                  16,
+                                ),
                               ),
                             ),
                             Padding(
@@ -184,7 +197,10 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                                           height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.blue,
+                                                ),
                                           ),
                                         )
                                       : const Icon(
@@ -209,18 +225,26 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(27), // Rounded pill shape
+                            borderRadius: BorderRadius.circular(
+                              27,
+                            ), // Rounded pill shape
                           ),
                         ),
                         child: _isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text(
                                 'Generate Scenario',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                       ),
                     ),
@@ -234,7 +258,11 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
     );
   }
 
-  Widget _buildOptionChip(String label, String groupValue, Function(String) onSelect) {
+  Widget _buildOptionChip(
+    String label,
+    String groupValue,
+    Function(String) onSelect,
+  ) {
     final isSelected = label == groupValue;
     return ChoiceChip(
       label: Text(label),

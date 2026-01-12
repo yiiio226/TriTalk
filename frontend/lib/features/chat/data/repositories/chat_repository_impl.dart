@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../../models/message.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/chat_history_service.dart';
+import '../../../../core/data/api/api_service.dart';
+import '../chat_history_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 
 /// Implementation of [ChatRepository] that coordinates between:
