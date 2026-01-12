@@ -492,4 +492,14 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   void setTranscribing(bool isTranscribing) {
     state = state.copyWith(isTranscribing: isTranscribing);
   }
+
+  /// Clear error state
+  void clearError() {
+    state = state.copyWith(error: null, showErrorBanner: false);
+  }
+
+  /// Update recording duration (for UI display)
+  void updateRecordingDuration(int duration) {
+    state = state.copyWith(recordingDuration: duration);
+  }
 }

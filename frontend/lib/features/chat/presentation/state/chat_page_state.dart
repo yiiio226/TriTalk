@@ -18,6 +18,9 @@ abstract class ChatPageState with _$ChatPageState {
     /// Whether voice recording is active
     @Default(false) bool isRecording,
 
+    /// Current recording duration in seconds (for UI display)
+    @Default(0) int recordingDuration,
+
     /// Whether voice transcription is in progress
     @Default(false) bool isTranscribing,
 

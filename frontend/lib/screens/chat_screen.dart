@@ -44,7 +44,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   // Voice input state
   final AudioRecorder _audioRecorder = AudioRecorder();
   Timer? _recordingTimer;
-  int _currentRecordingDuration = 0;
 
   // Animation controller for pulsing microphone
   late AnimationController _pulseController;
@@ -54,25 +53,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   String? _playingMessageId;
   final bool _isPlaying = false;
 
-  // Getters for Riverpod State
+  // ValueNotifier for text input state (triggers rebuild when text changes)
+  final ValueNotifier<bool> _hasTextNotifier = ValueNotifier(false);
+
+  // Getter for notifier (read-only access)
   ChatPageNotifier get _notifier =>
       ref.read(chatPageNotifierProvider(widget.scene).notifier);
-  ChatPageState get _readState =>
-      ref.read(chatPageNotifierProvider(widget.scene));
 
-  List<Message> get _messages => _readState.messages;
-  bool get _isMultiSelectMode => _readState.isMultiSelectMode;
-  Set<String> get _selectedMessageIds => _readState.selectedMessageIds;
-  List<String>? get _cachedHints => _readState.cachedHints;
-  bool get _isRecordingVoice => _readState.isRecording;
-  bool get _isOptimizing => _readState.isOptimizing;
-  int get _hintsMessageCount => _messages.length; // Approximate check
+  // Getters for state access in methods outside build() - use ref.read for non-reactive access
+  ChatPageState get _state => ref.read(chatPageNotifierProvider(widget.scene));
+  List<Message> get _messages => _state.messages;
+  bool get _isMultiSelectMode => _state.isMultiSelectMode;
+  Set<String> get _selectedMessageIds => _state.selectedMessageIds;
+  List<String>? get _cachedHints => _state.cachedHints;
+  int get _currentRecordingDuration => _state.recordingDuration;
+  bool get _isRecordingVoice => _state.isRecording;
+  bool get _isOptimizing => _state.isOptimizing;
+  int get _hintsMessageCount => _messages.length;
 
   // Error state getters
-  bool get _showErrorBanner =>
-      _readState.showErrorBanner || _readState.error != null;
-  bool get _initialLoadFailed => _messages.isEmpty && _readState.error != null;
-  bool get _isTimeoutError => _readState.error?.contains('timed out') ?? false;
+  bool get _showErrorBanner => _state.showErrorBanner || _state.error != null;
+  bool get _initialLoadFailed => _messages.isEmpty && _state.error != null;
+  bool get _isTimeoutError => _state.error?.contains('timed out') ?? false;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,8 +102,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifier.loadMessages();
     });
+
+    // Listen to text changes via ValueNotifier (no setState needed)
     _textController.addListener(() {
-      setState(() {}); // Rebuild to update optimization button state
+      _hasTextNotifier.value = _textController.text.trim().isNotEmpty;
     });
 
     // Listen to keyboard changes and scroll to bottom when keyboard appears
@@ -156,6 +160,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _audioPlayer.dispose();
     _textController.dispose();
     _scrollController.dispose();
+    _hasTextNotifier.dispose();
     super.dispose();
   }
 
@@ -177,20 +182,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   void _startRecordingTimer() {
-    _currentRecordingDuration = 0;
+    _notifier.updateRecordingDuration(0);
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _currentRecordingDuration++;
-      });
+      final state = ref.read(chatPageNotifierProvider(widget.scene));
+      _notifier.updateRecordingDuration(state.recordingDuration + 1);
     });
   }
 
   void _stopRecordingTimer() {
     _recordingTimer?.cancel();
     _recordingTimer = null;
-    setState(() {
-      _currentRecordingDuration = 0;
-    });
+    _notifier.updateRecordingDuration(0);
   }
 
   /// Enhanced voice recording stop with options from main branch
@@ -342,6 +344,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Watch the state for reactive updates - this triggers rebuilds when state changes
+    // We call ref.watch to subscribe to state changes even though we use getters for access
+    ref.watch(chatPageNotifierProvider(widget.scene));
+
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 64, // Added width for custom leading

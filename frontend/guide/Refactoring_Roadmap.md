@@ -49,20 +49,20 @@ _Target: Decouple Data logic from UI logic. UI should never import `http` or `su
 
 \_Target: Slim down `ChatScreen.dart`
 
-- [ ] **3.1. Design Immutable State**
-  - [ ] Create `features/chat/presentation/state/chat_page_state.dart` using Freezed.
+- [x] **3.1. Design Immutable State**
+  - [x] Create `features/chat/presentation/state/chat_page_state.dart` using Freezed.
     - Fields: `isLoading`, `isRecording`, `messages` (List), `currentScene`, `selectionMode`, etc.
-- [ ] **3.2. Create ChatPageNotifier**
-  - [ ] Create `features/chat/presentation/notifiers/chat_page_notifier.dart`.
-  - [ ] Move **Business Logic** from `_ChatScreenState` methods here:
-    - [ ] `sendMessage()`
-    - [ ] `handleAnalyze()`
-    - [ ] `deleteMessages()`
-    - [ ] `toggleSelectionMode()`
-- [ ] **3.3. Refactor ChatScreen (The Big One)**
-  - [ ] Convert `ChatScreen` from `StatefulWidget` to `ConsumerWidget`.
-  - [ ] Replace `setState` calls with `ref.read(chatProvider.notifier).action()`.
-  - [ ] Replace UI rendering logic to read from `ref.watch(chatProvider)`.
+- [x] **3.2. Create ChatPageNotifier**
+  - [x] Create `features/chat/presentation/notifiers/chat_page_notifier.dart`.
+  - [x] Move **Business Logic** from `_ChatScreenState` methods here:
+    - [x] `sendMessage()`
+    - [x] `handleAnalyze()` (as `analyzeMessage()`)
+    - [x] `deleteMessages()` (as `deleteSelectedMessages()`)
+    - [x] `toggleSelectionMode()` (as `toggleMultiSelectMode()`)
+- [x] **3.3. Refactor ChatScreen (The Big One)**
+  - [x] Convert `ChatScreen` from `StatefulWidget` to `ConsumerStatefulWidget` (kept Stateful for animation/controller lifecycle).
+  - [x] Replace `setState` calls with `ref.read(chatProvider.notifier).action()`.
+  - [x] Replace UI rendering logic to read from `ref.watch(chatProvider)`.
   - [ ] Extract sub-widgets (e.g., `ChatInputArea`, `AiMessageBubble`) into separate files if not already done.
 
 ### Phase 4: Structural Reorganization (Core/Features)

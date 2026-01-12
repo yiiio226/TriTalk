@@ -18,7 +18,8 @@ mixin _$ChatPageState {
  List<Message> get messages;/// Whether the initial load is in progress
  bool get isLoading;/// Whether a message is currently being sent
  bool get isSending;/// Whether voice recording is active
- bool get isRecording;/// Whether voice transcription is in progress
+ bool get isRecording;/// Current recording duration in seconds (for UI display)
+ int get recordingDuration;/// Whether voice transcription is in progress
  bool get isTranscribing;/// Whether the app is currently playing audio
  bool get isPlayingAudio;/// ID of the message currently playing audio
  String? get playingMessageId;/// Whether multi-select mode is active
@@ -39,16 +40,16 @@ $ChatPageStateCopyWith<ChatPageState> get copyWith => _$ChatPageStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatPageState&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isSending, isSending) || other.isSending == isSending)&&(identical(other.isRecording, isRecording) || other.isRecording == isRecording)&&(identical(other.isTranscribing, isTranscribing) || other.isTranscribing == isTranscribing)&&(identical(other.isPlayingAudio, isPlayingAudio) || other.isPlayingAudio == isPlayingAudio)&&(identical(other.playingMessageId, playingMessageId) || other.playingMessageId == playingMessageId)&&(identical(other.isMultiSelectMode, isMultiSelectMode) || other.isMultiSelectMode == isMultiSelectMode)&&const DeepCollectionEquality().equals(other.selectedMessageIds, selectedMessageIds)&&(identical(other.error, error) || other.error == error)&&(identical(other.showErrorBanner, showErrorBanner) || other.showErrorBanner == showErrorBanner)&&(identical(other.isTimeoutError, isTimeoutError) || other.isTimeoutError == isTimeoutError)&&const DeepCollectionEquality().equals(other.cachedHints, cachedHints)&&(identical(other.isOptimizing, isOptimizing) || other.isOptimizing == isOptimizing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatPageState&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isSending, isSending) || other.isSending == isSending)&&(identical(other.isRecording, isRecording) || other.isRecording == isRecording)&&(identical(other.recordingDuration, recordingDuration) || other.recordingDuration == recordingDuration)&&(identical(other.isTranscribing, isTranscribing) || other.isTranscribing == isTranscribing)&&(identical(other.isPlayingAudio, isPlayingAudio) || other.isPlayingAudio == isPlayingAudio)&&(identical(other.playingMessageId, playingMessageId) || other.playingMessageId == playingMessageId)&&(identical(other.isMultiSelectMode, isMultiSelectMode) || other.isMultiSelectMode == isMultiSelectMode)&&const DeepCollectionEquality().equals(other.selectedMessageIds, selectedMessageIds)&&(identical(other.error, error) || other.error == error)&&(identical(other.showErrorBanner, showErrorBanner) || other.showErrorBanner == showErrorBanner)&&(identical(other.isTimeoutError, isTimeoutError) || other.isTimeoutError == isTimeoutError)&&const DeepCollectionEquality().equals(other.cachedHints, cachedHints)&&(identical(other.isOptimizing, isOptimizing) || other.isOptimizing == isOptimizing));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(messages),isLoading,isSending,isRecording,isTranscribing,isPlayingAudio,playingMessageId,isMultiSelectMode,const DeepCollectionEquality().hash(selectedMessageIds),error,showErrorBanner,isTimeoutError,const DeepCollectionEquality().hash(cachedHints),isOptimizing);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(messages),isLoading,isSending,isRecording,recordingDuration,isTranscribing,isPlayingAudio,playingMessageId,isMultiSelectMode,const DeepCollectionEquality().hash(selectedMessageIds),error,showErrorBanner,isTimeoutError,const DeepCollectionEquality().hash(cachedHints),isOptimizing);
 
 @override
 String toString() {
-  return 'ChatPageState(messages: $messages, isLoading: $isLoading, isSending: $isSending, isRecording: $isRecording, isTranscribing: $isTranscribing, isPlayingAudio: $isPlayingAudio, playingMessageId: $playingMessageId, isMultiSelectMode: $isMultiSelectMode, selectedMessageIds: $selectedMessageIds, error: $error, showErrorBanner: $showErrorBanner, isTimeoutError: $isTimeoutError, cachedHints: $cachedHints, isOptimizing: $isOptimizing)';
+  return 'ChatPageState(messages: $messages, isLoading: $isLoading, isSending: $isSending, isRecording: $isRecording, recordingDuration: $recordingDuration, isTranscribing: $isTranscribing, isPlayingAudio: $isPlayingAudio, playingMessageId: $playingMessageId, isMultiSelectMode: $isMultiSelectMode, selectedMessageIds: $selectedMessageIds, error: $error, showErrorBanner: $showErrorBanner, isTimeoutError: $isTimeoutError, cachedHints: $cachedHints, isOptimizing: $isOptimizing)';
 }
 
 
@@ -59,7 +60,7 @@ abstract mixin class $ChatPageStateCopyWith<$Res>  {
   factory $ChatPageStateCopyWith(ChatPageState value, $Res Function(ChatPageState) _then) = _$ChatPageStateCopyWithImpl;
 @useResult
 $Res call({
- List<Message> messages, bool isLoading, bool isSending, bool isRecording, bool isTranscribing, bool isPlayingAudio, String? playingMessageId, bool isMultiSelectMode, Set<String> selectedMessageIds, String? error, bool showErrorBanner, bool isTimeoutError, List<String>? cachedHints, bool isOptimizing
+ List<Message> messages, bool isLoading, bool isSending, bool isRecording, int recordingDuration, bool isTranscribing, bool isPlayingAudio, String? playingMessageId, bool isMultiSelectMode, Set<String> selectedMessageIds, String? error, bool showErrorBanner, bool isTimeoutError, List<String>? cachedHints, bool isOptimizing
 });
 
 
@@ -76,13 +77,14 @@ class _$ChatPageStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatPageState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? isLoading = null,Object? isSending = null,Object? isRecording = null,Object? isTranscribing = null,Object? isPlayingAudio = null,Object? playingMessageId = freezed,Object? isMultiSelectMode = null,Object? selectedMessageIds = null,Object? error = freezed,Object? showErrorBanner = null,Object? isTimeoutError = null,Object? cachedHints = freezed,Object? isOptimizing = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? isLoading = null,Object? isSending = null,Object? isRecording = null,Object? recordingDuration = null,Object? isTranscribing = null,Object? isPlayingAudio = null,Object? playingMessageId = freezed,Object? isMultiSelectMode = null,Object? selectedMessageIds = null,Object? error = freezed,Object? showErrorBanner = null,Object? isTimeoutError = null,Object? cachedHints = freezed,Object? isOptimizing = null,}) {
   return _then(_self.copyWith(
 messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as List<Message>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isSending: null == isSending ? _self.isSending : isSending // ignore: cast_nullable_to_non_nullable
 as bool,isRecording: null == isRecording ? _self.isRecording : isRecording // ignore: cast_nullable_to_non_nullable
-as bool,isTranscribing: null == isTranscribing ? _self.isTranscribing : isTranscribing // ignore: cast_nullable_to_non_nullable
+as bool,recordingDuration: null == recordingDuration ? _self.recordingDuration : recordingDuration // ignore: cast_nullable_to_non_nullable
+as int,isTranscribing: null == isTranscribing ? _self.isTranscribing : isTranscribing // ignore: cast_nullable_to_non_nullable
 as bool,isPlayingAudio: null == isPlayingAudio ? _self.isPlayingAudio : isPlayingAudio // ignore: cast_nullable_to_non_nullable
 as bool,playingMessageId: freezed == playingMessageId ? _self.playingMessageId : playingMessageId // ignore: cast_nullable_to_non_nullable
 as String?,isMultiSelectMode: null == isMultiSelectMode ? _self.isMultiSelectMode : isMultiSelectMode // ignore: cast_nullable_to_non_nullable
@@ -177,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Message> messages,  bool isLoading,  bool isSending,  bool isRecording,  bool isTranscribing,  bool isPlayingAudio,  String? playingMessageId,  bool isMultiSelectMode,  Set<String> selectedMessageIds,  String? error,  bool showErrorBanner,  bool isTimeoutError,  List<String>? cachedHints,  bool isOptimizing)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Message> messages,  bool isLoading,  bool isSending,  bool isRecording,  int recordingDuration,  bool isTranscribing,  bool isPlayingAudio,  String? playingMessageId,  bool isMultiSelectMode,  Set<String> selectedMessageIds,  String? error,  bool showErrorBanner,  bool isTimeoutError,  List<String>? cachedHints,  bool isOptimizing)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatPageState() when $default != null:
-return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording,_that.isTranscribing,_that.isPlayingAudio,_that.playingMessageId,_that.isMultiSelectMode,_that.selectedMessageIds,_that.error,_that.showErrorBanner,_that.isTimeoutError,_that.cachedHints,_that.isOptimizing);case _:
+return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording,_that.recordingDuration,_that.isTranscribing,_that.isPlayingAudio,_that.playingMessageId,_that.isMultiSelectMode,_that.selectedMessageIds,_that.error,_that.showErrorBanner,_that.isTimeoutError,_that.cachedHints,_that.isOptimizing);case _:
   return orElse();
 
 }
@@ -198,10 +200,10 @@ return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Message> messages,  bool isLoading,  bool isSending,  bool isRecording,  bool isTranscribing,  bool isPlayingAudio,  String? playingMessageId,  bool isMultiSelectMode,  Set<String> selectedMessageIds,  String? error,  bool showErrorBanner,  bool isTimeoutError,  List<String>? cachedHints,  bool isOptimizing)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Message> messages,  bool isLoading,  bool isSending,  bool isRecording,  int recordingDuration,  bool isTranscribing,  bool isPlayingAudio,  String? playingMessageId,  bool isMultiSelectMode,  Set<String> selectedMessageIds,  String? error,  bool showErrorBanner,  bool isTimeoutError,  List<String>? cachedHints,  bool isOptimizing)  $default,) {final _that = this;
 switch (_that) {
 case _ChatPageState():
-return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording,_that.isTranscribing,_that.isPlayingAudio,_that.playingMessageId,_that.isMultiSelectMode,_that.selectedMessageIds,_that.error,_that.showErrorBanner,_that.isTimeoutError,_that.cachedHints,_that.isOptimizing);case _:
+return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording,_that.recordingDuration,_that.isTranscribing,_that.isPlayingAudio,_that.playingMessageId,_that.isMultiSelectMode,_that.selectedMessageIds,_that.error,_that.showErrorBanner,_that.isTimeoutError,_that.cachedHints,_that.isOptimizing);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -218,10 +220,10 @@ return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Message> messages,  bool isLoading,  bool isSending,  bool isRecording,  bool isTranscribing,  bool isPlayingAudio,  String? playingMessageId,  bool isMultiSelectMode,  Set<String> selectedMessageIds,  String? error,  bool showErrorBanner,  bool isTimeoutError,  List<String>? cachedHints,  bool isOptimizing)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Message> messages,  bool isLoading,  bool isSending,  bool isRecording,  int recordingDuration,  bool isTranscribing,  bool isPlayingAudio,  String? playingMessageId,  bool isMultiSelectMode,  Set<String> selectedMessageIds,  String? error,  bool showErrorBanner,  bool isTimeoutError,  List<String>? cachedHints,  bool isOptimizing)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatPageState() when $default != null:
-return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording,_that.isTranscribing,_that.isPlayingAudio,_that.playingMessageId,_that.isMultiSelectMode,_that.selectedMessageIds,_that.error,_that.showErrorBanner,_that.isTimeoutError,_that.cachedHints,_that.isOptimizing);case _:
+return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording,_that.recordingDuration,_that.isTranscribing,_that.isPlayingAudio,_that.playingMessageId,_that.isMultiSelectMode,_that.selectedMessageIds,_that.error,_that.showErrorBanner,_that.isTimeoutError,_that.cachedHints,_that.isOptimizing);case _:
   return null;
 
 }
@@ -233,7 +235,7 @@ return $default(_that.messages,_that.isLoading,_that.isSending,_that.isRecording
 
 
 class _ChatPageState implements ChatPageState {
-  const _ChatPageState({final  List<Message> messages = const [], this.isLoading = false, this.isSending = false, this.isRecording = false, this.isTranscribing = false, this.isPlayingAudio = false, this.playingMessageId, this.isMultiSelectMode = false, final  Set<String> selectedMessageIds = const {}, this.error, this.showErrorBanner = false, this.isTimeoutError = false, final  List<String>? cachedHints, this.isOptimizing = false}): _messages = messages,_selectedMessageIds = selectedMessageIds,_cachedHints = cachedHints;
+  const _ChatPageState({final  List<Message> messages = const [], this.isLoading = false, this.isSending = false, this.isRecording = false, this.recordingDuration = 0, this.isTranscribing = false, this.isPlayingAudio = false, this.playingMessageId, this.isMultiSelectMode = false, final  Set<String> selectedMessageIds = const {}, this.error, this.showErrorBanner = false, this.isTimeoutError = false, final  List<String>? cachedHints, this.isOptimizing = false}): _messages = messages,_selectedMessageIds = selectedMessageIds,_cachedHints = cachedHints;
   
 
 /// List of messages in the current conversation
@@ -251,6 +253,8 @@ class _ChatPageState implements ChatPageState {
 @override@JsonKey() final  bool isSending;
 /// Whether voice recording is active
 @override@JsonKey() final  bool isRecording;
+/// Current recording duration in seconds (for UI display)
+@override@JsonKey() final  int recordingDuration;
 /// Whether voice transcription is in progress
 @override@JsonKey() final  bool isTranscribing;
 /// Whether the app is currently playing audio
@@ -298,16 +302,16 @@ _$ChatPageStateCopyWith<_ChatPageState> get copyWith => __$ChatPageStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatPageState&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isSending, isSending) || other.isSending == isSending)&&(identical(other.isRecording, isRecording) || other.isRecording == isRecording)&&(identical(other.isTranscribing, isTranscribing) || other.isTranscribing == isTranscribing)&&(identical(other.isPlayingAudio, isPlayingAudio) || other.isPlayingAudio == isPlayingAudio)&&(identical(other.playingMessageId, playingMessageId) || other.playingMessageId == playingMessageId)&&(identical(other.isMultiSelectMode, isMultiSelectMode) || other.isMultiSelectMode == isMultiSelectMode)&&const DeepCollectionEquality().equals(other._selectedMessageIds, _selectedMessageIds)&&(identical(other.error, error) || other.error == error)&&(identical(other.showErrorBanner, showErrorBanner) || other.showErrorBanner == showErrorBanner)&&(identical(other.isTimeoutError, isTimeoutError) || other.isTimeoutError == isTimeoutError)&&const DeepCollectionEquality().equals(other._cachedHints, _cachedHints)&&(identical(other.isOptimizing, isOptimizing) || other.isOptimizing == isOptimizing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatPageState&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isSending, isSending) || other.isSending == isSending)&&(identical(other.isRecording, isRecording) || other.isRecording == isRecording)&&(identical(other.recordingDuration, recordingDuration) || other.recordingDuration == recordingDuration)&&(identical(other.isTranscribing, isTranscribing) || other.isTranscribing == isTranscribing)&&(identical(other.isPlayingAudio, isPlayingAudio) || other.isPlayingAudio == isPlayingAudio)&&(identical(other.playingMessageId, playingMessageId) || other.playingMessageId == playingMessageId)&&(identical(other.isMultiSelectMode, isMultiSelectMode) || other.isMultiSelectMode == isMultiSelectMode)&&const DeepCollectionEquality().equals(other._selectedMessageIds, _selectedMessageIds)&&(identical(other.error, error) || other.error == error)&&(identical(other.showErrorBanner, showErrorBanner) || other.showErrorBanner == showErrorBanner)&&(identical(other.isTimeoutError, isTimeoutError) || other.isTimeoutError == isTimeoutError)&&const DeepCollectionEquality().equals(other._cachedHints, _cachedHints)&&(identical(other.isOptimizing, isOptimizing) || other.isOptimizing == isOptimizing));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),isLoading,isSending,isRecording,isTranscribing,isPlayingAudio,playingMessageId,isMultiSelectMode,const DeepCollectionEquality().hash(_selectedMessageIds),error,showErrorBanner,isTimeoutError,const DeepCollectionEquality().hash(_cachedHints),isOptimizing);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),isLoading,isSending,isRecording,recordingDuration,isTranscribing,isPlayingAudio,playingMessageId,isMultiSelectMode,const DeepCollectionEquality().hash(_selectedMessageIds),error,showErrorBanner,isTimeoutError,const DeepCollectionEquality().hash(_cachedHints),isOptimizing);
 
 @override
 String toString() {
-  return 'ChatPageState(messages: $messages, isLoading: $isLoading, isSending: $isSending, isRecording: $isRecording, isTranscribing: $isTranscribing, isPlayingAudio: $isPlayingAudio, playingMessageId: $playingMessageId, isMultiSelectMode: $isMultiSelectMode, selectedMessageIds: $selectedMessageIds, error: $error, showErrorBanner: $showErrorBanner, isTimeoutError: $isTimeoutError, cachedHints: $cachedHints, isOptimizing: $isOptimizing)';
+  return 'ChatPageState(messages: $messages, isLoading: $isLoading, isSending: $isSending, isRecording: $isRecording, recordingDuration: $recordingDuration, isTranscribing: $isTranscribing, isPlayingAudio: $isPlayingAudio, playingMessageId: $playingMessageId, isMultiSelectMode: $isMultiSelectMode, selectedMessageIds: $selectedMessageIds, error: $error, showErrorBanner: $showErrorBanner, isTimeoutError: $isTimeoutError, cachedHints: $cachedHints, isOptimizing: $isOptimizing)';
 }
 
 
@@ -318,7 +322,7 @@ abstract mixin class _$ChatPageStateCopyWith<$Res> implements $ChatPageStateCopy
   factory _$ChatPageStateCopyWith(_ChatPageState value, $Res Function(_ChatPageState) _then) = __$ChatPageStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Message> messages, bool isLoading, bool isSending, bool isRecording, bool isTranscribing, bool isPlayingAudio, String? playingMessageId, bool isMultiSelectMode, Set<String> selectedMessageIds, String? error, bool showErrorBanner, bool isTimeoutError, List<String>? cachedHints, bool isOptimizing
+ List<Message> messages, bool isLoading, bool isSending, bool isRecording, int recordingDuration, bool isTranscribing, bool isPlayingAudio, String? playingMessageId, bool isMultiSelectMode, Set<String> selectedMessageIds, String? error, bool showErrorBanner, bool isTimeoutError, List<String>? cachedHints, bool isOptimizing
 });
 
 
@@ -335,13 +339,14 @@ class __$ChatPageStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatPageState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? isLoading = null,Object? isSending = null,Object? isRecording = null,Object? isTranscribing = null,Object? isPlayingAudio = null,Object? playingMessageId = freezed,Object? isMultiSelectMode = null,Object? selectedMessageIds = null,Object? error = freezed,Object? showErrorBanner = null,Object? isTimeoutError = null,Object? cachedHints = freezed,Object? isOptimizing = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? isLoading = null,Object? isSending = null,Object? isRecording = null,Object? recordingDuration = null,Object? isTranscribing = null,Object? isPlayingAudio = null,Object? playingMessageId = freezed,Object? isMultiSelectMode = null,Object? selectedMessageIds = null,Object? error = freezed,Object? showErrorBanner = null,Object? isTimeoutError = null,Object? cachedHints = freezed,Object? isOptimizing = null,}) {
   return _then(_ChatPageState(
 messages: null == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
 as List<Message>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isSending: null == isSending ? _self.isSending : isSending // ignore: cast_nullable_to_non_nullable
 as bool,isRecording: null == isRecording ? _self.isRecording : isRecording // ignore: cast_nullable_to_non_nullable
-as bool,isTranscribing: null == isTranscribing ? _self.isTranscribing : isTranscribing // ignore: cast_nullable_to_non_nullable
+as bool,recordingDuration: null == recordingDuration ? _self.recordingDuration : recordingDuration // ignore: cast_nullable_to_non_nullable
+as int,isTranscribing: null == isTranscribing ? _self.isTranscribing : isTranscribing // ignore: cast_nullable_to_non_nullable
 as bool,isPlayingAudio: null == isPlayingAudio ? _self.isPlayingAudio : isPlayingAudio // ignore: cast_nullable_to_non_nullable
 as bool,playingMessageId: freezed == playingMessageId ? _self.playingMessageId : playingMessageId // ignore: cast_nullable_to_non_nullable
 as String?,isMultiSelectMode: null == isMultiSelectMode ? _self.isMultiSelectMode : isMultiSelectMode // ignore: cast_nullable_to_non_nullable
