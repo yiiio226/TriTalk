@@ -47,7 +47,7 @@ _Target: Decouple Data logic from UI logic. UI should never import `http` or `su
 
 ### Phase 3: View Logic Extraction (Notifier Pattern)
 
-_Target: Slim down `ChatScreen.dart` from 2000+ lines to <500 lines._
+\_Target: Slim down `ChatScreen.dart`
 
 - [ ] **3.1. Design Immutable State**
   - [ ] Create `features/chat/presentation/state/chat_page_state.dart` using Freezed.

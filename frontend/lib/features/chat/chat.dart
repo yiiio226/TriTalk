@@ -13,3 +13,8 @@ export 'data/repositories/chat_repository_impl.dart';
 
 // Providers
 export 'providers/chat_repository_provider.dart';
+export 'providers/chat_page_provider.dart';
+
+// Presentation
+export 'presentation/state/chat_page_state.dart';
+export 'presentation/notifiers/chat_page_notifier.dart';
