@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
-import 'storage_key_service.dart';
+import '../../../core/data/local/storage_key_service.dart';
 
 class VocabItem {
   final String phrase;

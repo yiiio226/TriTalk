@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/auth/auth_provider.dart';
-import '../services/auth_service.dart';
-import '../services/user_service.dart';
-import '../data/language_constants.dart';
-import '../design/app_design_system.dart';
-import 'unified_favorites_screen.dart'; // Import UnifiedFavoritesScreen
-import 'paywall_screen.dart';
-import 'splash_screen.dart'; // For logout navigation
+import '../../../../core/auth/auth_provider.dart';
+import '../../../../services/auth_service.dart';
+import '../../data/services/user_service.dart';
+import '../../../../data/language_constants.dart';
+import '../../../../design/app_design_system.dart';
+import 'favorites_screen.dart'; // Import UnifiedFavoritesScreen
+import '../../../subscription/presentation/pages/paywall_screen.dart';
+import '../../../onboarding/presentation/pages/splash_screen.dart'; // For logout navigation
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

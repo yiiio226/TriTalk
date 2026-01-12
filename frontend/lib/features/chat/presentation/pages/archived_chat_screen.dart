@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/message.dart';
-import '../widgets/chat_bubble.dart';
-import '../services/chat_history_service.dart';
-import '../design/app_design_system.dart';
+import '../../../../models/message.dart';
+import '../../../../widgets/chat_bubble.dart';
+import '../../../../services/chat_history_service.dart';
+import '../../../../design/app_design_system.dart';
 
 class ArchivedChatScreen extends StatelessWidget {
   final BookmarkedConversation bookmark;
@@ -22,7 +22,7 @@ class ArchivedChatScreen extends StatelessWidget {
         feedback: msg.feedback,
         analysis: msg.analysis,
         isAnimated: false, // Disable animation for archived messages
-        isLoading: false,  // Ensure no loading state
+        isLoading: false, // Ensure no loading state
       );
     }).toList();
 
@@ -67,11 +67,10 @@ class ArchivedChatScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final msg = displayMessages[index];
                   return Align(
-                    alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: ChatBubble(
-                      key: ValueKey(msg.id),
-                      message: msg,
-                    ),
+                    alignment: msg.isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    child: ChatBubble(key: ValueKey(msg.id), message: msg),
                   );
                 },
               ),

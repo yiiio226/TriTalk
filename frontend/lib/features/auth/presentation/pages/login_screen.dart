@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/auth/auth_provider.dart';
-import '../core/auth/auth_state.dart';
-import '../design/app_design_system.dart';
-import 'home_screen.dart';
-import 'onboarding_screen.dart';
+import '../../../../core/auth/auth_provider.dart';
+import '../../../../core/auth/auth_state.dart';
+import '../../../../design/app_design_system.dart';
+import '../../../home/presentation/pages/home_screen.dart';
+import '../../../onboarding/presentation/pages/onboarding_screen.dart';
 
 /// Login screen using Riverpod for state management
 class LoginScreen extends ConsumerWidget {

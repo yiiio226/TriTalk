@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_history_service.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/history_skeleton_loader.dart';
-import '../screens/archived_chat_screen.dart';
+import '../features/chat/presentation/pages/archived_chat_screen.dart';
 
 class ChatHistoryListWidget extends StatefulWidget {
   final String? sceneId;
@@ -27,9 +27,9 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
     // Simulate network delay to show skeleton if needed, or just load
     // Using a small delay to ensure smoother transition if switching tabs
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     if (!mounted) return;
-    
+
     setState(() {
       _bookmarks = ChatHistoryService().getBookmarks();
       _isLoading = false;
@@ -53,25 +53,19 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                   const Text(
+                  const Text(
                     'Delete Conversation?',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
-                   const SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   const Text(
                     'Are you sure you want to delete this conversation?',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                   Row(
+                  Row(
                     children: [
                       Expanded(
                         child: TextButton(
@@ -86,9 +80,9 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
                           child: const Text(
                             'Cancel',
                             style: TextStyle(
-                               color: Colors.black,
-                               fontWeight: FontWeight.bold,
-                             ),
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -98,7 +92,7 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
                           onPressed: () => Navigator.of(context).pop(true),
                           style: TextButton.styleFrom(
                             backgroundColor: const Color(0xFFFF3B30),
-                             padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -108,7 +102,7 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                             ),
+                            ),
                           ),
                         ),
                       ),
@@ -126,11 +120,9 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
   void _deleteBookmark(String id) {
     ChatHistoryService().removeBookmark(id);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Conversation deleted"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Conversation deleted")));
     }
   }
 
@@ -139,7 +131,7 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
     if (_isLoading) {
       return const HistorySkeletonLoader();
     }
-    
+
     return ValueListenableBuilder<List<BookmarkedConversation>>(
       valueListenable: ChatHistoryService().bookmarksNotifier,
       builder: (context, bookmarks, _) {
@@ -149,7 +141,7 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
             imagePath: 'assets/empty_state_lemon.png',
           );
         }
-        
+
         return ListView.separated(
           padding: const EdgeInsets.all(20),
           itemCount: bookmarks.length,
@@ -173,15 +165,28 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
               },
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(item.preview, maxLines: 1, overflow: TextOverflow.ellipsis),
+                title: Text(
+                  item.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  item.preview,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(item.date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text(
+                      item.date,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.grey,
+                      ),
                       onPressed: () async {
                         final confirm = await _showDeleteConfirmDialog(context);
                         if (confirm == true) {

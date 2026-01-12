@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../models/scene.dart';
-import '../widgets/scene_card.dart';
-import '../widgets/custom_scene_dialog.dart';
-import '../widgets/scene_options_drawer.dart';
-import '../widgets/styled_drawer.dart';
-import '../services/chat_history_service.dart';
-import '../services/auth_service.dart';
-import '../services/scene_service.dart';
-import '../widgets/top_toast.dart';
-import '../design/app_design_system.dart';
-import 'chat_screen.dart';
-import 'profile_screen.dart';
-import 'scenario_configuration_screen.dart';
+import '../../../../models/scene.dart';
+import '../../../../widgets/scene_card.dart';
+import '../../../../widgets/custom_scene_dialog.dart';
+import '../../../../widgets/scene_options_drawer.dart';
+import '../../../../widgets/styled_drawer.dart';
+import '../../../../services/chat_history_service.dart';
+import '../../../../services/auth_service.dart';
+import '../../../../services/scene_service.dart';
+import '../../../../widgets/top_toast.dart';
+import '../../../../design/app_design_system.dart';
+import '../../../chat/presentation/pages/chat_screen.dart';
+import '../../../profile/presentation/pages/profile_screen.dart';
+import '../../../scenes/presentation/pages/scenario_configuration_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

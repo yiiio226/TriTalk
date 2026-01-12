@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import '../widgets/empty_state_widget.dart';
 
 class GrammarListWidget extends StatelessWidget {
@@ -13,8 +13,11 @@ class GrammarListWidget extends StatelessWidget {
       animation: VocabService(),
       builder: (context, child) {
         final items = VocabService().items
-            .where((item) => item.tag == 'Grammar Point' && 
-                             (sceneId == null || item.scenarioId == sceneId))
+            .where(
+              (item) =>
+                  item.tag == 'Grammar Point' &&
+                  (sceneId == null || item.scenarioId == sceneId),
+            )
             .toList();
 
         if (items.isEmpty) {
@@ -55,7 +58,10 @@ class GrammarListWidget extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete_outline, color: Colors.green[300]), // Subtle delete icon
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Colors.green[300],
+                        ), // Subtle delete icon
                         onPressed: () {
                           VocabService().remove(item.phrase);
                         },
@@ -63,15 +69,15 @@ class GrammarListWidget extends StatelessWidget {
                     ],
                   ),
                   if (item.translation.isNotEmpty) ...[
-                     const SizedBox(height: 8),
-                     Text(
-                       item.translation, // Explanation + Example
-                       style: TextStyle(
-                         fontSize: 14,
-                         color: Colors.green[800],
-                         height: 1.5,
-                       ),
-                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item.translation, // Explanation + Example
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.green[800],
+                        height: 1.5,
+                      ),
+                    ),
                   ],
                 ],
               ),

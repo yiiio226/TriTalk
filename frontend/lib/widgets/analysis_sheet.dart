@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/message.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import '../design/app_design_system.dart';
 import 'top_toast.dart';
 import 'styled_drawer.dart';

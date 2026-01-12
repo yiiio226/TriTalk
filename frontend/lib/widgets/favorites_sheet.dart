@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import 'styled_drawer.dart';
 import 'empty_state_widget.dart';
 
@@ -28,7 +28,7 @@ class FavoritesSheet extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -38,15 +38,15 @@ class FavoritesSheet extends StatelessWidget {
               builder: (context, child) {
                 final service = VocabService();
                 final items = service.getItemsForScenario(scenarioId);
-                
-                  if (items.isEmpty) {
-                    return const Center(
-                      child: EmptyStateWidget(
-                        message: 'No favorites yet for this scenario',
-                        imagePath: 'assets/empty_state_pear.png', 
-                      ),
-                    );
-                  }
+
+                if (items.isEmpty) {
+                  return const Center(
+                    child: EmptyStateWidget(
+                      message: 'No favorites yet for this scenario',
+                      imagePath: 'assets/empty_state_pear.png',
+                    ),
+                  );
+                }
 
                 return ListView.separated(
                   itemCount: items.length,
@@ -62,8 +62,9 @@ class FavoritesSheet extends StatelessWidget {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (item.translation.isNotEmpty && item.translation != "Smart Feedback")
-                             Text(item.translation),
+                          if (item.translation.isNotEmpty &&
+                              item.translation != "Smart Feedback")
+                            Text(item.translation),
                           Text(
                             item.tag,
                             style: TextStyle(
@@ -74,7 +75,11 @@ class FavoritesSheet extends StatelessWidget {
                         ],
                       ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
                         onPressed: () {
                           service.remove(item.phrase);
                         },

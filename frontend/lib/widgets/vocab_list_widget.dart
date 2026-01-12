@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/vocab_skeleton_loader.dart';
 
 class VocabListWidget extends StatelessWidget {
   final String? sceneId;
-  
+
   const VocabListWidget({super.key, this.sceneId});
 
   @override
@@ -17,13 +17,17 @@ class VocabListWidget extends StatelessWidget {
         if (service.isLoading && service.items.isEmpty) {
           return const VocabSkeletonLoader();
         }
-        
+
         // Filter out Grammar Points AND Analyzed Sentences
         // AND match sceneId if provided
-        final items = service.items.where((i) => 
-            i.tag != 'Grammar Point' && i.tag != 'Analyzed Sentence' &&
-            (sceneId == null || i.scenarioId == sceneId)
-        ).toList();
+        final items = service.items
+            .where(
+              (i) =>
+                  i.tag != 'Grammar Point' &&
+                  i.tag != 'Analyzed Sentence' &&
+                  (sceneId == null || i.scenarioId == sceneId),
+            )
+            .toList();
 
         if (items.isEmpty) {
           return const EmptyStateWidget(
@@ -31,7 +35,7 @@ class VocabListWidget extends StatelessWidget {
             imagePath: 'assets/empty_state_pear.png',
           );
         }
-        
+
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: items.length,
@@ -61,7 +65,10 @@ class VocabListWidget extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete_outline, color: Colors.blue[300]),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Colors.blue[300],
+                        ),
                         onPressed: () {
                           VocabService().remove(item.phrase);
                         },
@@ -69,15 +76,15 @@ class VocabListWidget extends StatelessWidget {
                     ],
                   ),
                   if (item.translation.isNotEmpty) ...[
-                     const SizedBox(height: 8),
-                     Text(
-                       item.translation,
-                       style: TextStyle(
-                         fontSize: 14,
-                         color: Colors.blue[800],
-                         height: 1.5,
-                       ),
-                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item.translation,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue[800],
+                        height: 1.5,
+                      ),
+                    ),
                   ],
                 ],
               ),

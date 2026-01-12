@@ -90,40 +90,40 @@ _Target: Clean component isolation._
 
 _Target: Move global services to `lib/core` as per ApparenceKit guidelines._
 
-- [ ] **6.1. Networking & API**
-  - [ ] Move `services/api_service.dart` -> `core/data/api/api_service.dart`.
-  - [ ] Move `services/auth_interceptor.dart`, `services/client_provider.dart` -> `core/data/api/`.
-- [ ] **6.2. Local Storage & Env**
-  - [ ] Move `services/preferences_service.dart` -> `core/data/local/preferences_service.dart`.
-  - [ ] Move `services/storage_key_service.dart` -> `core/data/local/storage_keys.dart`.
-  - [ ] Create `core/utils/` for any helpers currently in services.
-- [ ] **6.3. Authentication Service**
-  - [ ] Move `services/auth_service.dart` -> `features/auth/data/services/` (or keep in `core/auth/data` if shared).
+- [x] **6.1. Networking & API**
+  - [x] Move `services/api_service.dart` -> `core/data/api/api_service.dart`.
+  - [x] Move `services/auth_interceptor.dart`, `services/client_provider.dart` -> `core/data/api/`.
+- [x] **6.2. Local Storage & Env**
+  - [x] Move `services/preferences_service.dart` -> `core/data/local/preferences_service.dart`.
+  - [x] Move `services/storage_key_service.dart` -> `core/data/local/storage_keys.dart` (Moved as `storage_key_service.dart`).
+  - [x] Create `core/utils/` for any helpers currently in services.
+- [x] **6.3. Authentication Service**
+  - [x] Move `services/auth_service.dart` -> `features/auth/data/services/` (or keep in `core/auth/data` if shared).
 
 ### Phase 7: Feature Completion (Screens -> Features)
 
 _Target: Move all screens from `lib/screens/` to their respective feature modules._
 
-- [ ] **7.1. Auth & Onboarding Module**
-  - [ ] Move `screens/login_screen.dart` -> `features/auth/presentation/pages/`.
-  - [ ] Move `screens/onboarding_screen.dart` -> `features/onboarding/presentation/pages/`.
-  - [ ] Move `screens/splash_screen.dart` -> `features/onboarding/presentation/pages/` (or `core/presentation`).
-- [ ] **7.2. Profile Module**
-  - [ ] Move `screens/profile_screen.dart` -> `features/profile/presentation/pages/`.
-  - [ ] Move `screens/unified_favorites_screen.dart` -> `features/profile/presentation/pages/favorites_screen.dart`.
-  - [ ] Move `services/user_service.dart` -> `features/profile/data/services/`.
-- [ ] **7.3. Scenes Module**
-  - [ ] Move `screens/scenario_configuration_screen.dart` -> `features/scenes/presentation/pages/`.
-- [ ] **7.4. Home Module**
-  - [ ] Create `features/home` structure.
-  - [ ] Move `screens/home_screen.dart` -> `features/home/presentation/pages/`.
-- [ ] **7.5. Subscription Module**
-  - [ ] Create `features/subscription`.
-  - [ ] Move `screens/paywall_screen.dart` -> `features/subscription/presentation/pages/`.
-  - [ ] Move `services/revenue_cat_service.dart` -> `features/subscription/data/services/`.
-- [ ] **7.6. Study Tools (Vocab/Notes)**
-  - [ ] Create `features/study`.
-  - [ ] Move `services/vocab_service.dart`, `services/note_service.dart` into `features/study/data/`.
+- [x] **7.1. Auth & Onboarding Module**
+  - [x] Move `screens/login_screen.dart` -> `features/auth/presentation/pages/`.
+  - [x] Move `screens/onboarding_screen.dart` -> `features/onboarding/presentation/pages/`.
+  - [x] Move `screens/splash_screen.dart` -> `features/onboarding/presentation/pages/` (or `core/presentation`).
+- [x] **7.2. Profile Module**
+  - [x] Move `screens/profile_screen.dart` -> `features/profile/presentation/pages/`.
+  - [x] Move `screens/unified_favorites_screen.dart` -> `features/profile/presentation/pages/favorites_screen.dart`.
+  - [x] Move `services/user_service.dart` -> `features/profile/data/services/`.
+- [x] **7.3. Scenes Module**
+  - [x] Move `screens/scenario_configuration_screen.dart` -> `features/scenes/presentation/pages/`.
+- [x] **7.4. Home Module**
+  - [x] Create `features/home` structure.
+  - [x] Move `screens/home_screen.dart` -> `features/home/presentation/pages/`.
+- [x] **7.5. Subscription Module**
+  - [x] Create `features/subscription`.
+  - [x] Move `screens/paywall_screen.dart` -> `features/subscription/presentation/pages/`.
+  - [x] Move `services/revenue_cat_service.dart` -> `features/subscription/data/services/`.
+- [x] **7.6. Study Tools (Vocab/Notes)**
+  - [x] Create `features/study`.
+  - [x] Move `services/vocab_service.dart`, `services/note_service.dart` into `features/study/data/`.
 
 ### Phase 8: Final Cleanup & Standardization
 

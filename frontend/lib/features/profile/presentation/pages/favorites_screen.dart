@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../widgets/vocab_list_widget.dart';
-import '../widgets/grammar_list_widget.dart'; // Transformed from sentence_list_widget
-import '../widgets/saved_sentence_list_widget.dart'; // For full sentences
-import '../widgets/chat_history_list_widget.dart';
-import '../design/app_design_system.dart';
+import '../../../../widgets/vocab_list_widget.dart';
+import '../../../../widgets/grammar_list_widget.dart'; // Transformed from sentence_list_widget
+import '../../../../widgets/saved_sentence_list_widget.dart'; // For full sentences
+import '../../../../widgets/chat_history_list_widget.dart';
+import '../../../../design/app_design_system.dart';
 
 class UnifiedFavoritesScreen extends StatefulWidget {
   final String? sceneId; // Optional filter
-  
+
   const UnifiedFavoritesScreen({super.key, this.sceneId});
 
   @override
@@ -63,13 +63,11 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Tab Bar
             Container(
               decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200),
-                ),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
               ),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -81,8 +79,12 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                   indicatorWeight: 3,
                   isScrollable: true, // Allow scrolling if tabs don't fit
                   tabAlignment: TabAlignment.start, // Align tabs to the start
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Increased left padding
-                  labelPadding: const EdgeInsets.only(right: 24), // Add space between tabs, but not before first
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                  ), // Increased left padding
+                  labelPadding: const EdgeInsets.only(
+                    right: 24,
+                  ), // Add space between tabs, but not before first
                   labelStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -95,12 +97,13 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                     const Tab(text: 'Vocabulary'),
                     const Tab(text: 'Sentence'),
                     const Tab(text: 'Grammar'),
-                    if (widget.sceneId == null) const Tab(text: 'Chat'), // Only show in global favorites
+                    if (widget.sceneId == null)
+                      const Tab(text: 'Chat'), // Only show in global favorites
                   ],
                 ),
               ),
             ),
-            
+
             // Tab Content
             Expanded(
               child: TabBarView(
@@ -109,7 +112,10 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                   VocabListWidget(sceneId: widget.sceneId),
                   SavedSentenceListWidget(sceneId: widget.sceneId),
                   GrammarListWidget(sceneId: widget.sceneId),
-                  if (widget.sceneId == null) ChatHistoryListWidget(sceneId: widget.sceneId), // Only show in global favorites
+                  if (widget.sceneId == null)
+                    ChatHistoryListWidget(
+                      sceneId: widget.sceneId,
+                    ), // Only show in global favorites
                 ],
               ),
             ),

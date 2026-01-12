@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'auth_service.dart';
+import '../../../auth/data/services/auth_service.dart';
 
 class UserService {
   final AuthService _authService = AuthService();

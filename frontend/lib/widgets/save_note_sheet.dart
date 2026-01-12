@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import 'styled_drawer.dart';
 
 class SaveNoteSheet extends StatefulWidget {
@@ -7,7 +7,7 @@ class SaveNoteSheet extends StatefulWidget {
   final String? sceneId; // Add sceneId to link to conversation
 
   const SaveNoteSheet({
-    super.key, 
+    super.key,
     required this.originalSentence,
     this.sceneId,
   });
@@ -37,7 +37,7 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
         // Save whole sentence with sceneId
         await VocabService().add(
           widget.originalSentence,
-          "Saved Sentence", 
+          "Saved Sentence",
           "Analyzed Sentence", // Tag for Sentence Tab
           scenarioId: widget.sceneId, // Link to current conversation
         );
@@ -45,20 +45,21 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
         // Save selected words with sceneId
         final indices = _selectedWordIndices.toList()..sort();
         final selectedText = indices.map((i) => _words[i]).join(' ');
-        
+
         await VocabService().add(
           selectedText,
-          widget.originalSentence, // Use original sentence as context/translation
+          widget
+              .originalSentence, // Use original sentence as context/translation
           "Vocabulary", // Tag
           scenarioId: widget.sceneId, // Link to current conversation
         );
       }
-      
+
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved to Notebook!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Saved to Notebook!')));
       }
     } catch (e) {
       // Handle error
@@ -96,7 +97,10 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                   children: [
                     const Text(
                       'Quick Save',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
@@ -119,7 +123,7 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
               ],
             ),
           ),
-          
+
           // Scrollable Content
           Flexible(
             child: SingleChildScrollView(
@@ -130,44 +134,64 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                   final isSelected = _selectedWordIndices.contains(index);
                   // Check if word is already saved (strip punctuation for better matching if needed, but simple check first)
                   // Note: naive check. Ideally we strip punctuation.
-                  final word = _words[index].replaceAll(RegExp(r'[^\w\s]'), ''); 
-                  final isSaved = VocabService().exists(word, scenarioId: widget.sceneId);
+                  final word = _words[index].replaceAll(RegExp(r'[^\w\s]'), '');
+                  final isSaved = VocabService().exists(
+                    word,
+                    scenarioId: widget.sceneId,
+                  );
 
                   return GestureDetector(
-                    onTap: isSaved ? null : () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedWordIndices.remove(index);
-                        } else {
-                          _selectedWordIndices.add(index);
-                        }
-                      });
-                    },
+                    onTap: isSaved
+                        ? null
+                        : () {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedWordIndices.remove(index);
+                              } else {
+                                _selectedWordIndices.add(index);
+                              }
+                            });
+                          },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? Colors.black 
-                            : (isSaved ? Colors.deepPurple.shade50 : Colors.white),
+                        color: isSelected
+                            ? Colors.black
+                            : (isSaved
+                                  ? Colors.deepPurple.shade50
+                                  : Colors.white),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: isSelected 
-                              ? Colors.transparent 
-                              : (isSaved ? Colors.deepPurple.shade200 : Colors.grey.shade300),
+                          color: isSelected
+                              ? Colors.transparent
+                              : (isSaved
+                                    ? Colors.deepPurple.shade200
+                                    : Colors.grey.shade300),
                           width: 1.5,
                         ),
-                        boxShadow: isSelected 
-                            ? [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))] 
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
                             : null,
                       ),
                       child: Text(
                         _words[index],
                         style: TextStyle(
-                          color: isSelected 
-                              ? Colors.white 
+                          color: isSelected
+                              ? Colors.white
                               : (isSaved ? Colors.deepPurple : Colors.black87),
-                          fontWeight: isSelected || isSaved ? FontWeight.bold : FontWeight.w500,
+                          fontWeight: isSelected || isSaved
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                           fontSize: 15,
                         ),
                       ),
@@ -177,7 +201,7 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
               ),
             ),
           ),
-          
+
           // Fixed Footer
           Padding(
             padding: const EdgeInsets.only(top: 24),
@@ -186,21 +210,32 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 0), // Height controlled by minimumSize
+                padding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                ), // Height controlled by minimumSize
                 minimumSize: const Size(double.infinity, 56),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
               ),
               child: _isSaving
                   ? const SizedBox(
-                      height: 24, width: 24, 
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
-                      _selectedWordIndices.isEmpty 
-                          ? 'Save Entire Sentence' 
+                      _selectedWordIndices.isEmpty
+                          ? 'Save Entire Sentence'
                           : 'Save Selected (${_selectedWordIndices.length})',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
             ),
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../design/app_design_system.dart';
-import '../services/revenue_cat_service.dart';
+import '../../../../design/app_design_system.dart';
+import '../../data/services/revenue_cat_service.dart';
 
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
@@ -23,7 +23,7 @@ class PaywallScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: Column(
-          children: [            
+          children: [
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -35,13 +35,15 @@ class PaywallScreen extends StatelessWidget {
                       height: 200,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/images/premium_illustration.png'),
+                          image: AssetImage(
+                            'assets/images/premium_illustration.png',
+                          ),
                           fit: BoxFit.contain,
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     Text(
                       'Unlock Full Potential',
                       style: AppTypography.headline1.copyWith(
@@ -59,7 +61,7 @@ class PaywallScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    
+
                     // Feature List
                     _buildFeatureItem('Unlimited Messages'),
                     _buildFeatureItem('Advanced Grammar Feedback'),
@@ -69,7 +71,7 @@ class PaywallScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Bottom Action Area
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
@@ -86,7 +88,9 @@ class PaywallScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg - 6),
+                        padding: EdgeInsets.symmetric(
+                          vertical: AppSpacing.lg - 6,
+                        ),
                         backgroundColor: AppColors.primary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -105,11 +109,11 @@ class PaywallScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () {
-                       RevenueCatService().mockRestore();
-                       Navigator.pop(context);
-                       ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Purchases Restored')),
-                       );
+                      RevenueCatService().mockRestore();
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Purchases Restored')),
+                      );
                     },
                     child: Text(
                       'Restore Purchases',

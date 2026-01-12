@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import '../widgets/empty_state_widget.dart';
 
 class SavedSentenceListWidget extends StatelessWidget {
@@ -13,15 +13,18 @@ class SavedSentenceListWidget extends StatelessWidget {
       animation: VocabService(),
       builder: (context, child) {
         final items = VocabService().items
-            .where((item) => item.tag == 'Analyzed Sentence' &&
-                             (sceneId == null || item.scenarioId == sceneId))
+            .where(
+              (item) =>
+                  item.tag == 'Analyzed Sentence' &&
+                  (sceneId == null || item.scenarioId == sceneId),
+            )
             .toList();
 
         if (items.isEmpty) {
           return const Center(
             child: EmptyStateWidget(
               message: 'No analyzed sentences saved yet',
-              imagePath: 'assets/empty_state_pear.png', 
+              imagePath: 'assets/empty_state_pear.png',
             ),
           );
         }
@@ -56,23 +59,27 @@ class SavedSentenceListWidget extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete_outline, color: Colors.purple[300]),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Colors.purple[300],
+                        ),
                         onPressed: () {
                           VocabService().remove(item.phrase);
                         },
                       ),
                     ],
                   ),
-                  if (item.translation.isNotEmpty && item.translation != 'Analyzed Sentence') ...[
-                     const SizedBox(height: 8),
-                     Text(
-                       item.translation, // "AI Message Analysis" or manual
-                       style: TextStyle(
-                         fontSize: 12,
-                         color: Colors.purple[700],
-                         fontStyle: FontStyle.italic,
-                       ),
-                     ),
+                  if (item.translation.isNotEmpty &&
+                      item.translation != 'Analyzed Sentence') ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      item.translation, // "AI Message Analysis" or manual
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.purple[700],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ],
                 ],
               ),

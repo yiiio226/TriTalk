@@ -17,7 +17,7 @@ import '../../../../services/api_service.dart';
 import '../../../../services/chat_history_service.dart';
 
 import '../../../../core/design/app_design_system.dart';
-import '../../../../screens/unified_favorites_screen.dart';
+import '../../../profile/presentation/pages/favorites_screen.dart';
 import '../../../../widgets/top_toast.dart';
 import '../../../../widgets/scene_options_drawer.dart';
 import '../../../../widgets/styled_drawer.dart';

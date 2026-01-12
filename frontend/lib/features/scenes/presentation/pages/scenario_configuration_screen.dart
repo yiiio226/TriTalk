@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/scene.dart';
-import '../design/app_design_system.dart';
-import 'chat_screen.dart';
+import '../../../../models/scene.dart';
+import '../../../../design/app_design_system.dart';
+import '../../../chat/presentation/pages/chat_screen.dart';
 
 class ScenarioConfigurationScreen extends StatefulWidget {
   final Scene scene;
@@ -9,10 +9,12 @@ class ScenarioConfigurationScreen extends StatefulWidget {
   const ScenarioConfigurationScreen({super.key, required this.scene});
 
   @override
-  State<ScenarioConfigurationScreen> createState() => _ScenarioConfigurationScreenState();
+  State<ScenarioConfigurationScreen> createState() =>
+      _ScenarioConfigurationScreenState();
 }
 
-class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScreen> {
+class _ScenarioConfigurationScreenState
+    extends State<ScenarioConfigurationScreen> {
   String _selectedSpeed = 'Normal'; // Slow, Normal
   String _selectedPersonality = 'Gentle'; // Gentle, Strict, Humorous
 
@@ -27,7 +29,10 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Back to scenarios', style: TextStyle(color: Colors.black, fontSize: 16)),
+        title: const Text(
+          'Back to scenarios',
+          style: TextStyle(color: Colors.black, fontSize: 16),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -39,30 +44,65 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
               style: TextStyle(fontSize: 20, color: Colors.grey),
             ),
             const SizedBox(height: 32),
-            
+
             // Speed Section
             _buildSectionTitle('AI Speaking Speed', Icons.volume_up_outlined),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildSelectionCard('Slow', '🐢', _selectedSpeed == 'Slow', () => setState(() => _selectedSpeed = 'Slow'))),
+                Expanded(
+                  child: _buildSelectionCard(
+                    'Slow',
+                    '🐢',
+                    _selectedSpeed == 'Slow',
+                    () => setState(() => _selectedSpeed = 'Slow'),
+                  ),
+                ),
                 const SizedBox(width: 16),
-                Expanded(child: _buildSelectionCard('Normal', '🚶', _selectedSpeed == 'Normal', () => setState(() => _selectedSpeed = 'Normal'))),
+                Expanded(
+                  child: _buildSelectionCard(
+                    'Normal',
+                    '🚶',
+                    _selectedSpeed == 'Normal',
+                    () => setState(() => _selectedSpeed = 'Normal'),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 32),
 
             // Personality Section
-            _buildSectionTitle('AI Personality', Icons.sentiment_satisfied_outlined),
+            _buildSectionTitle(
+              'AI Personality',
+              Icons.sentiment_satisfied_outlined,
+            ),
             const SizedBox(height: 16),
-            _buildPersonalityCard('Gentle', 'Patient and encouraging', Icons.sentiment_satisfied, _selectedPersonality == 'Gentle', () => setState(() => _selectedPersonality = 'Gentle')),
+            _buildPersonalityCard(
+              'Gentle',
+              'Patient and encouraging',
+              Icons.sentiment_satisfied,
+              _selectedPersonality == 'Gentle',
+              () => setState(() => _selectedPersonality = 'Gentle'),
+            ),
             const SizedBox(height: 12),
-            _buildPersonalityCard('Strict', 'Direct and challenging', Icons.flash_on, _selectedPersonality == 'Strict', () => setState(() => _selectedPersonality = 'Strict')),
+            _buildPersonalityCard(
+              'Strict',
+              'Direct and challenging',
+              Icons.flash_on,
+              _selectedPersonality == 'Strict',
+              () => setState(() => _selectedPersonality = 'Strict'),
+            ),
             const SizedBox(height: 12),
-            _buildPersonalityCard('Humorous', 'Fun and lighthearted', Icons.sentiment_very_satisfied, _selectedPersonality == 'Humorous', () => setState(() => _selectedPersonality = 'Humorous')),
+            _buildPersonalityCard(
+              'Humorous',
+              'Fun and lighthearted',
+              Icons.sentiment_very_satisfied,
+              _selectedPersonality == 'Humorous',
+              () => setState(() => _selectedPersonality = 'Humorous'),
+            ),
 
             const Spacer(),
-            
+
             // Start Button
             SizedBox(
               height: 56,
@@ -80,7 +120,9 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
                 ),
                 child: Text(
                   'Start Practice',
@@ -114,7 +156,12 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
     );
   }
 
-  Widget _buildSelectionCard(String title, String emoji, bool isSelected, VoidCallback onTap) {
+  Widget _buildSelectionCard(
+    String title,
+    String emoji,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -145,7 +192,13 @@ class _ScenarioConfigurationScreenState extends State<ScenarioConfigurationScree
     );
   }
 
-  Widget _buildPersonalityCard(String title, String subtitle, IconData icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildPersonalityCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

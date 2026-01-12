@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'storage_key_service.dart';
+import '../../../core/data/local/storage_key_service.dart';
 
 class NoteService {
   static const String _keySentencesBase = 'saved_sentences';

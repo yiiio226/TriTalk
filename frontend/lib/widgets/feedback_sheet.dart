@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
-import '../services/vocab_service.dart';
+import '../features/study/data/vocab_service.dart';
 import 'styled_drawer.dart';
 import 'top_toast.dart';
 
@@ -9,9 +9,9 @@ class FeedbackSheet extends StatefulWidget {
   final String sceneId;
 
   const FeedbackSheet({
-    super.key, 
-    required this.message, 
-    required this.sceneId
+    super.key,
+    required this.message,
+    required this.sceneId,
   });
 
   @override
@@ -30,15 +30,21 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
   void _initializeSavedStates() {
     final vocabService = VocabService();
     final feedback = widget.message.feedback;
-    
+
     if (feedback != null) {
-      if (feedback.nativeExpression.isNotEmpty && 
-          vocabService.exists(feedback.nativeExpression, scenarioId: widget.sceneId)) {
+      if (feedback.nativeExpression.isNotEmpty &&
+          vocabService.exists(
+            feedback.nativeExpression,
+            scenarioId: widget.sceneId,
+          )) {
         _savedItems.add(feedback.nativeExpression);
       }
-      
-      if (feedback.exampleAnswer.isNotEmpty && 
-          vocabService.exists(feedback.exampleAnswer, scenarioId: widget.sceneId)) {
+
+      if (feedback.exampleAnswer.isNotEmpty &&
+          vocabService.exists(
+            feedback.exampleAnswer,
+            scenarioId: widget.sceneId,
+          )) {
         _savedItems.add(feedback.exampleAnswer);
       }
     }
@@ -47,9 +53,9 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
   @override
   Widget build(BuildContext context) {
     if (widget.message.feedback == null) return const SizedBox.shrink();
-    
+
     final feedback = widget.message.feedback!;
-    
+
     return StyledDrawer(
       padding: EdgeInsets.zero,
       child: Column(
@@ -62,23 +68,26 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
             child: Row(
               children: [
                 Icon(
-                  feedback.isPerfect ? Icons.star : Icons.auto_fix_high, 
-                  color: feedback.isPerfect ? Colors.amber : Colors.orange
+                  feedback.isPerfect ? Icons.star : Icons.auto_fix_high,
+                  color: feedback.isPerfect ? Colors.amber : Colors.orange,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   feedback.isPerfect ? 'Perfect!' : 'Feedback',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
-                )
+                ),
               ],
             ),
           ),
-          
+
           // Scrollable Content
           Flexible(
             child: SingleChildScrollView(
@@ -86,43 +95,55 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSection('Your Sentence', widget.message.content, isError: !feedback.isPerfect),
+                  _buildSection(
+                    'Your Sentence',
+                    widget.message.content,
+                    isError: !feedback.isPerfect,
+                  ),
                   const SizedBox(height: 16),
-                  
+
                   if (!feedback.isPerfect) ...[
                     _buildSection(
-                      'Corrected', 
-                      feedback.correctedText, 
+                      'Corrected',
+                      feedback.correctedText,
                       isSuccess: true,
                       context: context,
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   if (feedback.nativeExpression.isNotEmpty) ...[
-                     _buildSection(
-                       'Native Expression', 
-                       feedback.nativeExpression, 
-                       isNative: true,
-                       context: context,
-                       isSaved: _savedItems.contains(feedback.nativeExpression),
-                       onSave: () => _saveToVocab(context, feedback.nativeExpression, "Analyzed Sentence"),
-                     ),
-                     const SizedBox(height: 16),
+                    _buildSection(
+                      'Native Expression',
+                      feedback.nativeExpression,
+                      isNative: true,
+                      context: context,
+                      isSaved: _savedItems.contains(feedback.nativeExpression),
+                      onSave: () => _saveToVocab(
+                        context,
+                        feedback.nativeExpression,
+                        "Analyzed Sentence",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                   ],
 
                   if (feedback.exampleAnswer.isNotEmpty) ...[
-                     _buildSection(
-                       'Possible Answer', 
-                       feedback.exampleAnswer, 
-                       isNative: true,
-                       context: context,
-                       isSaved: _savedItems.contains(feedback.exampleAnswer),
-                       onSave: () => _saveToVocab(context, feedback.exampleAnswer, "Analyzed Sentence"),
-                     ),
-                     const SizedBox(height: 16),
+                    _buildSection(
+                      'Possible Answer',
+                      feedback.exampleAnswer,
+                      isNative: true,
+                      context: context,
+                      isSaved: _savedItems.contains(feedback.exampleAnswer),
+                      onSave: () => _saveToVocab(
+                        context,
+                        feedback.exampleAnswer,
+                        "Analyzed Sentence",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                   ],
-                  
+
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -132,7 +153,11 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, size: 20, color: Colors.blue),
+                        const Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -157,7 +182,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     if (!_savedItems.contains(phrase)) {
       VocabService().add(
         phrase,
-        "Smart Feedback", 
+        "Smart Feedback",
         tag,
         scenarioId: widget.sceneId,
       );
@@ -169,10 +194,10 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
   }
 
   Widget _buildSection(
-    String label, 
+    String label,
     String text, {
-    bool isError = false, 
-    bool isSuccess = false, 
+    bool isError = false,
+    bool isSuccess = false,
     bool isNative = false,
     bool isSaved = false,
     BuildContext? context,
@@ -192,8 +217,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
             Text(
               label.toUpperCase(),
               style: TextStyle(
-                fontSize: 12, 
-                fontWeight: FontWeight.bold, 
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
                 color: Colors.grey[600],
               ),
             ),
@@ -203,8 +228,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
                   child: Icon(
-                    isSaved ? Icons.bookmark : Icons.bookmark_border, 
-                    size: 20, 
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    size: 20,
                     color: isNative ? Colors.purple[700] : Colors.grey[600],
                   ),
                 ),
@@ -217,7 +242,9 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
           style: TextStyle(
             fontSize: 16,
             color: textColor ?? Colors.black87,
-            fontWeight: (isSuccess || isNative) ? FontWeight.w600 : FontWeight.normal,
+            fontWeight: (isSuccess || isNative)
+                ? FontWeight.w600
+                : FontWeight.normal,
             fontStyle: isNative ? FontStyle.italic : FontStyle.normal,
           ),
         ),
