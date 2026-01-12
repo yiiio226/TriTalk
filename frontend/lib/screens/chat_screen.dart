@@ -332,7 +332,7 @@ class _ChatScreenState extends State<ChatScreen>
       timestamp: DateTime.now(),
       audioPath: audioPath,
       audioDuration: duration,
-      isFeedbackLoading: true,
+      isFeedbackLoading: false,
     );
 
     // Placeholder AI message (will be streamed)
@@ -414,7 +414,7 @@ class _ChatScreenState extends State<ChatScreen>
               _messages[userIndex] = _messages[userIndex].copyWith(
                 content: metadata.transcript ?? '', // Fill transcript!
                 voiceFeedback: metadata.voiceFeedback,
-                feedback: metadata.reviewFeedback,
+                // feedback: metadata.reviewFeedback, // Disabled auto-analysis
                 isFeedbackLoading: false,
               );
             }
