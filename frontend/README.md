@@ -1,45 +1,47 @@
-# TriTalk Frontend
+**中文** | [English](README_en.md)
 
-TriTalk is a modern, AI-powered language learning application built with Flutter.
+# TriTalk 前端
 
-## 🚀 Getting Started
+TriTalk 是一个使用 Flutter 构建的现代 AI 驱动的语言学习应用程序。
 
-### Prerequisites
+## 🚀 快速开始
+
+### 先决条件
 
 - Flutter SDK
-- Android Studio / Xcode (for mobile emulators)
+- Android Studio / Xcode (用于移动模拟器)
 
-### Setup
+### 设置
 
 ```bash
 cd frontend
 flutter pub get
-# Run with local backend (dev) or production URL
+# 使用本地后端 (dev) 或生产 URL 运行
 flutter run
 ```
 
-## 🔄 OpenAPI Integration
+## 🔄 OpenAPI 集成
 
-TriTalk uses OpenAPI to ensure type-safe communication with the backend.
+TriTalk 使用 OpenAPI 确保与后端的类型安全通信。
 
-### Sync Client
+### 同步客户端
 
-When the backend API changes, you can generate the updated client code:
+当后端 API 发生变化时，您可以生成更新的客户端代码：
 
 ```bash
 cd frontend
 
-# Pull latest spec + generate code
+# 拉取最新规范 + 生成代码
 ./sync-spec.sh
 
-# Pull specific version (e.g. pinned v1.0.0)
+# 拉取特定版本 (例如固定版本 v1.0.0)
 ./sync-spec.sh 1.0.0
 ```
 
-> 📖 Detailed Documentation: [openapi_frontend.md](openapi_frontend.md)
+> 📖 详细文档: [openapi_frontend.md](openapi_frontend.md)
 
-## 🏗 Architecture
+## 🏗 架构
 
-TriTalk follows a comprehensive Feature-First, Layered architecture utilizing Riverpod for state management.
+TriTalk 遵循全面的功能优先、分层架构，利用 Riverpod 进行状态管理。
 
-- **[Current Architecture Guide](guide/Architecture.md)**: Detailed breakdown of the project structure and layers.
+- **[当前架构指南](guide/Architecture.md)**: 项目结构和层的详细介绍。

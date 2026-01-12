@@ -1,29 +1,31 @@
-# TriTalk Frontend Architecture
+**中文** | [English](Architecture_en.md)
 
-This document describes the current architecture of the TriTalk frontend application.
+# TriTalk 前端架构
 
-## 🏗 High-Level Overview
+本文档描述了 TriTalk 前端应用程序的当前架构。
 
-TriTalk adopts a **Feature-First, Layered Architecture** powered by **Riverpod** for state management and dependency injection.
+## 🏗 高层概述
 
-- **Feature-First**: The codebase is organized by business domains (features) rather than technical layers. Each feature is a self-contained module.
-- **Layered**: Within each feature, code is separated into **Domain**, **Data**, and **Presentation** layers to enforce proper separation of concerns.
-- **Reactive**: The UI is reactive, listening to immutable state changes driven by Riverpod Notifiers.
+TriTalk 采用了由 **Riverpod** 支持的 **功能优先、分层架构**，用于状态管理和依赖注入。
 
-### Tech Stack
+- **功能优先**: 代码库按业务领域（功能）而不是技术层组织。每个功能都是一个独立的模块。
+- **分层**: 在每个功能中，代码被分为 **领域 (Domain)**、**数据 (Data)** 和 **表现 (Presentation)** 层，以强制执行适当的关注点分离。
+- **响应式**: UI 是响应式的，监听由 Riverpod Notifiers 驱动的不可变状态更改。
 
-- **Framework**: Flutter
-- **State Management & DI**: `flutter_riverpod`
-- **Immutability**: `freezed`
-- **Data Serialization**: `json_serializable`
-- **API Client**: `chopper` (generated via `swagger_dart_code_generator`)
-- **Backend**: Supabase (PostgreSQL + Auth + Storage)
+### 技术栈
+
+- **框架**: Flutter
+- **状态管理 & 依赖注入**: `flutter_riverpod`
+- **不可变性**: `freezed`
+- **数据序列化**: `json_serializable`
+- **API 客户端**: `chopper` (通过 `swagger_dart_code_generator` 生成)
+- **后端**: Supabase (PostgreSQL + Auth + Storage)
 
 ---
 
-## 📂 Directory Structure
+## 📂 目录结构
 
-The `lib/` directory is organized as follows:
+`lib/` 目录组织如下：
 
 ```mermaid
 graph TD
@@ -50,95 +52,95 @@ graph TD
     Features --> FeatureSub[subscription/]
 ```
 
-### 1. Core (`lib/core/`)
+### 1. 核心 (`lib/core/`)
 
-Contains code shared across multiple features or application-wide infrastructure.
+包含跨多个功能或应用程序范围内基础设施共享的代码。
 
-- **`auth/`**: Global authentication state and logic (e.g., `AuthProvider`).
-- **`data/`**: Global data services and clients.
-  - `api/`: HTTP clients, Interceptors, base API services.
-  - `local/`: Shared preferences, secure storage, database keys.
-- **`design/`**: App theme, colors, typography, and assets.
-- **`env/`**: Environment configuration (e.g., Dev vs. Prod).
-- **`initializer/`**: App startup logic (Supabase init, specific service warm-ups).
-- **`utils/`**: Helper functions and extensions.
-- **`widgets/`**: Reusable infrastructure UI components (e.g., Loaders, Toasts, generic Buttons).
+- **`auth/`**: 全局认证状态和逻辑 (例如 `AuthProvider`)。
+- **`data/`**: 全局数据服务和客户端。
+  - `api/`: HTTP 客户端, 拦截器, 基础 API 服务。
+  - `local/`: 共享首选项 (Shared preferences), 安全存储 (secure storage), 数据库密钥。
+- **`design/`**: 应用程序主题, 颜色, 排版和资产。
+- **`env/`**: 环境配置 (例如 Dev vs. Prod)。
+- **`initializer/`**: 应用程序启动逻辑 (Supabase 初始化, 特定服务预热)。
+- **`utils/`**: 辅助函数和扩展。
+- **`widgets/`**: 可重用的基础设施 UI 组件 (例如加载器, Toasts, 通用按钮)。
 
-### 2. Features (`lib/features/`)
+### 2. 功能 (`lib/features/`)
 
-Each folder represents a specific business capability. A fully-featured module follows this internal structure:
+每个文件夹代表一项特定的业务能力。一个功能齐全的模块遵循此内部结构：
 
 ```text
 features/chat/
-├── data/                 # Data Layer (Implementation)
-│   ├── *_service.dart    # Data sources (API clients, local DAOs)
-│   └── repositories/     # Implementation of Domain Repositories
-├── domain/               # Domain Layer (Definitions)
-│   ├── models/           # Dart Data Classes (Freezed)
-│   └── repositories/     # Abstract Repository Interfaces
-├── presentation/         # Presentation Layer (UI & Logic)
-│   ├── notifiers/        # StateNotifiers / Notifiers (Business Logic)
-│   ├── pages/            # Full Screen Widgets (Scaffolds)
-│   ├── state/            # UI State Classes (Freezed)
-│   └── widgets/          # Feature-specific UI components
-└── providers/            # Riverpod Providers for the feature
+├── data/                 # 数据层 (实现)
+│   ├── *_service.dart    # 数据源 (API 客户端, 本地 DAOs)
+│   └── repositories/     # 领域存储库的实现
+├── domain/               # 领域层 (定义)
+│   ├── models/           # Dart 数据类 (Freezed)
+│   └── repositories/     # 抽象存储库接口
+├── presentation/         # 表现层 (UI & 逻辑)
+│   ├── notifiers/        # StateNotifiers / Notifiers (业务逻辑)
+│   ├── pages/            # 全屏 Widgets (Scaffolds)
+│   ├── state/            # UI 状态类 (Freezed)
+│   └── widgets/          # 功能特定的 UI 组件
+└── providers/            # 该功能的 Riverpod 提供者
 ```
 
-> **Note**: Simpler features (e.g., `home/`, `onboarding/`) may omit `domain/` or `data/` layers if they don't define custom models or repository interfaces.
+> **注意**: 较简单的功能 (例如 `home/`, `onboarding/`) 如果没有定义自定义模型或存储库接口，可能会省略 `domain/` 或 `data/` 层。
 
-### 3. Components (`lib/components/`)
+### 3. 组件 (`lib/components/`)
 
-Contains standalone configuration components (e.g., `supabase_config.dart`).
+包含独立的配置组件 (例如 `supabase_config.dart`)。
 
-### 4. Generated Code (`lib/swagger_generated_code/`)
+### 4. 生成的代码 (`lib/swagger_generated_code/`)
 
-Auto-generated API client code from Swagger/OpenAPI specs using `swagger_dart_code_generator`. **Do not edit manually** — regenerate using `flutter pub run build_runner build`.
-
----
-
-## 🧱 Layer Details
-
-### 1. Domain Layer (`domain/`)
-
-_The stable heart of the feature._
-
-> **Why "Domain"?** This term comes from [Domain-Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design), a software design approach that focuses on modeling software to match the business domain. The "domain" represents the core business logic and rules — independent of UI frameworks or data storage mechanisms.
-
-- **Responsibility**: Defines "What" the feature does and "What" data it uses.
-- **Contents**:
-  - **Models**: Immutable data structures (e.g., `ChatMessage`, `Scene`).
-  - **Repositories (Interfaces)**: Contracts defining data operations (e.g., `IChatRepository`).
-- **Rules**: Pure Dart code. NO Flutter UI imports. NO data implementation details (Http, SharedPreferences).
-
-### 2. Data Layer (`data/`)
-
-_The implementation details._
-
-- **Responsibility**: Implements repository interfaces to fetch/store data.
-- **Contents**:
-  - **Repository Implementations**: Implement `IChatRepository`. They orchestrate data fetching from remote sources (API) and local sources (Cache).
-  - **Data Sources**: Direct connectors to external systems (e.g., `ChatApiService`, `ChatLocalService`).
-- **Rules**: Depends on Domain.
-
-### 3. Presentation Layer (`presentation/`)
-
-_The user interface and interaction logic._
-
-- **Responsibility**: Displays state and handles user input.
-- **Contents**:
-  - **Pages**: Top-level screens.
-  - **Widgets**: reusable UI bits.
-  - **Notifiers (View Models)**: Classes extending `Notifier` or `StateNotifier`. They hold the [Business Logic].
-  - **State**: Immutable classes representing the UI state at any moment (e.g., `ChatPageState`).
-- **Rules**: Depends on Domain. NEVER communicates directly with Data layer (uses Repositories via DI).
+从 Swagger/OpenAPI 规范自动生成的 API 客户端代码，使用 `swagger_dart_code_generator`。**不要手动编辑** — 使用 `flutter pub run build_runner build` 重新生成。
 
 ---
 
-## 🔄 State Management Pattern
+## 🧱 层细节
 
-We use **Riverpod** to bind these layers together.
+### 1. 领域层 (`domain/`)
 
-1.  **State Definition**: Defined using `Freezed`.
+_功能稳定的核心。_
+
+> **为什么叫 "Domain" (领域)?** 这个术语来自 [领域驱动设计 (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)，这是一种专注于建模软件以匹配业务领域的软件设计方法。"领域" 代表核心业务逻辑和规则 — 独立于 UI 框架 or 数据存储机制。
+
+- **职责**: 定义功能 "做什么" 以及它使用 "什么" 数据。
+- **内容**:
+  - **模型**: 不可变数据结构 (例如 `ChatMessage`, `Scene`)。
+  - **存储库 (接口)**: 定义数据操作的契约 (例如 `IChatRepository`)。
+- **规则**: 纯 Dart 代码。没有 Flutter UI 导入。没有数据实现细节 (Http, SharedPreferences)。
+
+### 2. 数据层 (`data/`)
+
+_实现细节。_
+
+- **职责**: 实现存储库接口以获取/存储数据。
+- **内容**:
+  - **存储库实现**: 实现 `IChatRepository`。它们协调从远程源 (API) 和本地源 (缓存) 获取数据。
+  - **数据源**: 连接外部系统的直接连接器 (例如 `ChatApiService`, `ChatLocalService`)。
+- **规则**: 依赖于领域层 (Domain)。
+
+### 3. 表现层 (`presentation/`)
+
+_用户界面和交互逻辑。_
+
+- **职责**: 显示状态并处理用户输入。
+- **内容**:
+  - **页面**: 顶级屏幕。
+  - **Widgets**: 可重用的 UI 片段。
+  - **Notifiers (View Models)**: 扩展 `Notifier` 或 `StateNotifier` 的类。它们持有 [业务逻辑]。
+  - **状态**: 代表任何时刻 UI 状态的不可变类 (例如 `ChatPageState`)。
+- **规则**: 依赖于领域层 (Domain)。**绝不** 直接与数据层通信 (通过 DI 使用存储库)。
+
+---
+
+## 🔄 状态管理模式
+
+我们使用 **Riverpod** 将这些层绑定在一起。
+
+1.  **状态定义**: 使用 `Freezed` 定义。
 
     ```dart
     @freezed
@@ -150,13 +152,13 @@ We use **Riverpod** to bind these layers together.
     }
     ```
 
-2.  **Notifier**: Manages the state and handles logic.
+2.  **Notifier**: 管理状态并处理逻辑。
 
     ```dart
     class ChatPageNotifier extends StateNotifier<ChatPageState> {
       final IChatRepository _repository;
 
-      // Dependency Injection via Constructor
+      // 通过构造函数进行依赖注入
       ChatPageNotifier(this._repository) : super(const ChatPageState());
 
       Future<void> sendMessage(String text) async {
@@ -167,16 +169,16 @@ We use **Riverpod** to bind these layers together.
     }
     ```
 
-3.  **UI Consumption**:
+3.  **UI 消费**:
 
     ```dart
     class ChatScreen extends ConsumerWidget {
       @override
       Widget build(BuildContext context, WidgetRef ref) {
-        // Watch the state
+        // 观察状态
         final state = ref.watch(chatPageProvider);
 
-        // Trigger logic
+        // 触发逻辑
         return FloatingActionButton(
           onPressed: () => ref.read(chatPageProvider.notifier).sendMessage("Hello"),
           child: state.isLoading ? CircularProgressIndicator() : Icon(Icons.send),
