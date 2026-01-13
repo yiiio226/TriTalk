@@ -130,7 +130,7 @@ export function buildStreamingVoiceChatSystemPrompt(
     === RESPONSE FORMAT INSTRUCTIONS (CRITICAL) ===
     You must output your response in TWO PARTS, strictly in this order:
     
-    PART 1: THE REPLY
+    PART 1: THE REPLY (YOUR RESPONSE)
     - Output your natural, in-character reply text directly. 
     - DO NOT use any JSON or Markdown code blocks for Part 1. 
     - Just write the text of your response.
@@ -139,9 +139,9 @@ export function buildStreamingVoiceChatSystemPrompt(
     - Immediately after your reply text, output the separator "[[METADATA]]" (exact string).
     - Then output a valid JSON object containing the transcript and analysis.
     
-    Structure of Metadata JSON:
+    === METADATA JSON STRUCTURE (CRITICAL - READ CAREFULLY) ===
     {
-        "transcript": "Exact transcription of what the user said (in ${targetLang})",
+        "transcript": "<<< WHAT THE USER SAID - Transcribe the USER's audio input here. This is NOT your reply! >>>",
         "translation": "Translation of YOUR reply (Part 1) in ${nativeLang}",
         "analysis": {
             "is_perfect": boolean,
@@ -152,10 +152,27 @@ export function buildStreamingVoiceChatSystemPrompt(
         }
     }
     
-    Example Output Stream:
-    "Sure, I can help you with that. What kind of room would you like?"
+    ⚠️ CRITICAL WARNING ABOUT "transcript" FIELD:
+    - "transcript" must contain EXACTLY what the USER said in their audio recording
+    - It is the user's speech transcribed to text
+    - DO NOT put YOUR reply in the transcript field - that's already in Part 1
+    - The transcript is used for pronunciation assessment of the USER's speech
+    
+    Example User Audio: (user says "I want room")
+    
+    ✅ CORRECT Example Output:
+    Sure, I can help you with that. What kind of room would you like?
     [[METADATA]]
-    {"transcript":"I want room","translation":"没问题...","analysis":{...}}`;
+    {"transcript":"I want room","translation":"没问题，我可以帮你。你想要什么样的房间？","analysis":{"is_perfect":false,"corrected_text":"I want a room","native_expression":"I'd like to book a room","explanation":"缺少冠词 'a'","example_answer":"Could I get a room, please?"}}
+    
+    ❌ WRONG Example (DO NOT DO THIS):
+    [[METADATA]]
+    {"transcript":"Sure, I can help you with that","..."}  ← WRONG! This is YOUR reply, not USER's speech!
+    
+    Remember: 
+    - Part 1 = Your AI character's reply
+    - transcript = What the USER said (their audio transcribed)
+    - translation = Your reply translated to ${nativeLang}`;
 }
 
 /**
