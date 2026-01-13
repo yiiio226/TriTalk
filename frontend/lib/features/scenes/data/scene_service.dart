@@ -125,7 +125,7 @@ class SceneService extends ChangeNotifier {
           category: e['category'] ?? 'Custom',
           difficulty: e['difficulty'] ?? 'Easy',
           goal: e['goal'] ?? '',
-          iconPath: e['icon_path'] ?? 'assets/images/user_avatar_male.png',
+          iconPath: e['icon_path'] ?? '',
           color: e['color'] ?? 0xFF000000,
         );
       }).toList();
