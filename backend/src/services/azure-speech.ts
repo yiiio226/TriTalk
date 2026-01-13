@@ -199,6 +199,29 @@ export async function callAzureSpeechAssessment(
     NBest?: any[];
   };
 
+  // Debug logging - log the raw Azure response
+  console.log("[Azure Speech] Raw response:", JSON.stringify(result, null, 2));
+  console.log("[Azure Speech] RecognitionStatus:", result.RecognitionStatus);
+  console.log("[Azure Speech] DisplayText:", result.DisplayText);
+  if (result.NBest?.[0]) {
+    const nBest = result.NBest[0];
+    console.log("[Azure Speech] NBest[0].Display:", nBest.Display);
+    console.log(
+      "[Azure Speech] NBest[0].PronunciationAssessment:",
+      JSON.stringify(nBest.PronunciationAssessment)
+    );
+    console.log(
+      "[Azure Speech] NBest[0].Words count:",
+      nBest.Words?.length || 0
+    );
+    if (nBest.Words?.[0]) {
+      console.log(
+        "[Azure Speech] First word sample:",
+        JSON.stringify(nBest.Words[0])
+      );
+    }
+  }
+
   // Check recognition status
   if (result.RecognitionStatus !== "Success") {
     throw new Error(

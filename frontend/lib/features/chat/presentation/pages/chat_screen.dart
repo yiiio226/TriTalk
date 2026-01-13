@@ -170,13 +170,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     final directory = await getApplicationDocumentsDirectory();
     final path =
-        '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
 
-    await _audioRecorder.start(const RecordConfig(), path: path);
+    // Use WAV format with PCM encoding - required by Azure Speech API
+    // Azure Pronunciation Assessment only supports: WAV (PCM) or OGG (Opus)
+    await _audioRecorder.start(
+      const RecordConfig(
+        encoder: AudioEncoder.wav,
+        sampleRate: 16000, // 16kHz optimal for speech recognition
+        numChannels: 1, // Mono audio
+      ),
+      path: path,
+    );
 
     _notifier.setRecording(true);
     _startRecordingTimer();
-    
+
     // Start waveform animation
     _pulseController.repeat();
   }
