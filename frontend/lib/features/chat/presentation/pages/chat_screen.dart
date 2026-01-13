@@ -176,6 +176,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     _notifier.setRecording(true);
     _startRecordingTimer();
+    
+    // Start waveform animation
+    _pulseController.repeat();
   }
 
   void _startRecordingTimer() {
@@ -680,7 +683,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
-      child: _isRecordingVoice ? _buildRecordingMode() : _buildTextInputMode(),
+      child: _isRecordingVoice
+          ? _buildRecordingMode()
+          : ValueListenableBuilder<bool>(
+              valueListenable: _hasTextNotifier,
+              builder: (context, hasText, child) {
+                return _buildTextInputMode();
+              },
+            ),
     );
   }
 

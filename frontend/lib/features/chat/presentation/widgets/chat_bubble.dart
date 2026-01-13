@@ -158,17 +158,26 @@ class _ChatBubbleState extends State<ChatBubble>
 
     // Handle text changes or animation toggle
     if (widget.message.content != oldWidget.message.content) {
-      // Content changed, remove from started animations to allow re-animation
-      _startedAnimations.remove(widget.message.id);
-
-      if (widget.message.isAnimated) {
-        _currentIndex = 0;
-        _displayedText = "";
-        _isAnimationComplete = false; // Animation will restart
-        _startTypewriter();
+      // Only restart animation if this message hasn't started animating yet
+      // This prevents restart when scrolling during streaming
+      if (!_startedAnimations.contains(widget.message.id)) {
+        if (widget.message.isAnimated) {
+          _currentIndex = 0;
+          _displayedText = "";
+          _isAnimationComplete = false;
+          _startedAnimations.add(widget.message.id);
+          _startTypewriter();
+        } else {
+          _displayedText = widget.message.content;
+          _isAnimationComplete = true;
+        }
       } else {
+        // Animation already started, just update to show full content
+        // This handles the case where content is being streamed
         _displayedText = widget.message.content;
-        _isAnimationComplete = true;
+        if (_typewriterTimer == null || !_typewriterTimer!.isActive) {
+          _isAnimationComplete = true;
+        }
       }
     }
   }
@@ -199,6 +208,41 @@ class _ChatBubbleState extends State<ChatBubble>
     });
   }
 
+  Future<String> _resolveAudioPath(String originalPath) async {
+    final file = File(originalPath);
+    if (await file.exists()) {
+      return originalPath;
+    }
+
+    // iOS Sandbox handling: Path might contain old Container UUID
+    // Try to find the file in current Documents or Cache directory by filename
+    try {
+      final filename = originalPath.split('/').last;
+
+      // Check Documents
+      final docsDir = await getApplicationDocumentsDirectory();
+      final docsFile = File('${docsDir.path}/$filename');
+      if (await docsFile.exists()) {
+        return docsFile.path;
+      }
+
+      // Check Cache
+      final cacheDir = await getTemporaryDirectory();
+      final cacheFile = File('${cacheDir.path}/$filename');
+      if (await cacheFile.exists()) {
+        return cacheFile.path;
+      }
+
+      // Check specialized paths if needed (e.g. tts_cache)
+      // This handles the specific case of TTS files stored in user-scoped tts_cache
+      // and recorded files stored in root of Documents
+    } catch (e) {
+      debugPrint('Error resolving audio path: $e');
+    }
+
+    return originalPath;
+  }
+
   Future<void> _playPauseVoice() async {
     if (widget.message.audioPath == null) return;
 
@@ -206,7 +250,9 @@ class _ChatBubbleState extends State<ChatBubble>
       if (_isPlaying) {
         await _audioPlayer.pause();
       } else {
-        await _audioPlayer.play(DeviceFileSource(widget.message.audioPath!));
+        final resolvedPath = await _resolveAudioPath(widget.message.audioPath!);
+        // Use UrlSource with file URI for robust playback on iOS/macOS
+        await _audioPlayer.play(UrlSource(Uri.file(resolvedPath).toString()));
       }
     } catch (e) {
       if (mounted) {
@@ -309,7 +355,8 @@ class _ChatBubbleState extends State<ChatBubble>
       boxShadow: AppShadows.xs,
     );
 
-    if (isPerfect) {
+    // Only apply feedback styling to user messages
+    if (isUser && isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
           colors: [Colors.green.shade50, Colors.green.shade100],
@@ -318,7 +365,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ),
         border: Border.all(color: Colors.green.shade200, width: 1),
       );
-    } else if (isMagicWand) {
+    } else if (isUser && isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: const LinearGradient(
           colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
@@ -327,7 +374,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ),
         border: Border.all(color: Colors.amber.shade200, width: 1),
       );
-    } else if (hasFeedback) {
+    } else if (isUser && hasFeedback) {
       bubbleDecoration = bubbleDecoration.copyWith(
         border: Border.all(color: Colors.orange.shade100, width: 1),
       );
@@ -386,7 +433,8 @@ class _ChatBubbleState extends State<ChatBubble>
                             ],
                           ],
                         ),
-                  if (hasFeedback) ...[
+                  // Only show feedback for user messages
+                  if (isUser && hasFeedback) ...[
                     const SizedBox(height: 6),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1079,7 +1127,7 @@ class _ChatBubbleState extends State<ChatBubble>
   /// Play TTS audio from the given file path
   Future<void> _playTTSAudio(String audioPath) async {
     try {
-      await _audioPlayer.play(DeviceFileSource(audioPath));
+      await _audioPlayer.play(UrlSource(Uri.file(audioPath).toString()));
       if (mounted) {
         setState(() {
           _isTTSPlaying = true;
