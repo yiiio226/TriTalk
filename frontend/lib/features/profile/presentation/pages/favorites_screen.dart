@@ -46,9 +46,22 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey[100],
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: AppColors.lightTextPrimary,
+                        size: 24,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/vocab_service.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'vocab_skeleton_loader.dart';
 
@@ -45,9 +46,9 @@ class VocabListWidget extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.lightBackground,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue[100]!),
+                border: Border.all(color: AppColors.lightDivider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,14 +61,14 @@ class VocabListWidget extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue[900],
+                            color: AppColors.lightTextPrimary,
                           ),
                         ),
                       ),
                       IconButton(
                         icon: Icon(
                           Icons.delete_outline,
-                          color: Colors.blue[300],
+                          color: AppColors.lightTextSecondary,
                         ),
                         onPressed: () {
                           VocabService().remove(item.phrase);
@@ -81,7 +82,7 @@ class VocabListWidget extends StatelessWidget {
                       item.translation,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.blue[800],
+                        color: AppColors.lightTextSecondary,
                         height: 1.5,
                       ),
                     ),
