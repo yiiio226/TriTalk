@@ -5,6 +5,8 @@ import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
+import 'package:frontend/core/design/app_design_system.dart';
+
 
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({super.key});
@@ -121,7 +123,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: Colors.blue),
+                        const Icon(Icons.auto_awesome, color: AppColors.primary),
                         const SizedBox(width: 8),
                         const Text(
                           'Create Your Own Scenario',
@@ -140,17 +142,18 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                     const SizedBox(height: 8),
                     Text(
                       'Describe a situation you want to practice. AI will create a roleplay scenario for you.',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: AppColors.lightTextSecondary),
                     ),
                     const SizedBox(height: 24),
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: Colors.blue.withValues(alpha: 0.3),
+                            color: AppColors.lightDivider,
+                            width: 1,
                           ),
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[50],
+                          color: AppColors.lightBackground,
                         ),
                         child: Stack(
                           alignment: Alignment.bottomRight,
@@ -185,7 +188,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
+                                        color: AppColors.lightShadow,
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -199,14 +202,14 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                                  Colors.blue,
+                                                  AppColors.primary,
                                                 ),
                                           ),
                                         )
                                       : const Icon(
                                           Icons.auto_awesome,
                                           size: 18,
-                                          color: Colors.blue,
+                                          color: AppColors.secondary,
                                         ),
                                 ),
                               ),
@@ -221,7 +224,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _generateScene,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black, // Black background
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(

@@ -205,7 +205,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   Text(
                     'Your AI Language Practice Companion',
                     style: AppTypography.body1.copyWith(
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),

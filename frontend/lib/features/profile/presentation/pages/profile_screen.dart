@@ -246,7 +246,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Text(
                           _email,
                           style: AppTypography.body2.copyWith(
-                            color: AppColors.lightTextSecondary,
+                            color: AppColors.lightTextPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -268,7 +268,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'Language Settings',
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -292,7 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     title: 'Learning Language',
                     subtitle: _targetLanguage,
                     icon: Icons.school,
-                    iconColor: AppColors.lightTextSecondary,
+                    iconColor: AppColors.lightTextPrimary,
                     onTap: () {
                       _showLanguageDialog(
                         'Select Learning Language',
@@ -306,7 +306,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'Tools',
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -314,6 +314,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Favorites', // Unified title
                     subtitle: 'Vocabulary, Sentences, Chat History',
+               
                     icon: Icons.bookmark,
                     iconColor: AppColors.lightWarning,
                     onTap: () {
@@ -420,7 +421,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const Icon(
                   Icons.chevron_right,
-                  color: AppColors.lightTextSecondary,
+                  color: AppColors.lightTextPrimary,
                 ),
               ],
             ),

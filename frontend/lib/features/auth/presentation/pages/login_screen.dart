@@ -91,7 +91,7 @@ class LoginScreen extends ConsumerWidget {
           'Practice conversations with AI to improve your language skills',
           textAlign: TextAlign.center,
           style: AppTypography.body1.copyWith(
-            color: AppColors.lightTextSecondary,
+            color: AppColors.lightTextPrimary,
           ),
         ),
       ],
@@ -273,7 +273,7 @@ class LoginScreen extends ConsumerWidget {
       TextSpan(
         text: 'By continuing, you agree to our ',
         style: AppTypography.caption.copyWith(
-          color: AppColors.lightTextSecondary,
+          color: AppColors.lightTextPrimary,
         ),
         children: [
           TextSpan(

@@ -56,7 +56,7 @@ class PaywallScreen extends StatelessWidget {
                       'Get unlimited conversations, advanced grammar analysis, and access to all premium scenarios.',
                       textAlign: TextAlign.center,
                       style: AppTypography.body1.copyWith(
-                        color: AppColors.lightTextSecondary,
+                        color: AppColors.lightTextPrimary,
                         height: 1.5,
                       ),
                     ),
@@ -119,7 +119,7 @@ class PaywallScreen extends StatelessWidget {
                       'Restore Purchases',
                       style: AppTypography.body2.copyWith(
                         fontSize: 15,
-                        color: AppColors.lightTextSecondary,
+                        color: AppColors.lightTextPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -27,8 +27,8 @@ class AppColors {
   // Color Palette (Semantic)
   // =============================
   // Named by usage for direct reference in components.
-  static const Color primary = Color(0xFFB5D0CC); // Main Brand Color (Buttons, Emphasis)
-  static const Color secondary = Color(0xFFE8F7F5); // Secondary Brand Color (Auxiliary Emphasis)
+  static const Color primary = Color(0xFF1D1D1D); // Main Brand Color (Buttons, Emphasis)
+  static const Color secondary = Color(0xFF15A4A9); // Secondary Brand Color (Auxiliary Emphasis)
 
   // Light Theme Base Colors
   static const Color lightBackground = Color(0xFFF8FAFC); // Page Background
@@ -42,8 +42,8 @@ class AppColors {
   static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
 
   // Light Theme Text Colors
-  static const Color lightTextPrimary = Color(0xFF0F172A); // Primary Text
-  static const Color lightTextSecondary = Color(0xFF475569); // Secondary Text
+  static const Color lightTextPrimary = Color(0xFF1D1D1D); // Primary Text
+  static const Color lightTextSecondary = Color(0xFF474747); // Secondary Text
   static const Color lightTextDisabled = Color(0xFF9CA3AF); // Placeholder/Disabled
 
   // Dark Theme Base Colors

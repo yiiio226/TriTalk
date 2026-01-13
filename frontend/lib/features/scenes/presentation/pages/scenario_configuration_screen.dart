@@ -227,7 +227,7 @@ class _ScenarioConfigurationScreenState
                 Text(
                   subtitle,
                   style: AppTypography.body2.copyWith(
-                    color: AppColors.lightTextSecondary,
+                    color: AppColors.lightTextPrimary,
                   ),
                 ),
               ],
