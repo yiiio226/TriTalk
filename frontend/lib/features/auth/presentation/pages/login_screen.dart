@@ -64,16 +64,16 @@ class LoginScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(25),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            boxShadow: AppShadows.md,
           ),
-          child: const Center(
-            child: Text('👋', style: TextStyle(fontSize: 50)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: Image.asset(
+              'assets/icon/icon.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -91,7 +91,7 @@ class LoginScreen extends ConsumerWidget {
           'Practice conversations with AI to improve your language skills',
           textAlign: TextAlign.center,
           style: AppTypography.body1.copyWith(
-            color: AppColors.lightTextSecondary,
+            color: AppColors.lightTextPrimary,
           ),
         ),
       ],
@@ -103,7 +103,8 @@ class LoginScreen extends ConsumerWidget {
     WidgetRef ref,
     AuthState authState,
   ) {
-    final isLoading = authState.isLoading;
+    final loadingType = authState.loadingType;
+    final isAnyLoading = loadingType != AuthLoadingType.none;
 
     return Column(
       children: [
@@ -144,49 +145,32 @@ class LoginScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
         ],
 
-        // Apple Sign In (iOS only, shown first on iOS)
-        if (Platform.isIOS) ...[
-          _buildLoginButton(
-            icon: Icons.apple,
-            label: 'Continue with Apple',
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-            isLoading: isLoading,
-            onPressed: isLoading
-                ? null
-                : () => ref.read(authProvider.notifier).loginWithApple(),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-
-        // Google Sign In
+        // Google Sign In (Black Button, Top)
         _buildLoginButton(
           icon: null,
           customIcon: _buildGoogleIcon(),
           label: 'Continue with Google',
-          backgroundColor: Colors.white,
-          textColor: AppColors.lightTextPrimary,
-          borderColor: AppColors.lightDivider,
-          isLoading: isLoading,
-          onPressed: isLoading
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          isLoading: loadingType == AuthLoadingType.google,
+          onPressed: isAnyLoading
               ? null
               : () => ref.read(authProvider.notifier).loginWithGoogle(),
         ),
+        const SizedBox(height: AppSpacing.md),
 
-        // Apple Sign In (non-iOS platforms, shown after Google)
-        if (!Platform.isIOS) ...[
-          const SizedBox(height: AppSpacing.md),
-          _buildLoginButton(
-            icon: Icons.apple,
-            label: 'Continue with Apple',
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-            isLoading: isLoading,
-            onPressed: isLoading
-                ? null
-                : () => ref.read(authProvider.notifier).loginWithApple(),
-          ),
-        ],
+        // Apple Sign In (White Button, Bottom)
+        _buildLoginButton(
+          icon: Icons.apple,
+          label: 'Continue with Apple',
+          backgroundColor: Colors.white,
+          textColor: AppColors.lightTextPrimary,
+          borderColor: AppColors.lightDivider,
+          isLoading: loadingType == AuthLoadingType.apple,
+          onPressed: isAnyLoading
+              ? null
+              : () => ref.read(authProvider.notifier).loginWithApple(),
+        ),
       ],
     );
   }
@@ -251,16 +235,13 @@ class LoginScreen extends ConsumerWidget {
     return Container(
       width: 24,
       height: 24,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-      ),
+  
       child: Center(
         child: Text(
           'G',
           style: TextStyle(
-            color: Colors.red[600],
-            fontSize: 18,
+            color: AppColors.darkTextPrimary,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -273,7 +254,7 @@ class LoginScreen extends ConsumerWidget {
       TextSpan(
         text: 'By continuing, you agree to our ',
         style: AppTypography.caption.copyWith(
-          color: AppColors.lightTextSecondary,
+          color: AppColors.lightTextPrimary,
         ),
         children: [
           TextSpan(

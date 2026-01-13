@@ -246,7 +246,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Text(
                           _email,
                           style: AppTypography.body2.copyWith(
-                            color: AppColors.lightTextSecondary,
+                            color: AppColors.lightTextPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -268,7 +268,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'Language Settings',
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -276,8 +276,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Native Language',
                     subtitle: _nativeLanguage,
-                    icon: Icons.language,
-                    iconColor: AppColors.primary,
+                    icon: Icons.public,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog(
                         'Select Native Language',
@@ -306,7 +306,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'Tools',
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextSecondary,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -314,8 +314,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Favorites', // Unified title
                     subtitle: 'Vocabulary, Sentences, Chat History',
+               
                     icon: Icons.bookmark,
-                    iconColor: AppColors.lightWarning,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -330,9 +331,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Upgrade to Pro',
                     subtitle: 'Get unlimited chats and advanced feedback',
-                    icon: Icons.star_border,
-                    iconColor: AppColors
-                        .lightWarning, // Slightly different to distinguish
+                    icon: Icons.star,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -342,13 +342,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.md),
                   // Logout Button
                   _buildMenuCard(
                     context,
                     title: 'Log Out',
-                    icon: Icons.logout,
-                    iconColor: AppColors.lightError,
+                    icon: Icons.arrow_circle_right,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: _handleLogout,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -420,7 +420,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const Icon(
                   Icons.chevron_right,
-                  color: AppColors.lightTextSecondary,
+                  color: AppColors.lightTextPrimary,
                 ),
               ],
             ),

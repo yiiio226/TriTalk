@@ -74,7 +74,7 @@ class SceneCard extends StatelessWidget {
                         Text(
                           'With: ${scene.aiRole}',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.lightTextSecondary,
+                            color: AppColors.lightTextPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,

@@ -66,7 +66,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Login with Google
   Future<bool> loginWithGoogle() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(loadingType: AuthLoadingType.google, error: null);
 
     try {
       final success = await _authService.loginWithGoogle();
@@ -76,7 +76,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _authService.init();
 
         state = state.copyWith(
-          isLoading: false,
+          loadingType: AuthLoadingType.none,
           status: AuthStatus.authenticated,
           user: _authService.currentUser,
           needsOnboarding: _authService.needsOnboarding,
@@ -87,21 +87,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         return true;
       } else {
-        state = state.copyWith(isLoading: false, error: 'Google login failed');
+        state = state.copyWith(loadingType: AuthLoadingType.none, error: 'Google login failed');
         return false;
       }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('AuthNotifier: Google login error - $e');
       }
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(loadingType: AuthLoadingType.none, error: e.toString());
       return false;
     }
   }
 
   /// Login with Apple
   Future<bool> loginWithApple() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(loadingType: AuthLoadingType.apple, error: null);
 
     try {
       final success = await _authService.loginWithApple();
@@ -111,7 +111,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _authService.init();
 
         state = state.copyWith(
-          isLoading: false,
+          loadingType: AuthLoadingType.none,
           status: AuthStatus.authenticated,
           user: _authService.currentUser,
           needsOnboarding: _authService.needsOnboarding,
@@ -122,21 +122,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         return true;
       } else {
-        state = state.copyWith(isLoading: false, error: 'Apple login failed');
+        state = state.copyWith(loadingType: AuthLoadingType.none, error: 'Apple login failed');
         return false;
       }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('AuthNotifier: Apple login error - $e');
       }
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(loadingType: AuthLoadingType.none, error: e.toString());
       return false;
     }
   }
 
   /// Logout the current user
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(loadingType: AuthLoadingType.general);
 
     try {
       await _authService.logout();
@@ -152,7 +152,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       // Even if logout fails, mark as unauthenticated locally
       state = state.copyWith(
-        isLoading: false,
+        loadingType: AuthLoadingType.none,
         status: AuthStatus.unauthenticated,
         error: e.toString(),
       );
