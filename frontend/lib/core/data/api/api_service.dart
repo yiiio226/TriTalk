@@ -93,9 +93,18 @@ class ApiService {
       if (response.statusCode == 200) {
         return ChatResponse.fromJson(jsonDecode(response.body));
       } else {
-        throw Exception('Failed to load chat response: ${response.statusCode}');
+        if (kDebugMode) {
+          debugPrint('❌ [sendMessage] Status: ${response.statusCode}');
+          debugPrint('❌ [sendMessage] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed to load chat response: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [sendMessage] Exception: $e');
+      }
       throw Exception('Error sending message: $e');
     }
   }
@@ -150,9 +159,18 @@ class ApiService {
       if (response.statusCode == 200) {
         return SceneGenerationResponse.fromJson(jsonDecode(response.body));
       } else {
-        throw Exception('Failed to generate scene: ${response.statusCode}');
+        if (kDebugMode) {
+          debugPrint('❌ [generateScene] Status: ${response.statusCode}');
+          debugPrint('❌ [generateScene] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed to generate scene: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [generateScene] Exception: $e');
+      }
       throw Exception('Error generating scene: $e');
     }
   }
@@ -169,9 +187,18 @@ class ApiService {
         final data = jsonDecode(response.body);
         return data['translation'];
       } else {
-        throw Exception('Failed to translate text: ${response.statusCode}');
+        if (kDebugMode) {
+          debugPrint('❌ [translateText] Status: ${response.statusCode}');
+          debugPrint('❌ [translateText] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed to translate text: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [translateText] Exception: $e');
+      }
       throw Exception('Error translating text: $e');
     }
   }
@@ -311,13 +338,34 @@ class ApiService {
         body: jsonEncode({'description': description}),
       );
 
+      if (kDebugMode) {
+        debugPrint(
+          '📝 [polishScenario] Response status: ${response.statusCode}',
+        );
+        if (response.statusCode != 200) {
+          debugPrint(
+            '📝 [polishScenario] Response headers: ${response.headers}',
+          );
+          debugPrint('📝 [polishScenario] Response body: ${response.body}');
+        }
+      }
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['polished_text'];
       } else {
-        throw Exception('Failed to polish scenario: ${response.statusCode}');
+        if (kDebugMode) {
+          debugPrint('❌ [polishScenario] Error: ${response.statusCode}');
+          debugPrint('❌ [polishScenario] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed to polish scenario: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [polishScenario] Exception: $e');
+      }
       throw Exception('Error polishing scenario: $e');
     }
   }
