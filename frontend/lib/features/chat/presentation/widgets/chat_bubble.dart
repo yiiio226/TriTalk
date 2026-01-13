@@ -346,7 +346,8 @@ class _ChatBubbleState extends State<ChatBubble>
       boxShadow: AppShadows.xs,
     );
 
-    if (isPerfect) {
+    // Only apply feedback styling to user messages
+    if (isUser && isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
           colors: [Colors.green.shade50, Colors.green.shade100],
@@ -355,7 +356,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ),
         border: Border.all(color: Colors.green.shade200, width: 1),
       );
-    } else if (isMagicWand) {
+    } else if (isUser && isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: const LinearGradient(
           colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)],
@@ -364,7 +365,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ),
         border: Border.all(color: Colors.amber.shade200, width: 1),
       );
-    } else if (hasFeedback) {
+    } else if (isUser && hasFeedback) {
       bubbleDecoration = bubbleDecoration.copyWith(
         border: Border.all(color: Colors.orange.shade100, width: 1),
       );
@@ -423,7 +424,8 @@ class _ChatBubbleState extends State<ChatBubble>
                             ],
                           ],
                         ),
-                  if (hasFeedback) ...[
+                  // Only show feedback for user messages
+                  if (isUser && hasFeedback) ...[
                     const SizedBox(height: 6),
                     Row(
                       mainAxisSize: MainAxisSize.min,
