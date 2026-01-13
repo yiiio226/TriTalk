@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "backend/supabase/migrations/**"
+      - ".github/workflows/deploy-db-dev.yml"
 
 jobs:
   deploy-dev:
