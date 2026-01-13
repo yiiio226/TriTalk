@@ -149,6 +149,13 @@ app.openapi(chatSendRoute, async (c) => {
   try {
     const body = c.req.valid("json");
     const env = c.env as Env;
+
+    console.log("[/chat/send] Request received:", {
+      message: body.message?.substring(0, 50),
+      historyLength: body.history?.length || 0,
+      sceneContext: body.scene_context?.substring(0, 30),
+    });
+
     const nativeLang = body.native_language || "Chinese (Simplified)";
     const targetLang = body.target_language || "English";
 
@@ -295,6 +302,7 @@ app.openapi(transcribeRoute, async (c) => {
 
 // POST /chat/send-voice
 app.post("/chat/send-voice", async (c) => {
+  console.log("[/chat/send-voice] Request received");
   try {
     const formData = await c.req.formData();
     const env = c.env as Env;
@@ -304,6 +312,12 @@ app.post("/chat/send-voice", async (c) => {
     const nativeLang =
       (formData.get("native_language") as string) || "Chinese (Simplified)";
     const targetLang = (formData.get("target_language") as string) || "English";
+
+    console.log("[/chat/send-voice] Parsed form data:", {
+      hasAudio: !!audioFile,
+      sceneContext: sceneContext?.substring(0, 30),
+      historyLength: historyStr?.length,
+    });
 
     let history: any[] = [];
     try {
