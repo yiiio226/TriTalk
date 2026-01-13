@@ -15,6 +15,14 @@ enum AuthStatus {
   unauthenticated,
 }
 
+/// Type of loading operation
+enum AuthLoadingType {
+  none,
+  google,
+  apple,
+  general,
+}
+
 /// Authentication state using Freezed for immutability
 @freezed
 abstract class AuthState with _$AuthState {
@@ -28,8 +36,8 @@ abstract class AuthState with _$AuthState {
     /// Whether the user needs onboarding (profile not completed)
     @Default(false) bool needsOnboarding,
 
-    /// Loading state for login operations
-    @Default(false) bool isLoading,
+    /// Loading type to distinguish between different operations
+    @Default(AuthLoadingType.none) AuthLoadingType loadingType,
 
     /// Error message if any
     String? error,

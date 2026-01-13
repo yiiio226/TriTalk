@@ -103,7 +103,8 @@ class LoginScreen extends ConsumerWidget {
     WidgetRef ref,
     AuthState authState,
   ) {
-    final isLoading = authState.isLoading;
+    final loadingType = authState.loadingType;
+    final isAnyLoading = loadingType != AuthLoadingType.none;
 
     return Column(
       children: [
@@ -151,8 +152,8 @@ class LoginScreen extends ConsumerWidget {
           label: 'Continue with Google',
           backgroundColor: Colors.black,
           textColor: Colors.white,
-          isLoading: isLoading,
-          onPressed: isLoading
+          isLoading: loadingType == AuthLoadingType.google,
+          onPressed: isAnyLoading
               ? null
               : () => ref.read(authProvider.notifier).loginWithGoogle(),
         ),
@@ -165,8 +166,8 @@ class LoginScreen extends ConsumerWidget {
           backgroundColor: Colors.white,
           textColor: AppColors.lightTextPrimary,
           borderColor: AppColors.lightDivider,
-          isLoading: isLoading,
-          onPressed: isLoading
+          isLoading: loadingType == AuthLoadingType.apple,
+          onPressed: isAnyLoading
               ? null
               : () => ref.read(authProvider.notifier).loginWithApple(),
         ),
