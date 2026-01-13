@@ -21,32 +21,66 @@ class _ScenarioConfigurationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Back to scenarios',
-          style: TextStyle(color: Colors.black, fontSize: 16),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      backgroundColor: AppColors.lightSurface,
+      body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Configure your practice session',
-              style: TextStyle(fontSize: 20, color: Colors.grey),
+            // Custom Header
+            Container(
+              color: AppColors.lightSurface,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.lightBackground,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: AppColors.lightTextPrimary,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Back to scenarios',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.lightTextPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
+            // Content
+            Expanded(
+              child: Container(
+                color: AppColors.lightBackground,
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Configure your practice session',
+                      style: TextStyle(fontSize: 16, color: AppColors.lightTextSecondary),
+                    ),
+                    const SizedBox(height: 32),
 
             // Speed Section
-            _buildSectionTitle('AI Speaking Speed', Icons.volume_up_outlined),
+            _buildSectionTitle('AI Speaking Speed', Icons.volume_up_outlined, AppColors.lightTextSecondary),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -75,6 +109,7 @@ class _ScenarioConfigurationScreenState
             _buildSectionTitle(
               'AI Personality',
               Icons.sentiment_satisfied_outlined,
+              AppColors.lightTextSecondary,
             ),
             const SizedBox(height: 16),
             _buildPersonalityCard(
@@ -128,28 +163,33 @@ class _ScenarioConfigurationScreenState
                   'Start Practice',
                   style: AppTypography.button.copyWith(
                     fontSize: 18,
-                    color: AppColors.lightTextPrimary,
+                    color: AppColors.darkTextPrimary,
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, IconData icon) {
+  Widget _buildSectionTitle(String title, IconData icon, [Color? color]) {
+    final effectiveColor = color ?? AppColors.lightTextSecondary;
     return Row(
       children: [
-        Icon(icon, color: AppColors.lightTextPrimary),
+        Icon(icon, color: effectiveColor),
         const SizedBox(width: 8),
         Text(
           title,
           style: AppTypography.subtitle1.copyWith(
-            color: AppColors.lightTextPrimary,
-            fontWeight: FontWeight.bold,
+            color: effectiveColor,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -170,7 +210,7 @@ class _ScenarioConfigurationScreenState
           color: isSelected ? AppColors.secondary : Colors.white,
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.lightDivider,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1 : 1,
           ),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
@@ -207,7 +247,7 @@ class _ScenarioConfigurationScreenState
           color: isSelected ? AppColors.secondary : Colors.white,
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.lightDivider,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1 : 1,
           ),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),

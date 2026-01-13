@@ -28,13 +28,63 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
     try {
       final messages = await _repository.fetchHistory(sceneKey: _sceneId);
 
-      // If new conversation, we might want to handle initial message logic here
-      // or rely on the UI/Repository to have already set it up.
-      // For now, let's just load what we have.
-
       state = state.copyWith(isLoading: false, messages: messages);
+
+      // If this is a new conversation (no messages), automatically generate AI's first message
+      if (messages.isEmpty) {
+        await _generateInitialAIMessage();
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Generate the initial AI greeting message for new conversations
+  Future<void> _generateInitialAIMessage() async {
+    // Add loading placeholder for AI
+    final loadingId = 'loading_initial_${DateTime.now().millisecondsSinceEpoch}';
+    final loadingMsg = Message(
+      id: loadingId,
+      content: '',
+      isUser: false,
+      timestamp: DateTime.now(),
+      isLoading: true,
+    );
+
+    state = state.copyWith(messages: [loadingMsg]);
+
+    try {
+      final sceneContext = _buildSceneContext();
+      
+      // Send a simple greeting to trigger AI's first response
+      // The AI will respond based on the scene context and its role
+      final response = await _repository.sendMessage(
+        text: 'Hi', // Simple greeting to start the conversation
+        sceneContext: sceneContext,
+        history: [],
+      );
+
+      // Replace loading message with actual AI response
+      final aiMessage = Message(
+        id: _uuid.v4(),
+        content: response.message,
+        isUser: false,
+        timestamp: DateTime.now(),
+        translation: response.translation,
+        feedback: response.feedback,
+        isAnimated: true,
+      );
+
+      final finalMessages = [aiMessage];
+      state = state.copyWith(messages: finalMessages);
+
+      _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
+    } catch (e) {
+      // Remove loading message on error
+      state = state.copyWith(
+        messages: [],
+        error: 'Failed to generate initial message: $e',
+      );
     }
   }
 

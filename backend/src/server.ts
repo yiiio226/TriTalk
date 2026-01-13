@@ -230,6 +230,48 @@ app.openapi(chatSendRoute, async (c) => {
     const nativeLang = body.native_language || "Chinese (Simplified)";
     const targetLang = body.target_language || "English";
 
+    // Check if this is the initial message (empty history + simple greeting)
+    const isInitialMessage =
+      (!body.history || body.history.length === 0) &&
+      body.message.trim().toLowerCase() === 'hi';
+
+    if (isInitialMessage) {
+      // For initial message, just generate AI's greeting without analysis
+      const initialPrompt = `You are roleplaying in a language learning scenario.
+      
+SCENARIO CONTEXT: ${body.scene_context}
+
+CRITICAL ROLE INSTRUCTIONS:
+1. You MUST play the AI role specified in the scenario context.
+2. This is the START of a new conversation.
+3. Generate a natural, in-character greeting to begin the roleplay.
+4. Stay in character and set the scene naturally.
+5. Keep your greeting conversational and welcoming.
+
+Generate ONLY a JSON response with this format:
+{
+    "reply": "Your in-character greeting to start the conversation"
+}`;
+
+      const messages = [{ role: "user", content: initialPrompt }];
+      const content = await callOpenRouter(
+        env.OPENROUTER_API_KEY,
+        env.OPENROUTER_CHAT_MODEL,
+        messages
+      );
+      const data = parseJSON(content);
+      const replyText = sanitizeText(data.reply || "Hello! How can I help you today?");
+
+      return c.json(
+        {
+          message: replyText,
+          review_feedback: null, // No feedback for initial greeting
+        },
+        200
+      );
+    }
+
+    // Normal message flow with analysis
     const systemPrompt = buildChatSystemPrompt(
       body.scene_context,
       nativeLang,
@@ -403,7 +445,7 @@ app.post("/chat/send-voice", async (c) => {
     let history: any[] = [];
     try {
       history = JSON.parse(historyStr);
-    } catch (e) {}
+    } catch (e) { }
 
     if (!audioFile || typeof audioFile === "string") {
       throw new Error("No audio file uploaded");
@@ -479,7 +521,7 @@ app.post("/chat/send-voice", async (c) => {
                   JSON.stringify({ type: "token", content: content })
                 );
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
@@ -608,7 +650,7 @@ app.post("/chat/analyze", async (c) => {
                 if (content.includes("```")) continue;
                 await stream.write(content);
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       },
@@ -999,7 +1041,7 @@ app.post("/tts/generate", async (c) => {
                 })
               );
             }
-          } catch (e) {}
+          } catch (e) { }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
       },
