@@ -23,10 +23,15 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       super(const ChatPageState());
 
   /// Load initial messages for the scene
+  /// Forces sync from cloud to ensure latest messages are loaded across devices
   Future<void> loadMessages() async {
     state = state.copyWith(isLoading: true);
     try {
-      final messages = await _repository.fetchHistory(sceneKey: _sceneId);
+      // Force sync from cloud to get latest messages (important for cross-device sync)
+      final messages = await _repository.fetchHistory(
+        sceneKey: _sceneId,
+        forceSync: true,
+      );
 
       state = state.copyWith(isLoading: false, messages: messages);
 
