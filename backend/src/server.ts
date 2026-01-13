@@ -68,6 +68,77 @@ import {
 const app = new OpenAPIHono<{ Bindings: Env; Variables: { user: any } }>();
 
 // ============================================
+// Error Logging Helper
+// ============================================
+interface ErrorLogContext {
+  route: string;
+  method?: string;
+  userId?: string;
+  requestData?: Record<string, unknown>;
+}
+
+function logError(error: unknown, context: ErrorLogContext): void {
+  const errorObj = error instanceof Error ? error : new Error(String(error));
+  const timestamp = new Date().toISOString();
+
+  // Structured log for Cloudflare observability
+  console.error(
+    JSON.stringify({
+      timestamp,
+      level: "ERROR",
+      route: context.route,
+      method: context.method || "UNKNOWN",
+      userId: context.userId || "anonymous",
+      error: {
+        name: errorObj.name,
+        message: errorObj.message,
+        stack: errorObj.stack?.split("\n").slice(0, 5).join("\n"), // First 5 lines of stack
+      },
+      requestData: context.requestData,
+    })
+  );
+
+  // Also log in human-readable format for quick debugging
+  console.error(`[${timestamp}] ERROR in ${context.route}:`, errorObj.message);
+  if (errorObj.stack) {
+    console.error("Stack trace:", errorObj.stack);
+  }
+}
+
+// ============================================
+// Global Error Handler
+// ============================================
+app.onError((err, c) => {
+  const requestId =
+    c.req.header("cf-ray") || c.req.header("x-request-id") || "unknown";
+  const user = c.get("user");
+
+  logError(err, {
+    route: c.req.path,
+    method: c.req.method,
+    userId: user?.id,
+    requestData: {
+      requestId,
+      url: c.req.url,
+      headers: {
+        "content-type": c.req.header("content-type"),
+        "user-agent": c.req.header("user-agent"),
+      },
+    },
+  });
+
+  // Return a generic error response
+  return c.json(
+    {
+      error: "Internal Server Error",
+      message: err.message || "An unexpected error occurred",
+      requestId,
+    },
+    500
+  );
+});
+
+// ============================================
 // CORS Middleware (Global)
 // ============================================
 app.use(
@@ -149,6 +220,13 @@ app.openapi(chatSendRoute, async (c) => {
   try {
     const body = c.req.valid("json");
     const env = c.env as Env;
+
+    console.log("[/chat/send] Request received:", {
+      message: body.message?.substring(0, 50),
+      historyLength: body.history?.length || 0,
+      sceneContext: body.scene_context?.substring(0, 30),
+    });
+
     const nativeLang = body.native_language || "Chinese (Simplified)";
     const targetLang = body.target_language || "English";
 
@@ -196,7 +274,12 @@ app.openapi(chatSendRoute, async (c) => {
       200
     );
   } catch (error) {
-    console.error("Error in /chat/send:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/send",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       {
         message: "Sorry, I'm having trouble connecting to the AI right now.",
@@ -285,7 +368,12 @@ app.openapi(transcribeRoute, async (c) => {
       200
     );
   } catch (error) {
-    console.error("Error in /chat/transcribe:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/transcribe",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       { error: "Failed to transcribe audio", details: String(error) },
       500
@@ -295,6 +383,7 @@ app.openapi(transcribeRoute, async (c) => {
 
 // POST /chat/send-voice
 app.post("/chat/send-voice", async (c) => {
+  console.log("[/chat/send-voice] Request received");
   try {
     const formData = await c.req.formData();
     const env = c.env as Env;
@@ -304,6 +393,12 @@ app.post("/chat/send-voice", async (c) => {
     const nativeLang =
       (formData.get("native_language") as string) || "Chinese (Simplified)";
     const targetLang = (formData.get("target_language") as string) || "English";
+
+    console.log("[/chat/send-voice] Parsed form data:", {
+      hasAudio: !!audioFile,
+      sceneContext: sceneContext?.substring(0, 30),
+      historyLength: historyStr?.length,
+    });
 
     let history: any[] = [];
     try {
@@ -397,7 +492,12 @@ app.post("/chat/send-voice", async (c) => {
       }
     );
   } catch (error) {
-    console.error("Error in /chat/send-voice:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/send-voice",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       {
         message: "Sorry, I'm having trouble processing your voice message.",
@@ -455,7 +555,12 @@ app.openapi(hintRoute, async (c) => {
 
     return c.json({ hints }, 200);
   } catch (error) {
-    console.error("Error in /chat/hint:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/hint",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       {
         hints: [
@@ -513,7 +618,12 @@ app.post("/chat/analyze", async (c) => {
       }
     );
   } catch (error) {
-    console.error("Error in /chat/analyze:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/analyze",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       {
         grammar_points: [],
@@ -581,7 +691,13 @@ app.openapi(sceneGenerateRoute, async (c) => {
       200
     );
   } catch (error) {
-    console.error("Error in /scene/generate:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/scene/generate",
+      method: "POST",
+      userId: user?.id,
+      requestData: { description: body?.description?.substring(0, 50) },
+    });
     return c.json(
       {
         title: "Custom Scene",
@@ -634,7 +750,12 @@ app.openapi(scenePolishRoute, async (c) => {
       200
     );
   } catch (error) {
-    console.error("Error in /scene/polish:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/scene/polish",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       { polished_text: "Could not polish text at this time." },
       500
@@ -676,7 +797,12 @@ app.openapi(translateRoute, async (c) => {
     const data = parseJSON(content);
     return c.json({ translation: data.translation || body.text }, 200);
   } catch (error) {
-    console.error("Error in /common/translate:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/common/translate",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json({ translation: "Translation unavailable." }, 500);
   }
 });
@@ -734,7 +860,12 @@ app.openapi(shadowRoute, async (c) => {
       200
     );
   } catch (error) {
-    console.error("Error in /chat/shadow:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/shadow",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       {
         score: 0,
@@ -791,7 +922,12 @@ app.openapi(optimizeRoute, async (c) => {
     const data = parseJSON(content);
     return c.json({ optimized_text: data.optimized_text || body.message }, 200);
   } catch (error) {
-    console.error("Error in /chat/optimize:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/optimize",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json({ optimized_text: "Optimization unavailable." }, 500);
   }
 });
@@ -875,7 +1011,12 @@ app.post("/tts/generate", async (c) => {
       }
     );
   } catch (error) {
-    console.error("Error in /tts/generate:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/tts/generate",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json({ error: "TTS generation failed." }, 500);
   }
 });
@@ -967,6 +1108,12 @@ app.openapi(deleteMessagesRoute, async (c) => {
     }
     return c.json({ success: true, deleted_count: deletedCount }, 200);
   } catch (error) {
+    const user = c.get("user");
+    logError(error, {
+      route: "/chat/messages",
+      method: "DELETE",
+      userId: user?.id,
+    });
     return c.json({ error: "Failed to delete messages" }, 500);
   }
 });
@@ -1069,7 +1216,12 @@ app.post("/speech/assess", async (c) => {
 
     return c.json(response, 200);
   } catch (error) {
-    console.error("Error in /speech/assess:", error);
+    const user = c.get("user");
+    logError(error, {
+      route: "/speech/assess",
+      method: "POST",
+      userId: user?.id,
+    });
     return c.json(
       {
         error: "Failed to assess pronunciation",
