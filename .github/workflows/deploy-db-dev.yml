@@ -24,11 +24,13 @@ jobs:
           cd backend
           # Encode the password to handle special characters correctly in the connection string
           ENC_PASSWORD=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ.get('SUPABASE_DB_PASSWORD', '')))")
-          # Force direct connection to the database (port 5432) instead of the pooler
-          DB_URL="postgresql://postgres:${ENC_PASSWORD}@db.${{ secrets.SUPABASE_DEV_PROJECT_REF }}.supabase.co:5432/postgres"
+          # Use AWS IPv4 pooler hostname since GitHub Actions doesn't support IPv6
+          # Format: aws-0-[region].pooler.supabase.com (uses IPv4 only)
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
 
-          npx supabase link --project-ref ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+          npx supabase link --project-ref $SUPABASE_PROJECT_REF
           npx supabase db push --db-url "$DB_URL"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DEV_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
