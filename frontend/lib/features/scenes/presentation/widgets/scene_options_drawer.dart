@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
-
+import 'package:frontend/core/design/app_design_system.dart';
 class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onClear;
   final VoidCallback? onDelete;
@@ -24,7 +24,7 @@ class SceneOptionsDrawer extends StatelessWidget {
         children: [
           if (onShowFavorites != null)
             ListTile(
-              leading: const Icon(Icons.star_outline, color: Colors.amber),
+              leading: const Icon(Icons.star_outline, color: AppColors.primary),
               title: const Text('Favorites'),
               onTap: () {
                 Navigator.pop(context);
@@ -33,7 +33,7 @@ class SceneOptionsDrawer extends StatelessWidget {
             ),
           if (onClear != null)
             ListTile(
-              leading: const Icon(Icons.refresh, color: Colors.black),
+              leading: const Icon(Icons.refresh, color: AppColors.primary),
               title: const Text('Clear Conversation'),
               onTap: () {
                 Navigator.pop(context);
@@ -42,7 +42,7 @@ class SceneOptionsDrawer extends StatelessWidget {
             ),
           if (onBookmark != null)
             ListTile(
-              leading: const Icon(Icons.bookmark_border, color: Colors.black),
+              leading: const Icon(Icons.bookmark_border, color: AppColors.primary),
               title: const Text('Bookmark Conversation'),
               onTap: () {
                 Navigator.pop(context);
@@ -53,10 +53,10 @@ class SceneOptionsDrawer extends StatelessWidget {
             const Divider(),
           if (onDelete != null)
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              leading: const Icon(Icons.delete_outline, color: AppColors.lightError),
               title: const Text(
                 'Delete Conversation',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppColors.lightError),
               ),
               onTap: () {
                 Navigator.pop(context);
