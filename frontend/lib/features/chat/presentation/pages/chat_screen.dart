@@ -176,6 +176,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     _notifier.setRecording(true);
     _startRecordingTimer();
+    
+    // Start waveform animation
+    _pulseController.repeat();
   }
 
   void _startRecordingTimer() {
