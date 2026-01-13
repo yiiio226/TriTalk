@@ -164,17 +164,22 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                               minLines: null,
                               expands: true,
                               textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
-                                hintText:
-                                    'Example: I need to return a defective product, but the store clerk is being difficult...',
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.fromLTRB(
-                                  16,
-                                  16,
-                                  40,
-                                  16,
+                                decoration: const InputDecoration(
+                                  hintText:
+                                      'Example: I need to return a defective product, but the store clerk is being difficult...',
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  filled: false,
+                                  contentPadding: EdgeInsets.fromLTRB(
+                                    16,
+                                    16,
+                                    40,
+                                    16,
+                                  ),
                                 ),
-                              ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),

@@ -36,9 +36,9 @@ class AppColors {
   static const Color lightDivider = Color(0xFFE2E8F0); // Divider/Border
 
   // Light Theme State Colors
-  static const Color lightError = Color(0xFFEF4444); // Error
-  static const Color lightSuccess = Color(0xFF10B981); // Success
-  static const Color lightWarning = Color(0xFFF59E0B); // Warning
+  static const Color lightError = Color(0xFFA63333); // Error
+  static const Color lightSuccess = Color(0xFF15AE7B); // Success
+  static const Color lightWarning = Color(0xFFC58B29); // Warning
   static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
 
   // Light Theme Text Colors
