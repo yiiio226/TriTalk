@@ -167,7 +167,7 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.lightBackground,
+                  color: AppColors.lightSurface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.lightDivider),
                 ),

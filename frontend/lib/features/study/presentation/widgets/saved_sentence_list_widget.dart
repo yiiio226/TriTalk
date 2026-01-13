@@ -39,7 +39,7 @@ class SavedSentenceListWidget extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.lightBackground,
+                color: AppColors.lightSurface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.lightDivider),
               ),
