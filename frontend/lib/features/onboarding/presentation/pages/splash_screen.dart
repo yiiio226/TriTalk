@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/auth/auth_provider.dart';
 import '../../../../core/auth/auth_state.dart';
@@ -20,7 +21,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
   bool _hasNavigated = false;
   bool _isInitialized = false;
 
@@ -35,13 +35,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
@@ -131,26 +124,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           builder: (context, child) {
             return Opacity(
               opacity: _fadeAnimation.value,
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // App Logo
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 30,
-                            offset: const Offset(0, 15),
-                          ),
-                        ],
-                      ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // App Logo with Shimmer overlay
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Original Logo Layer
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
+                            ),
+                          ],
+                        ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(30),
                           child: Image.asset(
@@ -161,38 +156,61 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                         ),
                       ),
-                    const SizedBox(height: AppSpacing.xl),
-                    // App Name
-                    Text(
-                      'TriTalk',
-                      style: AppTypography.headline1.copyWith(
-                        color: AppColors.lightTextPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    // Tagline
-                    Text(
-                      'Your AI Language Practice Companion',
-                      style: AppTypography.body1.copyWith(
-                        color: AppColors.lightTextSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    // Loading indicator (shows while determining auth state)
-                    if (authState.status == AuthStatus.unknown)
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
+                      // Shimmer Overlay Layer
+                      Shimmer.fromColors(
+                        baseColor: Colors.white.withValues(alpha: 0.0),
+                        highlightColor: Colors.white.withValues(alpha: 0.4),
+                        period: const Duration(milliseconds: 1500),
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
                       ),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  // App Name with Shimmer overlay
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Original Text Layer
+                      Text(
+                        'TriTalk',
+                        style: AppTypography.headline1.copyWith(
+                          color: AppColors.lightTextPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      // Shimmer Overlay Layer
+                      Shimmer.fromColors(
+                        baseColor: Colors.white.withValues(alpha: 0.0),
+                        highlightColor: Colors.white.withValues(alpha: 0.4),
+                        period: const Duration(milliseconds: 1500),
+                        child: Text(
+                          'TriTalk',
+                          style: AppTypography.headline1.copyWith(
+                            color: AppColors.lightTextPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // Tagline
+                  Text(
+                    'Your AI Language Practice Companion',
+                    style: AppTypography.body1.copyWith(
+                      color: AppColors.lightTextSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  // Loading indicator removed as per request
+                ],
               ),
             );
           },
