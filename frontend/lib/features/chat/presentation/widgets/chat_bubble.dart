@@ -271,8 +271,17 @@ class _ChatBubbleState extends State<ChatBubble>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.white.withValues(alpha: 0.5),
-      builder: (context) =>
-          VoiceFeedbackSheet(feedback: widget.message.voiceFeedback!),
+      builder: (context) => VoiceFeedbackSheet(
+        feedback: widget.message.voiceFeedback!,
+        audioPath: widget.message.audioPath,
+        transcript: widget.message.content, // Transcript is stored in content
+        onFeedbackUpdate: (updatedFeedback) {
+          // Persist the updated feedback with Azure data
+          widget.onMessageUpdate?.call(
+            widget.message.copyWith(voiceFeedback: updatedFeedback),
+          );
+        },
+      ),
     );
   }
 
