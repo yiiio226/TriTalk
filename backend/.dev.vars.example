@@ -1,0 +1,18 @@
+# TriTalk Backend - Development Environment Variables
+# Copy this file to .dev.vars and fill in your API keys
+
+# OpenRouter API (Required)
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# Supabase (Required for authentication)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# MiniMax TTS (Optional - for text-to-speech)
+MINIMAX_API_KEY=your_minimax_api_key_here
+MINIMAX_GROUP_ID=your_minimax_group_id_here
+
+# Azure Speech (Optional - for pronunciation assessment)
+# Get your key from: https://portal.azure.com -> Cognitive Services -> Speech
+AZURE_SPEECH_KEY=your_azure_speech_subscription_key_here
+AZURE_SPEECH_REGION=westus2

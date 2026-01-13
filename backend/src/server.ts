@@ -26,6 +26,9 @@ import {
   createSupabaseClient,
   extractToken,
   authMiddleware,
+  callAzureSpeechAssessment,
+  processWordsForUI,
+  isAzureSpeechConfigured,
 } from "./services";
 
 // Prompts
@@ -64,6 +67,8 @@ import {
   OptimizeResponseSchema,
   TTSRequestSchema,
   TTSResponseSchema,
+  PronunciationAssessmentRequestSchema,
+  PronunciationAssessmentResponseSchema,
 } from "./schemas";
 
 // Initialize OpenAPIHono app
@@ -96,6 +101,7 @@ app.use("/chat/*", authMiddleware);
 app.use("/scene/*", authMiddleware);
 app.use("/common/*", authMiddleware);
 app.use("/tts/*", authMiddleware);
+app.use("/speech/*", authMiddleware);
 
 // ============================================
 // Routes
@@ -309,7 +315,7 @@ app.post("/chat/send-voice", async (c) => {
     let history: any[] = [];
     try {
       history = JSON.parse(historyStr);
-    } catch (e) { }
+    } catch (e) {}
 
     if (!audioFile || typeof audioFile === "string") {
       throw new Error("No audio file uploaded");
@@ -385,7 +391,7 @@ app.post("/chat/send-voice", async (c) => {
                   JSON.stringify({ type: "token", content: content })
                 );
               }
-            } catch (e) { }
+            } catch (e) {}
           }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
@@ -504,7 +510,7 @@ app.post("/chat/analyze", async (c) => {
                 if (content.includes("```")) continue;
                 await stream.write(content);
               }
-            } catch (e) { }
+            } catch (e) {}
           }
         }
       },
@@ -864,7 +870,7 @@ app.post("/tts/generate", async (c) => {
                 })
               );
             }
-          } catch (e) { }
+          } catch (e) {}
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
       },
@@ -969,6 +975,103 @@ app.openapi(deleteMessagesRoute, async (c) => {
     return c.json({ success: true, deleted_count: deletedCount }, 200);
   } catch (error) {
     return c.json({ error: "Failed to delete messages" }, 500);
+  }
+});
+
+// ============================================
+// Speech API - Pronunciation Assessment
+// ============================================
+
+// POST /speech/assess - Pronunciation Assessment using Azure Speech
+app.post("/speech/assess", async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const env = c.env as Env;
+
+    // Check if Azure Speech is configured
+    if (
+      !isAzureSpeechConfigured(env.AZURE_SPEECH_KEY, env.AZURE_SPEECH_REGION)
+    ) {
+      return c.json({ error: "Azure Speech is not configured" }, 500);
+    }
+
+    const audioFile = formData.get("audio");
+    const referenceText = formData.get("reference_text") as string;
+    const language = (formData.get("language") as string) || "en-US";
+    const enableProsody = formData.get("enable_prosody") !== "false";
+
+    if (!audioFile || typeof audioFile === "string") {
+      return c.json({ error: "No audio file uploaded" }, 400);
+    }
+
+    if (!referenceText) {
+      return c.json({ error: "Reference text is required" }, 400);
+    }
+
+    const audioBlob = audioFile as File;
+    const arrayBuffer = await audioBlob.arrayBuffer();
+
+    console.log(
+      `[Speech/Assess] Reference: "${referenceText}", Language: ${language}, Size: ${arrayBuffer.byteLength} bytes`
+    );
+
+    // Call Azure Speech Pronunciation Assessment API
+    const result = await callAzureSpeechAssessment(
+      env.AZURE_SPEECH_KEY!,
+      env.AZURE_SPEECH_REGION!,
+      arrayBuffer,
+      referenceText,
+      language,
+      enableProsody
+    );
+
+    // Process words for UI display (Traffic Light system)
+    const wordFeedback = processWordsForUI(result.words);
+
+    // Transform to snake_case for API response
+    const response = {
+      recognition_status: result.recognitionStatus,
+      display_text: result.displayText,
+      pronunciation_score: result.pronunciationScore,
+      accuracy_score: result.accuracyScore,
+      fluency_score: result.fluencyScore,
+      completeness_score: result.completenessScore,
+      prosody_score: result.prosodyScore,
+      words: result.words.map((word) => ({
+        word: word.word,
+        accuracy_score: word.accuracyScore,
+        error_type: word.errorType,
+        phonemes: word.phonemes.map((phoneme) => ({
+          phoneme: phoneme.phoneme,
+          accuracy_score: phoneme.accuracyScore,
+          offset: phoneme.offset,
+          duration: phoneme.duration,
+        })),
+      })),
+      word_feedback: wordFeedback.map((wf) => ({
+        text: wf.text,
+        score: wf.score,
+        level: wf.level,
+        error_type: wf.errorType,
+        phonemes: wf.phonemes.map((phoneme) => ({
+          phoneme: phoneme.phoneme,
+          accuracy_score: phoneme.accuracyScore,
+          offset: phoneme.offset,
+          duration: phoneme.duration,
+        })),
+      })),
+    };
+
+    return c.json(response, 200);
+  } catch (error) {
+    console.error("Error in /speech/assess:", error);
+    return c.json(
+      {
+        error: "Failed to assess pronunciation",
+        details: String(error),
+      },
+      500
+    );
   }
 });
 
