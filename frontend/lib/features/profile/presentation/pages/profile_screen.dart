@@ -277,7 +277,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     title: 'Native Language',
                     subtitle: _nativeLanguage,
                     icon: Icons.public,
-                    iconColor: AppColors.primary,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog(
                         'Select Native Language',
@@ -292,7 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     title: 'Learning Language',
                     subtitle: _targetLanguage,
                     icon: Icons.school,
-                    iconColor: AppColors.lightTextPrimary,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog(
                         'Select Learning Language',
@@ -316,7 +316,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     subtitle: 'Vocabulary, Sentences, Chat History',
                
                     icon: Icons.bookmark,
-                    iconColor: AppColors.lightWarning,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -332,7 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     title: 'Upgrade to Pro',
                     subtitle: 'Get unlimited chats and advanced feedback',
                     icon: Icons.star,
-                    iconColor: AppColors.lightWarning,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -342,7 +342,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.md),
                   // Logout Button
                   _buildMenuCard(
                     context,
