@@ -128,7 +128,7 @@ class _ScenarioConfigurationScreenState
                   'Start Practice',
                   style: AppTypography.button.copyWith(
                     fontSize: 18,
-                    color: AppColors.lightTextPrimary,
+                    color: AppColors.darkTextPrimary,
                   ),
                 ),
               ),
@@ -170,7 +170,7 @@ class _ScenarioConfigurationScreenState
           color: isSelected ? AppColors.secondary : Colors.white,
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.lightDivider,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1 : 1,
           ),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
@@ -207,7 +207,7 @@ class _ScenarioConfigurationScreenState
           color: isSelected ? AppColors.secondary : Colors.white,
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.lightDivider,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1 : 1,
           ),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
