@@ -1,16 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:frontend/features/chat/domain/models/message.dart';
+import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 
 class VoiceFeedbackSheet extends StatefulWidget {
   final VoiceFeedback feedback;
   final ScrollController? scrollController;
+  final String? audioPath; // For calling speech/assess
+  final String? transcript; // Reference text for assessment
+  final Function(VoiceFeedback)?
+  onFeedbackUpdate; // Callback when Azure data arrives
 
   const VoiceFeedbackSheet({
     super.key,
     required this.feedback,
     this.scrollController,
+    this.audioPath,
+    this.transcript,
+    this.onFeedbackUpdate,
   });
 
   @override
@@ -18,6 +27,125 @@ class VoiceFeedbackSheet extends StatefulWidget {
 }
 
 class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
+  late VoiceFeedback _feedback;
+  bool _isLoadingAzure = false;
+  String? _azureError;
+
+  @override
+  void initState() {
+    super.initState();
+    _feedback = widget.feedback;
+
+    // If we don't have Azure data yet and have audio/transcript, fetch it
+    if (!_feedback.hasAzureData &&
+        widget.audioPath != null &&
+        widget.transcript != null &&
+        widget.transcript!.isNotEmpty) {
+      _fetchAzurePronunciationAssessment();
+    }
+  }
+
+  Future<void> _fetchAzurePronunciationAssessment() async {
+    setState(() {
+      _isLoadingAzure = true;
+      _azureError = null;
+    });
+
+    try {
+      if (kDebugMode) {
+        debugPrint('🎤 VoiceFeedbackSheet: Calling speech/assess');
+        debugPrint('   audioPath: ${widget.audioPath}');
+        debugPrint('   transcript: "${widget.transcript}"');
+      }
+
+      final speechService = SpeechAssessmentService();
+      final result = await speechService.assessPronunciationFromPath(
+        audioPath: widget.audioPath!,
+        referenceText: widget.transcript!,
+        language: 'en-US',
+        enableProsody: true,
+      );
+
+      // Log the response
+      if (kDebugMode) {
+        debugPrint('✅ Speech/Assess Response:');
+        debugPrint('   isSuccess: ${result.isSuccess}');
+        debugPrint('   pronunciationScore: ${result.pronunciationScore}');
+        debugPrint('   accuracyScore: ${result.accuracyScore}');
+        debugPrint('   fluencyScore: ${result.fluencyScore}');
+        debugPrint('   completenessScore: ${result.completenessScore}');
+        debugPrint('   prosodyScore: ${result.prosodyScore}');
+        debugPrint('   wordFeedback: ${result.wordFeedback.length} words');
+        for (final word in result.wordFeedback) {
+          debugPrint(
+            '     - "${word.text}": score=${word.score}, level=${word.level}, errorType=${word.errorType}',
+          );
+        }
+      }
+
+      if (!result.isSuccess) {
+        setState(() {
+          _isLoadingAzure = false;
+          _azureError = 'Recognition failed';
+        });
+        return;
+      }
+
+      // Convert to our model format
+      final azureWordFeedback = result.wordFeedback
+          .map(
+            (w) => AzureWordFeedback(
+              text: w.text,
+              score: w.score,
+              level: w.level,
+              errorType: w.errorType,
+              phonemes: w.phonemes
+                  .map(
+                    (p) => AzurePhonemeFeedback(
+                      phoneme: p.phoneme,
+                      accuracyScore: p.accuracyScore,
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
+          .toList();
+
+      final updatedFeedback = _feedback.copyWithAzureData(
+        pronunciationScore: result.pronunciationScore.round(),
+        azureAccuracyScore: result.accuracyScore,
+        azureFluencyScore: result.fluencyScore,
+        azureCompletenessScore: result.completenessScore,
+        azureProsodyScore: result.prosodyScore,
+        azureWordFeedback: azureWordFeedback,
+      );
+
+      setState(() {
+        _feedback = updatedFeedback;
+        _isLoadingAzure = false;
+      });
+
+      // Notify parent to persist the update
+      widget.onFeedbackUpdate?.call(updatedFeedback);
+    } on SpeechAssessmentException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Speech/Assess Error: ${e.message}');
+      }
+      setState(() {
+        _isLoadingAzure = false;
+        _azureError = e.message;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Speech/Assess Error: $e');
+      }
+      setState(() {
+        _isLoadingAzure = false;
+        _azureError = e.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StyledDrawer(
@@ -42,7 +170,19 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
 
           _buildHeader(),
           const SizedBox(height: 24),
-          _buildSentenceBreakdown(),
+
+          // Show loading indicator for Azure assessment
+          if (_isLoadingAzure) _buildLoadingIndicator(),
+
+          // Show error if Azure assessment failed
+          if (_azureError != null) _buildErrorBanner(),
+
+          // Show Azure word feedback if available
+          if (_feedback.hasAzureData)
+            _buildAzureWordFeedback()
+          else
+            _buildSentenceBreakdown(),
+
           if (widget.feedback.errorFocus != null) ...[
             const SizedBox(height: 24),
             _buildErrorFocus(),
@@ -52,6 +192,199 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
           const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 12),
+          Text('Analyzing pronunciation...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.red[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Assessment failed: $_azureError',
+              style: TextStyle(color: Colors.red[700], fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAzureWordFeedback() {
+    final words = _feedback.azureWordFeedback ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Pronunciation:',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.blue[100],
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Azure AI',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: words.map((word) {
+            Color color;
+            switch (word.level) {
+              case 'perfect':
+                color = Colors.green;
+                break;
+              case 'warning':
+                color = Colors.orange;
+                break;
+              case 'error':
+                color = Colors.red;
+                break;
+              case 'missing':
+                color = Colors.grey;
+                break;
+              default:
+                color = Colors.grey;
+            }
+
+            return IntrinsicWidth(
+              child: Column(
+                children: [
+                  Text(
+                    word.text,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: word.level == 'missing'
+                          ? Colors.grey
+                          : Colors.black87,
+                      decoration: word.level == 'missing'
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 4,
+                    width: 20,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${word.score.round()}',
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+
+        // Show Azure scores
+        const SizedBox(height: 16),
+        _buildAzureScores(),
+      ],
+    );
+  }
+
+  Widget _buildAzureScores() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildScoreItem('Accuracy', _feedback.azureAccuracyScore),
+          _buildScoreItem('Fluency', _feedback.azureFluencyScore),
+          _buildScoreItem('Complete', _feedback.azureCompletenessScore),
+          if (_feedback.azureProsodyScore != null)
+            _buildScoreItem('Prosody', _feedback.azureProsodyScore),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreItem(String label, double? score) {
+    final displayScore = score?.round() ?? 0;
+    Color color;
+    if (displayScore >= 80) {
+      color = Colors.green;
+    } else if (displayScore >= 60) {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+
+    return Column(
+      children: [
+        Text(
+          '$displayScore',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+      ],
     );
   }
 

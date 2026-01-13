@@ -1,46 +1,45 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { stream } from "hono/streaming";
 import { Env } from "./types";
 
 // Utils
 import {
-  parseJSON,
-  sanitizeText,
-  hexToBase64,
+  ALLOWED_ORIGINS,
   arrayBufferToBase64,
   detectAudioFormat,
-  ALLOWED_ORIGINS,
+  hexToBase64,
   iterateStreamLines,
+  parseJSON,
+  sanitizeText,
 } from "./utils";
 
 // Services
 import {
-  callOpenRouter,
-  callOpenRouterStreaming,
-  callOpenRouterMultimodal,
-  callMiniMaxTTS,
-  isTTSConfigured,
-  getTTSConfig,
-  createSupabaseClient,
-  extractToken,
   authMiddleware,
   callAzureSpeechAssessment,
-  processWordsForUI,
+  callMiniMaxTTS,
+  callOpenRouter,
+  callOpenRouterMultimodal,
+  callOpenRouterStreaming,
+  createSupabaseClient,
+  extractToken,
+  getTTSConfig,
   isAzureSpeechConfigured,
+  isTTSConfigured,
+  processWordsForUI,
 } from "./services";
 
 // Prompts
 import {
+  buildAnalyzePrompt,
   buildChatSystemPrompt,
-  buildVoiceChatSystemPrompt,
-  buildStreamingVoiceChatSystemPrompt,
   buildHintPrompt,
   buildOptimizePrompt,
-  buildAnalyzePrompt,
   buildSceneGeneratePrompt,
   buildScenePolishPrompt,
+  buildStreamingVoiceChatSystemPrompt,
   buildTranscribePrompt,
   buildTranslatePrompt,
 } from "./prompts";
@@ -50,25 +49,19 @@ import {
   ChatRequestSchema,
   ChatResponseSchema,
   ErrorSchema,
-  TranscribeResponseSchema,
   HintRequestSchema,
   HintResponseSchema,
-  AnalyzeRequestSchema,
-  AnalyzeResponseSchema,
-  SceneGenerationRequestSchema,
-  SceneGenerationResponseSchema,
-  PolishRequestSchema,
-  PolishResponseSchema,
-  TranslateRequestSchema,
-  TranslateResponseSchema,
-  ShadowRequestSchema,
-  ShadowResponseSchema,
   OptimizeRequestSchema,
   OptimizeResponseSchema,
-  TTSRequestSchema,
-  TTSResponseSchema,
-  PronunciationAssessmentRequestSchema,
-  PronunciationAssessmentResponseSchema,
+  PolishRequestSchema,
+  PolishResponseSchema,
+  SceneGenerationRequestSchema,
+  SceneGenerationResponseSchema,
+  ShadowRequestSchema,
+  ShadowResponseSchema,
+  TranscribeResponseSchema,
+  TranslateRequestSchema,
+  TranslateResponseSchema,
 } from "./schemas";
 
 // Initialize OpenAPIHono app
