@@ -5,15 +5,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/design/app_design_system.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:frontend/features/chat/domain/models/message.dart';
-import '../../../study/presentation/widgets/shadowing_sheet.dart';
-import '../../../study/presentation/widgets/save_note_sheet.dart';
-import 'voice_feedback_sheet.dart';
-import '../../../../core/data/api/api_service.dart';
-import '../../../../core/data/local/preferences_service.dart';
-import '../../../../core/data/local/storage_key_service.dart';
+import '../models/message.dart';
+import '../widgets/shadowing_sheet.dart';
+import '../widgets/save_note_sheet.dart';
+import '../widgets/voice_feedback_sheet.dart';
+import '../services/api_service.dart';
+import '../services/preferences_service.dart';
+import '../services/storage_key_service.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -34,10 +34,9 @@ class ChatBubble extends StatefulWidget {
     this.onMessageUpdate,
     this.onShowFeedback,
     this.isMultiSelectMode = false,
-    this.onLongPress,
+    this.onLongPress,≈ç
     this.onSelectionToggle,
   });
-
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
 }
@@ -65,6 +64,8 @@ class _ChatBubbleState extends State<ChatBubble>
   // Audio Playback
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
 
   // TTS state
   bool _isTTSLoading = false;
@@ -119,7 +120,7 @@ class _ChatBubbleState extends State<ChatBubble>
       _audioPlayer.onDurationChanged.listen((newDuration) {
         if (mounted) {
           setState(() {
-            // _duration = newDuration; // removed unused
+            _duration = newDuration;
           });
         }
       });
@@ -127,7 +128,7 @@ class _ChatBubbleState extends State<ChatBubble>
       _audioPlayer.onPositionChanged.listen((newPosition) {
         if (mounted) {
           setState(() {
-            // _position = newPosition; // removed unused
+            _position = newPosition;
           });
         }
       });
@@ -136,7 +137,7 @@ class _ChatBubbleState extends State<ChatBubble>
         if (mounted) {
           setState(() {
             _isPlaying = false;
-            // _position = Duration.zero; // removed unused
+            _position = Duration.zero;
           });
         }
       });
@@ -224,7 +225,7 @@ class _ChatBubbleState extends State<ChatBubble>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withValues(alpha: 0.5),
+      barrierColor: Colors.white.withOpacity(0.5),
       builder: (context) =>
           VoiceFeedbackSheet(feedback: widget.message.voiceFeedback!),
     );
@@ -250,7 +251,6 @@ class _ChatBubbleState extends State<ChatBubble>
               style: const TextStyle(
                 fontSize: 14, // Reduced from 16
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
               ),
             ),
             const SizedBox(width: 4),
@@ -287,7 +287,7 @@ class _ChatBubbleState extends State<ChatBubble>
   Widget build(BuildContext context) {
     final message = widget.message;
     final isUser = message.isUser;
-    // final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start; // unused
+    final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
 
     final hasFeedback = message.feedback != null;
     final isPerfect = message.feedback?.isPerfect ?? false;
@@ -367,18 +367,12 @@ class _ChatBubbleState extends State<ChatBubble>
                               MarkdownBody(
                                 data: _displayedText,
                                 styleSheet: MarkdownStyleSheet(
-                                  p: const TextStyle(
-                                    fontSize: 16,
-                                    height: 1.4,
-                                    color: Colors.black87,
-                                  ),
+                                  p: const TextStyle(fontSize: 16, height: 1.4),
                                   strong: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
                                   ),
                                   em: const TextStyle(
                                     fontStyle: FontStyle.italic,
-                                    color: Colors.black87,
                                   ),
                                 ),
                                 selectable: !widget.isMultiSelectMode,
@@ -400,8 +394,8 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(
-                                alpha: 0.2,
+                              color: Colors.white.withOpacity(
+                                0.2,
                               ), // Increased transparency
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -447,8 +441,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(
-                                  alpha: 0.2,
+                                color: Colors.white.withOpacity(
+                                  0.2,
                                 ), // Increased transparency
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -491,7 +485,7 @@ class _ChatBubbleState extends State<ChatBubble>
                       ],
                     ),
                   ],
-                  if (widget.message.isFeedbackLoading) ...[
+                  if (widget.message.isFeedbackLoading) ...[ 
                     const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -537,10 +531,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                       height: 10,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 1,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
-                                            ),
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.black,
+                                        ),
                                       ),
                                     )
                                   else
@@ -803,7 +796,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              barrierColor: Colors.white.withValues(alpha: 0.5),
+                              barrierColor: Colors.white.withOpacity(0.5),
                               builder: (context) => SaveNoteSheet(
                                 originalSentence: message.content,
                                 sceneId: widget.sceneId, // Pass sceneId
@@ -854,8 +847,12 @@ class _ChatBubbleState extends State<ChatBubble>
                           : widget.message.content,
                       styleSheet: MarkdownStyleSheet(
                         p: const TextStyle(fontSize: 14, height: 1.4),
-                        strong: const TextStyle(fontWeight: FontWeight.bold),
-                        em: const TextStyle(fontStyle: FontStyle.italic),
+                        strong: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        em: const TextStyle(
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                       selectable: !widget.isMultiSelectMode,
                     ),
