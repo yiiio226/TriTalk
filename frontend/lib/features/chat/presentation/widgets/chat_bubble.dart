@@ -25,6 +25,7 @@ class ChatBubble extends StatefulWidget {
   final bool isMultiSelectMode; // Whether multi-select mode is active
   final VoidCallback? onLongPress; // Callback to enter multi-select mode
   final VoidCallback? onSelectionToggle; // Callback to toggle selection
+  final VoidCallback? onContentChanged; // Callback when content changes (for auto-scroll)
 
   const ChatBubble({
     super.key,
@@ -36,6 +37,7 @@ class ChatBubble extends StatefulWidget {
     this.isMultiSelectMode = false,
     this.onLongPress,
     this.onSelectionToggle,
+    this.onContentChanged,
   });
 
   @override
@@ -194,6 +196,8 @@ class _ChatBubbleState extends State<ChatBubble>
             _currentIndex++;
             _displayedText = widget.message.content.substring(0, _currentIndex);
           });
+          // Notify parent that content changed (for auto-scroll)
+          widget.onContentChanged?.call();
         }
       } else {
         timer.cancel();

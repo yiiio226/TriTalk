@@ -573,6 +573,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             _showFeedbackSheet(msg);
                           }
                         },
+                        onContentChanged: () {
+                          // Auto-scroll when AI message content changes during typewriter animation
+                          // Only scroll if we're near the bottom (within 200 pixels)
+                          if (_scrollController.hasClients) {
+                            final position = _scrollController.position;
+                            final isNearBottom = position.maxScrollExtent - position.pixels < 200;
+                            
+                            if (isNearBottom) {
+                              // Schedule scroll after the current frame
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (_scrollController.hasClients) {
+                                  _scrollController.animateTo(
+                                    _scrollController.position.maxScrollExtent,
+                                    duration: const Duration(milliseconds: 100),
+                                    curve: Curves.easeOut,
+                                  );
+                                }
+                              });
+                            }
+                          }
+                        },
                       ),
                     ),
                   );
