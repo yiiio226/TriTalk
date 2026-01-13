@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -232,7 +231,7 @@ class LoginScreen extends ConsumerWidget {
   }
 
   Widget _buildGoogleIcon() {
-    return Container(
+    return SizedBox(
       width: 24,
       height: 24,
   

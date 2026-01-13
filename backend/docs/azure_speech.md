@@ -109,6 +109,61 @@ Azure Speech API 推荐的音频格式：
 
 > 💡 提示: 其他格式 (如 mp3, m4a) 也可能被接受，但 PCM 16kHz Mono WAV 提供最佳准确度。
 
+## API 客户端选择：Swagger Generated vs Raw HTTP
+
+### 推荐：使用原生 HTTP 调用 (Raw HTTP)
+
+对于 `/speech/assess` 端点，我们 **推荐使用原生 HTTP 调用** 而非 Swagger 生成的客户端。
+
+### 原因分析
+
+| 方面           | Swagger Generated Client          | Raw HTTP (推荐)                   |
+| -------------- | --------------------------------- | --------------------------------- |
+| **文件上传**   | ⚠️ 可能存在 multipart 编码问题    | ✅ 完全控制文件编码               |
+| **二进制数据** | ⚠️ 生成代码可能不正确处理音频字节 | ✅ 直接操作 ArrayBuffer/Uint8List |
+| **调试难度**   | ❌ 错误信息被封装，难以定位       | ✅ 可直接查看请求/响应内容        |
+| **类型安全**   | ✅ 自动生成类型                   | ⚠️ 需要手动定义模型类             |
+| **一致性**     | ✅ 与其他 JSON API 一致           | ⚠️ 与 JSON API 调用风格不同       |
+
+### 详细说明
+
+1. **Multipart/Form-Data 的复杂性**
+
+   - Swagger 生成器对 `multipart/form-data` 的支持因工具而异
+   - 某些生成器可能错误地将 `File` 序列化为 Base64 而非二进制流
+   - 边界 (boundary) 字符串处理可能不兼容
+
+2. **音频文件的特殊性**
+
+   - 音频数据需要精确的字节级控制
+   - PCM/WAV 文件的 header 可能被错误修改
+   - 录音库返回的数据格式可能需要预处理
+
+3. **错误调试**
+
+   - 发音评估对音频质量敏感，容易出现边缘情况
+   - 原生 HTTP 允许直接检查请求体和响应
+   - 更容易添加日志和断点
+
+4. **实际项目经验**
+   - TriChat 项目已从 Swagger 客户端迁移到原生 HTTP 调用
+   - 对于 JSON API，两种方式都可以
+   - 对于文件上传，原生 HTTP 更可靠
+
+### 建议的代码组织
+
+```
+lib/services/
+├── chat_service.dart         # JSON API - 可用 Swagger 或原生 HTTP
+├── scenario_service.dart     # JSON API - 可用 Swagger 或原生 HTTP
+├── speech_service.dart       # Multipart API - 推荐原生 HTTP ⭐
+└── report_service.dart       # JSON API - 可用 Swagger 或原生 HTTP
+```
+
+### 结论
+
+> 📌 **最佳实践**: 对于 `/speech/assess` 这类涉及文件上传的端点，使用 `http.MultipartRequest` 原生调用更加可靠。对于纯 JSON 的 API 端点，Swagger 客户端和原生 HTTP 都可行，取决于团队偏好。
+
 ## 前端集成示例
 
 ### Flutter 服务类完整示例
