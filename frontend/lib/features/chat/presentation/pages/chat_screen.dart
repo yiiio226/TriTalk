@@ -98,6 +98,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // Initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifier.loadMessages();
+      
+      // Listen for when messages are loaded and scroll to bottom
+      ref.listenManual(
+        chatPageNotifierProvider(widget.scene),
+        (previous, next) {
+          // Scroll to bottom when messages are first loaded or when new messages arrive
+          if (next.messages.isNotEmpty && !next.isLoading) {
+            // Check if this is the initial load (previous was loading or had no messages)
+            final isInitialLoad = previous == null || 
+                                  previous.isLoading || 
+                                  previous.messages.isEmpty;
+            
+            if (isInitialLoad) {
+              // Scroll to bottom after messages are rendered
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  _scrollController.jumpTo(
+                    _scrollController.position.maxScrollExtent,
+                  );
+                }
+              });
+            }
+          }
+        },
+      );
     });
 
     // Listen to text changes via ValueNotifier (no setState needed)
