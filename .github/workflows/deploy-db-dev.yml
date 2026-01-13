@@ -21,12 +21,6 @@ jobs:
 
       - name: Debug - Check secrets are set
         run: |
-          echo "Checking if secrets are configured..."
-          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "❌ SUPABASE_DEV_DB_PASSWORD is empty or not set!"
-          else
-            echo "✅ SUPABASE_DEV_DB_PASSWORD is set (length: ${#SUPABASE_DB_PASSWORD} chars)"
-          fi
           if [ -z "$SUPABASE_PROJECT_REF" ]; then
             echo "❌ SUPABASE_DEV_PROJECT_REF is empty or not set!"
           else
