@@ -67,6 +67,13 @@ npx wrangler secret put OPENROUTER_API_KEY
 # 设置模型（可选，默认使用 wrangler.toml 中的配置）
 npx wrangler secret put OPENROUTER_MODEL
 # 输入: google/gemini-2.0-flash-exp:free
+
+# 设置 Azure Speech API Key (用于发音评估功能)
+npx wrangler secret put AZURE_SPEECH_KEY
+# 输入你的 Azure Speech subscription key
+
+npx wrangler secret put AZURE_SPEECH_REGION
+# 输入: eastus (或其他 Azure 区域)
 ```
 
 ### 3. 部署

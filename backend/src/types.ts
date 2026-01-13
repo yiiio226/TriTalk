@@ -112,6 +112,9 @@ export interface Env {
   MINIMAX_API_KEY?: string;
   MINIMAX_GROUP_ID?: string;
   MINIMAX_DEFAULT_VOICE_ID?: string;
+  // Azure Speech API credentials for Pronunciation Assessment
+  AZURE_SPEECH_KEY?: string;
+  AZURE_SPEECH_REGION?: string;
 }
 
 export interface PolishRequest {
@@ -161,4 +164,45 @@ export interface TTSResponse {
 export interface TranscribeResponse {
   text: string; // The optimized/refined transcription
   raw_text?: string; // The original transcription
+}
+
+// Pronunciation Assessment Types (Azure Speech)
+export interface PronunciationAssessmentRequest {
+  reference_text: string; // The expected text user should say
+  language?: string; // Language code (e.g., "en-US")
+  enable_prosody?: boolean; // Enable prosody/intonation assessment
+}
+
+export interface PhonemeResult {
+  phoneme: string; // IPA phoneme symbol
+  accuracy_score: number; // 0-100 accuracy score
+  offset?: number;
+  duration?: number;
+}
+
+export interface WordResult {
+  word: string;
+  accuracy_score: number;
+  error_type: "None" | "Omission" | "Insertion" | "Mispronunciation";
+  phonemes: PhonemeResult[];
+}
+
+export interface WordFeedback {
+  text: string;
+  score: number;
+  level: "perfect" | "warning" | "error" | "missing"; // Traffic light system
+  error_type: string;
+  phonemes: PhonemeResult[];
+}
+
+export interface PronunciationAssessmentResponse {
+  recognition_status: string;
+  display_text: string;
+  pronunciation_score: number; // Overall score (0-100)
+  accuracy_score: number;
+  fluency_score: number;
+  completeness_score: number;
+  prosody_score?: number; // Only if enableProsody is true
+  words: WordResult[];
+  word_feedback?: WordFeedback[]; // UI-ready word feedback
 }

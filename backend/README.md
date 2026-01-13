@@ -44,6 +44,14 @@ TriTalk 后端服务，部署在 Cloudflare Workers 上，提供全球边缘计�
 | `/chat/analyze`    | POST | 流式语法分析            |
 | `/tts/generate`    | POST | 流式语音合成            |
 
+### 语音评估端点 (Azure Speech)
+
+| 端点             | 方法 | 描述                             |
+| ---------------- | ---- | -------------------------------- |
+| `/speech/assess` | POST | 发音评估 (音素级分析 + 语调评估) |
+
+> 📝 **注意**: `/speech/assess` 端点需要配置 Azure Speech API 凭证 (`AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`)
+
 ### 系统端点
 
 | 端点      | 方法 | 描述              |
@@ -109,6 +117,7 @@ backend/
 │   │   ├── index.ts       # 服务导出
 │   │   ├── openrouter.ts  # OpenRouter API 客户端
 │   │   ├── minimax.ts     # MiniMax TTS API 客户端
+│   │   ├── azure-speech.ts # Azure Speech 发音评估 API 客户端
 │   │   ├── supabase.ts    # Supabase 客户端工具
 │   │   └── auth.ts        # 认证服务和中间件
 │   └── prompts/

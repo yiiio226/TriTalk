@@ -195,6 +195,54 @@ export const TranscribeResponseSchema = z.object({
   raw_text: z.string().optional(),
 });
 
+// --- Pronunciation Assessment Schemas ---
+
+export const PronunciationAssessmentRequestSchema = z.object({
+  reference_text: z
+    .string()
+    .openapi({ example: "The quick brown fox jumps over the lazy dog" }),
+  language: z.string().optional().openapi({ example: "en-US" }),
+  enable_prosody: z.boolean().optional().openapi({ example: true }),
+});
+
+export const PhonemeAssessmentSchema = z.object({
+  phoneme: z.string().openapi({ example: "ð" }),
+  accuracy_score: z.number().openapi({ example: 85.5 }),
+  offset: z.number().optional(),
+  duration: z.number().optional(),
+});
+
+export const WordAssessmentSchema = z.object({
+  word: z.string().openapi({ example: "the" }),
+  accuracy_score: z.number().openapi({ example: 92.3 }),
+  error_type: z
+    .enum(["None", "Omission", "Insertion", "Mispronunciation"])
+    .openapi({ example: "None" }),
+  phonemes: z.array(PhonemeAssessmentSchema),
+});
+
+export const WordFeedbackSchema = z.object({
+  text: z.string().openapi({ example: "the" }),
+  score: z.number().openapi({ example: 92.3 }),
+  level: z
+    .enum(["perfect", "warning", "error", "missing"])
+    .openapi({ example: "perfect" }),
+  error_type: z.string().openapi({ example: "None" }),
+  phonemes: z.array(PhonemeAssessmentSchema),
+});
+
+export const PronunciationAssessmentResponseSchema = z.object({
+  recognition_status: z.string().openapi({ example: "Success" }),
+  display_text: z.string().openapi({ example: "The quick brown fox" }),
+  pronunciation_score: z.number().openapi({ example: 87.5 }),
+  accuracy_score: z.number().openapi({ example: 89.2 }),
+  fluency_score: z.number().openapi({ example: 85.0 }),
+  completeness_score: z.number().openapi({ example: 100.0 }),
+  prosody_score: z.number().optional().openapi({ example: 82.5 }),
+  words: z.array(WordAssessmentSchema),
+  word_feedback: z.array(WordFeedbackSchema).optional(),
+});
+
 // --- Error Schema ---
 export const ErrorSchema = z.object({
   error: z.string().optional(),
