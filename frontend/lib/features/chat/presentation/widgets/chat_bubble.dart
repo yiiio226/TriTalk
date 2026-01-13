@@ -199,6 +199,41 @@ class _ChatBubbleState extends State<ChatBubble>
     });
   }
 
+  Future<String> _resolveAudioPath(String originalPath) async {
+    final file = File(originalPath);
+    if (await file.exists()) {
+      return originalPath;
+    }
+
+    // iOS Sandbox handling: Path might contain old Container UUID
+    // Try to find the file in current Documents or Cache directory by filename
+    try {
+      final filename = originalPath.split('/').last;
+
+      // Check Documents
+      final docsDir = await getApplicationDocumentsDirectory();
+      final docsFile = File('${docsDir.path}/$filename');
+      if (await docsFile.exists()) {
+        return docsFile.path;
+      }
+
+      // Check Cache
+      final cacheDir = await getTemporaryDirectory();
+      final cacheFile = File('${cacheDir.path}/$filename');
+      if (await cacheFile.exists()) {
+        return cacheFile.path;
+      }
+
+      // Check specialized paths if needed (e.g. tts_cache)
+      // This handles the specific case of TTS files stored in user-scoped tts_cache
+      // and recorded files stored in root of Documents
+    } catch (e) {
+      debugPrint('Error resolving audio path: $e');
+    }
+
+    return originalPath;
+  }
+
   Future<void> _playPauseVoice() async {
     if (widget.message.audioPath == null) return;
 
@@ -206,7 +241,9 @@ class _ChatBubbleState extends State<ChatBubble>
       if (_isPlaying) {
         await _audioPlayer.pause();
       } else {
-        await _audioPlayer.play(DeviceFileSource(widget.message.audioPath!));
+        final resolvedPath = await _resolveAudioPath(widget.message.audioPath!);
+        // Use UrlSource with file URI for robust playback on iOS/macOS
+        await _audioPlayer.play(UrlSource(Uri.file(resolvedPath).toString()));
       }
     } catch (e) {
       if (mounted) {
@@ -1079,7 +1116,7 @@ class _ChatBubbleState extends State<ChatBubble>
   /// Play TTS audio from the given file path
   Future<void> _playTTSAudio(String audioPath) async {
     try {
-      await _audioPlayer.play(DeviceFileSource(audioPath));
+      await _audioPlayer.play(UrlSource(Uri.file(audioPath).toString()));
       if (mounted) {
         setState(() {
           _isTTSPlaying = true;
