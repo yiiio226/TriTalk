@@ -23,7 +23,7 @@ jobs:
           ENC_PASSWORD=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ.get('SUPABASE_DB_PASSWORD', '')))")
           # Use AWS IPv4 pooler hostname since GitHub Actions doesn't support IPv6
           # Format: aws-0-[region].pooler.supabase.com (uses IPv4 only)
-          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
           npx supabase db push --db-url "$DB_URL"

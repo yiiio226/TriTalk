@@ -41,12 +41,15 @@ jobs:
           cd backend
           # Encode the password to handle special characters correctly in the connection string
           ENC_PASSWORD=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ.get('SUPABASE_DB_PASSWORD', '')))")
+
+          # Debug: show encoded password length (not the actual password)
+          echo "Encoded password length: ${#ENC_PASSWORD}"
+          echo "First 3 chars of encoded password: ${ENC_PASSWORD:0:3}***"
+
           # Use AWS IPv4 pooler hostname since GitHub Actions doesn't support IPv6
-          # Port 6543 for transaction mode pooling (required for migrations)
-          # ueOPshhNnbRFUqVm
           DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
 
-          echo "Connecting to: postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+          echo "Full connection URL (masked password): postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
           npx supabase db push --db-url "$DB_URL"
