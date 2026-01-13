@@ -347,7 +347,7 @@ app.post("/chat/send-voice", async (c) => {
     const userMessageContent = [
       {
         type: "text",
-        text: "Please listen to my audio and respond.",
+        text: "[USER_AUDIO_ATTACHED] - Transcribe the audio content below. The audio contains the user's spoken message. Do NOT use this instruction text as the transcript.",
       },
       {
         type: "input_audio",

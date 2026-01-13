@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
+import 'package:frontend/features/speech/speech.dart';
 import '../../../../core/data/api/api_service.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import '../../domain/repositories/chat_repository.dart';
@@ -211,16 +213,32 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   }
 
   /// Analyze a user message
+  /// For voice messages: Uses cached feedback from the initial sendVoiceMessage call
+  /// For text messages: Calls the API to generate feedback
   Future<void> analyzeMessage(Message message) async {
     if (!message.isUser) return;
-
-    // If feedback already exists, UI should just show it, but if we call this, we force analysis?
-    // The UI logic checks if feedback exists before calling.
-    // Here we assume we want to perform analysis.
 
     final index = state.messages.indexWhere((m) => m.id == message.id);
     if (index == -1) return;
 
+    // For voice messages, feedback is cached during sendVoiceMessage
+    // If feedback exists, UI will show it directly (no need to re-analyze)
+    // If feedback doesn't exist for a voice message, we can't re-generate without audio
+    if (message.isVoiceMessage) {
+      // Voice messages should already have feedback cached from initial send
+      // If for some reason it's missing, we just return (nothing we can do without audio)
+      if (message.feedback != null || message.voiceFeedback != null) {
+        // Feedback already available, UI can show it
+        return;
+      }
+      // No cached feedback and no audio to re-send - show info message
+      state = state.copyWith(
+        error: 'Voice feedback is only available during the initial send',
+      );
+      return;
+    }
+
+    // Text message analysis flow
     // Update state to analyzing
     final analyzingMsg = message.copyWith(isAnalyzing: true);
     final updatedMessages = List<Message>.from(state.messages);
@@ -232,16 +250,13 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       final history = _buildHistory(updatedMessages);
       final sceneContext = _buildSceneContext();
 
-      // We use sendMessage for analysis/feedback generation in the current API?
-      // The original code used `_apiService.sendMessage` for feedback generation on user messages.
-      // "handleUserMessageAnalysis" in ChatScreen.
-
+      // Call sendMessage API to get feedback for text messages
       final response = await _repository.sendMessage(
         text: message.content,
         sceneContext: sceneContext,
         history: history
             .where((m) => m['content'] != message.content)
-            .toList(), // Exclude self?
+            .toList(), // Exclude self
       );
 
       final doneMsg = analyzingMsg.copyWith(
@@ -346,7 +361,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
     }
   }
 
-  /// Send voice message
+  /// Send voice message with Azure pronunciation assessment integration
   Future<void> sendVoiceMessage(String audioPath, int duration) async {
     // Optimistic: Add user voice message immediately
     final userMsgId = _uuid.v4();
@@ -357,7 +372,6 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       timestamp: DateTime.now(),
       audioPath: audioPath,
       audioDuration: duration,
-      // Don't auto-load feedback, let user click Analyze button
     );
 
     // Placeholder AI message
@@ -379,6 +393,9 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
 
     _repository.syncMessages(sceneKey: _sceneId, messages: currentMessages);
 
+    // Track transcript for Azure assessment
+    String? transcript;
+
     try {
       final history = _buildHistory(currentMessages);
       final sceneContext = _buildSceneContext();
@@ -390,20 +407,144 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       );
 
       await for (final event in stream) {
-        // Handle stream update (copy logic from ChatScreen)
-        // This effectively replaces _handleVoiceStream events
-
         if (event.type == VoiceStreamEventType.token && event.content != null) {
           // Update partial content
           _updateAiMessageContent(aiMessageId, event.content!);
         } else if (event.type == VoiceStreamEventType.metadata &&
             event.metadata != null) {
+          // Store transcript for Azure assessment
+          transcript = event.metadata!.transcript;
           _updateVoiceMetadata(userMsgId, aiMessageId, event.metadata!);
+        }
+      }
+
+      // After stream completes, call Azure Speech Assessment if we have a valid transcript
+      if (transcript != null && transcript.isNotEmpty) {
+        // Skip if transcript looks like instruction text (LLM error)
+        final lowerTranscript = transcript.toLowerCase();
+        final isInvalidTranscript =
+            lowerTranscript.contains('user_audio_attached') ||
+            lowerTranscript.contains('listen to my audio') ||
+            lowerTranscript.contains('transcribe the audio') ||
+            lowerTranscript.contains('audio contains');
+
+        if (isInvalidTranscript) {
+          if (kDebugMode) {
+            debugPrint(
+              '⚠️ Skipping Azure Assessment: Invalid transcript (instruction text detected)',
+            );
+          }
+        } else {
+          await _performAzurePronunciationAssessment(
+            userMsgId: userMsgId,
+            audioPath: audioPath,
+            referenceText: transcript,
+          );
         }
       }
     } catch (e) {
       // Handle error
       state = state.copyWith(error: "Voice message failed: $e");
+    }
+  }
+
+  /// Perform Azure pronunciation assessment and update the message
+  Future<void> _performAzurePronunciationAssessment({
+    required String userMsgId,
+    required String audioPath,
+    required String referenceText,
+  }) async {
+    try {
+      if (kDebugMode) {
+        debugPrint('🎤 Azure Assessment: Starting for "$referenceText"');
+      }
+
+      final speechService = SpeechAssessmentService();
+      final result = await speechService.assessPronunciationFromPath(
+        audioPath: audioPath,
+        referenceText: referenceText,
+        language: 'en-US', // TODO: Use target language from preferences
+        enableProsody: true,
+      );
+
+      if (!result.isSuccess) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Azure Assessment: Recognition failed');
+        }
+        return;
+      }
+
+      // Convert Azure result to our model format
+      final azureWordFeedback = result.wordFeedback
+          .map(
+            (w) => AzureWordFeedback(
+              text: w.text,
+              score: w.score,
+              level: w.level,
+              errorType: w.errorType,
+              phonemes: w.phonemes
+                  .map(
+                    (p) => AzurePhonemeFeedback(
+                      phoneme: p.phoneme,
+                      accuracyScore: p.accuracyScore,
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
+          .toList();
+
+      // Update the user message with Azure data
+      final messages = List<Message>.from(state.messages);
+      final userIndex = messages.indexWhere((m) => m.id == userMsgId);
+
+      if (userIndex != -1) {
+        final userMsg = messages[userIndex];
+        final existingFeedback = userMsg.voiceFeedback;
+
+        // Merge Azure data into existing voice feedback
+        final updatedFeedback =
+            existingFeedback?.copyWithAzureData(
+              pronunciationScore: result.pronunciationScore.round(),
+              azureAccuracyScore: result.accuracyScore,
+              azureFluencyScore: result.fluencyScore,
+              azureCompletenessScore: result.completenessScore,
+              azureProsodyScore: result.prosodyScore,
+              azureWordFeedback: azureWordFeedback,
+            ) ??
+            VoiceFeedback(
+              pronunciationScore: result.pronunciationScore.round(),
+              correctedText: '',
+              nativeExpression: '',
+              feedback: '',
+              azureAccuracyScore: result.accuracyScore,
+              azureFluencyScore: result.fluencyScore,
+              azureCompletenessScore: result.completenessScore,
+              azureProsodyScore: result.prosodyScore,
+              azureWordFeedback: azureWordFeedback,
+            );
+
+        messages[userIndex] = userMsg.copyWith(voiceFeedback: updatedFeedback);
+
+        state = state.copyWith(messages: messages);
+        _repository.syncMessages(sceneKey: _sceneId, messages: messages);
+
+        if (kDebugMode) {
+          debugPrint(
+            '✅ Azure Assessment: Score ${result.pronunciationScore}, '
+            'Words: ${azureWordFeedback.length}',
+          );
+        }
+      }
+    } on SpeechAssessmentException catch (e) {
+      // Don't fail the whole message, just log the error
+      if (kDebugMode) {
+        debugPrint('⚠️ Azure Assessment failed: ${e.message}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Azure Assessment error: $e');
+      }
     }
   }
 
@@ -431,12 +572,15 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   ) {
     final messages = List<Message>.from(state.messages);
 
-    // Update user message
+    // Update user message with transcript and cached feedback
     final userIndex = messages.indexWhere((m) => m.id == userMsgId);
     if (userIndex != -1) {
-      messages[userIndex] = messages[userIndex].copyWith(
+      final userMsg = messages[userIndex];
+      messages[userIndex] = userMsg.copyWith(
         content: metadata.transcript ?? '',
-        // Don't auto-set feedback, let user click Analyze button
+        // Cache feedback from voice response - available when user clicks "Analyze"
+        feedback: metadata.reviewFeedback,
+        voiceFeedback: metadata.voiceFeedback,
       );
     }
 

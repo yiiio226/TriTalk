@@ -9,7 +9,8 @@ class Message {
   final bool isLoading; // Transient: Loading state for pending messages
   final bool isAnimated; // Transient: Whether to animate the text appearance
   final bool isFeedbackLoading; // Transient: Whether feedback is being analyzed
-  final bool isAnalyzing; // Transient: Whether user message is being analyzed (for manual analysis trigger)
+  final bool
+  isAnalyzing; // Transient: Whether user message is being analyzed (for manual analysis trigger)
   final List<String>? hints; // For persisting suggested replies
   final bool
   hasPendingError; // Whether this message failed to send and needs retry
@@ -415,13 +416,88 @@ class ErrorFocus {
   };
 }
 
+/// Phoneme-level feedback from Azure pronunciation assessment
+class AzurePhonemeFeedback {
+  final String phoneme; // IPA phoneme symbol
+  final double accuracyScore; // 0-100
+
+  AzurePhonemeFeedback({required this.phoneme, required this.accuracyScore});
+
+  factory AzurePhonemeFeedback.fromJson(Map<String, dynamic> json) =>
+      AzurePhonemeFeedback(
+        phoneme: json['phoneme'] ?? '',
+        accuracyScore: (json['accuracy_score'] as num?)?.toDouble() ?? 0.0,
+      );
+
+  Map<String, dynamic> toJson() => {
+    'phoneme': phoneme,
+    'accuracy_score': accuracyScore,
+  };
+
+  /// Traffic light level based on score
+  String get level {
+    if (accuracyScore > 80) return 'perfect';
+    if (accuracyScore >= 60) return 'warning';
+    return 'error';
+  }
+}
+
+/// Word-level feedback from Azure pronunciation assessment (Traffic Light)
+class AzureWordFeedback {
+  final String text;
+  final double score; // 0-100
+  final String level; // perfect, warning, error, missing
+  final String errorType; // None, Omission, Insertion, Mispronunciation
+  final List<AzurePhonemeFeedback> phonemes;
+
+  AzureWordFeedback({
+    required this.text,
+    required this.score,
+    required this.level,
+    required this.errorType,
+    this.phonemes = const [],
+  });
+
+  factory AzureWordFeedback.fromJson(Map<String, dynamic> json) =>
+      AzureWordFeedback(
+        text: json['text'] ?? '',
+        score: (json['score'] as num?)?.toDouble() ?? 0.0,
+        level: json['level'] ?? 'error',
+        errorType: json['error_type'] ?? 'None',
+        phonemes:
+            (json['phonemes'] as List?)
+                ?.map((p) => AzurePhonemeFeedback.fromJson(p))
+                .toList() ??
+            [],
+      );
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'score': score,
+    'level': level,
+    'error_type': errorType,
+    'phonemes': phonemes.map((p) => p.toJson()).toList(),
+  };
+
+  /// Whether this word has pronunciation issues
+  bool get hasIssue => level != 'perfect';
+}
+
 class VoiceFeedback {
-  final int pronunciationScore; // 0-100
-  final String correctedText; // Corrected pronunciation text
-  final String nativeExpression; // Native way to say it
-  final String feedback; // Detailed feedback
-  final List<VoiceWord>? sentenceBreakdown;
-  final ErrorFocus? errorFocus;
+  final int pronunciationScore; // 0-100 (overall or Azure score)
+  final String correctedText; // Corrected pronunciation text (LLM)
+  final String nativeExpression; // Native way to say it (LLM)
+  final String feedback; // Detailed feedback (LLM)
+  final List<VoiceWord>? sentenceBreakdown; // LLM-based word breakdown
+  final ErrorFocus? errorFocus; // LLM-based error focus
+
+  // Azure pronunciation assessment data (precise phoneme-level)
+  final double? azureAccuracyScore; // 0-100
+  final double? azureFluencyScore; // 0-100
+  final double? azureCompletenessScore; // 0-100
+  final double? azureProsodyScore; // 0-100 (optional)
+  final List<AzureWordFeedback>?
+  azureWordFeedback; // Traffic Light word feedback
 
   VoiceFeedback({
     required this.pronunciationScore,
@@ -430,7 +506,46 @@ class VoiceFeedback {
     required this.feedback,
     this.sentenceBreakdown,
     this.errorFocus,
+    // Azure fields (optional)
+    this.azureAccuracyScore,
+    this.azureFluencyScore,
+    this.azureCompletenessScore,
+    this.azureProsodyScore,
+    this.azureWordFeedback,
   });
+
+  /// Create a copy with updated Azure data
+  VoiceFeedback copyWithAzureData({
+    int? pronunciationScore,
+    double? azureAccuracyScore,
+    double? azureFluencyScore,
+    double? azureCompletenessScore,
+    double? azureProsodyScore,
+    List<AzureWordFeedback>? azureWordFeedback,
+  }) {
+    return VoiceFeedback(
+      pronunciationScore: pronunciationScore ?? this.pronunciationScore,
+      correctedText: correctedText,
+      nativeExpression: nativeExpression,
+      feedback: feedback,
+      sentenceBreakdown: sentenceBreakdown,
+      errorFocus: errorFocus,
+      azureAccuracyScore: azureAccuracyScore ?? this.azureAccuracyScore,
+      azureFluencyScore: azureFluencyScore ?? this.azureFluencyScore,
+      azureCompletenessScore:
+          azureCompletenessScore ?? this.azureCompletenessScore,
+      azureProsodyScore: azureProsodyScore ?? this.azureProsodyScore,
+      azureWordFeedback: azureWordFeedback ?? this.azureWordFeedback,
+    );
+  }
+
+  /// Whether Azure pronunciation data is available
+  bool get hasAzureData =>
+      azureWordFeedback != null && azureWordFeedback!.isNotEmpty;
+
+  /// Get words with pronunciation issues (from Azure data)
+  List<AzureWordFeedback> get problemWords =>
+      azureWordFeedback?.where((w) => w.hasIssue).toList() ?? [];
 
   Map<String, dynamic> toJson() {
     return {
@@ -440,6 +555,12 @@ class VoiceFeedback {
       'feedback': feedback,
       'sentence_breakdown': sentenceBreakdown?.map((e) => e.toJson()).toList(),
       'error_focus': errorFocus?.toJson(),
+      // Azure data
+      'azure_accuracy_score': azureAccuracyScore,
+      'azure_fluency_score': azureFluencyScore,
+      'azure_completeness_score': azureCompletenessScore,
+      'azure_prosody_score': azureProsodyScore,
+      'azure_word_feedback': azureWordFeedback?.map((w) => w.toJson()).toList(),
     };
   }
 
@@ -455,6 +576,15 @@ class VoiceFeedback {
       errorFocus: json['error_focus'] != null
           ? ErrorFocus.fromJson(json['error_focus'])
           : null,
+      // Azure data
+      azureAccuracyScore: (json['azure_accuracy_score'] as num?)?.toDouble(),
+      azureFluencyScore: (json['azure_fluency_score'] as num?)?.toDouble(),
+      azureCompletenessScore: (json['azure_completeness_score'] as num?)
+          ?.toDouble(),
+      azureProsodyScore: (json['azure_prosody_score'] as num?)?.toDouble(),
+      azureWordFeedback: (json['azure_word_feedback'] as List?)
+          ?.map((w) => AzureWordFeedback.fromJson(w))
+          .toList(),
     );
   }
 }
