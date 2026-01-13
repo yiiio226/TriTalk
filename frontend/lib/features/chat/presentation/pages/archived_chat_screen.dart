@@ -27,26 +27,39 @@ class ArchivedChatScreen extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightSurface, // Status bar background
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 10),
             // Custom Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+            Container(
+              color: AppColors.lightSurface,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.lightBackground,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: AppColors.lightTextPrimary,
+                        size: 24,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       bookmark.title,
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppColors.lightTextPrimary,
                       ),
@@ -57,12 +70,13 @@ class ArchivedChatScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
             // Content
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: displayMessages.length,
+              child: Container(
+                color: AppColors.lightBackground,
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 36, 16, 16), // 20 + 16 spacing
+                  itemCount: displayMessages.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final msg = displayMessages[index];
@@ -75,6 +89,7 @@ class ArchivedChatScreen extends StatelessWidget {
                 },
               ),
             ),
+          ),
           ],
         ),
       ),

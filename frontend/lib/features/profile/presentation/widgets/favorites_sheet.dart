@@ -18,7 +18,7 @@ class FavoritesSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bookmark, color: Colors.amber),
+              const Icon(Icons.bookmark, color:AppColors.primary),
               const SizedBox(width: 8),
               const Text(
                 'Favorites',

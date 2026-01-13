@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/vocab_service.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 
 class GrammarListWidget extends StatelessWidget {
@@ -38,9 +39,9 @@ class GrammarListWidget extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.green[50],
+                color: AppColors.lightSurface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green[100]!),
+                border: Border.all(color: AppColors.lightDivider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,14 +54,14 @@ class GrammarListWidget extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green[900],
+                            color: AppColors.lightTextPrimary,
                           ),
                         ),
                       ),
                       IconButton(
                         icon: Icon(
                           Icons.delete_outline,
-                          color: Colors.green[300],
+                          color: AppColors.lightTextSecondary,
                         ), // Subtle delete icon
                         onPressed: () {
                           VocabService().remove(item.phrase);
@@ -74,7 +75,7 @@ class GrammarListWidget extends StatelessWidget {
                       item.translation, // Explanation + Example
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.green[800],
+                        color: AppColors.lightTextSecondary,
                         height: 1.5,
                       ),
                     ),
