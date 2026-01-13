@@ -144,50 +144,32 @@ class LoginScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
         ],
 
-        // Apple Sign In (iOS only, shown first on iOS)
-        if (Platform.isIOS) ...[
-          _buildLoginButton(
-            icon: Icons.apple,
-            label: 'Continue with Apple',
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-            isLoading: isLoading,
-            onPressed: isLoading
-                ? null
-                : () => ref.read(authProvider.notifier).loginWithApple(),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-
-        // Google Sign In
+        // Google Sign In (Black Button, Top)
         _buildLoginButton(
           icon: null,
-
           customIcon: _buildGoogleIcon(),
           label: 'Continue with Google',
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          isLoading: isLoading,
+          onPressed: isLoading
+              ? null
+              : () => ref.read(authProvider.notifier).loginWithGoogle(),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Apple Sign In (White Button, Bottom)
+        _buildLoginButton(
+          icon: Icons.apple,
+          label: 'Continue with Apple',
           backgroundColor: Colors.white,
           textColor: AppColors.lightTextPrimary,
           borderColor: AppColors.lightDivider,
           isLoading: isLoading,
           onPressed: isLoading
               ? null
-              : () => ref.read(authProvider.notifier).loginWithGoogle(),
+              : () => ref.read(authProvider.notifier).loginWithApple(),
         ),
-
-        // Apple Sign In (non-iOS platforms, shown after Google)
-        if (!Platform.isIOS) ...[
-          const SizedBox(height: AppSpacing.md),
-          _buildLoginButton(
-            icon: Icons.apple,
-            label: 'Continue with Apple',
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-            isLoading: isLoading,
-            onPressed: isLoading
-                ? null
-                : () => ref.read(authProvider.notifier).loginWithApple(),
-          ),
-        ],
       ],
     );
   }
@@ -252,16 +234,13 @@ class LoginScreen extends ConsumerWidget {
     return Container(
       width: 24,
       height: 24,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-      ),
+  
       child: Center(
         child: Text(
           'G',
           style: TextStyle(
-            color: AppColors.lightTextPrimary,
-            fontSize: 18,
+            color: AppColors.darkTextPrimary,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
