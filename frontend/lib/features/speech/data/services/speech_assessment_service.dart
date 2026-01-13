@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/core/data/api/api_service.dart';
@@ -50,6 +51,7 @@ class SpeechAssessmentService {
     String language = 'en-US',
     bool enableProsody = true,
   }) async {
+    referenceText = "Can i get a cup of coffee please?";
     try {
       final uri = Uri.parse('$_baseUrl/speech/assess');
 
@@ -64,17 +66,20 @@ class SpeechAssessmentService {
       request.fields['language'] = language;
       request.fields['enable_prosody'] = enableProsody.toString();
 
-      // 添加音频文件
+      // 添加音频文件 (WAV format with PCM encoding, required by Azure)
       request.files.add(
         await http.MultipartFile.fromPath(
           'audio',
           audioFile.path,
           filename: 'audio.wav',
+          contentType: MediaType('audio', 'wav'),
         ),
       );
 
       if (kDebugMode) {
-        debugPrint('🎤 SpeechAssessment: Sending request to $uri');
+        debugPrint(
+          '\n\n\n🎤🎤🎤🎤🎤 SpeechAssessment: Sending request to $uri',
+        );
         debugPrint(
           '   Reference text: "${referenceText.substring(0, referenceText.length.clamp(0, 50))}..."',
         );
@@ -146,17 +151,20 @@ class SpeechAssessmentService {
       request.fields['language'] = language;
       request.fields['enable_prosody'] = enableProsody.toString();
 
-      // 从字节创建文件
+      // 从字节创建文件 (WAV format with PCM encoding, required by Azure)
       request.files.add(
         http.MultipartFile.fromBytes(
           'audio',
           audioBytes,
           filename: 'audio.wav',
+          contentType: MediaType('audio', 'wav'),
         ),
       );
 
       if (kDebugMode) {
-        debugPrint('🎤 SpeechAssessment: Sending ${audioBytes.length} bytes');
+        debugPrint(
+          '\n\n\n\n 🎤🎤🎤 SpeechAssessment: Sending ${audioBytes.length} bytes',
+        );
         debugPrint(
           '   Reference text: "${referenceText.substring(0, referenceText.length.clamp(0, 50))}..."',
         );
