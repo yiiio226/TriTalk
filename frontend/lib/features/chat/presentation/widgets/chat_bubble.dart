@@ -158,17 +158,26 @@ class _ChatBubbleState extends State<ChatBubble>
 
     // Handle text changes or animation toggle
     if (widget.message.content != oldWidget.message.content) {
-      // Content changed, remove from started animations to allow re-animation
-      _startedAnimations.remove(widget.message.id);
-
-      if (widget.message.isAnimated) {
-        _currentIndex = 0;
-        _displayedText = "";
-        _isAnimationComplete = false; // Animation will restart
-        _startTypewriter();
+      // Only restart animation if this message hasn't started animating yet
+      // This prevents restart when scrolling during streaming
+      if (!_startedAnimations.contains(widget.message.id)) {
+        if (widget.message.isAnimated) {
+          _currentIndex = 0;
+          _displayedText = "";
+          _isAnimationComplete = false;
+          _startedAnimations.add(widget.message.id);
+          _startTypewriter();
+        } else {
+          _displayedText = widget.message.content;
+          _isAnimationComplete = true;
+        }
       } else {
+        // Animation already started, just update to show full content
+        // This handles the case where content is being streamed
         _displayedText = widget.message.content;
-        _isAnimationComplete = true;
+        if (_typewriterTimer == null || !_typewriterTimer!.isActive) {
+          _isAnimationComplete = true;
+        }
       }
     }
   }
