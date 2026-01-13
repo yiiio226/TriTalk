@@ -276,7 +276,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Native Language',
                     subtitle: _nativeLanguage,
-                    icon: Icons.language,
+                    icon: Icons.public,
                     iconColor: AppColors.primary,
                     onTap: () {
                       _showLanguageDialog(
@@ -331,9 +331,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Upgrade to Pro',
                     subtitle: 'Get unlimited chats and advanced feedback',
-                    icon: Icons.star_border,
-                    iconColor: AppColors
-                        .lightWarning, // Slightly different to distinguish
+                    icon: Icons.star,
+                    iconColor: AppColors.lightWarning,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -348,7 +347,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildMenuCard(
                     context,
                     title: 'Log Out',
-                    icon: Icons.logout,
+                    icon: Icons.power_settings_new,
                     iconColor: AppColors.lightError,
                     onTap: _handleLogout,
                   ),
