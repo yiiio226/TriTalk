@@ -103,22 +103,29 @@ class SpeechAssessmentService {
 
         return result;
       } else {
+        // Log detailed error information
+        if (kDebugMode) {
+          debugPrint('❌ SpeechAssessment: HTTP Error');
+          debugPrint('   Status Code: ${response.statusCode}');
+          debugPrint('   Response Headers: ${response.headers}');
+          debugPrint('   Response Body: ${response.body}');
+        }
+
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         final errorMessage =
             errorData['error'] ??
             'Failed to assess pronunciation: ${response.statusCode}';
 
-        if (kDebugMode) {
-          debugPrint('❌ SpeechAssessment: Error - $errorMessage');
-        }
-
-        throw SpeechAssessmentException(errorMessage);
+        throw SpeechAssessmentException(
+          '$errorMessage (status: ${response.statusCode})',
+        );
       }
     } catch (e) {
       if (e is SpeechAssessmentException) rethrow;
 
       if (kDebugMode) {
-        debugPrint('❌ SpeechAssessment error: $e');
+        debugPrint('❌ SpeechAssessment exception: $e');
+        debugPrint('   Exception type: ${e.runtimeType}');
       }
       throw SpeechAssessmentException('Error assessing pronunciation: $e');
     }
