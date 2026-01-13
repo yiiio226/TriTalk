@@ -357,7 +357,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       timestamp: DateTime.now(),
       audioPath: audioPath,
       audioDuration: duration,
-      isFeedbackLoading: true,
+      // Don't auto-load feedback, let user click Analyze button
     );
 
     // Placeholder AI message
@@ -436,9 +436,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
     if (userIndex != -1) {
       messages[userIndex] = messages[userIndex].copyWith(
         content: metadata.transcript ?? '',
-        voiceFeedback: metadata.voiceFeedback,
-        feedback: metadata.reviewFeedback,
-        isFeedbackLoading: false,
+        // Don't auto-set feedback, let user click Analyze button
       );
     }
 
