@@ -1004,8 +1004,20 @@ app.post("/speech/assess", async (c) => {
     const audioBlob = audioFile as File;
     const arrayBuffer = await audioBlob.arrayBuffer();
 
+    // Debug: inspect audio header bytes
+    const headerBytes = new Uint8Array(arrayBuffer.slice(0, 44));
+    const headerStr = String.fromCharCode(...headerBytes.slice(0, 4));
     console.log(
-      `[Speech/Assess] Reference: "${referenceText}", Language: ${language}, Size: ${arrayBuffer.byteLength} bytes`
+      `[Speech/Assess] Reference: "${referenceText}", Language: ${language}`
+    );
+    console.log(
+      `[Speech/Assess] File: ${audioBlob.name}, Size: ${arrayBuffer.byteLength} bytes, Header: "${headerStr}"`
+    );
+    console.log(
+      `[Speech/Assess] First 12 header bytes:`,
+      Array.from(headerBytes.slice(0, 12))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ")
     );
 
     // Call Azure Speech Pronunciation Assessment API
