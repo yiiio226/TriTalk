@@ -3,7 +3,6 @@
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:collection/collection.dart';
-import 'dart:convert';
 
 part 'swagger.models.swagger.g.dart';
 

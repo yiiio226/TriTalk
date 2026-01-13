@@ -13,30 +13,47 @@
 
 ---
 
-## 3. Azure 发音评估核心配置 (Backend/Client Side)
+## 3. 前端实现状态
 
-在调用 Azure SDK 时，必须正确配置 `PronunciationAssessmentConfig` 以获取 PRD 中要求的深度诊断数据。
+✅ **已完成实现** (2026-01-13)
 
-### 核心配置项 (JSON 逻辑)
+### 文件结构
 
-```typescript
-{
-  "referenceText": "The text user is supposed to say",
-  "gradingSystem": "HundredMark",      // 百分制：0-100
-  "granularity": "Phoneme",           // 颗粒度：音素级 (最高级别)
-  "phonemeAlphabet": "IPA",           // 音标系统：国际音标
-  "enableProsodyAssessment": true     // 开启语调/重音评估 (关键)
-}
-
+```
+lib/features/speech/
+├── speech.dart                           # 模块入口 (barrel export)
+├── data/
+│   ├── data.dart                         # 数据层导出
+│   └── services/
+│       └── speech_assessment_service.dart # API 服务类
+├── domain/
+│   ├── domain.dart                       # 领域层导出
+│   └── models/
+│       └── pronunciation_result.dart     # 数据模型
+└── providers/
+    └── speech_providers.dart             # Riverpod 状态管理
 ```
 
 ---
 
-## 4. 数据处理逻辑与 UI 映射
+## 4. 数据模型
 
-Azure 返回的响应需要被解构成前端可用的模型。
+### PronunciationResult (发音评估结果)
 
-### A. 单词级评分 (Traffic Light)
+```dart
+class PronunciationResult {
+  final String recognitionStatus;     // 识别状态
+  final String displayText;           // 识别文本
+  final double pronunciationScore;    // 综合发音评分 (0-100)
+  final double accuracyScore;         // 准确度评分
+  final double fluencyScore;          // 流利度评分
+  final double completenessScore;     // 完整度评分
+  final double? prosodyScore;         // 语调评分 (可选)
+  final List<WordFeedback> wordFeedback; // 单词级反馈
+}
+```
+
+### WordFeedback (单词反馈 - Traffic Light)
 
 | 字段            | 逻辑判断      | UI 表现        |
 | --------------- | ------------- | -------------- |
@@ -45,104 +62,186 @@ Azure 返回的响应需要被解构成前端可用的模型。
 | `AccuracyScore` | < 60          | 红色 (Error)   |
 | `ErrorType`     | == "Omission" | 灰色 (Missing) |
 
-### B. 音素级对比 (Deep Dive)
+### PhonemeFeedback (音素反馈)
 
-当用户点击特定单词（如 "live"）时，提取该单词下的 `Phonemes` 数组：
-
-- **目标音标**: `phoneme.phoneme` (API 返回的预期音标)
-- **得分**: `phoneme.pronunciationAssessment.accuracyScore`
-- **错误逻辑**: 若 `accuracyScore` 低于阈值，则触发“音素纠错卡片”。
-
----
-
-## 5. 核心代码实现 (以 TypeScript/SDK 为例)
-
-### 步骤 1: 初始化语音配置
-
-```typescript
-import * as SpeechSDK from "microsoft-cognitiveservices-speech-sdk";
-
-const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-  AZURE_KEY,
-  AZURE_REGION
-);
-speechConfig.speechRecognitionLanguage = "en-US"; // 或动态传入
-```
-
-### 步骤 2: 配置发音评估服务
-
-```typescript
-// 定义发音评估配置
-const pronConfig = new SpeechSDK.PronunciationAssessmentConfig(
-  referenceText,
-  SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
-  SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
-  true // 开启音信级反馈
-);
-
-// 开启韵律（语调）评估
-pronConfig.enableProsodyAssessment = true;
-
-const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-
-pronConfig.applyTo(recognizer);
-```
-
-### 步骤 3: 处理返回结果
-
-```typescript
-recognizer.recognizeOnceAsync((result) => {
-  const pronResult = SpeechSDK.PronunciationAssessmentResult.fromResult(result);
-
-  // 1. 整体评分
-  console.log("Overall Score:", pronResult.pronunciationScore);
-
-  // 2. 逐词分析 (映射到 UI)
-  const wordResults = result.privJson.NBest[0].Words.map((w) => ({
-    text: w.Word,
-    score: w.PronunciationAssessment.AccuracyScore,
-    errorType: w.PronunciationAssessment.ErrorType,
-    phonemes: w.Phonemes, // 用于深度诊断卡片
-  }));
-
-  // 3. 韵律/语调分析
-  const prosodyScore = pronResult.prosodyScore;
-});
+```dart
+class PhonemeFeedback {
+  final String phoneme;         // IPA 音标
+  final double accuracyScore;   // 准确度评分
+  final int? offset;            // 偏移量 (ms)
+  final int? duration;          // 持续时间 (ms)
+}
 ```
 
 ---
 
-## 6. UI 组件结构说明 (Cursor 辅助实现)
+## 5. 使用方法
+
+### 方法 1: 使用 SpeechAssessmentService 直接调用
+
+```dart
+import 'package:frontend/features/speech/speech.dart';
+
+// 初始化服务 (单例模式)
+final speechService = SpeechAssessmentService();
+
+// 从文件评估发音
+final result = await speechService.assessPronunciationFromPath(
+  audioPath: '/path/to/recording.wav',
+  referenceText: 'The quick brown fox jumps over the lazy dog',
+  language: 'en-US',
+  enableProsody: true,
+);
+
+// 处理结果
+if (result.isSuccess) {
+  print('发音评分: ${result.pronunciationScore}');
+  print('准确度: ${result.accuracyScore}');
+  print('流利度: ${result.fluencyScore}');
+
+  // 遍历每个单词的反馈
+  for (final word in result.wordFeedback) {
+    print('${word.text}: ${word.score} (${word.level})');
+
+    // 如果是问题单词，显示音素详情
+    if (word.hasIssue) {
+      for (final phoneme in word.problemPhonemes) {
+        print('  音素: ${phoneme.phoneme}, 评分: ${phoneme.accuracyScore}');
+      }
+    }
+  }
+}
+```
+
+### 方法 2: 使用 Riverpod Provider
+
+```dart
+import 'package:frontend/features/speech/speech.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class PronunciationWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(pronunciationAssessmentProvider);
+
+    if (state.isLoading) {
+      return CircularProgressIndicator();
+    }
+
+    if (state.error != null) {
+      return Text('Error: ${state.error}');
+    }
+
+    if (state.result != null) {
+      return PronunciationResultView(result: state.result!);
+    }
+
+    return ElevatedButton(
+      onPressed: () async {
+        await ref.read(pronunciationAssessmentProvider.notifier).assessFromPath(
+          audioPath: audioPath,
+          referenceText: 'Hello world',
+        );
+      },
+      child: Text('Assess Pronunciation'),
+    );
+  }
+}
+```
+
+### 方法 3: 从字节数据评估 (录音后直接评估)
+
+```dart
+// 录音完成后获取字节数据
+final audioBytes = await recorder.stopRecording();
+
+final result = await speechService.assessPronunciationFromBytes(
+  audioBytes: audioBytes,
+  referenceText: referenceText,
+);
+```
+
+---
+
+## 6. UI 组件建议
 
 ### 组件 1: `SpeechBubble` (语音气泡)
 
 - **Input**: `List<WordResult>`
-- **Logic**: 遍历单词，根据 `accuracyScore` 动态改变文本 `TextStyle.color`。
+- **Logic**: 遍历单词，根据 `word.color` 动态改变文本颜色
+
+```dart
+Row(
+  children: result.wordFeedback.map((word) =>
+    Text(
+      word.text,
+      style: TextStyle(color: word.color),
+    ),
+  ).toList(),
+)
+```
 
 ### 组件 2: `CorrectionCard` (诊断卡片)
 
-- **触发条件**: 点击 `WordResult` 且 `score < 80`。
+- **触发条件**: 点击 `WordResult` 且 `score < 80`
 - **内容**:
-- 显示错误单词的音标对比。
-- _(提示：此处需根据音素 ID 加载本地 SVG 资源)_。
+  - 显示错误单词和正确发音
+  - 列出问题音素及其评分
+  - 提供音标对比
 
-### 组件 3: `PitchChart` (音高对比图)
+### 组件 3: `ScoreGauge` (评分仪表盘)
 
-- **数据来源**: 需要从音频文件中提取 F0 频率。
-- **实现方案**: 使用第三方库（如 Flutter 的 `fl_chart`）绘制 Azure 返回的 `Prosody` 数据时间轴。
+- 使用圆形进度条显示 `pronunciationScore`
+- 颜色根据 `overallLevel` 变化
 
----
+### 组件 4: `ProsodyChart` (语调图表)
 
-## 7. 异常处理与性能优化
-
-1. **VAD (Voice Activity Detection)**: 在前端开启静音检测，用户停止说话 1.5s 后自动提交，避免无意义的 API 调用。
-2. **音频压缩**: 即使是 16kHz PCM，长句子也可能导致传输慢。建议在 Cloudflare Worker 层做流式转发。
-3. **多语言支持**: 确保 `ReferenceText` 的语言编码与 `speechRecognitionLanguage` 一致。
+- 使用 `fl_chart` 绑定 prosody 数据
+- 显示音高变化曲线
 
 ---
 
-**下一步建议：**
-你可以直接将此文档贴给 Cursor，并输入提示词：
+## 7. 错误处理
 
-> _"根据这个技术文档，帮我用 Flutter 实现一个 `PronunciationAnalyzer` 类，并写出对接 Azure SDK 的识别逻辑。"_
+### 常见错误
+
+| 错误信息                          | 原因               | 解决方案                      |
+| --------------------------------- | ------------------ | ----------------------------- |
+| `Azure Speech is not configured`  | 后端未配置 API Key | 检查 Worker 环境变量          |
+| `Azure Speech recognition failed` | 无法识别语音       | 检查音频质量/格式             |
+| `No audio file uploaded`          | 未上传音频文件     | 确保 multipart 请求包含 audio |
+| `Reference text is required`      | 未提供参考文本     | 添加 reference_text 字段      |
+
+### 异常处理示例
+
+```dart
+try {
+  final result = await speechService.assessPronunciationFromPath(
+    audioPath: audioPath,
+    referenceText: referenceText,
+  );
+  // 处理成功结果
+} on SpeechAssessmentException catch (e) {
+  // 处理 API 错误
+  showSnackBar('评估失败: ${e.message}');
+} catch (e) {
+  // 处理其他错误
+  showSnackBar('发生未知错误');
+}
+```
+
+---
+
+## 8. 性能优化建议
+
+1. **VAD (Voice Activity Detection)**: 在前端开启静音检测，用户停止说话 1.5s 后自动提交
+2. **音频压缩**: 使用 16kHz PCM 格式减少传输大小
+3. **缓存结果**: 对于相同音频可缓存评估结果
+4. **多语言支持**: 确保 `language` 参数与音频内容匹配
+
+---
+
+## 9. 相关链接
+
+- [Azure Speech Pronunciation Assessment 官方文档](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/how-to-pronunciation-assessment)
+- [后端 API 文档](../backend/docs/azure_speech.md)
