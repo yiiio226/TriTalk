@@ -19,14 +19,34 @@ jobs:
         with:
           version: latest
 
+      - name: Debug - Check secrets are set
+        run: |
+          echo "Checking if secrets are configured..."
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "❌ SUPABASE_DEV_DB_PASSWORD is empty or not set!"
+          else
+            echo "✅ SUPABASE_DEV_DB_PASSWORD is set (length: ${#SUPABASE_DB_PASSWORD} chars)"
+          fi
+          if [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "❌ SUPABASE_DEV_PROJECT_REF is empty or not set!"
+          else
+            echo "✅ SUPABASE_DEV_PROJECT_REF is set: $SUPABASE_PROJECT_REF"
+          fi
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DEV_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+
       - name: Link and Push to Dev DB
         run: |
           cd backend
           # Encode the password to handle special characters correctly in the connection string
           ENC_PASSWORD=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ.get('SUPABASE_DB_PASSWORD', '')))")
           # Use AWS IPv4 pooler hostname since GitHub Actions doesn't support IPv6
-          # Format: aws-0-[region].pooler.supabase.com (uses IPv4 only)
+          # Port 6543 for transaction mode pooling (required for migrations)
+          # ueOPshhNnbRFUqVm
           DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+
+          echo "Connecting to: postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
           npx supabase db push --db-url "$DB_URL"
