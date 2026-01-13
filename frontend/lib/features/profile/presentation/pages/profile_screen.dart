@@ -347,8 +347,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildMenuCard(
                     context,
                     title: 'Log Out',
-                    icon: Icons.power_settings_new,
-                    iconColor: AppColors.lightError,
+                    icon: Icons.arrow_circle_right,
+                    iconColor: AppColors.lightTextSecondary,
                     onTap: _handleLogout,
                   ),
                   const SizedBox(height: AppSpacing.lg),

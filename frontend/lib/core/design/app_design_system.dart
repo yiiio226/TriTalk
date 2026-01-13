@@ -28,7 +28,7 @@ class AppColors {
   // =============================
   // Named by usage for direct reference in components.
   static const Color primary = Color(0xFF1D1D1D); // Main Brand Color (Buttons, Emphasis)
-  static const Color secondary = Color(0xFF15A4A9); // Secondary Brand Color (Auxiliary Emphasis)
+  static const Color secondary = Color(0xFF2BC3C9); // Secondary Brand Color (Auxiliary Emphasis)
 
   // Light Theme Base Colors
   static const Color lightBackground = Color(0xFFF8FAFC); // Page Background

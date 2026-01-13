@@ -34,6 +34,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       vsync: this,
     );
 
+    _animationController.addListener(() {
+      final authState = ref.read(authProvider);
+      if (authState.status != AuthStatus.unknown) {
+        _navigateBasedOnAuthState(authState);
+      }
+    });
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,

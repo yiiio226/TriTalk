@@ -64,16 +64,16 @@ class LoginScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(25),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            boxShadow: AppShadows.md,
           ),
-          child: const Center(
-            child: Text('👋', style: TextStyle(fontSize: 50)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: Image.asset(
+              'assets/icon/icon.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -162,6 +162,7 @@ class LoginScreen extends ConsumerWidget {
         // Google Sign In
         _buildLoginButton(
           icon: null,
+
           customIcon: _buildGoogleIcon(),
           label: 'Continue with Google',
           backgroundColor: Colors.white,
@@ -259,7 +260,7 @@ class LoginScreen extends ConsumerWidget {
         child: Text(
           'G',
           style: TextStyle(
-            color: Colors.red[600],
+            color: AppColors.lightTextPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
