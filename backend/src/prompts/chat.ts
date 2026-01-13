@@ -141,7 +141,7 @@ export function buildStreamingVoiceChatSystemPrompt(
     
     === METADATA JSON STRUCTURE (CRITICAL - READ CAREFULLY) ===
     {
-        "transcript": "<<< WHAT THE USER SAID - Transcribe the USER's audio input here. This is NOT your reply! >>>",
+        "transcript": "<<< COPY THE USER'S RAW TEXT EXACTLY AS PROVIDED - DO NOT MODIFY! >>>",
         "translation": "Translation of YOUR reply (Part 1) in ${nativeLang}",
         "analysis": {
             "is_perfect": boolean,
@@ -153,10 +153,12 @@ export function buildStreamingVoiceChatSystemPrompt(
     }
     
     ⚠️ CRITICAL WARNING ABOUT "transcript" FIELD:
-    - "transcript" must contain EXACTLY what the USER said in their audio recording
-    - It is the user's speech transcribed to text
+    - "transcript" must contain the USER's original raw text EXACTLY as provided to you
+    - DO NOT polish, correct, or modify the user's text in any way
+    - Keep ALL filler words (um, uh, 嗯, 那个, etc.), hesitations, and speech disfluencies
+    - Keep grammatical errors, typos, and incomplete sentences as-is
+    - The transcript is used for pronunciation assessment and must match the original audio exactly
     - DO NOT put YOUR reply in the transcript field - that's already in Part 1
-    - The transcript is used for pronunciation assessment of the USER's speech
     
     Example User Audio: (user says "I want room")
     
