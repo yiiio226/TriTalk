@@ -36,87 +36,112 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightSurface, 
+      
+   
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 10),
-            // Custom Header with Back Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
+            // Unified Header + TabBar Container
+            Container(
+              color: AppColors.lightSurface,
+              child: Column(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                  const SizedBox(height: 10),
+                  // Custom Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.lightBackground,
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              color: AppColors.lightTextPrimary,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Favorites',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.lightTextPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Favorites',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextPrimary,
+                  const SizedBox(height: 16),
+                  
+                  // Tab Bar
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: AppColors.lightDivider),
+                      ),
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TabBar(
+                        controller: _tabController,
+                        labelColor: AppColors.lightTextPrimary,
+                        unselectedLabelColor: AppColors.lightTextSecondary,
+                        indicatorColor: AppColors.primary,
+                        dividerColor: Colors.transparent, // Remove default M3 divider
+                        indicatorWeight: 3,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        labelPadding: const EdgeInsets.only(right: 24),
+                        labelStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        tabs: [
+                          const Tab(text: 'Vocabulary'),
+                          const Tab(text: 'Sentence'),
+                          const Tab(text: 'Grammar'),
+                          if (widget.sceneId == null)
+                            const Tab(text: 'Chat'),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Tab Bar
-            Container(
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.black,
-                  indicatorWeight: 3,
-                  isScrollable: true, // Allow scrolling if tabs don't fit
-                  tabAlignment: TabAlignment.start, // Align tabs to the start
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                  ), // Increased left padding
-                  labelPadding: const EdgeInsets.only(
-                    right: 24,
-                  ), // Add space between tabs, but not before first
-                  labelStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.normal,
-                  ),
-                  tabs: [
-                    const Tab(text: 'Vocabulary'),
-                    const Tab(text: 'Sentence'),
-                    const Tab(text: 'Grammar'),
-                    if (widget.sceneId == null)
-                      const Tab(text: 'Chat'), // Only show in global favorites
-                  ],
-                ),
-              ),
-            ),
 
             // Tab Content
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  VocabListWidget(sceneId: widget.sceneId),
-                  SavedSentenceListWidget(sceneId: widget.sceneId),
-                  GrammarListWidget(sceneId: widget.sceneId),
-                  if (widget.sceneId == null)
-                    ChatHistoryListWidget(
-                      sceneId: widget.sceneId,
-                    ), // Only show in global favorites
-                ],
+              child: Container(
+                color: AppColors.lightBackground,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    VocabListWidget(sceneId: widget.sceneId),
+                    SavedSentenceListWidget(sceneId: widget.sceneId),
+                    GrammarListWidget(sceneId: widget.sceneId),
+                    if (widget.sceneId == null)
+                      ChatHistoryListWidget(
+                        sceneId: widget.sceneId,
+                      ), // Only show in global favorites
+                  ],
+                ),
               ),
             ),
           ],

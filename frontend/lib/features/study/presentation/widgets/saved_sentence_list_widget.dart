@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/vocab_service.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 
 class SavedSentenceListWidget extends StatelessWidget {
@@ -38,9 +39,9 @@ class SavedSentenceListWidget extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.purple[50],
+                color: AppColors.lightSurface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purple[100]!),
+                border: Border.all(color: AppColors.lightDivider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +54,7 @@ class SavedSentenceListWidget extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.purple[900],
+                            color: AppColors.lightTextPrimary,
                             height: 1.4,
                           ),
                         ),
@@ -61,7 +62,7 @@ class SavedSentenceListWidget extends StatelessWidget {
                       IconButton(
                         icon: Icon(
                           Icons.delete_outline,
-                          color: Colors.purple[300],
+                          color: AppColors.lightTextSecondary,
                         ),
                         onPressed: () {
                           VocabService().remove(item.phrase);
@@ -76,7 +77,7 @@ class SavedSentenceListWidget extends StatelessWidget {
                       item.translation, // "AI Message Analysis" or manual
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.purple[700],
+                        color: AppColors.lightTextSecondary,
                         fontStyle: FontStyle.italic,
                       ),
                     ),

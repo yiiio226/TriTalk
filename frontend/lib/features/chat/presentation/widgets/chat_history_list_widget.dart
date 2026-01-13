@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/chat_history_service.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'history_skeleton_loader.dart';
 import '../pages/archived_chat_screen.dart';
@@ -141,9 +142,9 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
         }
 
         return ListView.separated(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16), // Unified padding
           itemCount: bookmarks.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+          separatorBuilder: (_, __) => const SizedBox(height: 16), // Unified spacing
           itemBuilder: (context, index) {
             final item = bookmarks[index];
             return Dismissible(
@@ -152,7 +153,10 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
               background: Container(
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 20),
-                color: Colors.red,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               confirmDismiss: (direction) async {
@@ -161,47 +165,81 @@ class _ChatHistoryListWidgetState extends State<ChatHistoryListWidget> {
               onDismissed: (direction) {
                 _deleteBookmark(item.id);
               },
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  item.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.lightSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.lightDivider),
                 ),
-                subtitle: Text(
-                  item.preview,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item.date,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.grey,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ArchivedChatScreen(bookmark: item),
                       ),
-                      onPressed: () async {
-                        final confirm = await _showDeleteConfirmDialog(context);
-                        if (confirm == true) {
-                          _deleteBookmark(item.id);
-                        }
-                      },
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.title,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.lightTextPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              item.date,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.lightTextSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: AppColors.lightTextSecondary,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () async {
+                                final confirm =
+                                    await _showDeleteConfirmDialog(context);
+                                if (confirm == true) {
+                                  _deleteBookmark(item.id);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          item.preview,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.lightTextSecondary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ArchivedChatScreen(bookmark: item),
-                    ),
-                  );
-                },
               ),
             );
           },
