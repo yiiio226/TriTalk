@@ -705,6 +705,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                 messageId: message.id,
                                 initialFeedback: message.shadowingFeedback,
                                 initialAudioPath: message.shadowingAudioPath,
+                                initialTtsAudioPath:
+                                    message.ttsAudioPath ??
+                                    _ttsAudioPath, // Use message cache or bubble cache
                                 onFeedbackUpdate: (feedback, audioPath) {
                                   // Persist the shadowing result with audio path
                                   widget.onMessageUpdate?.call(
@@ -713,6 +716,16 @@ class _ChatBubbleState extends State<ChatBubble>
                                       shadowingAudioPath: audioPath,
                                     ),
                                   );
+                                },
+                                onTtsUpdate: (ttsPath) {
+                                  // Persist the TTS audio path to message
+                                  widget.onMessageUpdate?.call(
+                                    message.copyWith(ttsAudioPath: ttsPath),
+                                  );
+                                  // Also update local cache
+                                  setState(() {
+                                    _ttsAudioPath = ttsPath;
+                                  });
                                 },
                               ),
                             );

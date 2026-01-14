@@ -5,17 +5,22 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
+import 'package:frontend/core/data/api/api_service.dart';
+import 'package:frontend/core/data/local/storage_key_service.dart';
 
 class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
   final String messageId; // Message ID for file naming
   final VoiceFeedback? initialFeedback; // Previous shadowing result to display
   final String? initialAudioPath; // Previous recording path
+  final String? initialTtsAudioPath; // Previous TTS audio path (cached)
   final Function(VoiceFeedback, String?)?
   onFeedbackUpdate; // Callback with feedback and audio path
+  final Function(String)? onTtsUpdate; // Callback when TTS audio is generated
 
   const ShadowingSheet({
     super.key,
@@ -23,7 +28,9 @@ class ShadowingSheet extends ConsumerStatefulWidget {
     required this.messageId,
     this.initialFeedback,
     this.initialAudioPath,
+    this.initialTtsAudioPath,
     this.onFeedbackUpdate,
+    this.onTtsUpdate,
   });
 
   @override
@@ -41,18 +48,34 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   String _errorMessage = '';
   String? _currentRecordingPath; // Track current recording for replay/cleanup
 
+  // TTS state for "Listen" button
+  bool _isTTSLoading = false;
+  bool _isTTSPlaying = false;
+  String? _ttsAudioPath; // Cached TTS audio file path
+  final AudioPlayer _ttsPlayer = AudioPlayer(); // Separate player for TTS
+
   @override
   void initState() {
     super.initState();
     // Initialize with previous feedback and audio path if available
     _feedback = widget.initialFeedback;
     _currentRecordingPath = widget.initialAudioPath;
+    _ttsAudioPath = widget.initialTtsAudioPath; // Initialize cached TTS path
 
-    // Listen to audio player state
+    // Listen to audio player state for recording playback
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (mounted) {
         setState(() {
           _isPlaying = state == PlayerState.playing;
+        });
+      }
+    });
+
+    // Listen to TTS audio player state
+    _ttsPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isTTSPlaying = state == PlayerState.playing;
         });
       }
     });
@@ -62,8 +85,132 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   void dispose() {
     _audioRecorder.dispose();
     _audioPlayer.dispose();
+    _ttsPlayer.dispose(); // Dispose TTS player
     // Note: We do NOT delete the recording on dispose anymore since it's persisted
     super.dispose();
+  }
+
+  /// Play text-to-speech for the target text (correct pronunciation)
+  Future<void> _playTextToSpeech() async {
+    // If already playing TTS, stop it
+    if (_isTTSPlaying) {
+      await _ttsPlayer.stop();
+      setState(() {
+        _isTTSPlaying = false;
+      });
+      return;
+    }
+
+    // Stop recording playback if playing
+    if (_isPlaying) {
+      await _audioPlayer.stop();
+    }
+
+    // If we have a cached audio file, play it directly
+    if (_ttsAudioPath != null && await File(_ttsAudioPath!).exists()) {
+      await _playTTSAudio(_ttsAudioPath!);
+      return;
+    }
+
+    // Show loading state
+    setState(() {
+      _isTTSLoading = true;
+    });
+
+    try {
+      final apiService = ApiService();
+      final List<String> audioChunks = [];
+
+      // Use streaming API to receive audio chunks
+      await for (final chunk in apiService.generateTTSStream(
+        widget.targetText,
+        messageId: widget.messageId,
+      )) {
+        if (!mounted) break;
+
+        switch (chunk.type) {
+          case TTSChunkType.audioChunk:
+            if (chunk.audioBase64 != null) {
+              audioChunks.add(chunk.audioBase64!);
+            }
+            break;
+          case TTSChunkType.info:
+            // Duration info received
+            break;
+          case TTSChunkType.done:
+            // All chunks received
+            break;
+          case TTSChunkType.error:
+            throw Exception(chunk.error ?? 'TTS generation failed');
+        }
+      }
+
+      if (!mounted) return;
+
+      if (audioChunks.isEmpty) {
+        throw Exception('No audio received');
+      }
+
+      // Combine all base64 chunks and decode
+      final combinedBase64 = audioChunks.join('');
+      final audioBytes = base64Decode(combinedBase64);
+
+      // Save to cache with user-scoped path
+      final cacheDir = await getApplicationDocumentsDirectory();
+      final storageKey = StorageKeyService();
+      final ttsCacheDir = Directory(
+        storageKey.getUserScopedPath(cacheDir.path, 'tts_cache'),
+      );
+      if (!await ttsCacheDir.exists()) {
+        await ttsCacheDir.create(recursive: true);
+      }
+
+      // Use message ID as filename (sanitized)
+      final safeFileName = widget.messageId.replaceAll(
+        RegExp(r'[^a-zA-Z0-9-_]'),
+        '_',
+      );
+      final audioFile = File('${ttsCacheDir.path}/$safeFileName.mp3');
+      await audioFile.writeAsBytes(audioBytes);
+
+      if (mounted) {
+        setState(() {
+          _ttsAudioPath = audioFile.path;
+          _isTTSLoading = false;
+        });
+
+        // Notify parent to persist the TTS audio path
+        widget.onTtsUpdate?.call(audioFile.path);
+
+        // Play the audio immediately
+        await _playTTSAudio(audioFile.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTTSLoading = false;
+          _errorMessage = 'Failed to generate speech: $e';
+        });
+      }
+    }
+  }
+
+  /// Play TTS audio from the given file path
+  Future<void> _playTTSAudio(String audioPath) async {
+    try {
+      await _ttsPlayer.play(UrlSource(Uri.file(audioPath).toString()));
+      if (mounted) {
+        setState(() {
+          _isTTSPlaying = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to play audio: $e';
+        });
+      }
+    }
   }
 
   Future<void> _deleteCurrentRecording() async {
@@ -324,33 +471,91 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   }
 
   Widget _buildRecordButton() {
+    return Column(
+      children: [
+        // Listen button for correct pronunciation
+        _buildListenButton(),
+        const SizedBox(height: 24),
+        // Record button
+        GestureDetector(
+          onLongPressStart: (_) => _startRecording(),
+          onLongPressEnd: (_) => _stopRecording(),
+          child: Column(
+            children: [
+              Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  color: _isRecording
+                      ? Colors.red.shade100
+                      : Colors.blue.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.mic,
+                  size: 40,
+                  color: _isRecording ? Colors.red : Colors.blue,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _isRecording ? 'Release to Stop' : 'Hold to Record',
+                style: TextStyle(
+                  color: _isRecording ? Colors.red : Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build the "Listen" button for TTS playback
+  Widget _buildListenButton() {
     return GestureDetector(
-      onLongPressStart: (_) => _startRecording(),
-      onLongPressEnd: (_) => _stopRecording(),
-      child: Column(
-        children: [
-          Container(
-            height: 80,
-            width: 80,
-            decoration: BoxDecoration(
-              color: _isRecording ? Colors.red.shade100 : Colors.blue.shade100,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.mic,
-              size: 40,
-              color: _isRecording ? Colors.red : Colors.blue,
-            ),
+      onTap: _playTextToSpeech,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: _isTTSPlaying ? Colors.blue.shade100 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _isTTSPlaying ? Colors.blue.shade300 : Colors.grey.shade300,
           ),
-          const SizedBox(height: 12),
-          Text(
-            _isRecording ? 'Release to Stop' : 'Hold to Record',
-            style: TextStyle(
-              color: _isRecording ? Colors.red : Colors.grey.shade600,
-              fontWeight: FontWeight.w600,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isTTSLoading)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+              )
+            else if (_isTTSPlaying)
+              const Icon(Icons.stop_rounded, size: 18, color: Colors.blue)
+            else
+              const Icon(
+                Icons.volume_up_rounded,
+                size: 18,
+                color: Colors.black87,
+              ),
+            const SizedBox(width: 8),
+            Text(
+              _isTTSPlaying ? 'Stop' : 'Listen',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _isTTSPlaying ? Colors.blue : Colors.black87,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -362,6 +567,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
         // Use VoiceFeedbackSheet content inline
         _buildVoiceFeedbackContent(_feedback!),
         const SizedBox(height: 20),
+        // Listen button for correct pronunciation (above action buttons)
+        _buildListenButton(),
+        const SizedBox(height: 16),
         // Action buttons row
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
