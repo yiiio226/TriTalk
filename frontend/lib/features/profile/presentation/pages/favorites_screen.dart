@@ -4,6 +4,8 @@ import '../../../../features/study/presentation/widgets/grammar_list_widget.dart
 import '../../../../features/study/presentation/widgets/saved_sentence_list_widget.dart'; // For full sentences
 import '../../../../features/chat/presentation/widgets/chat_history_list_widget.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import '../../../study/data/vocab_service.dart';
+import '../../../chat/data/chat_history_service.dart';
 
 class UnifiedFavoritesScreen extends StatefulWidget {
   final String? sceneId; // Optional filter
@@ -25,6 +27,19 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
     // Otherwise show all 4 tabs
     final tabCount = widget.sceneId != null ? 3 : 4;
     _tabController = TabController(length: tabCount, vsync: this);
+    
+    // Trigger data refresh when screen opens
+    _refreshData();
+  }
+
+  Future<void> _refreshData() async {
+    // Refresh vocabulary data (covers Vocabulary, Sentence, Grammar tabs)
+    await VocabService().refresh();
+    
+    // Refresh chat history bookmarks (Chat tab)
+    if (widget.sceneId == null) {
+      await ChatHistoryService().refreshBookmarks();
+    }
   }
 
   @override
