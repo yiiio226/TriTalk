@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/data/api/api_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 class HintsSheet extends StatefulWidget {
   final String sceneDescription;
@@ -22,14 +24,11 @@ class HintsSheet extends StatefulWidget {
   State<HintsSheet> createState() => _HintsSheetState();
 }
 
-class _HintsSheetState extends State<HintsSheet>
-    with SingleTickerProviderStateMixin {
+class _HintsSheetState extends State<HintsSheet> {
   final ApiService _apiService = ApiService();
   bool _isLoading = true;
   List<String> _hints = [];
   String? _error;
-  late AnimationController _controller;
-  late Animation<double> _animation;
 
   @override
   void initState() {
@@ -42,23 +41,6 @@ class _HintsSheetState extends State<HintsSheet>
     } else {
       _loadHints();
     }
-
-    // Setup pulse animation for skeleton
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(
-      begin: 0.3,
-      end: 0.7,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   Future<void> _loadHints() async {
@@ -127,8 +109,12 @@ class _HintsSheetState extends State<HintsSheet>
 
   Widget _buildContent() {
     if (_isLoading) {
-      return Column(
-        children: List.generate(3, (index) => _buildSkeletonItem()),
+      return Shimmer.fromColors(
+        baseColor: AppColors.lightDivider,
+        highlightColor: AppColors.lightSurface,
+        child: Column(
+          children: List.generate(3, (index) => _buildSkeletonItem()),
+        ),
       );
     }
 
@@ -171,9 +157,9 @@ class _HintsSheetState extends State<HintsSheet>
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange[200]!, width: 1),
+                      color: AppColors.lightBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.lightDivider),
                     ),
                     child: Row(
                       children: [
@@ -182,15 +168,13 @@ class _HintsSheetState extends State<HintsSheet>
                             hint,
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.orange[900],
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.lightTextPrimary,
+                              height: 1.4,
                             ),
                           ),
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: Colors.orange[400],
-                        ),
+                        // Arrow removed as requested ("remove card right side operation")
                       ],
                     ),
                   ),
@@ -203,31 +187,37 @@ class _HintsSheetState extends State<HintsSheet>
   }
 
   Widget _buildSkeletonItem() {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[200]!.withValues(alpha: _animation.value),
-            borderRadius: BorderRadius.circular(8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.lightSurface.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Text Block 1
+          Container(
+            width: double.infinity,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300]!.withValues(alpha: _animation.value),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          // Text Block 2 (shorter)
+          Container(
+            width: 150,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
