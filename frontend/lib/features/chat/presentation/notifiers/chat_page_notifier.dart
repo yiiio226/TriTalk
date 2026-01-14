@@ -275,13 +275,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
     final index = state.messages.indexWhere((m) => m.id == message.id);
     if (index == -1) return;
 
-    // For voice messages, the VoiceFeedbackSheet handles Azure assessment
-    // when the sheet is opened. Just return here.
-    if (message.isVoiceMessage) {
-      return;
-    }
-
-    // Text message analysis flow
+    // Both text and voice messages follow the same analysis flow
     // Update state to analyzing
     final analyzingMsg = message.copyWith(isAnalyzing: true);
     final updatedMessages = List<Message>.from(state.messages);
@@ -293,7 +287,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       final history = _buildHistory(updatedMessages);
       final sceneContext = _buildSceneContext();
 
-      // Call sendMessage API to get feedback for text messages
+      // Call sendMessage API to get feedback
       final response = await _repository.sendMessage(
         text: message.content,
         sceneContext: sceneContext,

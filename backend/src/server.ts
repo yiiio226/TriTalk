@@ -484,7 +484,8 @@ app.post("/chat/send-voice", async (c) => {
             format: audioFormat,
           },
         },
-      ]
+      ],
+      false  // Plain text mode for transcription
     );
 
     const transcript = sanitizeText(transcriptResponse).trim();
@@ -556,7 +557,8 @@ app.post("/chat/send-voice", async (c) => {
 
           console.log("[Send Voice] Step 2 complete. Reply:", replyText.substring(0, 50));
 
-          // Send combined metadata with transcript and translation
+          // Send combined metadata with transcript only
+          // Note: Analysis is NOT included here - it's triggered on-demand when user clicks "Analyze"
           await stream.writeln(
             JSON.stringify({
               type: "metadata",
