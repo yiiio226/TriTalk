@@ -126,16 +126,28 @@ function transformAssessmentResult(
     throw new Error("No recognition results found in Azure response");
   }
 
-  const assessment = nBest.PronunciationAssessment;
+  // Azure returns scores in two possible locations depending on the API version:
+  // 1. Directly on nBest (current API behavior)
+  // 2. Nested under nBest.PronunciationAssessment (legacy/SDK behavior)
+  // We check both locations for compatibility
+  const assessment = nBest.PronunciationAssessment || nBest;
+
   const words: WordAssessment[] = (nBest.Words || []).map((word: any) => ({
     word: word.Word,
     offset: word.Offset || 0,
     duration: word.Duration || 0,
-    accuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
-    errorType: word.PronunciationAssessment?.ErrorType || "None",
+    // Word-level scores are directly on the word object, not nested
+    accuracyScore:
+      word.AccuracyScore ?? word.PronunciationAssessment?.AccuracyScore ?? 0,
+    errorType:
+      word.ErrorType ?? word.PronunciationAssessment?.ErrorType ?? "None",
     phonemes: (word.Phonemes || []).map((phoneme: any) => ({
       phoneme: phoneme.Phoneme,
-      accuracyScore: phoneme.PronunciationAssessment?.AccuracyScore || 0,
+      // Phoneme-level scores are also directly on the phoneme object
+      accuracyScore:
+        phoneme.AccuracyScore ??
+        phoneme.PronunciationAssessment?.AccuracyScore ??
+        0,
       offset: phoneme.Offset || 0,
       duration: phoneme.Duration || 0,
     })),
@@ -144,10 +156,12 @@ function transformAssessmentResult(
   return {
     recognitionStatus: azureResponse.RecognitionStatus,
     displayText: azureResponse.DisplayText || nBest.Display || "",
-    pronunciationScore: assessment?.PronScore || 0,
-    accuracyScore: assessment?.AccuracyScore || 0,
-    fluencyScore: assessment?.FluencyScore || 0,
-    completenessScore: assessment?.CompletenessScore || 0,
+    // Use PronScore for overall pronunciation score (Azure naming convention)
+    pronunciationScore:
+      assessment?.PronScore ?? assessment?.PronunciationScore ?? 0,
+    accuracyScore: assessment?.AccuracyScore ?? 0,
+    fluencyScore: assessment?.FluencyScore ?? 0,
+    completenessScore: assessment?.CompletenessScore ?? 0,
     prosodyScore: assessment?.ProsodyScore,
     words,
   };
