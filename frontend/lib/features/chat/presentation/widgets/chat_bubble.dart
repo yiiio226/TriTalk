@@ -473,6 +473,50 @@ class _ChatBubbleState extends State<ChatBubble>
                             ),
                           ),
                         ),
+                        // Text button for voice messages (same row as Perfect/Fix)
+                        if (widget.message.isVoiceMessage) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _showTranscript = !_showTranscript;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(
+                                  alpha: 0.2,
+                                ), // Match Perfect/Fix button background
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _showTranscript
+                                        ? Icons.subtitles_off_rounded
+                                        : Icons.subtitles_rounded,
+                                    size: 14,
+                                    color: Colors.black,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _showTranscript ? "Hide Text" : "Text",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -497,100 +541,103 @@ class _ChatBubbleState extends State<ChatBubble>
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GestureDetector(
-                            onTap: () => widget.onShowFeedback?.call(),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: widget.message.isAnalyzing
-                                    ? Colors.grey[200]
-                                    : Colors.grey[100],
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (widget.message.isAnalyzing)
-                                    const SizedBox(
-                                      width: 10,
-                                      height: 10,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
-                                            ),
-                                      ),
-                                    )
-                                  else
-                                    const Icon(
-                                      Icons.auto_awesome_rounded,
-                                      size: 14,
-                                      color: Colors.black,
-                                    ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    widget.message.isAnalyzing
-                                        ? "Analyzing..."
-                                        : "Analyze",
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                      child: GestureDetector(
+                        onTap: () => widget.onShowFeedback?.call(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
                           ),
-                          if (widget.message.isVoiceMessage) ...[
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _showTranscript = !_showTranscript;
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
+                          decoration: BoxDecoration(
+                            color: widget.message.isAnalyzing
+                                ? Colors.grey[200]
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.message.isAnalyzing)
+                                const SizedBox(
+                                  width: 10,
+                                  height: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1,
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(
+                                          Colors.black,
+                                        ),
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 14,
+                                  color: Colors.black,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _showTranscript
-                                          ? Icons.subtitles_off_rounded
-                                          : Icons.subtitles_rounded,
-                                      size: 14,
-                                      color: Colors.black,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _showTranscript ? "Hide Text" : "Text",
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.message.isAnalyzing
+                                    ? "Analyzing..."
+                                    : "Analyze",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
                               ),
-                            ),
-                          ],
-                        ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  // Text toggle button for voice messages (always show when no feedback)
+                  if (isUser &&
+                      widget.message.isVoiceMessage &&
+                      !widget.message.isLoading &&
+                      !hasFeedback) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _showTranscript = !_showTranscript;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _showTranscript
+                                    ? Icons.subtitles_off_rounded
+                                    : Icons.subtitles_rounded,
+                                size: 14,
+                                color: Colors.black,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _showTranscript ? "Hide Text" : "Text",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 2),
