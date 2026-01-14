@@ -851,6 +851,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     return Row(
       key: const ValueKey('textMode'),
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         // Lightbulb button
         IconButton(
@@ -870,6 +871,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               border: Border.all(color: Colors.transparent, width: 0),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: TextField(
