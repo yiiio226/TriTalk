@@ -637,6 +637,11 @@ class ChatHistoryService {
     }
   }
 
+  // Public method to force refresh bookmarks from cloud
+  Future<void> refreshBookmarks() async {
+    await _loadBookmarksFromCloud();
+  }
+
   Future<void> _syncBookmarkToCloud(BookmarkedConversation bookmark) async {
     try {
       final userId = _supabase.auth.currentUser?.id;

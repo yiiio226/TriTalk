@@ -115,6 +115,11 @@ class VocabService extends ChangeNotifier {
     }
   }
 
+  // Public method to force refresh from cloud
+  Future<void> refresh() async {
+    await _syncFromCloud();
+  }
+
   Future<void> _saveLocal() async {
     final prefs = await SharedPreferences.getInstance();
     final storageKey = StorageKeyService();
