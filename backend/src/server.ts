@@ -41,6 +41,7 @@ import {
   buildScenePolishPrompt,
   buildStreamingVoiceChatSystemPrompt,
   buildTranscribePrompt,
+  buildTranscriptionPrompt,
   buildTranslatePrompt,
 } from "./prompts";
 
@@ -423,7 +424,7 @@ app.openapi(transcribeRoute, async (c) => {
   }
 });
 
-// POST /chat/send-voice
+// POST /chat/send-voice - Two-step process: transcribe then respond
 app.post("/chat/send-voice", async (c) => {
   console.log("[/chat/send-voice] Request received");
   try {
@@ -461,7 +462,39 @@ app.post("/chat/send-voice", async (c) => {
       `[Send Voice] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
     );
 
-    const systemPrompt = buildStreamingVoiceChatSystemPrompt(
+    // ============================================
+    // STEP 1: Transcribe the audio
+    // ============================================
+    console.log("[Send Voice] Step 1: Transcribing audio...");
+    const transcriptPrompt = buildTranscriptionPrompt();
+    
+    const transcriptResponse = await callOpenRouterMultimodal(
+      env.OPENROUTER_API_KEY,
+      env.OPENROUTER_TRANSCRIBE_MODEL,
+      transcriptPrompt,
+      [
+        {
+          type: "text",
+          text: "Transcribe the following audio exactly as spoken:",
+        },
+        {
+          type: "input_audio",
+          input_audio: {
+            data: audioBase64,
+            format: audioFormat,
+          },
+        },
+      ]
+    );
+
+    const transcript = sanitizeText(transcriptResponse).trim();
+    console.log("[Send Voice] Step 1 complete. Transcript:", transcript.substring(0, 50));
+
+    // ============================================
+    // STEP 2: Generate AI response based on transcript
+    // ============================================
+    console.log("[Send Voice] Step 2: Generating AI response...");
+    const systemPrompt = buildChatSystemPrompt(
       sceneContext,
       nativeLang,
       targetLang
@@ -474,23 +507,10 @@ app.post("/chat/send-voice", async (c) => {
       messages.push(...recentHistory);
     }
 
-    const userMessageContent = [
-      {
-        type: "text",
-        text: "[USER_AUDIO_ATTACHED] - Transcribe the audio content below. The audio contains the user's spoken message. Do NOT use this instruction text as the transcript.",
-      },
-      {
-        type: "input_audio",
-        input_audio: {
-          data: audioBase64,
-          format: audioFormat,
-        },
-      },
-    ];
-
+    // Add the user's transcribed message
     messages.push({
       role: "user",
-      content: userMessageContent as any,
+      content: `<<LATEST_USER_MESSAGE>>${transcript}<</LATEST_USER_MESSAGE>>`,
     });
 
     const response = await callOpenRouterStreaming(
@@ -509,8 +529,18 @@ app.post("/chat/send-voice", async (c) => {
           console.log("Stream aborted: /chat/send-voice");
         });
 
-        let fullResponse = ""; // Accumulate full response to extract metadata
+        // Send transcript metadata immediately
+        await stream.writeln(
+          JSON.stringify({
+            type: "metadata",
+            data: { transcript },
+          })
+        );
 
+        let fullResponse = "";
+        let replyText = "";
+
+        // Stream the AI's response
         for await (const line of iterateStreamLines(response)) {
           if (line === "data: [DONE]") continue;
           if (line.startsWith("data: ")) {
@@ -520,67 +550,37 @@ app.post("/chat/send-voice", async (c) => {
               const content = parsed.choices?.[0]?.delta?.content || "";
               if (content) {
                 fullResponse += content;
+                replyText += content;
                 
-                // Check if we've hit the metadata separator
-                if (fullResponse.includes("[[METADATA]]")) {
-                  const parts = fullResponse.split("[[METADATA]]");
-                  const replyText = parts[0];
-                  const metadataStr = parts.slice(1).join("[[METADATA]]");
-                  
-                  // Send any remaining reply text before metadata
-                  if (replyText && !fullResponse.startsWith("[[METADATA]]")) {
-                    // Only send if we haven't already sent this part
-                    const alreadySent = fullResponse.length - content.length;
-                    const newPart = replyText.substring(Math.max(0, alreadySent));
-                    if (newPart) {
-                      await stream.writeln(
-                        JSON.stringify({ type: "token", content: newPart })
-                      );
-                    }
-                  }
-                  
-                  // Try to parse metadata if it looks complete
-                  if (metadataStr.includes("}")) {
-                    try {
-                      const jsonMatch = metadataStr.match(/\{[\s\S]*\}/);
-                      if (jsonMatch) {
-                        const metadata = JSON.parse(jsonMatch[0]);
-                        await stream.writeln(
-                          JSON.stringify({ type: "metadata", data: metadata })
-                        );
-                      }
-                    } catch (e) {
-                      // Metadata not complete yet, continue streaming
-                    }
-                  }
-                } else {
-                  // Normal token streaming before metadata
-                  await stream.writeln(
-                    JSON.stringify({ type: "token", content: content })
-                  );
-                }
+                // Stream the token
+                await stream.writeln(
+                  JSON.stringify({ type: "token", content: content })
+                );
               }
-            } catch (e) { }
-          }
-        }
-        
-        // Final check: if we have metadata but haven't sent it yet
-        if (fullResponse.includes("[[METADATA]]") && !fullResponse.includes('"type":"metadata"')) {
-          const parts = fullResponse.split("[[METADATA]]");
-          const metadataStr = parts.slice(1).join("[[METADATA]]");
-          try {
-            const jsonMatch = metadataStr.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              const metadata = JSON.parse(jsonMatch[0]);
-              await stream.writeln(
-                JSON.stringify({ type: "metadata", data: metadata })
-              );
+            } catch (e) {
+              // Skip malformed JSON
             }
-          } catch (e) {
-            console.error("Failed to parse final metadata:", e);
           }
         }
-        
+
+        // After streaming is complete, parse the full response for analysis data
+        try {
+          const data = parseJSON(fullResponse);
+          const analysisData = data.analysis || {};
+
+          // Send translation metadata
+          await stream.writeln(
+            JSON.stringify({
+              type: "metadata",
+              data: {
+                translation: sanitizeText(data.reply || ""),
+              },
+            })
+          );
+        } catch (e) {
+          console.error("[Send Voice] Failed to parse response for metadata:", e);
+        }
+
         await stream.writeln(JSON.stringify({ type: "done" }));
       },
       async (err, stream) => {
