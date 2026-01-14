@@ -32,6 +32,7 @@ export function buildScenePolishPrompt(description: string): string {
     User Input: "${description}"
     
     Make it more specific and suitable for setting up a roleplay context in a few sentences. 
-    It should describe the situation clearly so the AI knows how to roleplay.
+    IMPORTANT: Write the description from the USER's first-person perspective. Use "I" to refer to the user, and "you" to refer to what the user is doing.
+    The description should clearly set up the roleplay situation so the AI knows its role.
     Output JSON ONLY: { "polished_text": "..." }`;
 }
