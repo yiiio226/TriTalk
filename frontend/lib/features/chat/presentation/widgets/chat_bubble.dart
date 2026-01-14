@@ -427,53 +427,100 @@ class _ChatBubbleState extends State<ChatBubble>
                   // Only show feedback for user messages
                   if (isUser && hasFeedback) ...[
                     const SizedBox(height: 6),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Grammar/Perfect Button
-                        GestureDetector(
-                          onTap: () => widget.onShowFeedback?.call(),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(
-                                alpha: 0.2,
-                              ), // Increased transparency
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isPerfect
-                                      ? Icons.star_rounded
-                                      : Icons.auto_fix_high_rounded,
-                                  size: 14,
-                                  color: isPerfect
-                                      ? Colors.green[800]
-                                      : Colors
-                                            .orange[600], // Darker for visibility
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  isPerfect ? "Perfect" : "Fix",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Grammar/Perfect Button
+                          GestureDetector(
+                            onTap: () => widget.onShowFeedback?.call(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(
+                                  alpha: 0.2,
+                                ), // Increased transparency
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isPerfect
+                                        ? Icons.star_rounded
+                                        : Icons.auto_fix_high_rounded,
+                                    size: 14,
                                     color: isPerfect
                                         ? Colors.green[800]
                                         : Colors
                                               .orange[600], // Darker for visibility
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isPerfect ? "Perfect" : "Fix",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isPerfect
+                                          ? Colors.green[800]
+                                          : Colors
+                                                .orange[600], // Darker for visibility
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          // Text button for voice messages (same row as Perfect/Fix)
+                          if (widget.message.isVoiceMessage) ...[
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _showTranscript = !_showTranscript;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(
+                                    alpha: 0.2,
+                                  ), // Match Perfect/Fix button background
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _showTranscript
+                                          ? Icons.subtitles_off_rounded
+                                          : Icons.subtitles_rounded,
+                                      size: 14,
+                                      color: Colors.black,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _showTranscript ? "Hide Text" : "Text",
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                   if (widget.message.isFeedbackLoading) ...[
@@ -500,6 +547,7 @@ class _ChatBubbleState extends State<ChatBubble>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Analyze button
                           GestureDetector(
                             onTap: () => widget.onShowFeedback?.call(),
                             child: Container(
@@ -549,6 +597,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               ),
                             ),
                           ),
+                          // Text button for voice messages (same row as Analyze)
                           if (widget.message.isVoiceMessage) ...[
                             const SizedBox(width: 8),
                             GestureDetector(

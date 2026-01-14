@@ -237,6 +237,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     bool convertToText = false,
     bool sendDirectly = false,
   }) async {
+    // Capture duration BEFORE stopping timer (which resets it to 0)
+    final capturedDuration = _currentRecordingDuration;
+    
     _stopRecordingTimer();
 
     // Stop pulsing animation
@@ -251,8 +254,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         return;
       }
 
+      // Validate minimum recording duration
+      if (capturedDuration < 1) {
+        if (mounted) {
+          showTopToast(
+            context,
+            'Recording too short. Please speak for at least 1 second.',
+            isError: true,
+          );
+        }
+        // Delete the short recording file
+        try {
+          final file = File(path);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (e) {
+          // Ignore deletion errors
+        }
+        return;
+      }
+
       if (sendDirectly) {
-        _notifier.sendVoiceMessage(path, _currentRecordingDuration);
+        _notifier.sendVoiceMessage(path, capturedDuration);
         _scrollToBottom();
       } else if (convertToText) {
         await _transcribeAudio(path);
@@ -1183,6 +1207,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return;
     }
 
+    // For voice messages, open the feedback sheet directly
+    // The VoiceFeedbackSheet will handle Azure assessment
+    if (message.isVoiceMessage) {
+      _showFeedbackSheet(message);
+      return;
+    }
+
+    // For text messages, analyze first then show sheet
     try {
       await _notifier.analyzeMessage(message);
 

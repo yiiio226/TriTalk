@@ -452,19 +452,6 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
           _updateAiMessageContent(aiMessageId, event.content!);
         } else if (event.type == VoiceStreamEventType.metadata &&
             event.metadata != null) {
-          // Log the response for debugging
-          if (kDebugMode) {
-            final meta = event.metadata!;
-            debugPrint('📝 Voice Response Metadata:');
-            debugPrint('   transcript: "${meta.transcript}"');
-            debugPrint('   translation: "${meta.translation}"');
-            debugPrint(
-              '   reviewFeedback.correctedText: "${meta.reviewFeedback?.correctedText}"',
-            );
-            debugPrint(
-              '   voiceFeedback.pronunciationScore: ${meta.voiceFeedback.pronunciationScore}',
-            );
-          }
           _updateVoiceMetadata(userMsgId, aiMessageId, event.metadata!);
         }
       }
@@ -472,8 +459,23 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       // Note: Azure pronunciation assessment is now called on-demand
       // when user taps Analyze, not automatically after voice message
     } catch (e) {
-      // Handle error
-      state = state.copyWith(error: "Voice message failed: $e");
+      // Handle error and stop loading state
+      final index = state.messages.indexWhere((m) => m.id == aiMessageId);
+      if (index != -1) {
+        final errorMsg = state.messages[index].copyWith(
+          content: 'Failed to process voice message',
+          isLoading: false,
+        );
+        final errorMessages = List<Message>.from(state.messages);
+        errorMessages[index] = errorMsg;
+        state = state.copyWith(
+          messages: errorMessages,
+          error: "Voice message failed: $e",
+        );
+        _repository.syncMessages(sceneKey: _sceneId, messages: errorMessages);
+      } else {
+        state = state.copyWith(error: "Voice message failed: $e");
+      }
     }
   }
 
