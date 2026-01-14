@@ -529,18 +529,9 @@ app.post("/chat/send-voice", async (c) => {
           console.log("Stream aborted: /chat/send-voice");
         });
 
-        // Send transcript metadata immediately
-        await stream.writeln(
-          JSON.stringify({
-            type: "metadata",
-            data: { transcript },
-          })
-        );
-
         let fullResponse = "";
-        let replyText = "";
 
-        // Stream the AI's response
+        // Accumulate the full JSON response from Step 2
         for await (const line of iterateStreamLines(response)) {
           if (line === "data: [DONE]") continue;
           if (line.startsWith("data: ")) {
@@ -550,12 +541,6 @@ app.post("/chat/send-voice", async (c) => {
               const content = parsed.choices?.[0]?.delta?.content || "";
               if (content) {
                 fullResponse += content;
-                replyText += content;
-                
-                // Stream the token
-                await stream.writeln(
-                  JSON.stringify({ type: "token", content: content })
-                );
               }
             } catch (e) {
               // Skip malformed JSON
@@ -563,22 +548,45 @@ app.post("/chat/send-voice", async (c) => {
           }
         }
 
-        // After streaming is complete, parse the full response for analysis data
+        // Parse the complete JSON response
         try {
           const data = parseJSON(fullResponse);
+          const replyText = sanitizeText(data.reply || "");
           const analysisData = data.analysis || {};
 
-          // Send translation metadata
+          console.log("[Send Voice] Step 2 complete. Reply:", replyText.substring(0, 50));
+
+          // Send combined metadata with transcript and translation
           await stream.writeln(
             JSON.stringify({
               type: "metadata",
               data: {
-                translation: sanitizeText(data.reply || ""),
+                transcript,  // From Step 1
+                translation: null, // TODO: Add translation step if needed
               },
             })
           );
+
+          // Stream the reply text character by character for smooth UX
+          // (simulate streaming even though we have the full text)
+          for (let i = 0; i < replyText.length; i++) {
+            await stream.writeln(
+              JSON.stringify({ type: "token", content: replyText[i] })
+            );
+            // Small delay to simulate natural streaming (optional)
+            // await new Promise(resolve => setTimeout(resolve, 10));
+          }
         } catch (e) {
-          console.error("[Send Voice] Failed to parse response for metadata:", e);
+          console.error("[Send Voice] Failed to parse response:", e);
+          console.error("[Send Voice] Raw response:", fullResponse.substring(0, 200));
+          
+          // Send error
+          await stream.writeln(
+            JSON.stringify({
+              type: "error",
+              error: "Failed to parse AI response",
+            })
+          );
         }
 
         await stream.writeln(JSON.stringify({ type: "done" }));
