@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 
-class VoiceFeedbackSheet extends StatefulWidget {
+class VoiceFeedbackSheet extends ConsumerStatefulWidget {
   final VoiceFeedback feedback;
   final ScrollController? scrollController;
   final String? audioPath; // For calling speech/assess
@@ -23,131 +24,125 @@ class VoiceFeedbackSheet extends StatefulWidget {
   });
 
   @override
-  State<VoiceFeedbackSheet> createState() => _VoiceFeedbackSheetState();
+  ConsumerState<VoiceFeedbackSheet> createState() => _VoiceFeedbackSheetState();
 }
 
-class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
+class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
   late VoiceFeedback _feedback;
-  bool _isLoadingAzure = false;
-  String? _azureError;
+  bool _hasTriggeredAssessment = false;
 
   @override
   void initState() {
     super.initState();
     _feedback = widget.feedback;
 
+    // Schedule the assessment after build to access ref safely
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _triggerAssessmentIfNeeded();
+    });
+  }
+
+  void _triggerAssessmentIfNeeded() {
     // If we don't have Azure data yet and have audio/transcript, fetch it
-    if (!_feedback.hasAzureData &&
+    if (!_hasTriggeredAssessment &&
+        !_feedback.hasAzureData &&
         widget.audioPath != null &&
         widget.transcript != null &&
         widget.transcript!.isNotEmpty) {
-      _fetchAzurePronunciationAssessment();
-    }
-  }
+      _hasTriggeredAssessment = true;
 
-  Future<void> _fetchAzurePronunciationAssessment() async {
-    setState(() {
-      _isLoadingAzure = true;
-      _azureError = null;
-    });
-
-    try {
       if (kDebugMode) {
-        debugPrint('🎤 VoiceFeedbackSheet: Calling speech/assess');
+        debugPrint(
+          '🎤 VoiceFeedbackSheet: Triggering speech/assess via provider',
+        );
         debugPrint('   audioPath: ${widget.audioPath}');
         debugPrint('   transcript: "${widget.transcript}"');
       }
 
-      final speechService = SpeechAssessmentService();
-      final result = await speechService.assessPronunciationFromPath(
-        audioPath: widget.audioPath!,
-        referenceText: widget.transcript!,
-        language: 'en-US',
-        enableProsody: true,
-      );
+      // Clear previous state and trigger new assessment
+      ref.read(pronunciationAssessmentProvider.notifier).clearResult();
 
-      // Log the response
-      if (kDebugMode) {
-        debugPrint('✅ Speech/Assess Response:');
-        debugPrint('   isSuccess: ${result.isSuccess}');
-        debugPrint('   pronunciationScore: ${result.pronunciationScore}');
-        debugPrint('   accuracyScore: ${result.accuracyScore}');
-        debugPrint('   fluencyScore: ${result.fluencyScore}');
-        debugPrint('   completenessScore: ${result.completenessScore}');
-        debugPrint('   prosodyScore: ${result.prosodyScore}');
-        debugPrint('   wordFeedback: ${result.wordFeedback.length} words');
-        for (final word in result.wordFeedback) {
-          debugPrint(
-            '     - "${word.text}": score=${word.score}, level=${word.level}, errorType=${word.errorType}',
-          );
-        }
-      }
-
-      if (!result.isSuccess) {
-        setState(() {
-          _isLoadingAzure = false;
-          _azureError = 'Recognition failed';
-        });
-        return;
-      }
-
-      // Convert to our model format
-      final azureWordFeedback = result.wordFeedback
-          .map(
-            (w) => AzureWordFeedback(
-              text: w.text,
-              score: w.score,
-              level: w.level,
-              errorType: w.errorType,
-              phonemes: w.phonemes
-                  .map(
-                    (p) => AzurePhonemeFeedback(
-                      phoneme: p.phoneme,
-                      accuracyScore: p.accuracyScore,
-                    ),
-                  )
-                  .toList(),
-            ),
+      ref
+          .read(pronunciationAssessmentProvider.notifier)
+          .assessFromPath(
+            audioPath: widget.audioPath!,
+            referenceText: widget.transcript!,
+            language: 'en-US',
+            enableProsody: true,
           )
-          .toList();
-
-      final updatedFeedback = _feedback.copyWithAzureData(
-        pronunciationScore: result.pronunciationScore.round(),
-        azureAccuracyScore: result.accuracyScore,
-        azureFluencyScore: result.fluencyScore,
-        azureCompletenessScore: result.completenessScore,
-        azureProsodyScore: result.prosodyScore,
-        azureWordFeedback: azureWordFeedback,
-      );
-
-      setState(() {
-        _feedback = updatedFeedback;
-        _isLoadingAzure = false;
-      });
-
-      // Notify parent to persist the update
-      widget.onFeedbackUpdate?.call(updatedFeedback);
-    } on SpeechAssessmentException catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Speech/Assess Error: ${e.message}');
-      }
-      setState(() {
-        _isLoadingAzure = false;
-        _azureError = e.message;
-      });
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Speech/Assess Error: $e');
-      }
-      setState(() {
-        _isLoadingAzure = false;
-        _azureError = e.toString();
-      });
+          .then((result) {
+            if (result != null && mounted) {
+              _handleAssessmentResult(result);
+            }
+          });
     }
+  }
+
+  void _handleAssessmentResult(PronunciationResult result) {
+    if (kDebugMode) {
+      debugPrint('✅ Speech/Assess Response:');
+      debugPrint('   isSuccess: ${result.isSuccess}');
+      debugPrint('   pronunciationScore: ${result.pronunciationScore}');
+      debugPrint('   accuracyScore: ${result.accuracyScore}');
+      debugPrint('   fluencyScore: ${result.fluencyScore}');
+      debugPrint('   completenessScore: ${result.completenessScore}');
+      debugPrint('   prosodyScore: ${result.prosodyScore}');
+      debugPrint('   wordFeedback: ${result.wordFeedback.length} words');
+      for (final word in result.wordFeedback) {
+        debugPrint(
+          '     - "${word.text}": score=${word.score}, level=${word.level}, errorType=${word.errorType}',
+        );
+      }
+    }
+
+    if (!result.isSuccess) {
+      return;
+    }
+
+    // Convert to our model format
+    final azureWordFeedback = result.wordFeedback
+        .map(
+          (w) => AzureWordFeedback(
+            text: w.text,
+            score: w.score,
+            level: w.level,
+            errorType: w.errorType,
+            phonemes: w.phonemes
+                .map(
+                  (p) => AzurePhonemeFeedback(
+                    phoneme: p.phoneme,
+                    accuracyScore: p.accuracyScore,
+                  ),
+                )
+                .toList(),
+          ),
+        )
+        .toList();
+
+    final updatedFeedback = _feedback.copyWithAzureData(
+      pronunciationScore: result.pronunciationScore.round(),
+      azureAccuracyScore: result.accuracyScore,
+      azureFluencyScore: result.fluencyScore,
+      azureCompletenessScore: result.completenessScore,
+      azureProsodyScore: result.prosodyScore,
+      azureWordFeedback: azureWordFeedback,
+    );
+
+    setState(() {
+      _feedback = updatedFeedback;
+    });
+
+    // Notify parent to persist the update
+    widget.onFeedbackUpdate?.call(updatedFeedback);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watch the provider state for loading and error
+    final assessmentState = ref.watch(pronunciationAssessmentProvider);
+    final isLoading = assessmentState.isLoading;
+    final error = assessmentState.error;
+
     return StyledDrawer(
       padding: EdgeInsets.zero,
       child: ListView(
@@ -172,10 +167,10 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
           const SizedBox(height: 24),
 
           // Show loading indicator for Azure assessment
-          if (_isLoadingAzure) _buildLoadingIndicator(),
+          if (isLoading) _buildLoadingIndicator(),
 
           // Show error if Azure assessment failed
-          if (_azureError != null) _buildErrorBanner(),
+          if (error != null) _buildErrorBanner(error),
 
           // Show Azure word feedback if available
           if (_feedback.hasAzureData)
@@ -218,7 +213,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
     );
   }
 
-  Widget _buildErrorBanner() {
+  Widget _buildErrorBanner(String error) {
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
@@ -233,7 +228,7 @@ class _VoiceFeedbackSheetState extends State<VoiceFeedbackSheet> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Assessment failed: $_azureError',
+              'Assessment failed: $error',
               style: TextStyle(color: Colors.red[700], fontSize: 14),
             ),
           ),

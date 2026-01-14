@@ -51,7 +51,6 @@ class SpeechAssessmentService {
     String language = 'en-US',
     bool enableProsody = true,
   }) async {
-    // referenceText = "Can i get a cup of coffee please?";
     try {
       final uri = Uri.parse('$_baseUrl/speech/assess');
 
