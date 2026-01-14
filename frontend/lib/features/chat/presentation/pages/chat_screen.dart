@@ -254,6 +254,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         return;
       }
 
+      // Validate minimum recording duration
+      if (capturedDuration < 1) {
+        if (mounted) {
+          showTopToast(
+            context,
+            'Recording too short. Please speak for at least 1 second.',
+            isError: true,
+          );
+        }
+        // Delete the short recording file
+        try {
+          final file = File(path);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (e) {
+          // Ignore deletion errors
+        }
+        return;
+      }
+
       if (sendDirectly) {
         _notifier.sendVoiceMessage(path, capturedDuration);
         _scrollToBottom();
