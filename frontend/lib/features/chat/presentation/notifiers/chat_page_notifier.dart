@@ -452,19 +452,6 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
           _updateAiMessageContent(aiMessageId, event.content!);
         } else if (event.type == VoiceStreamEventType.metadata &&
             event.metadata != null) {
-          // Log the response for debugging
-          if (kDebugMode) {
-            final meta = event.metadata!;
-            debugPrint('📝 Voice Response Metadata:');
-            debugPrint('   transcript: "${meta.transcript}"');
-            debugPrint('   translation: "${meta.translation}"');
-            debugPrint(
-              '   reviewFeedback.correctedText: "${meta.reviewFeedback?.correctedText}"',
-            );
-            debugPrint(
-              '   voiceFeedback.pronunciationScore: ${meta.voiceFeedback.pronunciationScore}',
-            );
-          }
           _updateVoiceMetadata(userMsgId, aiMessageId, event.metadata!);
         }
       }
