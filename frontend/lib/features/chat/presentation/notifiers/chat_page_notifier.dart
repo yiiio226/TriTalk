@@ -450,6 +450,9 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
         }
       }
 
+      // Sync messages after stream completes to save AI reply to database
+      _repository.syncMessages(sceneKey: _sceneId, messages: state.messages);
+
       // Note: Azure pronunciation assessment is now called on-demand
       // when user taps Analyze, not automatically after voice message
     } catch (e) {
