@@ -512,152 +512,95 @@ class ApiService {
         );
       }
 
-      String buffer = ''; // Buffer for identifying the delimiter
-      String metadataBuffer = '';
-      bool foundMetadataSeparator = false;
-      const delimiter = '[[METADATA]]';
+      String buffer = '';
 
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
-        // The server sends NDJSON lines: {"type":"token","content":"..."}
-        // We need to parse these lines first
-        final lines = chunk.split('\n');
-        for (final line in lines) {
-          if (line.trim().isEmpty) continue;
+        buffer += chunk;
 
-          String? content;
+        // Process complete lines (NDJSON format)
+        while (buffer.contains('\n')) {
+          final index = buffer.indexOf('\n');
+          final line = buffer.substring(0, index).trim();
+          buffer = buffer.substring(index + 1);
+
+          if (line.isEmpty) continue;
 
           try {
-            // Try to parse as JSON first
             final json = jsonDecode(line);
 
             if (json is Map<String, dynamic>) {
-              if (json['type'] == 'token') {
-                content = json['content'];
-              } else if (json['type'] == 'error') {
-                // RETHROW server errors so they are caught by the outer stream handler
-                throw Exception(json['error']);
+              final type = json['type'];
+
+              if (type == 'token') {
+                // Stream AI reply tokens
+                final content = json['content'];
+                if (content != null && content.isNotEmpty) {
+                  yield VoiceStreamEvent(
+                    type: VoiceStreamEventType.token,
+                    content: content,
+                  );
+                }
+              } else if (type == 'metadata') {
+                // Parse metadata event
+                final data = json['data'];
+                if (data != null) {
+                  final analysis = data['analysis'];
+
+                  // Only create feedback objects if analysis exists
+                  VoiceFeedback? voiceFeedback;
+                  ReviewFeedback? reviewFeedback;
+
+                  if (analysis != null) {
+                    voiceFeedback = VoiceFeedback(
+                      pronunciationScore: 0,
+                      correctedText: analysis['corrected_text'] ?? '',
+                      nativeExpression: analysis['native_expression'] ?? '',
+                      feedback: analysis['explanation'] ?? '',
+                      sentenceBreakdown: [],
+                      errorFocus: null,
+                    );
+
+                    reviewFeedback = ReviewFeedback(
+                      isPerfect: analysis['is_perfect'] ?? false,
+                      correctedText: analysis['corrected_text'] ?? '',
+                      nativeExpression: analysis['native_expression'] ?? '',
+                      explanation: analysis['explanation'] ?? '',
+                      exampleAnswer: analysis['example_answer'] ?? '',
+                    );
+                  }
+
+                  final response = VoiceMessageResponse(
+                    message: '',
+                    translation: data['translation'],
+                    voiceFeedback: voiceFeedback ??
+                        VoiceFeedback(
+                          pronunciationScore: 0,
+                          correctedText: '',
+                          nativeExpression: '',
+                          feedback: '',
+                          sentenceBreakdown: [],
+                          errorFocus: null,
+                        ),
+                    reviewFeedback: reviewFeedback,
+                    transcript: data['transcript'],
+                  );
+
+                  yield VoiceStreamEvent(
+                    type: VoiceStreamEventType.metadata,
+                    metadata: response,
+                  );
+                }
+              } else if (type == 'done') {
+                // Stream complete
+                break;
+              } else if (type == 'error') {
+                throw Exception(json['error'] ?? 'Voice message failed');
               }
-            } else {
-              // Not a map, treat as raw content if needed, or ignore
             }
           } on FormatException {
-            // Not JSON, treat as raw text content (fallback for mixed modes)
-            // content = line;
-            // For now, we expect strict JSON protocol, so we might ignore non-JSON lines
-            // or log them.
+            // Skip non-JSON lines
+            if (kDebugMode) debugPrint("Skipping non-JSON line: $line");
           }
-
-          // Note: Any Exception thrown above (like the 'error' type) will propagate
-          // out of the 'await for' loop because we are not catching generic Exception here anymore.
-
-          if (content == null) continue;
-
-          if (foundMetadataSeparator) {
-            metadataBuffer += content;
-          } else {
-            buffer += content;
-
-            // Check for delimiter in buffer
-            if (buffer.contains(delimiter)) {
-              foundMetadataSeparator = true;
-              final parts = buffer.split(delimiter);
-
-              // Yield the remaining text part before the delimiter
-              if (parts[0].isNotEmpty) {
-                yield VoiceStreamEvent(
-                  type: VoiceStreamEventType.token,
-                  content: parts[0],
-                );
-              }
-
-              // Start metadata buffer with the rest
-              if (parts.length > 1) {
-                metadataBuffer = parts.sublist(1).join(delimiter);
-              }
-              buffer = ''; // Clear buffer
-            } else {
-              // Sliding window strategy to yield safe text
-              // We need to keep enough chars to cover a potential partial delimiter
-              // Delimiter length is 12.
-              // If buffer is "Hello world [[M", we can yield "Hello world "
-              // But strictly speaking, "[[M" could be valid text.
-              // For simplicity: If buffer length > delimiter length * 2, safe to yield head.
-              // Or just check if buffer *ends* with a partial match?
-              // Simple heuristc: yield all but last 15 chars
-              if (buffer.length > 20) {
-                final safeChunk = buffer.substring(0, buffer.length - 20);
-                yield VoiceStreamEvent(
-                  type: VoiceStreamEventType.token,
-                  content: safeChunk,
-                );
-                buffer = buffer.substring(buffer.length - 20);
-              }
-            }
-          }
-        }
-      }
-
-      // Flush remaining text buffer if we never found the separator (or if it wasn't valid)
-      if (!foundMetadataSeparator && buffer.isNotEmpty) {
-        yield VoiceStreamEvent(
-          type: VoiceStreamEventType.token,
-          content: buffer,
-        );
-      }
-
-      // Parse metadata if found
-      if (foundMetadataSeparator && metadataBuffer.isNotEmpty) {
-        try {
-          // Metadata might be surrounded by whitespace or other artifacts
-          final jsonStart = metadataBuffer.indexOf('{');
-          final jsonEnd = metadataBuffer.lastIndexOf('}');
-          if (jsonStart != -1 && jsonEnd != -1) {
-            final jsonStr = metadataBuffer.substring(jsonStart, jsonEnd + 1);
-            final json = jsonDecode(jsonStr);
-
-            // Map JSON to VoiceMessageResponse
-            // The JSON structure from prompt is:
-            // { transcript, translation, analysis: { corrected_text, ... } }
-
-            final analysis = json['analysis'] ?? {};
-
-            // Construct VoiceFeedback from analysis
-            // Note: We might need to map fields carefully or adjust VoiceMessageResponse
-            // Assuming VoiceMessageResponse structure:
-
-            final voiceFeedback = VoiceFeedback(
-              pronunciationScore: 0, // Not provided by this flow yet
-              correctedText: analysis['corrected_text'] ?? '',
-              nativeExpression: analysis['native_expression'] ?? '',
-              feedback: analysis['explanation'] ?? '',
-              sentenceBreakdown: [], // Not provided
-              errorFocus: null,
-            );
-
-            final reviewFeedback = ReviewFeedback(
-              isPerfect: analysis['is_perfect'] ?? false,
-              correctedText: analysis['corrected_text'] ?? '',
-              nativeExpression: analysis['native_expression'] ?? '',
-              explanation: analysis['explanation'] ?? '',
-              exampleAnswer: analysis['example_answer'] ?? '',
-            );
-
-            final response = VoiceMessageResponse(
-              message: '', // Already streamed
-              translation: json['translation'],
-              voiceFeedback: voiceFeedback,
-              reviewFeedback: reviewFeedback,
-              transcript:
-                  json['transcript'], // Need to add this field to VoiceMessageResponse?
-            );
-
-            yield VoiceStreamEvent(
-              type: VoiceStreamEventType.metadata,
-              metadata: response,
-            );
-          }
-        } catch (e) {
-          if (kDebugMode) debugPrint("Error parsing metadata: $e");
         }
       }
 

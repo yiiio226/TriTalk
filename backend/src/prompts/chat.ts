@@ -137,19 +137,12 @@ export function buildStreamingVoiceChatSystemPrompt(
     
     PART 2: THE METADATA
     - Immediately after your reply text, output the separator "[[METADATA]]" (exact string).
-    - Then output a valid JSON object containing the transcript and analysis.
+    - Then output a valid JSON object containing ONLY the transcript and translation.
     
     === METADATA JSON STRUCTURE (CRITICAL - READ CAREFULLY) ===
     {
-        "transcript": "<<< COPY THE USER'S RAW TEXT EXACTLY AS PROVIDED - DO NOT MODIFY! >>>",
-        "translation": "Translation of YOUR reply (Part 1) in ${nativeLang}",
-        "analysis": {
-            "is_perfect": boolean,
-            "corrected_text": "Grammatically correct version of USER message",
-            "native_expression": "More natural spoken expression for USER message",
-            "explanation": "Brief explanation in ${nativeLang}",
-            "example_answer": "Alternative answer in ${targetLang}"
-        }
+        "transcript": "<<<COPY THE USER'S RAW TEXT EXACTLY AS PROVIDED - DO NOT MODIFY!>>>",
+        "translation": "Translation of YOUR reply (Part 1) in ${nativeLang}"
     }
     
     ⚠️ CRITICAL WARNING ABOUT "transcript" FIELD:
@@ -165,7 +158,7 @@ export function buildStreamingVoiceChatSystemPrompt(
     ✅ CORRECT Example Output:
     Sure, I can help you with that. What kind of room would you like?
     [[METADATA]]
-    {"transcript":"I want room","translation":"没问题，我可以帮你。你想要什么样的房间？","analysis":{"is_perfect":false,"corrected_text":"I want a room","native_expression":"I'd like to book a room","explanation":"缺少冠词 'a'","example_answer":"Could I get a room, please?"}}
+    {"transcript":"I want room","translation":"没问题，我可以帮你。你想要什么样的房间？"}
     
     ❌ WRONG Example (DO NOT DO THIS):
     [[METADATA]]
@@ -174,7 +167,8 @@ export function buildStreamingVoiceChatSystemPrompt(
     Remember: 
     - Part 1 = Your AI character's reply
     - transcript = What the USER said (their audio transcribed)
-    - translation = Your reply translated to ${nativeLang}`;
+    - translation = Your reply translated to ${nativeLang}
+    - DO NOT include any analysis or feedback in the metadata`;
 }
 
 /**

@@ -509,6 +509,8 @@ app.post("/chat/send-voice", async (c) => {
           console.log("Stream aborted: /chat/send-voice");
         });
 
+        let fullResponse = ""; // Accumulate full response to extract metadata
+
         for await (const line of iterateStreamLines(response)) {
           if (line === "data: [DONE]") continue;
           if (line.startsWith("data: ")) {
@@ -517,13 +519,68 @@ app.post("/chat/send-voice", async (c) => {
               const parsed = JSON.parse(jsonStr);
               const content = parsed.choices?.[0]?.delta?.content || "";
               if (content) {
-                await stream.writeln(
-                  JSON.stringify({ type: "token", content: content })
-                );
+                fullResponse += content;
+                
+                // Check if we've hit the metadata separator
+                if (fullResponse.includes("[[METADATA]]")) {
+                  const parts = fullResponse.split("[[METADATA]]");
+                  const replyText = parts[0];
+                  const metadataStr = parts.slice(1).join("[[METADATA]]");
+                  
+                  // Send any remaining reply text before metadata
+                  if (replyText && !fullResponse.startsWith("[[METADATA]]")) {
+                    // Only send if we haven't already sent this part
+                    const alreadySent = fullResponse.length - content.length;
+                    const newPart = replyText.substring(Math.max(0, alreadySent));
+                    if (newPart) {
+                      await stream.writeln(
+                        JSON.stringify({ type: "token", content: newPart })
+                      );
+                    }
+                  }
+                  
+                  // Try to parse metadata if it looks complete
+                  if (metadataStr.includes("}")) {
+                    try {
+                      const jsonMatch = metadataStr.match(/\{[\s\S]*\}/);
+                      if (jsonMatch) {
+                        const metadata = JSON.parse(jsonMatch[0]);
+                        await stream.writeln(
+                          JSON.stringify({ type: "metadata", data: metadata })
+                        );
+                      }
+                    } catch (e) {
+                      // Metadata not complete yet, continue streaming
+                    }
+                  }
+                } else {
+                  // Normal token streaming before metadata
+                  await stream.writeln(
+                    JSON.stringify({ type: "token", content: content })
+                  );
+                }
               }
             } catch (e) { }
           }
         }
+        
+        // Final check: if we have metadata but haven't sent it yet
+        if (fullResponse.includes("[[METADATA]]") && !fullResponse.includes('"type":"metadata"')) {
+          const parts = fullResponse.split("[[METADATA]]");
+          const metadataStr = parts.slice(1).join("[[METADATA]]");
+          try {
+            const jsonMatch = metadataStr.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const metadata = JSON.parse(jsonMatch[0]);
+              await stream.writeln(
+                JSON.stringify({ type: "metadata", data: metadata })
+              );
+            }
+          } catch (e) {
+            console.error("Failed to parse final metadata:", e);
+          }
+        }
+        
         await stream.writeln(JSON.stringify({ type: "done" }));
       },
       async (err, stream) => {
