@@ -27,6 +27,9 @@ class Message {
   final VoiceFeedback? shadowingFeedback;
   final String? shadowingAudioPath; // Local path to shadowing recording
 
+  // TTS audio cache for AI messages (Listen button)
+  final String? ttsAudioPath; // Local path to cached TTS audio file
+
   Message({
     required this.id,
     required this.content,
@@ -47,6 +50,7 @@ class Message {
     this.voiceFeedback,
     this.shadowingFeedback,
     this.shadowingAudioPath,
+    this.ttsAudioPath,
   });
 
   Message copyWith({
@@ -69,6 +73,7 @@ class Message {
     VoiceFeedback? voiceFeedback,
     VoiceFeedback? shadowingFeedback,
     String? shadowingAudioPath,
+    String? ttsAudioPath,
   }) {
     return Message(
       id: id ?? this.id,
@@ -90,6 +95,7 @@ class Message {
       voiceFeedback: voiceFeedback ?? this.voiceFeedback,
       shadowingFeedback: shadowingFeedback ?? this.shadowingFeedback,
       shadowingAudioPath: shadowingAudioPath ?? this.shadowingAudioPath,
+      ttsAudioPath: ttsAudioPath ?? this.ttsAudioPath,
     );
   }
 
@@ -108,6 +114,7 @@ class Message {
       'voiceFeedback': voiceFeedback?.toJson(),
       'shadowingFeedback': shadowingFeedback?.toJson(),
       'shadowingAudioPath': shadowingAudioPath,
+      'ttsAudioPath': ttsAudioPath,
       'hasPendingError': hasPendingError,
     };
   }
@@ -135,6 +142,7 @@ class Message {
           ? VoiceFeedback.fromJson(json['shadowingFeedback'])
           : null,
       shadowingAudioPath: json['shadowingAudioPath'],
+      ttsAudioPath: json['ttsAudioPath'],
       hasPendingError: json['hasPendingError'] ?? false,
     );
   }
