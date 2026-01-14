@@ -17,6 +17,15 @@ class _ScenarioConfigurationScreenState
     extends State<ScenarioConfigurationScreen> {
   String _selectedSpeed = 'Normal'; // Slow, Normal
   String _selectedPersonality = 'Gentle'; // Gentle, Strict, Humorous
+  late String _aiRole;
+  late String _userRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _aiRole = widget.scene.aiRole;
+    _userRole = widget.scene.userRole;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,107 +78,105 @@ class _ScenarioConfigurationScreenState
             Expanded(
               child: Container(
                 color: AppColors.lightBackground,
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Configure your practice session',
-                      style: TextStyle(fontSize: 16, color: AppColors.lightTextSecondary),
-                    ),
-                    const SizedBox(height: 32),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Configure your practice session',
+                        style: TextStyle(fontSize: 16, color: AppColors.lightTextSecondary),
+                      ),
+                      const SizedBox(height: 24),
 
-            // Speed Section
-            _buildSectionTitle('AI Speaking Speed', Icons.volume_up_outlined, AppColors.lightTextSecondary),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSelectionCard(
-                    'Slow',
-                    '🐢',
-                    _selectedSpeed == 'Slow',
-                    () => setState(() => _selectedSpeed = 'Slow'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSelectionCard(
-                    'Normal',
-                    '🚶',
-                    _selectedSpeed == 'Normal',
-                    () => setState(() => _selectedSpeed = 'Normal'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
+                      // Role Display Section
+                      _buildRoleDisplaySection(),
+                      const SizedBox(height: 32),
 
-            // Personality Section
-            _buildSectionTitle(
-              'AI Personality',
-              Icons.sentiment_satisfied_outlined,
-              AppColors.lightTextSecondary,
-            ),
-            const SizedBox(height: 16),
-            _buildPersonalityCard(
-              'Gentle',
-              'Patient and encouraging',
-              Icons.sentiment_satisfied,
-              _selectedPersonality == 'Gentle',
-              () => setState(() => _selectedPersonality = 'Gentle'),
-            ),
-            const SizedBox(height: 12),
-            _buildPersonalityCard(
-              'Strict',
-              'Direct and challenging',
-              Icons.flash_on,
-              _selectedPersonality == 'Strict',
-              () => setState(() => _selectedPersonality = 'Strict'),
-            ),
-            const SizedBox(height: 12),
-            _buildPersonalityCard(
-              'Humorous',
-              'Fun and lighthearted',
-              Icons.sentiment_very_satisfied,
-              _selectedPersonality == 'Humorous',
-              () => setState(() => _selectedPersonality = 'Humorous'),
-            ),
-
-            const Spacer(),
-
-            // Start Button
-            SizedBox(
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to ChatScreen
-                  // Note: Logic to pass personality/speed to ChatScreen would go here
-                  // For now, we just pass the generated scene
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(scene: widget.scene),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                ),
-                child: Text(
-                  'Start Practice',
-                  style: AppTypography.button.copyWith(
-                    fontSize: 18,
-                    color: AppColors.darkTextPrimary,
+              // Personality Section
+              _buildSectionTitle(
+                'AI Personality',
+                Icons.sentiment_satisfied_outlined,
+                AppColors.lightTextSecondary,
+              ),
+              const SizedBox(height: 16),
+              _buildPersonalityCard(
+                'Gentle',
+                'Patient and encouraging',
+                Icons.sentiment_satisfied,
+                _selectedPersonality == 'Gentle',
+                () => setState(() => _selectedPersonality = 'Gentle'),
+              ),
+              const SizedBox(height: 12),
+              _buildPersonalityCard(
+                'Strict',
+                'Direct and challenging',
+                Icons.flash_on,
+                _selectedPersonality == 'Strict',
+                () => setState(() => _selectedPersonality = 'Strict'),
+              ),
+              const SizedBox(height: 12),
+              _buildPersonalityCard(
+                'Humorous',
+                'Fun and lighthearted',
+                Icons.sentiment_very_satisfied,
+                _selectedPersonality == 'Humorous',
+                () => setState(() => _selectedPersonality = 'Humorous'),
+              ),
+              const SizedBox(height: 24),
+                    ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-                  ],
+            // Fixed Bottom Button
+            Container(
+              color: AppColors.lightBackground,
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Create updated scene with modified roles
+                      final updatedScene = Scene(
+                        id: widget.scene.id,
+                        title: widget.scene.title,
+                        description: widget.scene.description,
+                        emoji: widget.scene.emoji,
+                        aiRole: _aiRole,
+                        userRole: _userRole,
+                        initialMessage: widget.scene.initialMessage,
+                        category: widget.scene.category,
+                        difficulty: widget.scene.difficulty,
+                        goal: widget.scene.goal,
+                        iconPath: widget.scene.iconPath,
+                        color: widget.scene.color,
+                      );
+                      
+                      // Navigate to ChatScreen with updated scene
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(scene: updatedScene),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                    child: Text(
+                      'Start Practice',
+                      style: AppTypography.button.copyWith(
+                        fontSize: 18,
+                        color: AppColors.darkTextPrimary,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -276,5 +283,119 @@ class _ScenarioConfigurationScreenState
         ),
       ),
     );
+  }
+
+  Widget _buildRoleDisplaySection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.lightDivider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Role Assignment',
+                style: AppTypography.subtitle1.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.lightTextPrimary,
+                ),
+              ),
+              GestureDetector(
+                onTap: _swapRoles,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.swap_horiz_rounded,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Switch',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildRoleCard('AI Role', _aiRole, Icons.smart_toy_outlined, AppColors.primary),
+          const SizedBox(height: 12),
+          _buildRoleCard('Your Role', _userRole, Icons.person_outline, AppColors.secondary),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleCard(String label, String role, IconData icon, Color accentColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.lightDivider.withOpacity(0.5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(icon, color: accentColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.lightTextSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  role,
+                  style: AppTypography.body1.copyWith(
+                    color: AppColors.lightTextPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _swapRoles() {
+    setState(() {
+      final temp = _aiRole;
+      _aiRole = _userRole;
+      _userRole = temp;
+    });
   }
 }
