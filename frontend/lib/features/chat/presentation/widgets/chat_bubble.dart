@@ -10,8 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../../study/presentation/widgets/shadowing_sheet.dart';
 import '../../../study/presentation/widgets/save_note_sheet.dart';
-import 'voice_feedback_sheet.dart';
-import '../../../../core/data/api/api_service.dart';
+import 'package:frontend/core/data/api/api_service.dart';
 import '../../../../core/data/local/preferences_service.dart';
 import '../../../../core/data/local/storage_key_service.dart';
 
@@ -25,7 +24,8 @@ class ChatBubble extends StatefulWidget {
   final bool isMultiSelectMode; // Whether multi-select mode is active
   final VoidCallback? onLongPress; // Callback to enter multi-select mode
   final VoidCallback? onSelectionToggle; // Callback to toggle selection
-  final VoidCallback? onContentChanged; // Callback when content changes (for auto-scroll)
+  final VoidCallback?
+  onContentChanged; // Callback when content changes (for auto-scroll)
 
   const ChatBubble({
     super.key,
@@ -267,28 +267,6 @@ class _ChatBubbleState extends State<ChatBubble>
     }
   }
 
-  void _showVoiceFeedback() {
-    if (widget.message.voiceFeedback == null) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.white.withValues(alpha: 0.5),
-      builder: (context) => VoiceFeedbackSheet(
-        feedback: widget.message.voiceFeedback!,
-        audioPath: widget.message.audioPath,
-        transcript: widget.message.content, // Transcript is stored in content
-        onFeedbackUpdate: (updatedFeedback) {
-          // Persist the updated feedback with Azure data
-          widget.onMessageUpdate?.call(
-            widget.message.copyWith(voiceFeedback: updatedFeedback),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildVoiceBubbleContent(bool isUser) {
     // Duration formatting: e.g. 3"
     final duration = widget.message.audioDuration ?? 0;
@@ -495,60 +473,6 @@ class _ChatBubbleState extends State<ChatBubble>
                             ),
                           ),
                         ),
-
-                        // Pronunciation Score (if exists)
-                        if (widget.message.isVoiceMessage &&
-                            widget.message.voiceFeedback != null) ...[
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: _showVoiceFeedback,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(
-                                  alpha: 0.2,
-                                ), // Increased transparency
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.mic_none_rounded,
-                                    size: 14,
-                                    color:
-                                        widget
-                                                .message
-                                                .voiceFeedback!
-                                                .pronunciationScore >=
-                                            80
-                                        ? Colors.green[800]
-                                        : Colors.orange[900],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${widget.message.voiceFeedback!.pronunciationScore}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          widget
-                                                  .message
-                                                  .voiceFeedback!
-                                                  .pronunciationScore >=
-                                              80
-                                          ? Colors.green[800]
-                                          : Colors.orange[900],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ],
@@ -776,8 +700,21 @@ class _ChatBubbleState extends State<ChatBubble>
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
-                              builder: (context) =>
-                                  ShadowingSheet(targetText: message.content),
+                              builder: (context) => ShadowingSheet(
+                                targetText: message.content,
+                                messageId: message.id,
+                                initialFeedback: message.shadowingFeedback,
+                                initialAudioPath: message.shadowingAudioPath,
+                                onFeedbackUpdate: (feedback, audioPath) {
+                                  // Persist the shadowing result with audio path
+                                  widget.onMessageUpdate?.call(
+                                    message.copyWith(
+                                      shadowingFeedback: feedback,
+                                      shadowingAudioPath: audioPath,
+                                    ),
+                                  );
+                                },
+                              ),
                             );
                           },
                           child: Container(

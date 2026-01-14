@@ -20,7 +20,12 @@ class Message {
   // Voice message fields
   final String? audioPath; // Local path to audio file
   final int? audioDuration; // Duration in seconds
-  final VoiceFeedback? voiceFeedback; // Pronunciation feedback
+  final VoiceFeedback?
+  voiceFeedback; // Pronunciation feedback for user voice messages
+
+  // Shadowing practice result for AI messages
+  final VoiceFeedback? shadowingFeedback;
+  final String? shadowingAudioPath; // Local path to shadowing recording
 
   Message({
     required this.id,
@@ -40,6 +45,8 @@ class Message {
     this.audioPath,
     this.audioDuration,
     this.voiceFeedback,
+    this.shadowingFeedback,
+    this.shadowingAudioPath,
   });
 
   Message copyWith({
@@ -60,6 +67,8 @@ class Message {
     String? audioPath,
     int? audioDuration,
     VoiceFeedback? voiceFeedback,
+    VoiceFeedback? shadowingFeedback,
+    String? shadowingAudioPath,
   }) {
     return Message(
       id: id ?? this.id,
@@ -79,6 +88,8 @@ class Message {
       audioPath: audioPath ?? this.audioPath,
       audioDuration: audioDuration ?? this.audioDuration,
       voiceFeedback: voiceFeedback ?? this.voiceFeedback,
+      shadowingFeedback: shadowingFeedback ?? this.shadowingFeedback,
+      shadowingAudioPath: shadowingAudioPath ?? this.shadowingAudioPath,
     );
   }
 
@@ -95,6 +106,8 @@ class Message {
       'audioPath': audioPath,
       'audioDuration': audioDuration,
       'voiceFeedback': voiceFeedback?.toJson(),
+      'shadowingFeedback': shadowingFeedback?.toJson(),
+      'shadowingAudioPath': shadowingAudioPath,
       'hasPendingError': hasPendingError,
     };
   }
@@ -118,6 +131,10 @@ class Message {
       voiceFeedback: json['voiceFeedback'] != null
           ? VoiceFeedback.fromJson(json['voiceFeedback'])
           : null,
+      shadowingFeedback: json['shadowingFeedback'] != null
+          ? VoiceFeedback.fromJson(json['shadowingFeedback'])
+          : null,
+      shadowingAudioPath: json['shadowingAudioPath'],
       hasPendingError: json['hasPendingError'] ?? false,
     );
   }
