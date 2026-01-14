@@ -472,8 +472,23 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       // Note: Azure pronunciation assessment is now called on-demand
       // when user taps Analyze, not automatically after voice message
     } catch (e) {
-      // Handle error
-      state = state.copyWith(error: "Voice message failed: $e");
+      // Handle error and stop loading state
+      final index = state.messages.indexWhere((m) => m.id == aiMessageId);
+      if (index != -1) {
+        final errorMsg = state.messages[index].copyWith(
+          content: 'Failed to process voice message',
+          isLoading: false,
+        );
+        final errorMessages = List<Message>.from(state.messages);
+        errorMessages[index] = errorMsg;
+        state = state.copyWith(
+          messages: errorMessages,
+          error: "Voice message failed: $e",
+        );
+        _repository.syncMessages(sceneKey: _sceneId, messages: errorMessages);
+      } else {
+        state = state.copyWith(error: "Voice message failed: $e");
+      }
     }
   }
 

@@ -1186,6 +1186,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return;
     }
 
+    // For voice messages, open the feedback sheet directly
+    // The VoiceFeedbackSheet will handle Azure assessment
+    if (message.isVoiceMessage) {
+      _showFeedbackSheet(message);
+      return;
+    }
+
+    // For text messages, analyze first then show sheet
     try {
       await _notifier.analyzeMessage(message);
 
