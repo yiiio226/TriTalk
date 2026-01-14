@@ -94,9 +94,14 @@ function buildPronunciationAssessmentHeader(
     Dimension: "Comprehensive",
   };
 
-  // Base64 encode the JSON config
+  // Base64 encode the JSON config (Unicode-safe)
+  // btoa() only handles Latin1, so we need to encode UTF-8 first
   const jsonString = JSON.stringify(assessmentConfig);
-  return btoa(jsonString);
+  const bytes = new TextEncoder().encode(jsonString);
+  const binaryString = Array.from(bytes, (byte) =>
+    String.fromCharCode(byte)
+  ).join("");
+  return btoa(binaryString);
 }
 
 /**
