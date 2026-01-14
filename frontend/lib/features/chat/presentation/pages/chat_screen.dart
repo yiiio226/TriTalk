@@ -10,6 +10,7 @@ import 'package:frontend/features/scenes/domain/models/scene.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
+import '../widgets/voice_feedback_sheet.dart';
 import '../../../study/presentation/widgets/analysis_sheet.dart';
 import '../widgets/hints_sheet.dart';
 import '../widgets/message_skeleton_loader.dart';
@@ -1207,14 +1208,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return;
     }
 
-    // For voice messages, open the feedback sheet directly
-    // The VoiceFeedbackSheet will handle Azure assessment
-    if (message.isVoiceMessage) {
-      _showFeedbackSheet(message);
-      return;
-    }
-
-    // For text messages, analyze first then show sheet
+    // For both text and voice messages, analyze first then show sheet
     try {
       await _notifier.analyzeMessage(message);
 

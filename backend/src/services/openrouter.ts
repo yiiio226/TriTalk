@@ -91,7 +91,8 @@ export async function callOpenRouterMultimodal(
   apiKey: string,
   model: string,
   systemPrompt: string,
-  userContent: Array<{ type: string; [key: string]: any }>
+  userContent: Array<{ type: string; [key: string]: any }>,
+  jsonMode: boolean = false
 ): Promise<any> {
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
@@ -115,7 +116,7 @@ export async function callOpenRouterMultimodal(
             content: userContent,
           },
         ],
-        response_format: { type: "json_object" },
+        ...(jsonMode && { response_format: { type: "json_object" } }),
       }),
     }
   );
