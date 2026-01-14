@@ -91,3 +91,169 @@
 | [ 图表：显示一条波浪线，并在末尾标示出你没有升调 ]    |
 +-------------------------------------------------------+
 ```
+
+### 线框图可行性分析 (Wireframe Feasibility)
+
+基于 Azure API 返回的数据，以下是线框图中各元素的实现可行性：
+
+```text
++-------------------------------------------------------+
+|  ✅ [Score: 60]        ✅ Needs Work    ✅ [Retry 🎤] |
++-------------------------------------------------------+
+|  Sentence:                                            |
+|  ✅ I [want] to [live] in a [hotel].                  |
+|       (黄)      (红)       (绿)                       |
++-------------------------------------------------------+
+| ✅ 🔴 Error Focus: "live"                             |
+| ---------------------------------------------------   |
+| ❌ 👂 You said: /liːv/ (leave)   ✅ [Play User Audio] |
+| ✅ 🤖 Correct:  /lɪv/ (live)     ✅ [Play AI Audio]   |
+|                                                       |
+| 🔶 💡 Tip: /ɪ/ 是短元音，嘴巴放松，不要拉长。         |
++-------------------------------------------------------+
+| ❌ 🌊 Intonation (语调):                              |
+| ❌ [ 图表：显示一条波浪线，并在末尾标示出你没有升调 ] |
++-------------------------------------------------------+
+```
+
+### 详细分析
+
+| 元素                     | 状态              | 原因 / 数据来源                                        |
+| ------------------------ | ----------------- | ------------------------------------------------------ |
+| **[Score: 60]**          | ✅ 可实现         | `PronScore: 73.5`                                      |
+| **Needs Work**           | ✅ 可实现         | 基于分数阈值判断 (如 <70 = Needs Work)                 |
+| **[Retry Button 🎤]**    | ✅ 可实现         | 前端 UI 功能                                           |
+| **句子逐词着色**         | ✅ 可实现         | `Words[].AccuracyScore` + `ErrorType`                  |
+| **Error Focus: "live"**  | ✅ 可实现         | 筛选 `ErrorType: "Mispronunciation"` 的单词            |
+| **👂 You said: /liːv/**  | ❌ **无法实现**   | Azure **不返回用户实际发了什么音**，只返回匹配程度分数 |
+| **(leave) 推断错误发音** | ❌ **无法实现**   | 同上，无法知道用户发的是 leave 还是其他                |
+| **🤖 Correct: /lɪv/**    | ✅ 可实现         | `Phonemes[].Phoneme` 返回 IPA 音标                     |
+| **[Play User Audio]**    | ✅ 可实现         | 前端已保存录音文件                                     |
+| **[Play AI Audio]**      | ✅ 可实现         | 使用 TTS 生成标准发音                                  |
+| **💡 Tip 发音提示**      | 🔶 **部分可实现** | 需 LLM 或预设内容库，Azure 不提供教学内容              |
+| **🌊 语调波浪线图**      | ❌ **无法实现**   | Azure REST API 不返回音高 (pitch) 数据点               |
+| **没有升调标记**         | 🔶 **部分可实现** | 只能显示 "Monotone" 错误，无法画曲线                   |
+
+## 7. Azure API 功能可行性分析 (Feature Feasibility Analysis)
+
+基于 Azure Speech Pronunciation Assessment API 返回的实际数据，以下是各功能的实现可行性分析：
+
+### A. 实时反馈层 (Instant Feedback)
+
+| 功能                                  | 状态   | 原因                                                     |
+| ------------------------------------- | ------ | -------------------------------------------------------- |
+| ✅ **整体评分环 (Overall Score)**     | 可实现 | Azure 返回 `PronScore: 73.5` 作为综合发音评分            |
+| ✅ **逐词颜色标记 - 绿色 (发音完美)** | 可实现 | 每个单词有 `AccuracyScore`，可用阈值判断 (如 ≥80 为绿色) |
+| ✅ **逐词颜色标记 - 黄色 (发音模糊)** | 可实现 | 可用分数阈值判断 (如 60-79 为黄色)                       |
+| ✅ **逐词颜色标记 - 红色 (发音错误)** | 可实现 | `ErrorType: "Mispronunciation"` 或分数 <60 标记为红色    |
+| ✅ **逐词颜色标记 - 灰色 (漏读单词)** | 可实现 | `ErrorType: "Omission"` 表示漏读 (需开启 EnableMiscue)   |
+
+### B. 音素级纠错 (Phoneme Level Error)
+
+| 功能                            | 状态        | 原因                                                                         |
+| ------------------------------- | ----------- | ---------------------------------------------------------------------------- |
+| ✅ **高亮错误单词**             | 可实现      | `ErrorType: "Mispronunciation"` 可精确定位错误单词                           |
+| ✅ **音素级准确度分数**         | 可实现      | 每个音素有独立的 `AccuracyScore`，如 `{"Phoneme": "m", "AccuracyScore": 24}` |
+| ✅ **显示 IPA 音标**            | 可实现      | Azure 返回 IPA 音标，如 `"Phoneme": "ɔɹ"`, `"ɛ"`, `"ŋ"` 等                   |
+| ❌ **对比用户发音 vs 正确发音** | 需 LLM 辅助 | Azure 只返回分数，不返回"用户实际发了什么音"，需要 LLM 根据低分音素推断      |
+| ❌ **舌位图解/动图**            | 需额外资源  | Azure 不提供此功能，需自建音素到舌位图的映射库                               |
+| 🔶 **发音纠错提示 (Tips)**      | 部分可实现  | 可基于低分音素生成提示，但具体教学内容需预设或 LLM 生成                      |
+
+### C. 语调与重音 (Intonation & Stress)
+
+| 功能                             | 状态       | 原因                                                                  |
+| -------------------------------- | ---------- | --------------------------------------------------------------------- |
+| ✅ **语调问题检测 (Monotone)**   | 可实现     | Azure 返回 `Intonation.ErrorTypes: ["Monotone"]` 表示语调平淡         |
+| ✅ **Prosody 综合评分**          | 可实现     | Azure 返回 `ProsodyScore: 57.8`                                       |
+| ❌ **音高曲线 (Pitch Contour)**  | 不可实现   | Azure REST API 不返回音高数据点，无法绘制曲线                         |
+| ❌ **用户 vs AI 语调对比曲线**   | 不可实现   | 需要原始音频的音高数据，Azure 不提供                                  |
+| 🔶 **重音标记 (Stress Markers)** | 部分可实现 | Azure 返回 `Syllables` 数据，但没有明确的重音标记；可通过音节时长推断 |
+
+### D. 流利度分析 (Fluency Metrics)
+
+| 功能                                    | 状态     | 原因                                                                 |
+| --------------------------------------- | -------- | -------------------------------------------------------------------- |
+| ✅ **流利度评分 (Fluency Score)**       | 可实现   | Azure 返回 `FluencyScore: 84`                                        |
+| ✅ **完整度评分 (Completeness)**        | 可实现   | Azure 返回 `CompletenessScore: 87`，表示参考文本的覆盖程度           |
+| ✅ **停顿检测 (Pause Detection)**       | 可实现   | Azure 返回 `Break.BreakLength: 5400000` (单位: 100ns = 0.54 秒停顿)  |
+| ✅ **意外停顿 (Unexpected Break)**      | 可实现   | `UnexpectedBreak.Confidence: 1.29` 表示不应该停顿的地方停顿了        |
+| ✅ **缺失停顿 (Missing Break)**         | 可实现   | `MissingBreak.Confidence: 1` 表示应该停顿的地方没停                  |
+| 🔶 **WPM (Words Per Minute)**           | 可计算   | 使用 `Duration` (总时长) 和单词数量计算：`Words / (Duration / 60秒)` |
+| ❌ **口癖检测 (Fillers: um, uh, like)** | 不可实现 | Azure 只匹配参考文本，不检测额外的填充词                             |
+
+### E. 练习与修正 (Practice Loop)
+
+| 功能                         | 状态   | 原因                               |
+| ---------------------------- | ------ | ---------------------------------- |
+| ✅ **播放用户录音**          | 可实现 | 前端已保存用户录音文件             |
+| ✅ **播放 AI 标准音**        | 可实现 | 可使用 TTS 生成参考文本的标准发音  |
+| ✅ **重录按钮**              | 可实现 | 前端 UI 功能，不依赖 Azure         |
+| 🔶 **合成对比 (左右耳对比)** | 可实现 | 需前端音频合成，技术上可行但较复杂 |
+
+---
+
+## 8. 数据结构速查 (Azure Response Data Reference)
+
+### 整体评分 (NBest[0])
+
+```json
+{
+  "AccuracyScore": 81, // 准确度
+  "FluencyScore": 84, // 流利度
+  "ProsodyScore": 57.8, // 韵律/语调
+  "CompletenessScore": 87, // 完整度
+  "PronScore": 73.5 // 综合发音分数
+}
+```
+
+### 单词级数据 (Words[])
+
+```json
+{
+  "Word": "morning",
+  "AccuracyScore": 54,
+  "ErrorType": "Mispronunciation",  // None | Mispronunciation | Omission | Insertion
+  "Syllables": [...],
+  "Phonemes": [...],
+  "Feedback": {
+    "Prosody": {
+      "Break": { "BreakLength": 5400000, "UnexpectedBreak": {...} },
+      "Intonation": { "ErrorTypes": ["Monotone"] }
+    }
+  }
+}
+```
+
+### 音素级数据 (Phonemes[])
+
+```json
+{
+  "Phoneme": "ɔɹ", // IPA 音标
+  "Offset": 18900000, // 开始时间 (100ns)
+  "Duration": 2900000, // 持续时间 (100ns)
+  "AccuracyScore": 46 // 该音素准确度
+}
+```
+
+---
+
+## 9. 实现优先级建议 (Implementation Priority)
+
+### Phase 1 - 核心功能 (全部可实现)
+
+1. ✅ 整体评分环显示
+2. ✅ 逐词颜色标记 (Traffic Light)
+3. ✅ 音素级分数显示
+4. ✅ 停顿检测标记
+
+### Phase 2 - 增强功能 (需额外工作)
+
+1. 🔶 发音纠错提示 (需 LLM 或预设内容库)
+2. 🔶 WPM 计算与显示
+3. 🔶 重音推断 (基于音节时长)
+
+### Phase 3 - 高级功能 (需要额外技术)
+
+1. ❌ 音高曲线对比 (需其他库如 Praat 或 Web Audio API)
+2. ❌ 舌位动图 (需自建资源库)
+3. ❌ 口癖检测 (可能需要自定义语音识别)
