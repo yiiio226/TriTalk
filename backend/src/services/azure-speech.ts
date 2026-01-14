@@ -85,18 +85,29 @@ export function getAzureSpeechConfig(
 function buildPronunciationAssessmentHeader(
   config: PronunciationAssessmentConfig
 ): string {
+  // IMPORTANT: Azure expects string values "True"/"False" for boolean parameters
+  // Using JavaScript boolean values (true/false) will cause the assessment to fail
+  // with all scores returning 0.
+  // See: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text-short
   const assessmentConfig = {
     ReferenceText: config.referenceText,
     GradingSystem: config.gradingSystem,
     Granularity: config.granularity,
-    PhonemeAlphabet: config.phonemeAlphabet,
-    EnableProsodyAssessment: config.enableProsodyAssessment,
     Dimension: "Comprehensive",
+    // Azure requires string "True" or "False", not boolean true/false
+    EnableMiscue: "False",
+    EnableProsodyAssessment: config.enableProsodyAssessment ? "True" : "False",
+    // PhonemeAlphabet is optional - only add if using Phoneme granularity
+    ...(config.granularity === "Phoneme" && {
+      PhonemeAlphabet: config.phonemeAlphabet,
+    }),
   };
 
   // Base64 encode the JSON config (Unicode-safe)
   // btoa() only handles Latin1, so we need to encode UTF-8 first
   const jsonString = JSON.stringify(assessmentConfig);
+  console.log(`[Azure Speech] Assessment Config JSON: ${jsonString}`);
+
   const bytes = new TextEncoder().encode(jsonString);
   const binaryString = Array.from(bytes, (byte) =>
     String.fromCharCode(byte)
@@ -143,6 +154,70 @@ function transformAssessmentResult(
 }
 
 /**
+ * Parse WAV header to extract audio format information
+ */
+function parseWavHeader(audioData: ArrayBuffer): {
+  sampleRate: number;
+  bitsPerSample: number;
+  numChannels: number;
+  isValid: boolean;
+} {
+  const view = new DataView(audioData);
+
+  // Check RIFF header
+  const riff = String.fromCharCode(
+    view.getUint8(0),
+    view.getUint8(1),
+    view.getUint8(2),
+    view.getUint8(3)
+  );
+  const wave = String.fromCharCode(
+    view.getUint8(8),
+    view.getUint8(9),
+    view.getUint8(10),
+    view.getUint8(11)
+  );
+
+  if (riff !== "RIFF" || wave !== "WAVE") {
+    return {
+      sampleRate: 16000,
+      bitsPerSample: 16,
+      numChannels: 1,
+      isValid: false,
+    };
+  }
+
+  // Parse fmt chunk - search for "fmt " marker
+  let offset = 12;
+  while (offset < Math.min(audioData.byteLength, 100)) {
+    const chunkId = String.fromCharCode(
+      view.getUint8(offset),
+      view.getUint8(offset + 1),
+      view.getUint8(offset + 2),
+      view.getUint8(offset + 3)
+    );
+    const chunkSize = view.getUint32(offset + 4, true);
+
+    if (chunkId === "fmt ") {
+      const numChannels = view.getUint16(offset + 10, true);
+      const sampleRate = view.getUint32(offset + 12, true);
+      const bitsPerSample = view.getUint16(offset + 22, true);
+
+      return { sampleRate, bitsPerSample, numChannels, isValid: true };
+    }
+
+    offset += 8 + chunkSize;
+  }
+
+  return {
+    sampleRate: 16000,
+    bitsPerSample: 16,
+    numChannels: 1,
+    isValid: false,
+  };
+}
+
+/**
  * Call Azure Speech Pronunciation Assessment API
  *
  * @param azureKey - Azure Cognitive Services subscription key
@@ -161,6 +236,23 @@ export async function callAzureSpeechAssessment(
   language: string = "en-US",
   enableProsody: boolean = true
 ): Promise<PronunciationAssessmentResult> {
+  // Parse WAV header to get actual audio format
+  const wavInfo = parseWavHeader(audioData);
+  console.log(
+    `[Azure Speech] WAV Info: sampleRate=${wavInfo.sampleRate}, bits=${wavInfo.bitsPerSample}, channels=${wavInfo.numChannels}, valid=${wavInfo.isValid}`
+  );
+
+  // IMPORTANT: Azure Pronunciation Assessment requires 16kHz audio
+  // If the audio is not 16kHz, the assessment scores will be 0
+  if (wavInfo.isValid && wavInfo.sampleRate !== 16000) {
+    console.warn(
+      `[Azure Speech] ⚠️ WARNING: Audio sample rate is ${wavInfo.sampleRate}Hz, but Azure requires 16000Hz for pronunciation assessment!`
+    );
+    console.warn(
+      `[Azure Speech] This may cause all pronunciation scores to be 0.`
+    );
+  }
+
   // Build pronunciation assessment config
   const assessmentConfig: PronunciationAssessmentConfig = {
     referenceText,
@@ -171,6 +263,16 @@ export async function callAzureSpeechAssessment(
   };
 
   const configHeader = buildPronunciationAssessmentHeader(assessmentConfig);
+  console.log(
+    `[Azure Speech] Assessment Config (decoded): ${JSON.stringify({
+      referenceText:
+        referenceText.substring(0, 50) +
+        (referenceText.length > 50 ? "..." : ""),
+      gradingSystem: "HundredMark",
+      granularity: "Phoneme",
+      enableProsody,
+    })}`
+  );
 
   // Construct the Azure Speech API URL
   const endpoint = `https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1`;
@@ -178,12 +280,17 @@ export async function callAzureSpeechAssessment(
   url.searchParams.set("language", language);
   url.searchParams.set("format", "detailed");
 
+  // Use the actual sample rate from the WAV header in Content-Type
+  const actualSampleRate = wavInfo.isValid ? wavInfo.sampleRate : 16000;
+  const contentType = `audio/wav; codecs=audio/pcm; samplerate=${actualSampleRate}`;
+  console.log(`[Azure Speech] Using Content-Type: ${contentType}`);
+
   // Make the API request
   const response = await fetch(url.toString(), {
     method: "POST",
     headers: {
       "Ocp-Apim-Subscription-Key": azureKey,
-      "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
+      "Content-Type": contentType,
       "Pronunciation-Assessment": configHeader,
       Accept: "application/json",
     },
