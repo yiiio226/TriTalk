@@ -1,27 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
-import 'package:frontend/features/chat/domain/models/message.dart';
-import '../../../../core/data/api/api_service.dart';
+import 'package:frontend/features/speech/speech.dart';
 
-class ShadowingSheet extends StatefulWidget {
+class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
 
   const ShadowingSheet({super.key, required this.targetText});
 
   @override
-  State<ShadowingSheet> createState() => _ShadowingSheetState();
+  ConsumerState<ShadowingSheet> createState() => _ShadowingSheetState();
 }
 
-class _ShadowingSheetState extends State<ShadowingSheet> {
+class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   final AudioRecorder _audioRecorder = AudioRecorder();
-  final ApiService _apiService = ApiService();
 
   bool _isRecording = false;
-
-  bool _isAnalyzing = false;
-  ShadowResult? _result;
+  PronunciationResult? _result;
   String _errorMessage = '';
 
   @override
@@ -49,7 +47,6 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
 
         setState(() {
           _isRecording = true;
-
           _result = null;
           _errorMessage = '';
         });
@@ -73,42 +70,46 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
     }
   }
 
-  Future<void> _analyzeAudio(String path) async {
-    setState(() => _isAnalyzing = true);
+  Future<void> _analyzeAudio(String audioPath) async {
+    if (kDebugMode) {
+      debugPrint('🎤 ShadowingSheet: Analyzing audio via speech/assess');
+      debugPrint('   audioPath: $audioPath');
+      debugPrint('   referenceText: "${widget.targetText}"');
+    }
 
-    try {
-      // TODO: In real implementation, transcribe audio first or send audio file.
-      // For MVP simulation, we simulate text based on random success or strict match (not possible here without STT).
-      // Since we don't have STT on device, we will mock the "user_audio_text" to be the same as target
-      // but slightly modified to test the "score" logic, or just send targetText to get a perfect score for demo.
-      // Let's send the targetText to simulate a "Good" attempt for now.
-      // Real App needs: Whispher API or on-device speech-to-text.
+    // Clear previous state and trigger new assessment
+    ref.read(pronunciationAssessmentProvider.notifier).clearResult();
 
-      final mockUserText = widget.targetText;
+    final result = await ref
+        .read(pronunciationAssessmentProvider.notifier)
+        .assessFromPath(
+          audioPath: audioPath,
+          referenceText: widget.targetText,
+          language: 'en-US',
+          enableProsody: true,
+        );
 
-      final result = await _apiService.analyzeShadow(
-        widget.targetText,
-        mockUserText,
-      );
-
-      if (mounted) {
-        setState(() {
-          _result = result;
-          _isAnalyzing = false;
-        });
+    if (mounted && result != null) {
+      if (kDebugMode) {
+        debugPrint('✅ ShadowingSheet: Assessment complete');
+        debugPrint('   pronunciationScore: ${result.pronunciationScore}');
+        debugPrint('   accuracyScore: ${result.accuracyScore}');
+        debugPrint('   fluencyScore: ${result.fluencyScore}');
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Analysis failed: $e';
-          _isAnalyzing = false;
-        });
-      }
+
+      setState(() {
+        _result = result;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watch the provider state for loading and error
+    final assessmentState = ref.watch(pronunciationAssessmentProvider);
+    final isAnalyzing = assessmentState.isLoading;
+    final providerError = assessmentState.error;
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -138,18 +139,18 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
           ),
           const SizedBox(height: 32),
 
-          if (_isAnalyzing)
+          if (isAnalyzing)
             const CircularProgressIndicator()
           else if (_result != null)
             _buildResultView()
           else
             _buildRecordButton(),
 
-          if (_errorMessage.isNotEmpty)
+          if (_errorMessage.isNotEmpty || providerError != null)
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(
-                _errorMessage,
+                _errorMessage.isNotEmpty ? _errorMessage : providerError!,
                 style: const TextStyle(color: Colors.red),
               ),
             ),
@@ -192,6 +193,8 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
   }
 
   Widget _buildResultView() {
+    final overallScore = _result!.pronunciationScore.round();
+
     return Column(
       children: [
         Row(
@@ -200,11 +203,11 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
             Column(
               children: [
                 Text(
-                  '${_result!.score}',
+                  '$overallScore',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: _getScoreColor(_result!.score),
+                    color: _getScoreColor(overallScore),
                   ),
                 ),
                 Text('Score', style: TextStyle(color: Colors.grey.shade600)),
@@ -213,14 +216,43 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
             const SizedBox(width: 32),
             Column(
               children: [
-                _buildMiniScore('Intonation', _result!.intonationScore),
+                _buildMiniScore('Fluency', _result!.fluencyScore),
                 const SizedBox(height: 8),
-                _buildMiniScore('Pronunciation', _result!.pronunciationScore),
+                _buildMiniScore('Accuracy', _result!.accuracyScore),
               ],
             ),
           ],
         ),
         const SizedBox(height: 24),
+
+        // Word-level feedback
+        if (_result!.wordFeedback.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: _result!.wordFeedback.map((word) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: word.color.withAlpha(30),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: word.color.withAlpha(100)),
+                ),
+                child: Text(
+                  word.text,
+                  style: TextStyle(
+                    color: word.color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // Feedback tip
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -233,7 +265,7 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  _result!.feedback,
+                  _generateFeedback(),
                   style: const TextStyle(color: Colors.blue, fontSize: 14),
                 ),
               ),
@@ -260,7 +292,37 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
     );
   }
 
-  Widget _buildMiniScore(String label, int score) {
+  String _generateFeedback() {
+    final score = _result!.pronunciationScore;
+    final problemWords = _result!.wordFeedback
+        .where((w) => w.hasIssue)
+        .toList();
+
+    if (score >= 90) {
+      return 'Excellent pronunciation! You\'re doing great!';
+    } else if (score >= 70) {
+      if (problemWords.isNotEmpty) {
+        final wordList = problemWords
+            .take(3)
+            .map((w) => '"${w.text}"')
+            .join(', ');
+        return 'Good effort! Focus on improving: $wordList';
+      }
+      return 'Good progress! Keep practicing for better fluency.';
+    } else {
+      if (problemWords.isNotEmpty) {
+        final wordList = problemWords
+            .take(3)
+            .map((w) => '"${w.text}"')
+            .join(', ');
+        return 'Keep practicing! Pay attention to: $wordList';
+      }
+      return 'Keep practicing! Try speaking more slowly and clearly.';
+    }
+  }
+
+  Widget _buildMiniScore(String label, double score) {
+    final intScore = score.round();
     return Row(
       children: [
         SizedBox(
@@ -269,7 +331,7 @@ class _ShadowingSheetState extends State<ShadowingSheet> {
           child: CircularProgressIndicator(
             value: score / 100,
             backgroundColor: Colors.grey.shade200,
-            color: _getScoreColor(score),
+            color: _getScoreColor(intScore),
             strokeWidth: 3,
           ),
         ),
