@@ -12,6 +12,7 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
 import '../../../study/presentation/widgets/analysis_sheet.dart';
 import '../widgets/hints_sheet.dart';
+import '../widgets/message_skeleton_loader.dart';
 import '../../../../core/data/api/api_service.dart';
 import '../../data/chat_history_service.dart';
 
@@ -520,85 +521,94 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         child: Column(
           children: [
             Expanded(
-              child: ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-                itemCount: _messages.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  return GestureDetector(
-                    behavior:
-                        HitTestBehavior.opaque, // Make entire area tappable
-                    onTap: _isMultiSelectMode
-                        ? () => _toggleMessageSelection(msg.id)
-                        : null,
-                    onLongPress: () => _enterMultiSelectMode(msg.id),
-                    child: Align(
-                      alignment: msg.isUser
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: ChatBubble(
-                        key: ValueKey(msg.id),
-                        message: msg,
-                        sceneId: widget.scene.id, // Pass sceneId
-                        isMultiSelectMode: _isMultiSelectMode,
-                        onLongPress: null, // Handled by outer GestureDetector
-                        onSelectionToggle:
-                            null, // Handled by outer GestureDetector
-                        onMessageUpdate: (updatedMessage) {
-                          // Update message in list and sync to cloud
-                          final msgIndex = _messages.indexWhere(
-                            (m) => m.id == updatedMessage.id,
-                          );
-                          if (msgIndex != -1) {
-                            // Use _notifier to update state
-                            _notifier.updateMessage(updatedMessage);
-                            // Sync to cloud
-                            ChatHistoryService().syncMessages(
-                              widget.scene.id,
-                              _messages,
-                            );
-                          }
-                        },
-                        onTap: () {
-                          if (!msg.isUser && !_isMultiSelectMode) {
-                            _handleAnalyze(msg);
-                          }
-                        },
-                        onShowFeedback: () {
-                          if (msg.isUser) {
-                            _handleUserMessageAnalysis(msg);
-                          } else {
-                            _showFeedbackSheet(msg);
-                          }
-                        },
-                        onContentChanged: () {
-                          // Auto-scroll when AI message content changes during typewriter animation
-                          // Only scroll if we're near the bottom (within 200 pixels)
-                          if (_scrollController.hasClients) {
-                            final position = _scrollController.position;
-                            final isNearBottom = position.maxScrollExtent - position.pixels < 200;
-                            
-                            if (isNearBottom) {
-                              // Schedule scroll after the current frame
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (_scrollController.hasClients) {
-                                  _scrollController.animateTo(
-                                    _scrollController.position.maxScrollExtent,
-                                    duration: const Duration(milliseconds: 100),
-                                    curve: Curves.easeOut,
+              child: (_messages.isEmpty && _state.isLoading)
+                  ? const MessageSkeletonLoader()
+                  : ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                      itemCount: _messages.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
+                        return GestureDetector(
+                          behavior: HitTestBehavior
+                              .opaque, // Make entire area tappable
+                          onTap: _isMultiSelectMode
+                              ? () => _toggleMessageSelection(msg.id)
+                              : null,
+                          onLongPress: () => _enterMultiSelectMode(msg.id),
+                          child: Align(
+                            alignment: msg.isUser
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: ChatBubble(
+                              key: ValueKey(msg.id),
+                              message: msg,
+                              sceneId: widget.scene.id, // Pass sceneId
+                              isMultiSelectMode: _isMultiSelectMode,
+                              onLongPress:
+                                  null, // Handled by outer GestureDetector
+                              onSelectionToggle:
+                                  null, // Handled by outer GestureDetector
+                              onMessageUpdate: (updatedMessage) {
+                                // Update message in list and sync to cloud
+                                final msgIndex = _messages.indexWhere(
+                                  (m) => m.id == updatedMessage.id,
+                                );
+                                if (msgIndex != -1) {
+                                  // Use _notifier to update state
+                                  _notifier.updateMessage(updatedMessage);
+                                  // Sync to cloud
+                                  ChatHistoryService().syncMessages(
+                                    widget.scene.id,
+                                    _messages,
                                   );
                                 }
-                              });
-                            }
-                          }
-                        },
-                      ),
+                              },
+                              onTap: () {
+                                if (!msg.isUser && !_isMultiSelectMode) {
+                                  _handleAnalyze(msg);
+                                }
+                              },
+                              onShowFeedback: () {
+                                if (msg.isUser) {
+                                  _handleUserMessageAnalysis(msg);
+                                } else {
+                                  _showFeedbackSheet(msg);
+                                }
+                              },
+                              onContentChanged: () {
+                                // Auto-scroll when AI message content changes during typewriter animation
+                                // Only scroll if we're near the bottom (within 200 pixels)
+                                if (_scrollController.hasClients) {
+                                  final position = _scrollController.position;
+                                  final isNearBottom =
+                                      position.maxScrollExtent -
+                                          position.pixels <
+                                          200;
+
+                                  if (isNearBottom) {
+                                    // Schedule scroll after the current frame
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      if (_scrollController.hasClients) {
+                                        _scrollController.animateTo(
+                                          _scrollController
+                                              .position.maxScrollExtent,
+                                          duration: const Duration(
+                                              milliseconds: 100),
+                                          curve: Curves.easeOut,
+                                        );
+                                      }
+                                    });
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
             if (_showErrorBanner) _buildErrorBanner(),
             if (_isMultiSelectMode) _buildMultiSelectActionBar(),
