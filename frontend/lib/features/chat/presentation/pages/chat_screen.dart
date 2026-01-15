@@ -1233,6 +1233,55 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return;
     }
 
+    // For voice messages, wait for transcript to be available first
+    if (message.isVoiceMessage && message.content.isEmpty) {
+      // Set analyzing state to show loading spinner
+      final index = _messages.indexWhere((m) => m.id == message.id);
+      if (index != -1) {
+        _notifier.updateMessage(message.copyWith(isAnalyzing: true));
+      }
+
+      // Poll for transcript (max 30 seconds)
+      int attempts = 0;
+      const maxAttempts = 300; // 30 seconds at 100ms intervals
+      while (attempts < maxAttempts) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        attempts++;
+        
+        // Get the latest message state
+        final currentMsg = _messages.firstWhere(
+          (m) => m.id == message.id,
+          orElse: () => message,
+        );
+        
+        if (currentMsg.content.isNotEmpty) {
+          // Transcript is ready, proceed with analysis
+          break;
+        }
+        
+        if (!mounted) return;
+      }
+      
+      // Get the updated message with transcript
+      final updatedMessage = _messages.firstWhere(
+        (m) => m.id == message.id,
+        orElse: () => message,
+      );
+      
+      // If still no transcript after timeout, show error
+      if (updatedMessage.content.isEmpty) {
+        if (mounted) {
+          _notifier.updateMessage(message.copyWith(isAnalyzing: false));
+          showTopToast(
+            context,
+            'Transcription timeout. Please try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+    }
+
     // For both text and voice messages, analyze first then show sheet
     try {
       await _notifier.analyzeMessage(message);
