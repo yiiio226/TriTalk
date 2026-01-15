@@ -378,23 +378,48 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   Future<void> _deleteSelectedMessages() async {
-    final shouldDelete = await showDialog<bool>(
+    final shouldDelete = await showModalBottomSheet<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除消息'),
-        content: Text('确定要删除选中的 ${_selectedMessageIds.length} 条消息吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withValues(alpha: 0.5),
+      builder: (BuildContext context) {
+        return StyledDrawer(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               Text(
+                'Delete ${_selectedMessageIds.length} Messages?',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Are you sure you want to delete selected messages? This action cannot be undone.',
+                style: TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (shouldDelete == true) {

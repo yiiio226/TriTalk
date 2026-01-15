@@ -52,6 +52,7 @@ class _ChatBubbleState extends State<ChatBubble>
 
   bool _showTranslation = false;
   bool _showTranscript = false; // Added for voice transcript toggle
+  bool _isTranscriptLoading = false; // Loading state for transcript
   bool _isTranslating = false;
   String? _translatedText;
 
@@ -461,7 +462,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    isPerfect ? "Perfect" : "Fix",
+                                    isPerfect ? "Perfect" : "Feedback",
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -479,10 +480,36 @@ class _ChatBubbleState extends State<ChatBubble>
                           if (widget.message.isVoiceMessage) ...[
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _showTranscript = !_showTranscript;
-                                });
+                              onTap: () async {
+                                if (_showTranscript) {
+                                  // Just hide if already showing
+                                  setState(() {
+                                    _showTranscript = false;
+                                  });
+                                } else {
+                                  // Check if transcript is already loaded
+                                  if (widget.message.content.isEmpty) {
+                                    // Show loading if transcript not yet loaded
+                                    setState(() {
+                                      _isTranscriptLoading = true;
+                                    });
+                                    
+                                    // Wait for transcript to load (it should be coming from backend)
+                                    await Future.delayed(const Duration(milliseconds: 300));
+                                    
+                                    if (mounted) {
+                                      setState(() {
+                                        _isTranscriptLoading = false;
+                                        _showTranscript = true;
+                                      });
+                                    }
+                                  } else {
+                                    // Transcript already loaded, show immediately
+                                    setState(() {
+                                      _showTranscript = true;
+                                    });
+                                  }
+                                }
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -498,13 +525,26 @@ class _ChatBubbleState extends State<ChatBubble>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
-                                      _showTranscript
-                                          ? Icons.subtitles_off_rounded
-                                          : Icons.subtitles_rounded,
-                                      size: 14,
-                                      color: Colors.black,
-                                    ),
+                                    if (_isTranscriptLoading)
+                                      const SizedBox(
+                                        width: 10,
+                                        height: 10,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.black,
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      Icon(
+                                        _showTranscript
+                                            ? Icons.subtitles_off_rounded
+                                            : Icons.subtitles_rounded,
+                                        size: 14,
+                                        color: Colors.black,
+                                      ),
                                     const SizedBox(width: 4),
                                     Text(
                                       _showTranscript ? "Hide Text" : "Text",
@@ -601,10 +641,36 @@ class _ChatBubbleState extends State<ChatBubble>
                           if (widget.message.isVoiceMessage) ...[
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _showTranscript = !_showTranscript;
-                                });
+                              onTap: () async {
+                                if (_showTranscript) {
+                                  // Just hide if already showing
+                                  setState(() {
+                                    _showTranscript = false;
+                                  });
+                                } else {
+                                  // Check if transcript is already loaded
+                                  if (widget.message.content.isEmpty) {
+                                    // Show loading if transcript not yet loaded
+                                    setState(() {
+                                      _isTranscriptLoading = true;
+                                    });
+                                    
+                                    // Wait for transcript to load (it should be coming from backend)
+                                    await Future.delayed(const Duration(milliseconds: 300));
+                                    
+                                    if (mounted) {
+                                      setState(() {
+                                        _isTranscriptLoading = false;
+                                        _showTranscript = true;
+                                      });
+                                    }
+                                  } else {
+                                    // Transcript already loaded, show immediately
+                                    setState(() {
+                                      _showTranscript = true;
+                                    });
+                                  }
+                                }
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -618,13 +684,26 @@ class _ChatBubbleState extends State<ChatBubble>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
-                                      _showTranscript
-                                          ? Icons.subtitles_off_rounded
-                                          : Icons.subtitles_rounded,
-                                      size: 14,
-                                      color: Colors.black,
-                                    ),
+                                    if (_isTranscriptLoading)
+                                      const SizedBox(
+                                        width: 10,
+                                        height: 10,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.black,
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      Icon(
+                                        _showTranscript
+                                            ? Icons.subtitles_off_rounded
+                                            : Icons.subtitles_rounded,
+                                        size: 14,
+                                        color: Colors.black,
+                                      ),
                                     const SizedBox(width: 4),
                                     Text(
                                       _showTranscript ? "Hide Text" : "Text",
