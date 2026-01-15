@@ -275,6 +275,11 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
     final index = state.messages.indexWhere((m) => m.id == message.id);
     if (index == -1) return;
 
+    // Ensure message has content (transcript for voice messages)
+    if (message.content.isEmpty) {
+      throw Exception('Cannot analyze message without content/transcript');
+    }
+
     // Both text and voice messages follow the same analysis flow
     // Update state to analyzing
     final analyzingMsg = message.copyWith(isAnalyzing: true);
