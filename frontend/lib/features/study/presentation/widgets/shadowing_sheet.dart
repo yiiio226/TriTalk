@@ -10,6 +10,8 @@ import 'dart:io';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/core/data/api/api_service.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
 
 class ShadowingSheet extends ConsumerStatefulWidget {
@@ -455,7 +457,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
                     ),
                     child: Icon(
                       Icons.record_voice_over_rounded,
-                      color: Colors.blue.shade400,
+                      color: AppColors.secondary,
                       size: 20,
                     ),
                   ),
@@ -536,90 +538,124 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         // 1. Play Original (Left)
-        GestureDetector(
-          onTap: _playTextToSpeech,
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF3F4F6),
-              shape: BoxShape.circle,
-            ),
-            child: _isTTSLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    _isTTSPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                    size: 28,
-                    color: const Color(0xFF374151),
-                  ),
-          ),
-        ),
-
-        // 2. Record Button (Center)
-        GestureDetector(
-          onLongPressStart: (_) => _startRecording(),
-          onLongPressEnd: (_) => _stopRecording(),
-          child: Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6))
-                      .withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.mic_rounded,
-              size: 32,
-              color: Colors.white,
-            ),
-          ),
-        ),
-
-        // 3. Score/Status (Right)
-        _feedback != null
-            ? GestureDetector(
-                onTap: _playRecording, // Play recording on tap
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981), // Green
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${_feedback!.pronunciationScore}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
-              )
-            : Container(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: _playTextToSpeech,
+              child: Container(
                 width: 56,
                 height: 56,
                 decoration: const BoxDecoration(
                   color: Color(0xFFF3F4F6),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.wifi_rounded, // Placeholder icon
-                  size: 24,
-                  color: Color(0xFF9CA3AF),
+                child: _isTTSLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        _isTTSPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                        size: 28,
+                        color: const Color(0xFF374151),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '原音',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+
+        // 2. Record Button (Center)
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onLongPressStart: (_) => _startRecording(),
+              onLongPressEnd: (_) => _stopRecording(),
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6))
+                          .withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.mic_rounded,
+                  size: 32,
+                  color: Colors.white,
                 ),
               ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _feedback == null ? '长按跟读' : '重新跟读',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+
+        // 3. Score/Status (Right)
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _feedback != null
+                ? GestureDetector(
+                    onTap: _playRecording, // Play recording on tap
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981), // Green
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${_feedback!.pronunciationScore}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF3F4F6),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      '0',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ),
+            const SizedBox(height: 8),
+            Text(
+              _feedback == null ? '待评分' : '播放跟读',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -861,64 +897,68 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
     );
   }
   Widget _buildSkeletonLoader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Score Header Skeleton
-        Row(
-          children: [
-            _buildSkeletonBox(height: 32, width: 100, radius: 8),
-            const SizedBox(width: 12),
-            _buildSkeletonBox(height: 24, width: 120, radius: 4),
-          ],
-        ),
-        const SizedBox(height: 24),
-        
-        // Stats Row Skeleton
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Shimmer.fromColors(
+      baseColor: AppColors.lightDivider,
+      highlightColor: AppColors.lightSurface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Score Header Skeleton
+          Row(
             children: [
-              _buildStatsSkeletonItem(),
-              _buildStatsSkeletonItem(),
-              _buildStatsSkeletonItem(),
+              _buildSkeletonBox(height: 32, width: 100, radius: 8),
+              const SizedBox(width: 12),
+              _buildSkeletonBox(height: 24, width: 120, radius: 4),
             ],
           ),
-        ),
-        const SizedBox(height: 32),
-        
-        // Words Skeleton
-        Row(
-          children: [
-            _buildSkeletonBox(height: 16, width: 80, radius: 4),
-            const SizedBox(width: 8),
-            _buildSkeletonBox(height: 20, width: 60, radius: 4),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: List.generate(8, (index) {
-             final width = 40.0 + (index % 3) * 20.0;
-             return Column(
-               children: [
-                 _buildSkeletonBox(height: 20, width: width, radius: 4),
-                 const SizedBox(height: 4),
-                 _buildSkeletonBox(height: 4, width: 20, radius: 2),
-                 const SizedBox(height: 2),
-                 _buildSkeletonBox(height: 10, width: 15, radius: 2),
-               ],
-             );
-          }),
-        ),
-      ],
+          const SizedBox(height: 24),
+          
+          // Stats Row Skeleton
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatsSkeletonItem(),
+                _buildStatsSkeletonItem(),
+                _buildStatsSkeletonItem(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          // Words Skeleton
+          Row(
+            children: [
+              _buildSkeletonBox(height: 16, width: 80, radius: 4),
+              const SizedBox(width: 8),
+              _buildSkeletonBox(height: 20, width: 60, radius: 4),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: List.generate(8, (index) {
+               final width = 40.0 + (index % 3) * 20.0;
+               return Column(
+                 children: [
+                   _buildSkeletonBox(height: 20, width: width, radius: 4),
+                   const SizedBox(height: 4),
+                   _buildSkeletonBox(height: 4, width: 20, radius: 2),
+                   const SizedBox(height: 2),
+                   _buildSkeletonBox(height: 10, width: 15, radius: 2),
+                 ],
+               );
+            }),
+          ),
+        ],
+      ),
     );
   }
 
@@ -937,7 +977,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(radius),
       ),
     );
