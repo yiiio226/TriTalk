@@ -31,6 +31,11 @@ export async function* iterateStreamLines(
         }
       }
     }
+
+    // Process remaining buffer
+    if (buffer.trim()) {
+      yield buffer.trim();
+    }
   } finally {
     reader.releaseLock();
   }
