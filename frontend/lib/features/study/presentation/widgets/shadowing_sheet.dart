@@ -429,255 +429,292 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Shadowing Practice',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+           // Drag Handle & Header
+          Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.record_voice_over_rounded,
+                      color: Colors.blue.shade400,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Shadowing Practice',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 24),
-          // Only show target text when no feedback (before/during recording)
-          if (_feedback == null) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
+          
+          if (isAnalyzing)
+            _buildSkeletonLoader()
+          else 
+            // Content Area - either target text or feedback
+            _feedback != null ? _buildVoiceFeedbackContent(_feedback!) : _buildTargetTextView(),
+
+          const SizedBox(height: 32),
+
+          // Error Message
+          if (_errorMessage.isNotEmpty || providerError != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                widget.targetText,
-                style: const TextStyle(fontSize: 18, height: 1.4),
+                _errorMessage.isNotEmpty ? _errorMessage : providerError!,
+                style: const TextStyle(color: Colors.red, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 32),
-          ],
 
-          if (isAnalyzing)
-            const CircularProgressIndicator()
-          else if (_feedback != null)
-            _buildResultView()
-          else
-            _buildRecordButton(),
-
-          if (_errorMessage.isNotEmpty || providerError != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                _errorMessage.isNotEmpty ? _errorMessage : providerError!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          const SizedBox(height: 20),
+          // Bottom Controls (Always visible)
+          _buildBottomControls(),
         ],
       ),
     );
   }
 
-  Widget _buildRecordButton() {
-    return Column(
-      children: [
-        // Listen button for correct pronunciation
-        _buildListenButton(),
-        const SizedBox(height: 24),
-        // Record button
-        GestureDetector(
-          onLongPressStart: (_) => _startRecording(),
-          onLongPressEnd: (_) => _stopRecording(),
-          child: Column(
-            children: [
-              Container(
-                height: 80,
-                width: 80,
-                decoration: BoxDecoration(
-                  color: _isRecording
-                      ? Colors.red.shade100
-                      : Colors.blue.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.mic,
-                  size: 40,
-                  color: _isRecording ? Colors.red : Colors.blue,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _isRecording ? 'Release to Stop' : 'Hold to Record',
-                style: TextStyle(
-                  color: _isRecording ? Colors.red : Colors.grey.shade600,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+  Widget _buildTargetTextView() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB), // Very light grey
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Text(
+        widget.targetText,
+        style: const TextStyle(
+          fontSize: 16, 
+          height: 1.5,
+          color: Color(0xFF1F2937),
         ),
-      ],
-    );
-  }
-
-  /// Build the "Listen" button for TTS playback
-  Widget _buildListenButton() {
-    return GestureDetector(
-      onTap: _playTextToSpeech,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: _isTTSPlaying ? Colors.blue.shade100 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: _isTTSPlaying ? Colors.blue.shade300 : Colors.grey.shade300,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_isTTSLoading)
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                ),
-              )
-            else if (_isTTSPlaying)
-              const Icon(Icons.stop_rounded, size: 18, color: Colors.blue)
-            else
-              const Icon(
-                Icons.volume_up_rounded,
-                size: 18,
-                color: Colors.black87,
-              ),
-            const SizedBox(width: 8),
-            Text(
-              _isTTSPlaying ? 'Stop' : 'Listen',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _isTTSPlaying ? Colors.blue : Colors.black87,
-              ),
-            ),
-          ],
-        ),
+        textAlign: TextAlign.center,
       ),
     );
   }
 
-  Widget _buildResultView() {
-    // Use the stored _feedback directly (either from initial or new assessment)
-    return Column(
+  Widget _buildBottomControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // Use VoiceFeedbackSheet content inline
-        _buildVoiceFeedbackContent(_feedback!),
-        const SizedBox(height: 20),
-        // Listen button for correct pronunciation (above action buttons)
-        _buildListenButton(),
-        const SizedBox(height: 16),
-        // Action buttons row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Replay button (only show if we have a recording)
-            if (_currentRecordingPath != null) ...[
-              OutlinedButton.icon(
-                onPressed: _playRecording,
-                icon: Icon(
-                  _isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                  size: 18,
-                ),
-                label: Text(_isPlaying ? 'Stop' : 'Replay'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _isPlaying ? Colors.red : Colors.black87,
-                  side: BorderSide(
-                    color: _isPlaying ? Colors.red : Colors.grey.shade400,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-            ],
-            // Try Again button
-            ElevatedButton.icon(
-              onPressed: _tryAgain,
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Try Again'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
+        // 1. Play Original (Left)
+        GestureDetector(
+          onTap: _playTextToSpeech,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3F4F6),
+              shape: BoxShape.circle,
             ),
-          ],
+            child: _isTTSLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    _isTTSPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                    size: 28,
+                    color: const Color(0xFF374151),
+                  ),
+          ),
         ),
+
+        // 2. Record Button (Center)
+        GestureDetector(
+          onLongPressStart: (_) => _startRecording(),
+          onLongPressEnd: (_) => _stopRecording(),
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6))
+                      .withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.mic_rounded,
+              size: 32,
+              color: Colors.white,
+            ),
+          ),
+        ),
+
+        // 3. Score/Status (Right)
+        _feedback != null
+            ? GestureDetector(
+                onTap: _playRecording, // Play recording on tap
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981), // Green
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${_feedback!.pronunciationScore}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              )
+            : Container(
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF3F4F6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.wifi_rounded, // Placeholder icon
+                  size: 24,
+                  color: Color(0xFF9CA3AF),
+                ),
+              ),
       ],
     );
   }
 
   Widget _buildVoiceFeedbackContent(VoiceFeedback feedback) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildFeedbackHeader(feedback),
-        const SizedBox(height: 20),
+        _buildScoreHeader(feedback),
+        const SizedBox(height: 24),
+        _buildStatsRow(feedback),
+        const SizedBox(height: 32),
         _buildAzureWordFeedback(feedback),
-        const SizedBox(height: 16),
-        _buildAzureScores(feedback),
       ],
     );
   }
 
-  Widget _buildFeedbackHeader(VoiceFeedback feedback) {
-    final score = feedback.pronunciationScore;
-    Color scoreColor;
-    String label;
-
-    if (score >= 80) {
-      scoreColor = Colors.green;
-      label = 'Great Job!';
-    } else if (score >= 60) {
-      scoreColor = Colors.orange;
-      label = 'Needs Work';
-    } else {
-      scoreColor = Colors.red;
-      label = 'Try Again';
-    }
-
+  Widget _buildScoreHeader(VoiceFeedback feedback) {
+    // Top Row: "Score: 91  Great Job!"
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: scoreColor.withValues(alpha: 0.1),
+            color: const Color(0xFFDCFCE7), // Light green
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: scoreColor.withValues(alpha: 0.5)),
+            border: Border.all(color: const Color(0xFF86EFAC)),
           ),
           child: Text(
-            'Score: $score',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
+            'Score: ${feedback.pronunciationScore}',
+            style: const TextStyle(
               fontSize: 16,
-              color: scoreColor,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF166534), // Dark green
             ),
           ),
         ),
         const SizedBox(width: 12),
         Text(
-          label,
+          feedback.pronunciationScore >= 80 ? 'Great Job!' : 'Keep Practicing!',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow(VoiceFeedback feedback) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB), // Very light grey
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem('Accuracy', feedback.azureAccuracyScore),
+          _buildStatItem('Fluency', feedback.azureFluencyScore),
+          _buildStatItem('Complete', feedback.azureCompletenessScore),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, double? score) {
+    final value = score?.round() ?? 0;
+    Color valueColor;
+    if (value >= 80) {
+      valueColor = const Color(0xFF10B981); // Green
+    } else if (value >= 60) {
+      valueColor = const Color(0xFFF59E0B); // Orange
+    } else {
+      valueColor = const Color(0xFFEF4444); // Red
+    }
+
+    return Column(
+      children: [
+        Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: valueColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF6B7280),
           ),
         ),
       ],
@@ -820,8 +857,89 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
             color: color,
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
       ],
+    );
+  }
+  Widget _buildSkeletonLoader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Score Header Skeleton
+        Row(
+          children: [
+            _buildSkeletonBox(height: 32, width: 100, radius: 8),
+            const SizedBox(width: 12),
+            _buildSkeletonBox(height: 24, width: 120, radius: 4),
+          ],
+        ),
+        const SizedBox(height: 24),
+        
+        // Stats Row Skeleton
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatsSkeletonItem(),
+              _buildStatsSkeletonItem(),
+              _buildStatsSkeletonItem(),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        
+        // Words Skeleton
+        Row(
+          children: [
+            _buildSkeletonBox(height: 16, width: 80, radius: 4),
+            const SizedBox(width: 8),
+            _buildSkeletonBox(height: 20, width: 60, radius: 4),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: List.generate(8, (index) {
+             final width = 40.0 + (index % 3) * 20.0;
+             return Column(
+               children: [
+                 _buildSkeletonBox(height: 20, width: width, radius: 4),
+                 const SizedBox(height: 4),
+                 _buildSkeletonBox(height: 4, width: 20, radius: 2),
+                 const SizedBox(height: 2),
+                 _buildSkeletonBox(height: 10, width: 15, radius: 2),
+               ],
+             );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsSkeletonItem() {
+    return Column(
+      children: [
+        _buildSkeletonBox(height: 32, width: 40, radius: 4),
+        const SizedBox(height: 4),
+        _buildSkeletonBox(height: 12, width: 60, radius: 4),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonBox({required double height, required double width, double radius = 4}) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }
