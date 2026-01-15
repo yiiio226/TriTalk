@@ -489,18 +489,27 @@ class _ChatBubbleState extends State<ChatBubble>
                                 } else {
                                   // Check if transcript is already loaded
                                   if (widget.message.content.isEmpty) {
-                                    // Show loading if transcript not yet loaded
+                                    // Show loading and wait for transcript
                                     setState(() {
                                       _isTranscriptLoading = true;
                                     });
                                     
-                                    // Wait for transcript to load (it should be coming from backend)
-                                    await Future.delayed(const Duration(milliseconds: 300));
+                                    // Poll for transcript updates (check every 100ms for up to 30 seconds)
+                                    int attempts = 0;
+                                    const maxAttempts = 300; // 30 seconds
+                                    while (attempts < maxAttempts && widget.message.content.isEmpty) {
+                                      await Future.delayed(const Duration(milliseconds: 100));
+                                      attempts++;
+                                      if (!mounted) return;
+                                    }
                                     
                                     if (mounted) {
                                       setState(() {
                                         _isTranscriptLoading = false;
-                                        _showTranscript = true;
+                                        // Only show transcript if content is now available
+                                        if (widget.message.content.isNotEmpty) {
+                                          _showTranscript = true;
+                                        }
                                       });
                                     }
                                   } else {
@@ -650,18 +659,27 @@ class _ChatBubbleState extends State<ChatBubble>
                                 } else {
                                   // Check if transcript is already loaded
                                   if (widget.message.content.isEmpty) {
-                                    // Show loading if transcript not yet loaded
+                                    // Show loading and wait for transcript
                                     setState(() {
                                       _isTranscriptLoading = true;
                                     });
                                     
-                                    // Wait for transcript to load (it should be coming from backend)
-                                    await Future.delayed(const Duration(milliseconds: 300));
+                                    // Poll for transcript updates (check every 100ms for up to 30 seconds)
+                                    int attempts = 0;
+                                    const maxAttempts = 300; // 30 seconds
+                                    while (attempts < maxAttempts && widget.message.content.isEmpty) {
+                                      await Future.delayed(const Duration(milliseconds: 100));
+                                      attempts++;
+                                      if (!mounted) return;
+                                    }
                                     
                                     if (mounted) {
                                       setState(() {
                                         _isTranscriptLoading = false;
-                                        _showTranscript = true;
+                                        // Only show transcript if content is now available
+                                        if (widget.message.content.isNotEmpty) {
+                                          _showTranscript = true;
+                                        }
                                       });
                                     }
                                   } else {
