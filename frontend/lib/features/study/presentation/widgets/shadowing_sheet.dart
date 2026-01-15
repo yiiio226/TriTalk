@@ -14,6 +14,8 @@ import 'package:shimmer/shimmer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
 
+import 'package:frontend/core/widgets/top_toast.dart';
+
 class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
   final String messageId; // Message ID for file naming
@@ -49,6 +51,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   _feedback; // Use VoiceFeedback to unify with initial and new results
   String _errorMessage = '';
   String? _currentRecordingPath; // Track current recording for replay/cleanup
+  DateTime? _recordingStartTime; // Track recording duration
 
   // TTS state for "Listen" button
   bool _isTTSLoading = false;
@@ -262,6 +265,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
           _feedback = null;
           _currentRecordingPath = null;
           _errorMessage = '';
+          _recordingStartTime = DateTime.now(); // Record start time
         });
       }
     } catch (e) {
@@ -272,6 +276,32 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   Future<void> _stopRecording() async {
     try {
       final path = await _audioRecorder.stop();
+      
+      // Check recording duration
+      if (_recordingStartTime != null) {
+        final duration = DateTime.now().difference(_recordingStartTime!);
+        if (duration.inMilliseconds < 1000) {
+          // Recording too short
+          setState(() {
+            _isRecording = false;
+            _currentRecordingPath = null;
+          });
+          
+          // Delete the short file
+          if (path != null) {
+            final file = File(path);
+            if (await file.exists()) {
+              await file.delete();
+            }
+          }
+          
+          if (mounted) {
+            showTopToast(context, 'Recording too short, please try again', isError: true);
+          }
+          return;
+        }
+      }
+
       if (path != null) {
         setState(() {
           _isRecording = false;
@@ -414,10 +444,24 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for specific errors to show toast
+    ref.listen(pronunciationAssessmentProvider, (previous, next) {
+      if (next.error != null && next.error != previous?.error) {
+        if (next.error!.contains('InitialSilenceTimeout')) {
+           // Show friendly toast for silence timeout
+           showTopToast(context, 'No voice detected, please try again', isError: true);
+        }
+      }
+    });
+
     // Watch the provider state for loading and error
     final assessmentState = ref.watch(pronunciationAssessmentProvider);
     final isAnalyzing = assessmentState.isLoading;
     final providerError = assessmentState.error;
+
+    // Filter out errors that are handled by toasts
+    final shouldShowProviderError = providerError != null && !providerError.contains('InitialSilenceTimeout');
+    final displayError = _errorMessage.isNotEmpty ? _errorMessage : (shouldShowProviderError ? providerError : '');
 
     return Container(
       decoration: BoxDecoration(
@@ -431,7 +475,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 64),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -496,11 +540,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
           const SizedBox(height: 32),
 
           // Error Message
-          if (_errorMessage.isNotEmpty || providerError != null)
+          if (displayError.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                _errorMessage.isNotEmpty ? _errorMessage : providerError!,
+                displayError,
                 style: const TextStyle(color: Colors.red, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
@@ -564,7 +608,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              '原音',
+              '原声',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -651,7 +695,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
                   ),
             const SizedBox(height: 8),
             Text(
-              _feedback == null ? '待评分' : '播放跟读',
+              _feedback == null ? '待评分' : '我的发音',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
