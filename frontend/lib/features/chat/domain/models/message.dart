@@ -155,8 +155,13 @@ class ReviewFeedback {
   final bool isPerfect;
   final String correctedText;
   final String nativeExpression;
-  final String explanation;
+  final String explanation; // Kept for backward compatibility, same as grammarExplanation
   final String exampleAnswer;
+  
+  // New specific explanation fields
+  final String? grammarExplanation;
+  final String? nativeExpressionReason;
+  final String? exampleAnswerReason;
 
   ReviewFeedback({
     required this.isPerfect,
@@ -164,6 +169,9 @@ class ReviewFeedback {
     required this.nativeExpression,
     required this.explanation,
     required this.exampleAnswer,
+    this.grammarExplanation,
+    this.nativeExpressionReason,
+    this.exampleAnswerReason,
   });
 
   Map<String, dynamic> toJson() {
@@ -172,17 +180,27 @@ class ReviewFeedback {
       'corrected_text': correctedText,
       'native_expression': nativeExpression,
       'explanation': explanation,
+      'grammar_explanation': grammarExplanation,
+      'native_expression_reason': nativeExpressionReason,
       'example_answer': exampleAnswer,
+      'example_answer_reason': exampleAnswerReason,
     };
   }
 
   factory ReviewFeedback.fromJson(Map<String, dynamic> json) {
+    // For backward compatibility: use grammar_explanation if available, otherwise fall back to explanation
+    final grammarExp = json['grammar_explanation'] as String?;
+    final oldExp = json['explanation'] as String? ?? '';
+    
     return ReviewFeedback(
       isPerfect: json['is_perfect'] ?? false,
       correctedText: json['corrected_text'] ?? '',
       nativeExpression: json['native_expression'] ?? '',
-      explanation: json['explanation'] ?? '',
+      explanation: grammarExp ?? oldExp, // Use new field if available, otherwise old field
       exampleAnswer: json['example_answer'] ?? '',
+      grammarExplanation: grammarExp ?? oldExp,
+      nativeExpressionReason: json['native_expression_reason'] as String?,
+      exampleAnswerReason: json['example_answer_reason'] as String?,
     );
   }
 }

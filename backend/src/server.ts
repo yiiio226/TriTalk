@@ -305,8 +305,11 @@ Generate ONLY a JSON response with this format:
       is_perfect: analysisData.is_perfect || false,
       corrected_text: sanitizeText(analysisData.corrected_text || body.message),
       native_expression: sanitizeText(analysisData.native_expression || ""),
-      explanation: sanitizeText(analysisData.explanation || ""),
+      explanation: sanitizeText(analysisData.grammar_explanation || analysisData.explanation || ""), // Backward compatibility
+      grammar_explanation: sanitizeText(analysisData.grammar_explanation || analysisData.explanation || ""),
+      native_expression_reason: sanitizeText(analysisData.native_expression_reason || ""),
       example_answer: sanitizeText(analysisData.example_answer || ""),
+      example_answer_reason: sanitizeText(analysisData.example_answer_reason || ""),
     };
 
     return c.json(
