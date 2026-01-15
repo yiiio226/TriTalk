@@ -418,9 +418,16 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
     final providerError = assessmentState.error;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
