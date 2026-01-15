@@ -95,11 +95,20 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSection(
-                    'Your Sentence',
-                    widget.message.content,
-                    isError: !feedback.isPerfect,
-                  ),
+                  // YOUR SENTENCE section with error highlighting
+                  if (!feedback.isPerfect) ...[
+                    _buildErrorHighlightSection(
+                      'Your Sentence',
+                      widget.message.content,
+                      feedback.correctedText,
+                    ),
+                  ] else ...[
+                    _buildSection(
+                      'Your Sentence',
+                      widget.message.content,
+                      isError: false,
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   
                   if (feedback.isPerfect) ...[
@@ -283,6 +292,89 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         ),
       ],
     );
+  }
+
+  Widget _buildErrorHighlightSection(
+    String label,
+    String originalText,
+    String correctedText,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 4),
+        _buildErrorHighlightText(originalText, correctedText),
+      ],
+    );
+  }
+
+  Widget _buildErrorHighlightText(String original, String corrected) {
+    final errorSpans = _computeErrorHighlight(original, corrected);
+    
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.black87,
+        ),
+        children: errorSpans,
+      ),
+    );
+  }
+
+  List<TextSpan> _computeErrorHighlight(String original, String corrected) {
+    final List<TextSpan> spans = [];
+    
+    // Simple word-based diff to identify errors
+    final originalWords = original.split(' ');
+    final correctedWords = corrected.split(' ');
+    
+    int i = 0, j = 0;
+    
+    while (i < originalWords.length) {
+      if (j < correctedWords.length && originalWords[i] == correctedWords[j]) {
+        // Word is correct - show in black
+        spans.add(TextSpan(
+          text: '${originalWords[i]} ',
+          style: const TextStyle(color: Colors.black87),
+        ));
+        i++;
+        j++;
+      } else {
+        // Word is incorrect - show in red
+        spans.add(TextSpan(
+          text: '${originalWords[i]} ',
+          style: TextStyle(
+            color: Colors.red[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ));
+        i++;
+        
+        // Skip ahead in corrected text to find next match
+        bool foundMatch = false;
+        for (int k = j; k < correctedWords.length && k < j + 3; k++) {
+          if (i < originalWords.length && originalWords[i] == correctedWords[k]) {
+            j = k;
+            foundMatch = true;
+            break;
+          }
+        }
+        if (!foundMatch && j < correctedWords.length) {
+          j++;
+        }
+      }
+    }
+    
+    return spans;
   }
 
   Widget _buildDiffSection(
