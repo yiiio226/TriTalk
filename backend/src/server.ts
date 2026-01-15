@@ -470,7 +470,7 @@ app.post("/chat/send-voice", async (c) => {
     // ============================================
     console.log("[Send Voice] Step 1: Transcribing audio...");
     const transcriptPrompt = buildTranscriptionPrompt();
-    
+
     const transcriptResponse = await callOpenRouterMultimodal(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_TRANSCRIBE_MODEL,
@@ -584,7 +584,7 @@ app.post("/chat/send-voice", async (c) => {
         } catch (e) {
           console.error("[Send Voice] Failed to parse response:", e);
           console.error("[Send Voice] Raw response:", fullResponse.substring(0, 200));
-          
+
           // Send error
           await stream.writeln(
             JSON.stringify({
@@ -1078,6 +1078,7 @@ app.post("/tts/generate", async (c) => {
         stream.onAbort(() => console.log("Stream aborted: /tts/generate"));
         let chunkIndex = 0;
         for await (const line of iterateStreamLines(ttsResponse)) {
+          console.log("MiniMax Raw Line:", line.substring(0, 200));
           if (!line.startsWith("data:")) continue;
           const jsonStr = line.slice(5).trim();
           if (!jsonStr || jsonStr === "[DONE]") continue;
@@ -1111,7 +1112,9 @@ app.post("/tts/generate", async (c) => {
                 })
               );
             }
-          } catch (e) { }
+          } catch (e) {
+            console.error("Error processing TTS chunk:", e);
+          }
         }
         await stream.writeln(JSON.stringify({ type: "done" }));
       },
