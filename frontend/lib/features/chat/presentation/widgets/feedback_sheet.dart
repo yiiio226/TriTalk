@@ -100,14 +100,42 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     widget.message.content,
                     isError: !feedback.isPerfect,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  
+                  if (feedback.isPerfect) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '语法正确！表达很棒！',
+                        style: TextStyle(color: Colors.green[900]),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  if (!feedback.isPerfect) const SizedBox(height: 8),
 
                   if (!feedback.isPerfect) ...[
-                    _buildSection(
+                    _buildDiffSection(
                       'Corrected',
+                      widget.message.content,
                       feedback.correctedText,
-                      isSuccess: true,
-                      context: context,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        feedback.explanation,
+                        style: TextStyle(color: Colors.blue[900]),
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -125,12 +153,26 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         "Analyzed Sentence",
                       ),
                     ),
+                    if (feedback.nativeExpressionReason != null && feedback.nativeExpressionReason!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          feedback.nativeExpressionReason!,
+                          style: TextStyle(color: Colors.blue[900]),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                   ],
 
                   if (feedback.exampleAnswer.isNotEmpty) ...[
                     _buildSection(
-                      'Possible Answer',
+                      'Reference Answer',
                       feedback.exampleAnswer,
                       isNative: true,
                       context: context,
@@ -141,33 +183,24 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         "Analyzed Sentence",
                       ),
                     ),
+                    if (feedback.exampleAnswerReason != null && feedback.exampleAnswerReason!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          feedback.exampleAnswerReason!,
+                          style: TextStyle(color: Colors.blue[900]),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                   ],
 
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          size: 20,
-                          color: Colors.blue,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            feedback.explanation,
-                            style: TextStyle(color: Colors.blue[900]),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
                   const SizedBox(height: 40), // Bottom padding
                 ],
               ),
@@ -250,5 +283,151 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         ),
       ],
     );
+  }
+
+  Widget _buildDiffSection(
+    String label,
+    String originalText,
+    String correctedText,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 4),
+        _buildDiffText(originalText, correctedText),
+      ],
+    );
+  }
+
+  Widget _buildDiffText(String original, String corrected) {
+    final diffSpans = _computeDiff(original, corrected);
+    
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.black87,
+        ),
+        children: diffSpans,
+      ),
+    );
+  }
+
+  List<TextSpan> _computeDiff(String original, String corrected) {
+    final List<TextSpan> spans = [];
+    
+    // Simple word-based diff algorithm
+    final originalWords = original.split(' ');
+    final correctedWords = corrected.split(' ');
+    
+    int i = 0, j = 0;
+    
+    while (i < originalWords.length || j < correctedWords.length) {
+      if (i < originalWords.length && j < correctedWords.length) {
+        if (originalWords[i] == correctedWords[j]) {
+          // Words match - show in normal style
+          spans.add(TextSpan(
+            text: '${originalWords[i]} ',
+            style: const TextStyle(color: Colors.black87),
+          ));
+          i++;
+          j++;
+        } else {
+          // Words differ - check if it's a replacement or insertion/deletion
+          bool foundMatch = false;
+          
+          // Look ahead in corrected text for the original word
+          for (int k = j + 1; k < correctedWords.length && k < j + 3; k++) {
+            if (originalWords[i] == correctedWords[k]) {
+              // Found the word later - means insertion happened
+              for (int m = j; m < k; m++) {
+                spans.add(TextSpan(
+                  text: '${correctedWords[m]} ',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ));
+              }
+              j = k;
+              foundMatch = true;
+              break;
+            }
+          }
+          
+          if (!foundMatch) {
+            // Look ahead in original text for the corrected word
+            bool foundInOriginal = false;
+            for (int k = i + 1; k < originalWords.length && k < i + 3; k++) {
+              if (originalWords[k] == correctedWords[j]) {
+                // Found the word later in original - means deletion happened
+                for (int m = i; m < k; m++) {
+                  spans.add(TextSpan(
+                    text: '${originalWords[m]} ',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ));
+                }
+                i = k;
+                foundInOriginal = true;
+                break;
+              }
+            }
+            
+            if (!foundInOriginal) {
+              // Simple replacement - show deletion then addition
+              spans.add(TextSpan(
+                text: '${originalWords[i]} ',
+                style: const TextStyle(
+                  color: Colors.red,
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ));
+              spans.add(TextSpan(
+                text: '${correctedWords[j]} ',
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.w600,
+                ),
+              ));
+              i++;
+              j++;
+            }
+          }
+        }
+      } else if (i < originalWords.length) {
+        // Remaining words in original - deletions
+        spans.add(TextSpan(
+          text: '${originalWords[i]} ',
+          style: const TextStyle(
+            color: Colors.red,
+            decoration: TextDecoration.lineThrough,
+          ),
+        ));
+        i++;
+      } else {
+        // Remaining words in corrected - additions
+        spans.add(TextSpan(
+          text: '${correctedWords[j]} ',
+          style: const TextStyle(
+            color: Colors.green,
+            fontWeight: FontWeight.w600,
+          ),
+        ));
+        j++;
+      }
+    }
+    
+    return spans;
   }
 }

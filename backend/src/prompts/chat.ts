@@ -65,8 +65,10 @@ export function buildChatSystemPrompt(
             "is_perfect": boolean,
             "corrected_text": "Grammatically correct version of ONLY the user's LATEST message (in ${targetLang})",
             "native_expression": "More natural way for the USER to express THEIR LATEST message (MUST be in ${targetLang}, NOT in ${nativeLang})",
-            "explanation": "Explanation in ${nativeLang} about the user's LATEST message. DO NOT include Pinyin.",
-            "example_answer": "Alternative way for the USER to express THEIR LATEST message (MUST be in ${targetLang}, NOT in ${nativeLang})"
+            "grammar_explanation": "Explanation in ${nativeLang} about the grammar corrections made to the user's LATEST message. Explain what was wrong and why it was corrected. DO NOT include Pinyin.",
+            "native_expression_reason": "Explanation in ${nativeLang} about why the native_expression is more natural or idiomatic than the user's original message. Focus on cultural context, naturalness, and native speaker preferences. DO NOT include Pinyin.",
+            "example_answer": "Alternative way for the USER to express THEIR LATEST message (MUST be in ${targetLang}, NOT in ${nativeLang})",
+            "example_answer_reason": "Explanation in ${nativeLang} about why the example_answer is a good alternative. Explain what makes this answer appropriate or useful in this context. DO NOT include Pinyin."
         }
     }`;
 }
