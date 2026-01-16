@@ -4,24 +4,47 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/core/env/env.dart';
 
-/// Service for playing word pronunciation using cloud TTS.
+/// Service for playing word pronunciation using a hybrid TTS strategy.
+///
+/// Strategy (per document):
+/// ```
+/// 用户点击单词
+///     ↓
+/// [1. 检查本地缓存] ───(有)──→ 直接播放 ✅
+///     ↓ (无)
+/// [2. 检查语言是否本地 TTS 支持]
+///     ↓
+///   ┌─(支持)────→ [3a] 本地 TTS 播放 ✅（零成本）
+///   │
+///   └─(不支持)──→ [3b] 请求云端 TTS → 播放 → 缓存
+/// ```
 ///
 /// Features:
-/// - Cloud TTS via MiniMax API
-/// - Disk caching for repeated playback
+/// - Local cache for repeated playback
+/// - Local TTS for supported languages (zero cost)
+/// - Cloud TTS via MiniMax API as fallback
 /// - Debounce for rapid taps
 class WordTtsService {
   static final WordTtsService _instance = WordTtsService._internal();
   factory WordTtsService() => _instance;
-  WordTtsService._internal();
+  WordTtsService._internal() {
+    _initLocalTts();
+  }
 
+  // Audio player for cached/cloud audio
   final AudioPlayer _audioPlayer = AudioPlayer();
+
+  // Local TTS engine
+  final FlutterTts _flutterTts = FlutterTts();
+  bool _isLocalTtsInitialized = false;
+  Set<String> _supportedLanguages = {};
 
   // Track currently playing word to prevent duplicate requests
   String? _currentlyPlayingWord;
@@ -40,7 +63,58 @@ class WordTtsService {
   /// Get the currently playing word
   String? get currentlyPlayingWord => _currentlyPlayingWord;
 
-  /// Play pronunciation for a word.
+  /// Initialize local TTS engine
+  Future<void> _initLocalTts() async {
+    try {
+      // Get available languages
+      final languages = await _flutterTts.getLanguages;
+      if (languages != null) {
+        _supportedLanguages = Set<String>.from(
+          (languages as List).map((e) => e.toString().toLowerCase()),
+        );
+      }
+
+      // Configure TTS settings
+      await _flutterTts.setSpeechRate(0.45); // Slightly slower for clarity
+      await _flutterTts.setVolume(1.0);
+      await _flutterTts.setPitch(1.0);
+
+      // Set completion handler
+      _flutterTts.setCompletionHandler(() {
+        _currentlyPlayingWord = null;
+      });
+
+      _isLocalTtsInitialized = true;
+
+      if (kDebugMode) {
+        debugPrint(
+            '🎤 Local TTS initialized. Supported languages: ${_supportedLanguages.length}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Failed to initialize local TTS: $e');
+      }
+      _isLocalTtsInitialized = false;
+    }
+  }
+
+  /// Check if a language is supported by local TTS
+  Future<bool> isLocalTtsAvailable(String language) async {
+    if (!_isLocalTtsInitialized) {
+      await _initLocalTts();
+    }
+
+    // Normalize language code (e.g., "en-US" -> "en_us" or "en-us")
+    final normalized = language.toLowerCase().replaceAll('-', '_');
+    final shortCode = language.split('-').first.toLowerCase();
+
+    // Check exact match or short code match
+    return _supportedLanguages.contains(normalized) ||
+        _supportedLanguages.contains(language.toLowerCase()) ||
+        _supportedLanguages.any((lang) => lang.startsWith(shortCode));
+  }
+
+  /// Play pronunciation for a word using hybrid strategy.
   /// Returns true if playback started successfully.
   Future<bool> speakWord(String word, {String language = 'en-US'}) async {
     // Debounce rapid taps
@@ -69,19 +143,31 @@ class WordTtsService {
       _isLoading = true;
       _currentlyPlayingWord = word;
 
-      // Try cache first
+      // ========== Step 1: Check local cache ==========
       final cachedPath = await _getCachedAudioPath(word, language);
       if (cachedPath != null) {
         if (kDebugMode) {
           debugPrint('🎵 WordTTS: Playing from cache: $word');
         }
-        await _playAudio(cachedPath);
+        await _playAudioFile(cachedPath);
         return true;
       }
 
-      // Fetch from API
+      // ========== Step 2: Check if local TTS supports this language ==========
+      final localTtsSupported = await isLocalTtsAvailable(language);
+
+      if (localTtsSupported) {
+        // ========== Step 3a: Use local TTS (zero cost) ==========
+        if (kDebugMode) {
+          debugPrint('🎤 WordTTS: Using local TTS for: $word ($language)');
+        }
+        await _playWithLocalTts(word, language);
+        return true;
+      }
+
+      // ========== Step 3b: Use cloud TTS ==========
       if (kDebugMode) {
-        debugPrint('🌐 WordTTS: Fetching from API: $word');
+        debugPrint('🌐 WordTTS: Fetching from cloud API: $word');
       }
 
       final audioBase64 = await _fetchWordAudio(word, language);
@@ -94,7 +180,7 @@ class WordTtsService {
       // Save to cache
       final savedPath = await _saveToCache(word, language, audioBase64);
       if (savedPath != null) {
-        await _playAudio(savedPath);
+        await _playAudioFile(savedPath);
         return true;
       }
 
@@ -113,9 +199,21 @@ class WordTtsService {
     }
   }
 
+  /// Play word using local TTS engine
+  Future<void> _playWithLocalTts(String word, String language) async {
+    _isLoading = false;
+
+    // Set language
+    await _flutterTts.setLanguage(language);
+
+    // Speak the word
+    await _flutterTts.speak(word);
+  }
+
   /// Stop current playback
   Future<void> stop() async {
     await _audioPlayer.stop();
+    await _flutterTts.stop();
     _currentlyPlayingWord = null;
     _isLoading = false;
   }
@@ -123,6 +221,37 @@ class WordTtsService {
   /// Dispose resources
   void dispose() {
     _audioPlayer.dispose();
+    _flutterTts.stop();
+  }
+
+  /// Clear all cached audio files
+  Future<void> clearCache({String? language}) async {
+    try {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final cacheBaseDir = Directory('${docsDir.path}/word_tts_cache');
+
+      if (language != null) {
+        // Clear specific language cache
+        final langDir = Directory('${cacheBaseDir.path}/$language');
+        if (await langDir.exists()) {
+          await langDir.delete(recursive: true);
+        }
+      } else {
+        // Clear all cache
+        if (await cacheBaseDir.exists()) {
+          await cacheBaseDir.delete(recursive: true);
+        }
+      }
+
+      if (kDebugMode) {
+        debugPrint(
+            '🗑️ WordTTS: Cache cleared ${language != null ? "for $language" : "(all)"}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Cache clear error: $e');
+      }
+    }
   }
 
   // ==================== Private Methods ====================
@@ -185,7 +314,7 @@ class WordTtsService {
     return null;
   }
 
-  /// Fetch word audio from API
+  /// Fetch word audio from cloud API
   Future<String?> _fetchWordAudio(String word, String language) async {
     try {
       final response = await http.post(
@@ -243,7 +372,7 @@ class WordTtsService {
   }
 
   /// Play audio from file path
-  Future<void> _playAudio(String filePath) async {
+  Future<void> _playAudioFile(String filePath) async {
     _isLoading = false;
 
     // Setup completion listener
