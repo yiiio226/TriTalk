@@ -206,8 +206,16 @@ class WordTtsService {
     // Set language
     await _flutterTts.setLanguage(language);
 
+    // Normalize word for TTS
+    // Single uppercase letters like "I" get spelled out as "Capital I"
+    // Convert to lowercase to speak naturally
+    String textToSpeak = word;
+    if (word.length == 1 && word == word.toUpperCase()) {
+      textToSpeak = word.toLowerCase();
+    }
+
     // Speak the word
-    await _flutterTts.speak(word);
+    await _flutterTts.speak(textToSpeak);
   }
 
   /// Stop current playback
