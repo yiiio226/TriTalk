@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -41,7 +42,8 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   ConsumerState<ShadowingSheet> createState() => _ShadowingSheetState();
 }
 
-class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
+class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
+    with TickerProviderStateMixin {
   final AudioRecorder _audioRecorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -59,6 +61,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   String? _ttsAudioPath; // Cached TTS audio file path
   final AudioPlayer _ttsPlayer = AudioPlayer(); // Separate player for TTS
 
+  // Waveform animation controller
+  late AnimationController _waveformController;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +71,12 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
     _feedback = widget.initialFeedback;
     _currentRecordingPath = widget.initialAudioPath;
     _ttsAudioPath = widget.initialTtsAudioPath; // Initialize cached TTS path
+
+    // Initialize waveform animation controller
+    _waveformController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
 
     // Listen to audio player state for recording playback
     _audioPlayer.onPlayerStateChanged.listen((state) {
@@ -88,6 +99,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
 
   @override
   void dispose() {
+    _waveformController.dispose();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     _ttsPlayer.dispose(); // Dispose TTS player
@@ -239,6 +251,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   Future<void> _startRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
+        // Trigger haptic feedback
+        HapticFeedback.mediumImpact();
+
         // Delete previous recording before starting a new one
         await _deleteCurrentRecording();
 
@@ -463,6 +478,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
     final shouldShowProviderError = providerError != null && !providerError.contains('InitialSilenceTimeout');
     final displayError = _errorMessage.isNotEmpty ? _errorMessage : (shouldShowProviderError ? providerError : '');
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final maxSheetHeight = screenHeight * 0.9;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -475,84 +493,119 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 64),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-           // Drag Handle & Header
-          Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: maxSheetHeight,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Fixed Header: Drag Handle & Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+              child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.record_voice_over_rounded,
-                      color: AppColors.secondary,
-                      size: 20,
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Shadowing Practice',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        shape: BoxShape.circle,
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.record_voice_over_rounded,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
                       ),
-                      child: const Icon(Icons.close, size: 20),
-                    ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Shadowing Practice',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 20),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 24),
+                  // Target Text - Always visible in header
+                  _buildTargetTextView(),
+                  const SizedBox(height: 16),
                 ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          
-          if (isAnalyzing)
-            _buildSkeletonLoader()
-          else 
-            // Content Area - either target text or feedback
-            _feedback != null ? _buildVoiceFeedbackContent(_feedback!) : _buildTargetTextView(),
-
-          const SizedBox(height: 32),
-
-          // Error Message
-          if (displayError.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Text(
-                displayError,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-                textAlign: TextAlign.center,
               ),
             ),
 
-          // Bottom Controls (Always visible)
-          _buildBottomControls(),
-        ],
+            // Scrollable Content Area
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isAnalyzing)
+                      _buildSkeletonLoader()
+                    else if (_isRecording)
+                      // Show waveform during recording
+                      _buildWaveform()
+                    else if (_feedback != null)
+                      // Show feedback after analysis
+                      _buildVoiceFeedbackContent(_feedback!)
+                    else
+                      // Empty space when idle
+                      const SizedBox(height: 40),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+
+            // Fixed Bottom Section: Error Message + Controls
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 64),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Error Message
+                  if (displayError.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        displayError,
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                  // Bottom Controls (Always visible)
+                  _buildBottomControls(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -608,7 +661,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              '原声',
+              'Listen',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -645,7 +698,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              _feedback == null ? '长按跟读' : '重新跟读',
+              _feedback == null ? 'Hold to Record' : 'Record Again',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -695,7 +748,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
                   ),
             const SizedBox(height: 8),
             Text(
-              _feedback == null ? '待评分' : '我的发音',
+              _feedback == null ? 'Not Rated' : 'My Score',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -1023,6 +1076,39 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
       decoration: BoxDecoration(
         color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+
+  /// Waveform animation widget for recording state
+  Widget _buildWaveform() {
+    return Container(
+      height: 120,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(30, (index) {
+          return AnimatedBuilder(
+            animation: _waveformController,
+            builder: (context, child) {
+              // Create a wave effect with staggered animation
+              final offset = (index * 0.05) % 1.0;
+              final animValue = (_waveformController.value + offset) % 1.0;
+              // Use a threshold that creates a "filling" effect or large block moving
+              final isDark = animValue < 0.5;
+
+              return Container(
+                width: 3,
+                height: 24,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.primary : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            },
+          );
+        }),
       ),
     );
   }
