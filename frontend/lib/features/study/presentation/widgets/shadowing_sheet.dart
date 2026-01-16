@@ -572,10 +572,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Target Text - Only visible when idle (not recording and no feedback)
-                  if (!_isRecording && _feedback == null && !isAnalyzing)
+                  // Target Text - Show only when idle or recording
+                  if (!isAnalyzing && _feedback == null)
                     _buildTargetTextView(),
-                  if (!_isRecording && _feedback == null && !isAnalyzing)
+                  if (!isAnalyzing && _feedback == null)
                     const SizedBox(height: 16),
                 ],
               ),
