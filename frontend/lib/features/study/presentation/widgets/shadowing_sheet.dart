@@ -1102,7 +1102,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 height: 24,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.secondary : Colors.grey[300],
+                  color: isDark ? AppColors.primary : Colors.grey[300],
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
