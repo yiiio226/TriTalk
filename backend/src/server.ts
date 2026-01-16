@@ -20,6 +20,7 @@ import {
   authMiddleware,
   callAzureSpeechAssessment,
   callMiniMaxTTS,
+  callMiniMaxTTSNonStreaming,
   callOpenRouter,
   callOpenRouterMultimodal,
   callOpenRouterStreaming,
@@ -1133,6 +1134,68 @@ app.post("/tts/generate", async (c) => {
       userId: user?.id,
     });
     return c.json({ error: "TTS generation failed." }, 500);
+  }
+});
+
+// POST /tts/word - Generate TTS for a single word (non-streaming)
+app.post("/tts/word", async (c) => {
+  try {
+    const env = c.env as Env;
+    if (!isTTSConfigured(env)) {
+      return c.json({ error: "TTS service not configured." }, 503);
+    }
+
+    const body = (await c.req.json()) as {
+      word: string;
+      language?: string;
+      voice_id?: string;
+    };
+
+    if (!body.word || body.word.trim().length === 0) {
+      return c.json({ error: "Word is required." }, 400);
+    }
+
+    // Limit word length for single word TTS
+    if (body.word.trim().length > 100) {
+      return c.json({ error: "Word is too long (max 100 characters)." }, 400);
+    }
+
+    const ttsConfig = getTTSConfig(env);
+
+    // Select voice based on language (default to English)
+    let voiceId = body.voice_id;
+    if (!voiceId && body.language) {
+      // Map language codes to MiniMax voice IDs
+      const voiceMap: Record<string, string> = {
+        "en-US": "English_Trustworthy_Man",
+        "en-GB": "English_Trustworthy_Man",
+        "zh-CN": "female-tianmei",
+        "ja-JP": "Japanese_IntellectualFemale",
+        "ko-KR": "Korean_IntellectualFemale",
+      };
+      voiceId = voiceMap[body.language] || "English_Trustworthy_Man";
+    }
+
+    const result = await callMiniMaxTTSNonStreaming(ttsConfig, {
+      text: body.word.trim(),
+      voiceId: voiceId,
+      speed: 0.9, // Slightly slower for clearer word pronunciation
+    });
+
+    return c.json({
+      audio_base64: result.audioBase64,
+      format: "mp3",
+      duration_ms: result.durationMs,
+    });
+  } catch (error) {
+    const user = c.get("user");
+    logError(error, {
+      route: "/tts/word",
+      method: "POST",
+      userId: user?.id,
+    });
+    console.error("TTS word generation error:", error);
+    return c.json({ error: "TTS word generation failed." }, 500);
   }
 });
 

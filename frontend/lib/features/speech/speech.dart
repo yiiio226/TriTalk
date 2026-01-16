@@ -34,6 +34,7 @@ export 'domain/models/pronunciation_result.dart';
 
 // Data services
 export 'data/services/speech_assessment_service.dart';
+export 'data/services/word_tts_service.dart';
 
 // Providers
 export 'providers/speech_providers.dart';

@@ -31,6 +31,9 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
   late VoiceFeedback _feedback;
   bool _hasTriggeredAssessment = false;
 
+  // Word TTS service for playing word pronunciations
+  final WordTtsService _wordTtsService = WordTtsService();
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +137,21 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
 
     // Notify parent to persist the update
     widget.onFeedbackUpdate?.call(updatedFeedback);
+  }
+
+  /// Play pronunciation for a word
+  Future<void> _playWordPronunciation(String word) async {
+    // Clean the word (remove punctuation)
+    final cleanWord = word.replaceAll(RegExp(r'[^\w\s\u4e00-\u9fff]'), '').trim();
+    if (cleanWord.isEmpty) return;
+
+    try {
+      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Word TTS error: $e');
+      }
+    }
   }
 
   @override
@@ -294,37 +312,40 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
                 color = Colors.grey;
             }
 
-            return IntrinsicWidth(
-              child: Column(
-                children: [
-                  Text(
-                    word.text,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: word.level == 'missing'
-                          ? Colors.grey
-                          : Colors.black87,
-                      decoration: word.level == 'missing'
-                          ? TextDecoration.lineThrough
-                          : null,
+            return GestureDetector(
+              onTap: () => _playWordPronunciation(word.text),
+              child: IntrinsicWidth(
+                child: Column(
+                  children: [
+                    Text(
+                      word.text,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: word.level == 'missing'
+                            ? Colors.grey
+                            : Colors.black87,
+                        decoration: word.level == 'missing'
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    height: 4,
-                    width: 20,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(2),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 4,
+                      width: 20,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${word.score.round()}',
-                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      '${word.score.round()}',
+                      style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
               ),
             );
           }).toList(),

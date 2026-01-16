@@ -47,6 +47,7 @@ dependencies:
   flutter_markdown: ^0.7.6
   audioplayers: ^5.0.0
   google_sign_in: ^7.2.0
+  crypto: ^3.0.6
 
   uuid: any
   # HTTP Client (runtime dependency)

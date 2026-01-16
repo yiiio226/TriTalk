@@ -15,7 +15,7 @@ class ScenarioConfigurationScreen extends StatefulWidget {
 
 class _ScenarioConfigurationScreenState
     extends State<ScenarioConfigurationScreen> {
-  String _selectedSpeed = 'Normal'; // Slow, Normal
+  final String _selectedSpeed = 'Normal'; // Slow, Normal
   String _selectedPersonality = 'Gentle'; // Gentle, Strict, Humorous
   late String _aiRole;
   late String _userRole;
