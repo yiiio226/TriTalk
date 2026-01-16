@@ -463,6 +463,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
     final shouldShowProviderError = providerError != null && !providerError.contains('InitialSilenceTimeout');
     final displayError = _errorMessage.isNotEmpty ? _errorMessage : (shouldShowProviderError ? providerError : '');
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final maxSheetHeight = screenHeight * 0.9;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -475,84 +478,112 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 64),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-           // Drag Handle & Header
-          Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: maxSheetHeight,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Fixed Header: Drag Handle & Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+              child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.record_voice_over_rounded,
-                      color: AppColors.secondary,
-                      size: 20,
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Shadowing Practice',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        shape: BoxShape.circle,
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.record_voice_over_rounded,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
                       ),
-                      child: const Icon(Icons.close, size: 20),
-                    ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Shadowing Practice',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 20),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 24),
                 ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          
-          if (isAnalyzing)
-            _buildSkeletonLoader()
-          else 
-            // Content Area - either target text or feedback
-            _feedback != null ? _buildVoiceFeedbackContent(_feedback!) : _buildTargetTextView(),
-
-          const SizedBox(height: 32),
-
-          // Error Message
-          if (displayError.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Text(
-                displayError,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-                textAlign: TextAlign.center,
               ),
             ),
 
-          // Bottom Controls (Always visible)
-          _buildBottomControls(),
-        ],
+            // Scrollable Content Area
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isAnalyzing)
+                      _buildSkeletonLoader()
+                    else
+                      // Content Area - either target text or feedback
+                      _feedback != null
+                          ? _buildVoiceFeedbackContent(_feedback!)
+                          : _buildTargetTextView(),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+
+            // Fixed Bottom Section: Error Message + Controls
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 64),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Error Message
+                  if (displayError.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        displayError,
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                  // Bottom Controls (Always visible)
+                  _buildBottomControls(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -608,7 +639,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              '原声',
+              'Listen',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -645,7 +676,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              _feedback == null ? '长按跟读' : '重新跟读',
+              _feedback == null ? 'Hold to Record' : 'Record Again',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -695,7 +726,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
                   ),
             const SizedBox(height: 8),
             Text(
-              _feedback == null ? '待评分' : '我的发音',
+              _feedback == null ? 'Not Rated' : 'My Score',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
