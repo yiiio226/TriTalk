@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -41,7 +42,8 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   ConsumerState<ShadowingSheet> createState() => _ShadowingSheetState();
 }
 
-class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
+class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
+    with TickerProviderStateMixin {
   final AudioRecorder _audioRecorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -59,6 +61,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   String? _ttsAudioPath; // Cached TTS audio file path
   final AudioPlayer _ttsPlayer = AudioPlayer(); // Separate player for TTS
 
+  // Waveform animation controller
+  late AnimationController _waveformController;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +71,12 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
     _feedback = widget.initialFeedback;
     _currentRecordingPath = widget.initialAudioPath;
     _ttsAudioPath = widget.initialTtsAudioPath; // Initialize cached TTS path
+
+    // Initialize waveform animation controller
+    _waveformController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
 
     // Listen to audio player state for recording playback
     _audioPlayer.onPlayerStateChanged.listen((state) {
@@ -88,6 +99,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
 
   @override
   void dispose() {
+    _waveformController.dispose();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     _ttsPlayer.dispose(); // Dispose TTS player
@@ -239,6 +251,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
   Future<void> _startRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
+        // Trigger haptic feedback
+        HapticFeedback.mediumImpact();
+
         // Delete previous recording before starting a new one
         await _deleteCurrentRecording();
 
@@ -536,6 +551,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
                     ],
                   ),
                   const SizedBox(height: 24),
+                  // Target Text - Always visible in header
+                  _buildTargetTextView(),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -549,11 +567,15 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
                   children: [
                     if (isAnalyzing)
                       _buildSkeletonLoader()
+                    else if (_isRecording)
+                      // Show waveform during recording
+                      _buildWaveform()
+                    else if (_feedback != null)
+                      // Show feedback after analysis
+                      _buildVoiceFeedbackContent(_feedback!)
                     else
-                      // Content Area - either target text or feedback
-                      _feedback != null
-                          ? _buildVoiceFeedbackContent(_feedback!)
-                          : _buildTargetTextView(),
+                      // Empty space when idle
+                      const SizedBox(height: 40),
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -1054,6 +1076,39 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet> {
       decoration: BoxDecoration(
         color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+
+  /// Waveform animation widget for recording state
+  Widget _buildWaveform() {
+    return Container(
+      height: 120,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(30, (index) {
+          return AnimatedBuilder(
+            animation: _waveformController,
+            builder: (context, child) {
+              // Create a wave effect with staggered animation
+              final offset = (index * 0.05) % 1.0;
+              final animValue = (_waveformController.value + offset) % 1.0;
+              // Use a threshold that creates a "filling" effect or large block moving
+              final isDark = animValue < 0.5;
+
+              return Container(
+                width: 3,
+                height: 24,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.secondary : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            },
+          );
+        }),
       ),
     );
   }
