@@ -572,9 +572,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Target Text - Always visible in header
-                  _buildTargetTextView(),
-                  const SizedBox(height: 16),
+                  // Target Text - Show only when idle or recording
+                  if (!isAnalyzing && _feedback == null)
+                    _buildTargetTextView(),
+                  if (!isAnalyzing && _feedback == null)
+                    const SizedBox(height: 16),
                 ],
               ),
             ),
