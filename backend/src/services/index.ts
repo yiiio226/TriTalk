@@ -11,6 +11,7 @@ export {
 
 export {
   callMiniMaxTTS,
+  callMiniMaxTTSNonStreaming,
   buildTTSRequestBody,
   isTTSConfigured,
   getTTSConfig,

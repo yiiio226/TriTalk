@@ -10,7 +10,6 @@ import 'package:frontend/features/scenes/domain/models/scene.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/feedback_sheet.dart';
-import '../widgets/voice_feedback_sheet.dart';
 import '../../../study/presentation/widgets/analysis_sheet.dart';
 import '../widgets/hints_sheet.dart';
 import '../widgets/message_skeleton_loader.dart';

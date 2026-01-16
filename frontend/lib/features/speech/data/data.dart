@@ -4,3 +4,4 @@
 library;
 
 export 'services/speech_assessment_service.dart';
+export 'services/word_tts_service.dart';
