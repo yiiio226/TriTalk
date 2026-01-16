@@ -571,7 +571,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       // Show waveform during recording
                       _buildWaveform()
                     else if (_feedback != null)
-                      // Show feedback after analysis
+                      // Show feedback after analysis (without target text)
                       _buildVoiceFeedbackContent(_feedback!)
                     else
                       // Empty space when idle
