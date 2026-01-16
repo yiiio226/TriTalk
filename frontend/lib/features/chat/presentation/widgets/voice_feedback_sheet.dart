@@ -141,8 +141,9 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
 
   /// Play pronunciation for a word
   Future<void> _playWordPronunciation(String word) async {
-    // Clean the word (remove punctuation)
-    final cleanWord = word.replaceAll(RegExp(r'[^\w\s\u4e00-\u9fff]'), '').trim();
+    // Clean the word (keep hyphens and apostrophes for proper pronunciation)
+    // Remove only sentence-ending punctuation like . , ! ? ; :
+    final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
     if (cleanWord.isEmpty) return;
 
     try {
