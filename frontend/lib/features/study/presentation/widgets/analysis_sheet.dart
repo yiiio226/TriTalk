@@ -621,9 +621,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.lightSuccessShade50,
+        color: AppColors.lg50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.lightSuccessShade200, width: 1),
+        border: Border.all(color: AppColors.lg200, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -39,7 +39,6 @@ class AppColors {
   static const Color ln900 = Color(0xE3000000);  // 89% black - Primary text, strong emphasis
 
 
-
   // =============================
   // Semantic Color Aliases (Backward Compatibility)
   // =============================
@@ -53,6 +52,60 @@ class AppColors {
   // Shadows / Overlays
   static const Color lightShadow = ln100;
 
+
+  // =============================
+  // Semantic Color Scales (Light Mode)
+  // =============================
+  // Comprehensive color scales for UI components, states, and semantic meanings.
+  // Each color has 6 shades from very light (50) to saturated (500).
+  
+  // Blue Scale (Light Mode) - For info, links, and primary actions
+  static const Color lb50 = Color(0xFFEFF6FF);   // Very light blue background
+  static const Color lb100 = Color(0xFFDBEAFE);  // Light blue background
+  static const Color lb200 = Color(0xFFBFDBFE);  // Soft blue for borders
+  static const Color lb300 = Color(0xFF93C5FD);  // Medium blue for hover states
+  static const Color lb400 = Color(0xFF60A5FA);  // Bright blue for accents
+  static const Color lb500 = Color(0xFF3B82F6);  // Saturated blue for primary info
+  
+  // Green Scale (Light Mode) - For success, positive states, and growth
+  static const Color lg50 = Color(0xFFECFDF5);   // Very light green background
+  static const Color lg100 = Color(0xFFD1FAE5);  // Light green background
+  static const Color lg200 = Color(0xFFA7F3D0);  // Soft green for borders
+  static const Color lg300 = Color(0xFF6EE7B7);  // Medium green for hover states
+  static const Color lg400 = Color(0xFF34D399);  // Bright green for accents
+  static const Color lg500 = Color(0xFF10B981);  // Saturated green for success
+  
+  // Red Scale (Light Mode) - For errors, warnings, and destructive actions
+  static const Color lr50 = Color(0xFFFEF2F2);   // Very light red background
+  static const Color lr100 = Color(0xFFFEE2E2);  // Light red background
+  static const Color lr200 = Color(0xFFFECACA);  // Soft red for borders
+  static const Color lr300 = Color(0xFFFCA5A5);  // Medium red for hover states
+  static const Color lr400 = Color(0xFFF87171);  // Bright red for accents
+  static const Color lr500 = Color(0xFFEF4444);  // Saturated red for errors
+  
+  // Yellow Scale (Light Mode) - For warnings, highlights, and attention
+  static const Color ly50 = Color(0xFFFEFCE8);   // Very light yellow background
+  static const Color ly100 = Color(0xFFFEF9C3);  // Light yellow background
+  static const Color ly200 = Color(0xFFFEF08A);  // Soft yellow for borders
+  static const Color ly300 = Color(0xFFFDE047);  // Medium yellow for hover states
+  static const Color ly400 = Color(0xFFFACC15);  // Bright yellow for accents
+  static const Color ly500 = Color(0xFFEAB308);  // Saturated yellow for warnings
+  
+  // Orange Scale (Light Mode) - For alerts, energy, and secondary warnings
+  static const Color lo50 = Color(0xFFFFF7ED);   // Very light orange background
+  static const Color lo100 = Color(0xFFFFEDD5);  // Light orange background
+  static const Color lo200 = Color(0xFFFED7AA);  // Soft orange for borders
+  static const Color lo300 = Color(0xFFFDBA74);  // Medium orange for hover states
+  static const Color lo400 = Color(0xFFFB923C);  // Bright orange for accents
+  static const Color lo500 = Color(0xFFF97316);  // Saturated orange for alerts
+  
+  // Purple Scale (Light Mode) - For premium, creative, and special features
+  static const Color lp50 = Color(0xFFFAF5FF);   // Very light purple background
+  static const Color lp100 = Color(0xFFF3E8FF);  // Light purple background
+  static const Color lp200 = Color(0xFFE9D5FF);  // Soft purple for borders
+  static const Color lp300 = Color(0xFFD8B4FE);  // Medium purple for hover states
+  static const Color lp400 = Color(0xFFC084FC);  // Bright purple for accents
+  static const Color lp500 = Color(0xFFA855F7);  // Saturated purple for premium
 
   // =============================
   // Brand Colors
@@ -70,22 +123,14 @@ class AppColors {
   // =============================
   // Light Theme State Colors
   // =============================
-  static const Color lightError = Color(0xFFA63333); // Error
-  static const Color lightSuccess = Color(0xFF008367); // Success
-  static const Color lightWarning = Color(0xFFD78700); // Warning
-  static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
-  static const Color lightInfo = Color(0xFF3B82F6); // Primary blue for info
-  static const Color lightBlue = Color(0xFF006283); // Info blue
-  static const Color lightInfoShade100 = Color(0xFFDBEAFE); // Light blue background
+  static const Color lightError = lr500; // Error
+  static const Color lightSuccess = lg500; // Success
+  static const Color lightWarning = ly500; // Warning
+  static const Color lightInfo = lb500; // Primary blue for info
+  static const Color lightBlue = lb500; // Info blue
 
-  // Green Success Shades (Light Theme)
-  static const Color lightSuccessShade50 = Color(0xFFECFDF5); // Very light green
-  static const Color lightSuccessShade100 = Color(0xFFD1FAEB); // Light green
-  static const Color lightSuccessShade200 = Color(0xFF83E4BB); // Medium light green
 
-    // Amber/Orange Warning Shades (Light Theme)
-  static const Color lightWarningShade200 = Color(0xFFFDE68A); // Amber shade for borders
-  static const Color lightOrangeShade100 = Color(0xFFFFEDD5); // Light orange for borders
+
 
   // =============================
   // Dark Theme Colors
@@ -106,6 +151,62 @@ class AppColors {
   static const Color dn700 = Color(0xC7FFFFFF);  // 78% white - Dark secondary text
   static const Color dn900 = Color(0xE3FFFFFF);  // 89% white - Primary text, strong emphasis
 
+
+
+  // =============================
+  // Semantic Color Scales (Dark Mode)
+  // =============================
+  // Dark mode variants optimized for dark backgrounds.
+  // Colors are adjusted for proper contrast and visual comfort in dark environments.
+  
+  // Blue Scale (Dark Mode)
+  static const Color db50 = Color(0xFF172554);   // Very dark blue background
+  static const Color db100 = Color(0xFF1E3A8A);  // Dark blue background
+  static const Color db200 = Color(0xFF1E40AF);  // Medium dark blue
+  static const Color db300 = Color(0xFF2563EB);  // Medium blue
+  static const Color db400 = Color(0xFF3B82F6);  // Bright blue
+  static const Color db500 = Color(0xFF60A5FA);  // Light blue for dark mode
+  
+  // Green Scale (Dark Mode)
+  static const Color dg50 = Color(0xFF064E3B);   // Very dark green background
+  static const Color dg100 = Color(0xFF065F46);  // Dark green background
+  static const Color dg200 = Color(0xFF047857);  // Medium dark green
+  static const Color dg300 = Color(0xFF059669);  // Medium green
+  static const Color dg400 = Color(0xFF10B981);  // Bright green
+  static const Color dg500 = Color(0xFF34D399);  // Light green for dark mode
+  
+  // Red Scale (Dark Mode)
+  static const Color dr50 = Color(0xFF7F1D1D);   // Very dark red background
+  static const Color dr100 = Color(0xFF991B1B);  // Dark red background
+  static const Color dr200 = Color(0xFFB91C1C);  // Medium dark red
+  static const Color dr300 = Color(0xFFDC2626);  // Medium red
+  static const Color dr400 = Color(0xFFEF4444);  // Bright red
+  static const Color dr500 = Color(0xFFF87171);  // Light red for dark mode
+  
+  // Yellow Scale (Dark Mode)
+  static const Color dy50 = Color(0xFF713F12);   // Very dark yellow background
+  static const Color dy100 = Color(0xFF854D0E);  // Dark yellow background
+  static const Color dy200 = Color(0xFFA16207);  // Medium dark yellow
+  static const Color dy300 = Color(0xFFCA8A04);  // Medium yellow
+  static const Color dy400 = Color(0xFFEAB308);  // Bright yellow
+  static const Color dy500 = Color(0xFFFACC15);  // Light yellow for dark mode
+  
+  // Orange Scale (Dark Mode)
+  static const Color do50 = Color(0xFF7C2D12);   // Very dark orange background
+  static const Color do100 = Color(0xFF9A3412);  // Dark orange background
+  static const Color do200 = Color(0xFFC2410C);  // Medium dark orange
+  static const Color do300 = Color(0xFFEA580C);  // Medium orange
+  static const Color do400 = Color(0xFFF97316);  // Bright orange
+  static const Color do500 = Color(0xFFFB923C);  // Light orange for dark mode
+  
+  // Purple Scale (Dark Mode)
+  static const Color dp50 = Color(0xFF581C87);   // Very dark purple background
+  static const Color dp100 = Color(0xFF6B21A8);  // Dark purple background
+  static const Color dp200 = Color(0xFF7E22CE);  // Medium dark purple
+  static const Color dp300 = Color(0xFF9333EA);  // Medium purple
+  static const Color dp400 = Color(0xFFA855F7);  // Bright purple
+  static const Color dp500 = Color(0xFFC084FC);  // Light purple for dark mode
+
   
   // Dark Theme Base Colors
   static const Color darkBackground = Color(0xFF0B1220);
@@ -113,13 +214,13 @@ class AppColors {
   static const Color darkDivider = ln200; // Divider/Border
 
   // Dark Theme State Colors
-  static const Color darkError = Color(0xFFF87171);
-  static const Color darkSuccess = Color(0xFF34D399);
-  static const Color darkWarning = Color(0xFFF59E0B);
-  static const Color darkWarningBackground = Color(0xFF451A03);
-  static const Color darkInfo = Color(0xFF60A5FA); // Info blue
-  static const Color darkBlue = Color(0xFF2BC3C9); // Info blue
-  static const Color darkInfoShade100 = Color(0xFF1E3A8A); // Light blue background
+  static const Color darkError = dr500; // Error
+  static const Color darkSuccess = dg500; // Success
+  static const Color darkWarning = dy500; // Warning
+  static const Color darkWarningBackground = dy50; // Warning Background
+  static const Color darkInfo = db500; // Info blue
+  static const Color darkBlue = db500; // Info blue
+
 
   
 
@@ -132,25 +233,7 @@ class AppColors {
   static const Color darkShadow = dn100;
 
 
-  // =============================
-  // Additional UI Colors
-  // =============================
-  
 
-  
-  // Green Success Shades (Dark Theme)
-  static const Color darkSuccessShade50 = Color(0xFF064E3B); // Dark mode very light green
-  static const Color darkSuccessShade100 = Color(0xFF065F46); // Dark mode light green
-  static const Color darkSuccessShade200 = Color(0xFF047857); // Dark mode medium light green
-  
-  
-
-  
-  // Amber/Orange Warning Shades (Dark Theme)
-  static const Color darkWarningShade200 = Color(0xFF92400E); // Dark mode amber shade
-  static const Color darkOrangeShade100 = Color(0xFF7C2D12); // Dark mode orange shade
-
-  
 
 }
 

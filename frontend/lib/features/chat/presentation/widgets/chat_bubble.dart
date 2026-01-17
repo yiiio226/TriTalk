@@ -351,11 +351,11 @@ class _ChatBubbleState extends State<ChatBubble>
     if (isUser && isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
-          colors: [AppColors.lightSuccessShade100, AppColors.lightSuccessShade200],
+          colors: [AppColors.lg100, AppColors.lg200],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: AppColors.lightSuccessShade200, width: 1),
+        border: Border.all(color: AppColors.lg200, width: 1),
       );
     } else if (isUser && isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
@@ -364,11 +364,11 @@ class _ChatBubbleState extends State<ChatBubble>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: AppColors.lightWarningShade200, width: 1),
+        border: Border.all(color: AppColors.ly200, width: 1),
       );
     } else if (isUser && hasFeedback) {
       bubbleDecoration = bubbleDecoration.copyWith(
-        border: Border.all(color: AppColors.lightOrangeShade100, width: 1),
+        border: Border.all(color: AppColors.lo100, width: 1),
       );
     }
 
@@ -792,7 +792,7 @@ class _ChatBubbleState extends State<ChatBubble>
                             ),
                             decoration: BoxDecoration(
                               color: _isTTSPlaying
-                                  ? AppColors.lightInfoShade100
+                                  ? AppColors.lb100
                                   : AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
