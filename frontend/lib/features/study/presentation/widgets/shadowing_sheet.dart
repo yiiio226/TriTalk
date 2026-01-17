@@ -8,6 +8,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/core/data/api/api_service.dart';
@@ -865,6 +866,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           _buildStatItem('Accuracy', feedback.azureAccuracyScore),
           _buildStatItem('Fluency', feedback.azureFluencyScore),
           _buildStatItem('Complete', feedback.azureCompletenessScore),
+          if (feedback.azureProsodyScore != null)
+             _buildStatItem('Prosody', feedback.azureProsodyScore),
         ],
       ),
     );
@@ -874,33 +877,29 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     if (feedback.azureProsodyScore == null) return const SizedBox.shrink();
 
     final score = feedback.azureProsodyScore!;
-    final normalizedScore = (score / 100.0).clamp(0.0, 1.0);
-
-    Color scoreColor;
-    String feedbackText;
+    
+    // Determine status text based on score
+    String statusText;
     if (score >= 80) {
-      scoreColor = const Color(0xFF10B981); // Green
-      feedbackText = 'Natural and expressive intonation.';
+      statusText = 'Great intonation! You sound natural.';
     } else if (score >= 60) {
-      scoreColor = const Color(0xFFF59E0B); // Orange
-      feedbackText = 'Good intonation, keep practicing the rhythm.';
+      statusText = 'Good start. Try to express more emotion.';
     } else {
-      scoreColor = const Color(0xFFEF4444); // Red
-      feedbackText = 'Try to mimic the ups and downs of the native speaker.';
+      statusText = 'Too flat. Mimic the ups and downs.';
     }
 
     return Container(
-      margin: const EdgeInsets.only(top: 16),
+      margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.lightBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.lightDivider),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -912,57 +911,101 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: scoreColor.withValues(alpha: 0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.graphic_eq_rounded,
                   size: 20,
-                  color: scoreColor,
+                  color: Colors.blue,
                 ),
               ),
               const SizedBox(width: 12),
               const Text(
-                'Intonation',
+                'Pitch Contour',
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.lightTextPrimary,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${score.round()}',
-                style: TextStyle(
-                  fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: scoreColor,
+                  color: AppColors.lightTextPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: normalizedScore,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-              minHeight: 10,
+          const SizedBox(height: 20),
+          // Pitch Contour Visualization
+          SizedBox(
+            height: 80,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: IntonationPainter(
+                score: score,
+                primaryColor: AppColors.primary,
+                userColor: _getScoreColor(score),
+              ),
             ),
           ),
+          const SizedBox(height: 16),
+          // Legend
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLegendItem('Native Speaker', AppColors.primary.withValues(alpha: 0.3)),
+              const SizedBox(width: 24),
+              _buildLegendItem('You', _getScoreColor(score)),
+            ],
+          ),
           const SizedBox(height: 12),
-          Text(
-            feedbackText,
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.lightTextSecondary,
-              fontStyle: FontStyle.italic,
+           Container(
+            padding: const EdgeInsets.all(12),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _getScoreColor(score).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              statusText,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: _getScoreColor(score), // Matches the user curve color
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.lightTextSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getScoreColor(double score) {
+     if (score >= 80) return const Color(0xFF10B981); // Green
+     if (score >= 60) return const Color(0xFFF59E0B); // Orange
+     return const Color(0xFFEF4444); // Red
+  }
 
   Widget _buildStatItem(String label, double? score) {
     final value = score?.round() ?? 0;
@@ -1257,5 +1300,83 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         }),
       ),
     );
+  }
+}
+
+/// Custom painter for drawing pitch contour visualization
+class IntonationPainter extends CustomPainter {
+  final double score;
+  final Color primaryColor;
+  final Color userColor;
+
+  IntonationPainter({
+    required this.score,
+    required this.primaryColor,
+    required this.userColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+
+    // AI Curve (Standard) - draw first so user curve is on top
+    final aiPath = Path();
+    paint.color = primaryColor.withValues(alpha: 0.3);
+    
+    for (double x = 0; x <= size.width; x += 2) {
+      final normalizedX = x / size.width;
+      final y = size.height * 0.5 + 
+               (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
+               (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
+               
+      if (x == 0) {
+        aiPath.moveTo(x, y);
+      } else {
+        aiPath.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(aiPath, paint);
+
+    // User Curve
+    final userPath = Path();
+    paint.color = userColor;
+    
+    for (double x = 0; x <= size.width; x += 2) {
+      final normalizedX = x / size.width;
+      
+      final aiY = size.height * 0.5 + 
+                 (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
+                 (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
+      
+      double userY;
+      if (score >= 90) {
+        userY = aiY + (math.sin(x * 0.1) * 2); 
+      } else if (score >= 60) {
+        userY = size.height * 0.5 + 
+               (aiY - size.height * 0.5) * 0.7 +
+               (math.sin(x * 0.05) * 5);
+      } else {
+        userY = size.height * 0.5 + 
+               (aiY - size.height * 0.5) * 0.2 +
+               (math.sin(x * 0.1) * 3);
+      }
+
+      if (x == 0) {
+        userPath.moveTo(x, userY);
+      } else {
+        userPath.lineTo(x, userY);
+      }
+    }
+    canvas.drawPath(userPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant IntonationPainter oldDelegate) {
+    return oldDelegate.score != score ||
+           oldDelegate.primaryColor != primaryColor ||
+           oldDelegate.userColor != userColor;
   }
 }
