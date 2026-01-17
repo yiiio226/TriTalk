@@ -445,7 +445,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         spans.add(TextSpan(
           text: '${originalWords[i]} ',
           style: TextStyle(
-            color: Colors.red[700],
+              color: AppColors.lr800,
             fontWeight: FontWeight.w500,
           ),
         ));

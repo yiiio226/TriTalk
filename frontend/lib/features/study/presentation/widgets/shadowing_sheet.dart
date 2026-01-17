@@ -840,7 +840,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        color: AppColors.lightSuccess, // Green
+                        color: AppColors.lg500, // Green
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -993,15 +993,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.lightDivider),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ln100.withValues(
-              alpha: 0.8,
-            ), // Adjusted for roughly 4% depending on ln100 opacity
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
