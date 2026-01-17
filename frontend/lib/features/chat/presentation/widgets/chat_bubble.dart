@@ -604,8 +604,8 @@ class _ChatBubbleState extends State<ChatBubble>
                               ),
                               decoration: BoxDecoration(
                                 color: widget.message.isAnalyzing
-                                    ? AppColors.lightGrey200
-                                    : AppColors.lightGrey100,
+                                    ? AppColors.ln200
+                                    : AppColors.ln100,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
@@ -694,7 +694,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.lightGrey100,
+                                  color: AppColors.ln100,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
@@ -757,7 +757,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.lightGrey100,
+                              color: AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -793,7 +793,7 @@ class _ChatBubbleState extends State<ChatBubble>
                             decoration: BoxDecoration(
                               color: _isTTSPlaying
                                   ? AppColors.lightInfoShade100
-                                  : AppColors.lightGrey100,
+                                  : AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -882,7 +882,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.lightGrey100,
+                              color: AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -916,7 +916,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.lightGrey100,
+                              color: AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -973,7 +973,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.lightGrey100,
+                              color: AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -1023,7 +1023,7 @@ class _ChatBubbleState extends State<ChatBubble>
                     const SizedBox(height: 8),
                     SelectableText(
                       _translatedText!,
-                      style: TextStyle(fontSize: 14, color: AppColors.lightGrey700),
+                      style: TextStyle(fontSize: 14, color: AppColors.ln700),
                     ),
                   ],
                 ],

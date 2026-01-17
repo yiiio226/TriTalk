@@ -38,6 +38,8 @@ class AppColors {
   static const Color ln700 = Color(0xC7000000);  // 78% black - Dark secondary text
   static const Color ln900 = Color(0xE3000000);  // 89% black - Primary text, strong emphasis
 
+
+
   // =============================
   // Semantic Color Aliases (Backward Compatibility)
   // =============================
@@ -51,11 +53,6 @@ class AppColors {
   // Shadows / Overlays
   static const Color lightShadow = ln100;
 
-  // Grey Shades (Light Theme)
-  /// Special grey for backgrounds - not pure black based, kept for specific UI needs
-  static const Color lightGrey100 = Color(0xFFF3F4F6); // Very light grey for backgrounds
-  static const Color lightGrey200 = ln200; // Light grey for disabled states
-  static const Color lightGrey700 = ln700; // Dark grey for secondary text
 
   // =============================
   // Brand Colors
@@ -77,96 +74,84 @@ class AppColors {
   static const Color lightSuccess = Color(0xFF008367); // Success
   static const Color lightWarning = Color(0xFFD78700); // Warning
   static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
+  static const Color lightInfo = Color(0xFF3B82F6); // Primary blue for info
+  static const Color lightBlue = Color(0xFF006283); // Info blue
+  static const Color lightInfoShade100 = Color(0xFFDBEAFE); // Light blue background
+
+  // Green Success Shades (Light Theme)
+  static const Color lightSuccessShade50 = Color(0xFFECFDF5); // Very light green
+  static const Color lightSuccessShade100 = Color(0xFFD1FAE5); // Light green
+  static const Color lightSuccessShade200 = Color(0xFFA7F3D0); // Medium light green
+
+    // Amber/Orange Warning Shades (Light Theme)
+  static const Color lightWarningShade200 = Color(0xFFFDE68A); // Amber shade for borders
+  static const Color lightOrangeShade100 = Color(0xFFFFEDD5); // Light orange for borders
 
   // =============================
   // Dark Theme Colors
   // =============================
+
+  // =============================
+  // Neutral Color Scale (Dark Mode)
+  // =============================
+  // Unified neutral colors based on pure white (#FFFFFF) with percentage-based opacity.
+  // This provides a consistent, predictable scale for all neutral UI elements in dark mode.
+  
+  static const Color dn50 = Color(0x08FFFFFF);   // 3% white - Subtle backgrounds, very light overlays
+  static const Color dn100 = Color(0x0DFFFFFF);  // 5% white - Shadows, very light grey backgrounds
+  static const Color dn200 = Color(0x1FFFFFFF);  // 12% white - Borders, dividers, light grey backgrounds
+  static const Color dn300 = Color(0x61FFFFFF);  // 38% white - Disabled states, placeholder text
+  static const Color dn400 = Color(0x73FFFFFF);  // 45% white - Medium grey for subtle emphasis
+  static const Color dn500 = Color(0xB8FFFFFF);  // 72% white - Secondary text, icons
+  static const Color dn700 = Color(0xC7FFFFFF);  // 78% white - Dark secondary text
+  static const Color dn900 = Color(0xE3FFFFFF);  // 89% white - Primary text, strong emphasis
+
   
   // Dark Theme Base Colors
   static const Color darkBackground = Color(0xFF0B1220);
   static const Color darkSurface = Color(0xFF111827);
-  static const Color darkDivider = Color(0xFF273042); // Divider/Border
+  static const Color darkDivider = ln200; // Divider/Border
 
   // Dark Theme State Colors
   static const Color darkError = Color(0xFFF87171);
   static const Color darkSuccess = Color(0xFF34D399);
   static const Color darkWarning = Color(0xFFF59E0B);
   static const Color darkWarningBackground = Color(0xFF451A03);
+  static const Color darkInfo = Color(0xFF60A5FA); // Info blue
+  static const Color darkBlue = Color(0xFF2BC3C9); // Info blue
+  static const Color darkInfoShade100 = Color(0xFF1E3A8A); // Light blue background
+
+  
 
   // Dark Theme Text Colors
-  static const Color darkTextPrimary = Color(0xFFF8FAFC);
-  static const Color darkTextSecondary = Color(0xFFCBD5E1);
-  static const Color darkTextDisabled = Color(0xFF9CA3AF); // Placeholder/Disabled
+  static const Color darkTextPrimary = dn900; // Primary Text
+  static const Color darkTextSecondary = dn500; // Secondary Text
+  static const Color darkTextDisabled = dn300; // Placeholder/Disabled
 
   // Dark Theme Shadows
-  static const Color darkShadow = Color(0x66000000);
+  static const Color darkShadow = dn100;
 
-  // Dark Theme Grey Shades
-  static const Color darkGrey100 = Color(0xFF1F2937); // Dark mode light grey
-  static const Color darkGrey200 = Color(0xFF374151); // Dark mode medium grey
-  static const Color darkGrey700 = Color(0xFFD1D5DB); // Dark mode text grey
 
   // =============================
   // Additional UI Colors
   // =============================
   
-  // Green Success Shades (Light Theme)
-  static const Color lightSuccessShade50 = Color(0xFFECFDF5); // Very light green
-  static const Color lightSuccessShade100 = Color(0xFFD1FAE5); // Light green
-  static const Color lightSuccessShade200 = Color(0xFFA7F3D0); // Medium light green
+
   
   // Green Success Shades (Dark Theme)
   static const Color darkSuccessShade50 = Color(0xFF064E3B); // Dark mode very light green
   static const Color darkSuccessShade100 = Color(0xFF065F46); // Dark mode light green
   static const Color darkSuccessShade200 = Color(0xFF047857); // Dark mode medium light green
   
-  // Blue/Info Colors (Light Theme)
-  static const Color lightInfo = Color(0xFF3B82F6); // Primary blue for info
-  static const Color lightInfoShade100 = Color(0xFFDBEAFE); // Light blue background
   
-  // Blue/Info Colors (Dark Theme)
-  static const Color darkInfo = Color(0xFF60A5FA); // Dark mode info blue
-  static const Color darkInfoShade100 = Color(0xFF1E3A8A); // Dark mode light blue background
-  
-  // Amber/Orange Warning Shades (Light Theme)
-  static const Color lightWarningShade200 = Color(0xFFFDE68A); // Amber shade for borders
-  static const Color lightOrangeShade100 = Color(0xFFFFEDD5); // Light orange for borders
+
   
   // Amber/Orange Warning Shades (Dark Theme)
   static const Color darkWarningShade200 = Color(0xFF92400E); // Dark mode amber shade
   static const Color darkOrangeShade100 = Color(0xFF7C2D12); // Dark mode orange shade
 
-  // -------------------- Analysis Card Colors (Preserved) --------------------
   
-  /// Purple background for analysis cards (e.g., grammar explanations)
-  static const Color analysisPurpleLight = Color(0xFFF3E5F5);
-  
-  /// Blue background for analysis cards (e.g., vocabulary)
-  static const Color analysisBlueLight = Color(0xFFE3F2FD);
-  
-  /// Red/Pink background for analysis cards (e.g., corrections)
-  static const Color analysisRedLight = Color(0xFFFFEBEE);
-  
-  /// Yellow gradient start for chat bubbles with feedback
-  static const Color feedbackGradientStart = Color(0xFFFFF8E1);
-  
-  /// Yellow gradient end for chat bubbles with feedback
-  static const Color feedbackGradientEnd = Color(0xFFFFECB3);
 
-  /// Purple background for analysis cards - dark mode
-  static const Color analysisPurpleDark = Color(0xFF2D1B3D);
-  
-  /// Blue background for analysis cards - dark mode
-  static const Color analysisBlueDark = Color(0xFF1A2942);
-  
-  /// Red/Pink background for analysis cards - dark mode
-  static const Color analysisRedDark = Color(0xFF3D1F1F);
-  
-  /// Yellow gradient start for chat bubbles with feedback - dark mode
-  static const Color feedbackGradientStartDark = Color(0xFF3A3A1C);
-  
-  /// Yellow gradient end for chat bubbles with feedback - dark mode
-  static const Color feedbackGradientEndDark = Color(0xFF4A4A2C);
 }
 
 

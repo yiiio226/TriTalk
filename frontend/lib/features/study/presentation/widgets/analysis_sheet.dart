@@ -353,9 +353,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.analysisBlueLight,
+                        color: AppColors.lightBlue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: Colors.blue.shade100),
+                        border: Border.all(color: AppColors.lightBlue.withOpacity(0.3)),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -373,7 +373,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             segment.tag,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.blue[700],
+                              color: AppColors.lightBlue,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
