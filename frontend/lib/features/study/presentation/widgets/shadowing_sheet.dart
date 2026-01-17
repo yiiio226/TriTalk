@@ -250,6 +250,81 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     }
   }
 
+  /// Play audio for a specific segment of the target text using Azure TTS
+  Future<void> _playSegmentAudio(int segmentIndex) async {
+    // Split target text into roughly 3 equal segments by word count
+    final words = widget.targetText.split(' ');
+    final segmentSize = (words.length / 3).ceil();
+    
+    int startIndex, endIndex;
+    switch (segmentIndex) {
+      case 0: // First segment
+        startIndex = 0;
+        endIndex = segmentSize;
+        break;
+      case 1: // Middle segment
+        startIndex = segmentSize;
+        endIndex = segmentSize * 2;
+        break;
+      case 2: // Last segment
+        startIndex = segmentSize * 2;
+        endIndex = words.length;
+        break;
+      default:
+        return;
+    }
+    
+    final segmentText = words.sublist(startIndex, endIndex.clamp(0, words.length)).join(' ');
+    
+    if (segmentText.isEmpty) return;
+    
+    try {
+      // Use Azure TTS for better intonation quality
+      final apiService = ApiService();
+      final List<String> audioChunks = [];
+
+      // Use streaming API to receive audio chunks
+      await for (final chunk in apiService.generateTTSStream(
+        segmentText,
+        messageId: '${widget.messageId}_segment_$segmentIndex',
+      )) {
+        if (!mounted) break;
+
+        switch (chunk.type) {
+          case TTSChunkType.audioChunk:
+            if (chunk.audioBase64 != null) {
+              audioChunks.add(chunk.audioBase64!);
+            }
+            break;
+          case TTSChunkType.done:
+            break;
+          case TTSChunkType.error:
+            throw Exception(chunk.error ?? 'Segment TTS generation failed');
+          default:
+            break;
+        }
+      }
+
+      if (!mounted || audioChunks.isEmpty) return;
+
+      // Combine and decode audio
+      final combinedBase64 = audioChunks.join('');
+      final audioBytes = base64Decode(combinedBase64);
+
+      // Save to temporary file and play
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/segment_$segmentIndex.mp3');
+      await tempFile.writeAsBytes(audioBytes);
+
+      // Play the segment audio
+      await _ttsPlayer.play(DeviceFileSource(tempFile.path));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Segment TTS error: $e');
+      }
+    }
+  }
+
   Future<void> _deleteCurrentRecording() async {
     if (_currentRecordingPath != null) {
       try {
@@ -878,14 +953,37 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
     final score = feedback.azureProsodyScore!;
     
-    // Determine status text based on score
+    // Analyze target text for specific patterns
+    final isQuestion = widget.targetText.trim().endsWith('?');
+    final hasExclamation = widget.targetText.contains('!');
+    
+    // Generate detailed feedback based on score and text pattern
     String statusText;
+    String detailedTip;
+    
     if (score >= 80) {
       statusText = 'Great intonation! You sound natural.';
+      detailedTip = isQuestion 
+          ? 'Your question intonation is spot-on! Keep it up.'
+          : 'Your tone matches the native speaker perfectly.';
     } else if (score >= 60) {
       statusText = 'Good start. Try to express more emotion.';
+      if (isQuestion) {
+        detailedTip = '💡 Tip: Raise your pitch more at the end of the question.';
+      } else if (hasExclamation) {
+        detailedTip = '💡 Tip: Add more energy and emphasis on key words.';
+      } else {
+        detailedTip = '💡 Tip: Vary your pitch to sound less monotone.';
+      }
     } else {
       statusText = 'Too flat. Mimic the ups and downs.';
+      if (isQuestion) {
+        detailedTip = '💡 Tip: Questions should rise at the end ↗️. Practice with exaggerated pitch.';
+      } else if (hasExclamation) {
+        detailedTip = '💡 Tip: Show excitement! Emphasize important words with higher pitch.';
+      } else {
+        detailedTip = '💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.';
+      }
     }
 
     return Container(
@@ -932,15 +1030,27 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             ],
           ),
           const SizedBox(height: 20),
-          // Pitch Contour Visualization
-          SizedBox(
-            height: 80,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: IntonationPainter(
-                score: score,
-                primaryColor: AppColors.primary,
-                userColor: _getScoreColor(score),
+          // Pitch Contour Visualization with Interactive Segments
+          GestureDetector(
+            onTapDown: (details) {
+              // Determine which segment was tapped
+              final tapX = details.localPosition.dx;
+              final width = MediaQuery.of(context).size.width - 80; // Account for padding
+              final segmentIndex = (tapX / width * 3).floor().clamp(0, 2);
+              
+              // Split target text into 3 segments and play the tapped segment
+              _playSegmentAudio(segmentIndex);
+            },
+            child: SizedBox(
+              height: 80,
+              width: double.infinity,
+              child: CustomPaint(
+                painter: IntonationPainter(
+                  score: score,
+                  primaryColor: AppColors.primary,
+                  userColor: _getScoreColor(score),
+                  targetText: widget.targetText,
+                ),
               ),
             ),
           ),
@@ -954,7 +1064,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               _buildLegendItem('You', _getScoreColor(score)),
             ],
           ),
-          const SizedBox(height: 12),
+           const SizedBox(height: 12),
            Container(
             padding: const EdgeInsets.all(12),
             width: double.infinity,
@@ -962,14 +1072,28 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               color: _getScoreColor(score).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              statusText,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: _getScoreColor(score), // Matches the user curve color
-              ),
+            child: Column(
+              children: [
+                Text(
+                  statusText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _getScoreColor(score),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  detailedTip,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.lightTextSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1303,16 +1427,18 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
 }
 
-/// Custom painter for drawing pitch contour visualization
+/// Custom painter for drawing pitch contour visualization with key point annotations
 class IntonationPainter extends CustomPainter {
   final double score;
   final Color primaryColor;
   final Color userColor;
+  final String targetText;
 
   IntonationPainter({
     required this.score,
     required this.primaryColor,
     required this.userColor,
+    required this.targetText,
   });
 
   @override
@@ -1371,12 +1497,64 @@ class IntonationPainter extends CustomPainter {
       }
     }
     canvas.drawPath(userPath, paint);
+
+    // Draw key point markers
+    _drawKeyPointMarkers(canvas, size);
+  }
+
+  void _drawKeyPointMarkers(Canvas canvas, Size size) {
+    final isQuestion = targetText.trim().endsWith('?');
+    final hasExclamation = targetText.contains('!');
+
+    final markerPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFF3B82F6); // Blue marker
+
+    // Question mark - show rise at end
+    if (isQuestion) {
+      final x = size.width * 0.9; // Near the end
+      final y = size.height * 0.3; // Upper part (rising pitch)
+      
+      // Draw upward arrow
+      canvas.drawCircle(Offset(x, y), 4, markerPaint);
+      
+      // Draw small arrow pointing up
+      final arrowPath = Path()
+        ..moveTo(x, y - 8)
+        ..lineTo(x - 3, y - 2)
+        ..lineTo(x + 3, y - 2)
+        ..close();
+      canvas.drawPath(arrowPath, markerPaint);
+    }
+
+    // Exclamation - show emphasis peak
+    if (hasExclamation) {
+      final x = size.width * 0.5; // Middle (emphasis point)
+      final y = size.height * 0.25; // High point
+      
+      // Draw emphasis marker
+      canvas.drawCircle(Offset(x, y), 4, markerPaint);
+      
+      // Draw small star-like shape for emphasis
+      final starPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = const Color(0xFF3B82F6);
+      
+      for (int i = 0; i < 4; i++) {
+        final angle = (i * math.pi / 2);
+        final x1 = x + math.cos(angle) * 6;
+        final y1 = y + math.sin(angle) * 6;
+        canvas.drawLine(Offset(x, y), Offset(x1, y1), starPaint);
+      }
+    }
   }
 
   @override
   bool shouldRepaint(covariant IntonationPainter oldDelegate) {
     return oldDelegate.score != score ||
            oldDelegate.primaryColor != primaryColor ||
-           oldDelegate.userColor != userColor;
+           oldDelegate.userColor != userColor ||
+           oldDelegate.targetText != targetText;
   }
 }
