@@ -557,7 +557,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                   spans.add(TextSpan(
                     text: '${originalWords[m]} ',
                     style: const TextStyle(
-                      color: Colors.red,
+                        color: AppColors.lr800,
                       decoration: TextDecoration.lineThrough,
                     ),
                   ));
@@ -573,7 +573,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               spans.add(TextSpan(
                 text: '${originalWords[i]} ',
                 style: const TextStyle(
-                  color: Colors.red,
+                    color: AppColors.lr800,
                   decoration: TextDecoration.lineThrough,
                 ),
               ));
