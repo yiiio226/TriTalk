@@ -1079,6 +1079,172 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     );
   }
 
+  /// Get localized prosody feedback based on user's native language
+  (String, String) _getLocalizedProsodyFeedback({
+    required double score,
+    required bool isQuestion,
+    required bool hasExclamation,
+    required String nativeLanguage,
+  }) {
+    // Localized messages map
+    final Map<String, Map<String, String>> messages = {
+      'Chinese (Simplified)': {
+        'great_status': '语调很棒！听起来很自然。',
+        'great_tip_question': '你的疑问语调非常到位！继续保持。',
+        'great_tip_default': '你的语调与母语者完美匹配。',
+        'good_status': '不错的开始，尝试表达更多情感。',
+        'good_tip_question': '💡 提示：在问句结尾处提高音调。',
+        'good_tip_exclamation': '💡 提示：在关键词上增加更多能量和强调。',
+        'good_tip_default': '💡 提示：变化你的音调，避免单调。',
+        'flat_status': '太平了，模仿语调的起伏。',
+        'flat_tip_question': '💡 提示：问句结尾应该上扬 ↗️。尝试夸张一点练习。',
+        'flat_tip_exclamation': '💡 提示：表现出兴奋！用更高的音调强调重要的词。',
+        'flat_tip_default': '💡 提示：你的声音听起来像机器人。模仿母语者的节奏和旋律。',
+      },
+      'Japanese': {
+        'great_status': 'イントネーションが素晴らしい！自然に聞こえます。',
+        'great_tip_question': '質問のイントネーションが完璧です！その調子で。',
+        'great_tip_default': 'ネイティブスピーカーと完璧にマッチしています。',
+        'good_status': '良いスタートです。もっと感情を込めてみましょう。',
+        'good_tip_question': '💡 ヒント：質問の最後でもっとピッチを上げましょう。',
+        'good_tip_exclamation': '💡 ヒント：キーワードにもっとエネルギーと強調を加えましょう。',
+        'good_tip_default': '💡 ヒント：単調にならないようにピッチを変化させましょう。',
+        'flat_status': '平坦すぎます。抑揚を真似しましょう。',
+        'flat_tip_question': '💡 ヒント：質問は最後で上がるべきです ↗️。大げさに練習してみましょう。',
+        'flat_tip_exclamation': '💡 ヒント：興奮を見せて！重要な言葉を高いピッチで強調しましょう。',
+        'flat_tip_default': '💡 ヒント：ロボットのように聞こえます。ネイティブのリズムとメロディーをコピーしましょう。',
+      },
+      'Korean': {
+        'great_status': '억양이 훌륭해요! 자연스럽게 들립니다.',
+        'great_tip_question': '질문 억양이 완벽해요! 계속 유지하세요.',
+        'great_tip_default': '네이티브 스피커와 완벽하게 일치합니다.',
+        'good_status': '좋은 시작이에요. 더 많은 감정을 표현해 보세요.',
+        'good_tip_question': '💡 팁: 질문 끝에서 음높이를 더 올리세요.',
+        'good_tip_exclamation': '💡 팁: 핵심 단어에 더 많은 에너지와 강조를 추가하세요.',
+        'good_tip_default': '💡 팁: 단조롭지 않게 음높이를 변화시키세요.',
+        'flat_status': '너무 평평해요. 억양의 오르내림을 따라하세요.',
+        'flat_tip_question': '💡 팁: 질문은 끝에서 올라가야 해요 ↗️. 과장해서 연습해 보세요.',
+        'flat_tip_exclamation': '💡 팁: 흥분을 표현하세요! 중요한 단어를 높은 음으로 강조하세요.',
+        'flat_tip_default': '💡 팁: 로봇처럼 들려요. 네이티브의 리듬과 멜로디를 따라하세요.',
+      },
+      'Spanish': {
+        'great_status': '¡Excelente entonación! Suenas natural.',
+        'great_tip_question':
+            '¡Tu entonación de pregunta es perfecta! Sigue así.',
+        'great_tip_default':
+            'Tu tono coincide perfectamente con el hablante nativo.',
+        'good_status': 'Buen comienzo. Intenta expresar más emoción.',
+        'good_tip_question':
+            '💡 Consejo: Sube más el tono al final de la pregunta.',
+        'good_tip_exclamation':
+            '💡 Consejo: Añade más energía y énfasis en las palabras clave.',
+        'good_tip_default': '💡 Consejo: Varía tu tono para no sonar monótono.',
+        'flat_status': 'Demasiado plano. Imita los altibajos.',
+        'flat_tip_question':
+            '💡 Consejo: Las preguntas deben subir al final ↗️. Practica con el tono exagerado.',
+        'flat_tip_exclamation':
+            '💡 Consejo: ¡Muestra emoción! Enfatiza las palabras importantes con un tono más alto.',
+        'flat_tip_default':
+            '💡 Consejo: Tu voz suena robótica. Copia el ritmo y la melodía del hablante nativo.',
+      },
+      'French': {
+        'great_status': 'Excellente intonation ! Tu as l\'air naturel.',
+        'great_tip_question':
+            'Ton intonation interrogative est parfaite ! Continue comme ça.',
+        'great_tip_default':
+            'Ton ton correspond parfaitement au locuteur natif.',
+        'good_status': 'Bon début. Essaie d\'exprimer plus d\'émotion.',
+        'good_tip_question':
+            '💡 Conseil : Monte ta voix davantage à la fin de la question.',
+        'good_tip_exclamation':
+            '💡 Conseil : Ajoute plus d\'énergie et d\'emphase sur les mots clés.',
+        'good_tip_default':
+            '💡 Conseil : Varie ta hauteur de voix pour éviter la monotonie.',
+        'flat_status': 'Trop plat. Imite les hauts et les bas.',
+        'flat_tip_question':
+            '💡 Conseil : Les questions doivent monter à la fin ↗️. Pratique avec une intonation exagérée.',
+        'flat_tip_exclamation':
+            '💡 Conseil : Montre de l\'enthousiasme ! Accentue les mots importants avec une voix plus haute.',
+        'flat_tip_default':
+            '💡 Conseil : Ta voix semble robotique. Copie le rythme et la mélodie du locuteur natif.',
+      },
+      'German': {
+        'great_status': 'Großartige Intonation! Du klingst natürlich.',
+        'great_tip_question': 'Deine Frageintonation ist perfekt! Weiter so.',
+        'great_tip_default': 'Dein Ton passt perfekt zum Muttersprachler.',
+        'good_status': 'Guter Anfang. Versuche mehr Emotionen auszudrücken.',
+        'good_tip_question':
+            '💡 Tipp: Hebe deine Stimme am Ende der Frage mehr an.',
+        'good_tip_exclamation':
+            '💡 Tipp: Füge mehr Energie und Betonung auf Schlüsselwörter hinzu.',
+        'good_tip_default':
+            '💡 Tipp: Variiere deine Tonhöhe, um weniger monoton zu klingen.',
+        'flat_status': 'Zu flach. Ahme die Höhen und Tiefen nach.',
+        'flat_tip_question':
+            '💡 Tipp: Fragen sollten am Ende steigen ↗️. Übe mit übertriebener Betonung.',
+        'flat_tip_exclamation':
+            '💡 Tipp: Zeige Begeisterung! Betone wichtige Wörter mit höherer Stimme.',
+        'flat_tip_default':
+            '💡 Tipp: Deine Stimme klingt roboterhaft. Kopiere den Rhythmus und die Melodie des Muttersprachlers.',
+      },
+      'English': {
+        'great_status': 'Great intonation! You sound natural.',
+        'great_tip_question':
+            'Your question intonation is spot-on! Keep it up.',
+        'great_tip_default': 'Your tone matches the native speaker perfectly.',
+        'good_status': 'Good start. Try to express more emotion.',
+        'good_tip_question':
+            '💡 Tip: Raise your pitch more at the end of the question.',
+        'good_tip_exclamation':
+            '💡 Tip: Add more energy and emphasis on key words.',
+        'good_tip_default': '💡 Tip: Vary your pitch to sound less monotone.',
+        'flat_status': 'Too flat. Mimic the ups and downs.',
+        'flat_tip_question':
+            '💡 Tip: Questions should rise at the end ↗️. Practice with exaggerated pitch.',
+        'flat_tip_exclamation':
+            '💡 Tip: Show excitement! Emphasize important words with higher pitch.',
+        'flat_tip_default':
+            '💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.',
+      },
+    };
+
+    // Get messages for user's language, fallback to English
+    final lang = messages.containsKey(nativeLanguage)
+        ? nativeLanguage
+        : 'English';
+    final msgs = messages[lang]!;
+
+    String statusText;
+    String detailedTip;
+
+    if (score >= 80) {
+      statusText = msgs['great_status']!;
+      detailedTip = isQuestion
+          ? msgs['great_tip_question']!
+          : msgs['great_tip_default']!;
+    } else if (score >= 60) {
+      statusText = msgs['good_status']!;
+      if (isQuestion) {
+        detailedTip = msgs['good_tip_question']!;
+      } else if (hasExclamation) {
+        detailedTip = msgs['good_tip_exclamation']!;
+      } else {
+        detailedTip = msgs['good_tip_default']!;
+      }
+    } else {
+      statusText = msgs['flat_status']!;
+      if (isQuestion) {
+        detailedTip = msgs['flat_tip_question']!;
+      } else if (hasExclamation) {
+        detailedTip = msgs['flat_tip_exclamation']!;
+      } else {
+        detailedTip = msgs['flat_tip_default']!;
+      }
+    }
+
+    return (statusText, detailedTip);
+  }
+
   Widget _buildLegendItem(String label, Color color) {
     return Row(
       children: [
