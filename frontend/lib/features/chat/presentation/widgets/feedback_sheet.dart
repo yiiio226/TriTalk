@@ -71,7 +71,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               children: [
                 Icon(
                   feedback.isPerfect ? Icons.star : Icons.auto_fix_high,
-                  color: feedback.isPerfect ? Colors.amber : Colors.orange,
+                  color: feedback.isPerfect ? AppColors.lg500 : AppColors.ly500,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -143,12 +143,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                        color: AppColors.lg100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         feedback.explanation,
-                        style: TextStyle(color: AppColors.lightSuccess),
+                        style: TextStyle(color: AppColors.lg800),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -177,12 +177,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                          color: AppColors.lg100,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           feedback.nativeExpressionReason!,
-                          style: TextStyle(color: AppColors.lightSuccess),
+                          style: TextStyle(color: AppColors.lg800),
                         ),
                       ),
                     ],
@@ -212,12 +212,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                          color: AppColors.lg100,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           feedback.exampleAnswerReason!,
-                          style: TextStyle(color: AppColors.lightSuccess),
+                          style: TextStyle(color: AppColors.lg800),
                         ),
                       ),
                     ],
@@ -281,8 +281,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     bool showShadowing = false,
   }) {
     Color? textColor;
-    if (isError) textColor = Colors.red[700];
-    if (isSuccess) textColor = Colors.green[700];
+    if (isError) textColor = AppColors.lr800;
+    if (isSuccess) textColor = AppColors.lg800;
     if (isNative) textColor = AppColors.lightTextPrimary;
 
     return Column(
