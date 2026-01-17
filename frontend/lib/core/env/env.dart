@@ -4,7 +4,7 @@ class Env {
   // And this is not sensitive information, so it is safe to shared publicly
   static const String supabaseAnonKey =
       'sb_publishable_nRj0KP57IDdQ7558VhbN-w_Oqvtrl9O';
-  // static const String localBackendUrl = 'http://192.168.1.2:8787';
+  // static const String localBackendUrl = 'http://192.168.1.3:8787';
   static const String localBackendUrl =
       'https://tritalk-backend.tristart226.workers.dev';
   static const String prodBackendUrl =
