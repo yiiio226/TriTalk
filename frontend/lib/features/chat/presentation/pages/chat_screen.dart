@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
@@ -97,34 +98,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
 
     // Initial load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _notifier.loadMessages();
-      
-      // Listen for when messages are loaded and scroll to bottom
-      ref.listenManual(
-        chatPageNotifierProvider(widget.scene),
-        (previous, next) {
-          // Scroll to bottom when messages are first loaded or when new messages arrive
-          if (next.messages.isNotEmpty && !next.isLoading) {
-            // Check if this is the initial load (previous was loading or had no messages)
-            final isInitialLoad = previous == null || 
-                                  previous.isLoading || 
-                                  previous.messages.isEmpty;
-            
-            if (isInitialLoad) {
-              // Scroll to bottom after messages are rendered
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_scrollController.hasClients) {
-                  _scrollController.jumpTo(
-                    _scrollController.position.maxScrollExtent,
-                  );
-                }
-              });
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _notifier.loadMessages();
+    
+    // Listen for when messages are loaded and scroll to bottom
+    ref.listenManual(
+      chatPageNotifierProvider(widget.scene),
+      (previous, next) {
+        // Detect when loading completes (transition from loading to not loading)
+        final loadingJustCompleted = (previous?.isLoading ?? false) && !next.isLoading;
+        
+        // Scroll to bottom when:
+        // 1. Loading just completed and we have messages
+        // 2. Messages were added (count increased)
+        if (next.messages.isNotEmpty && (loadingJustCompleted || 
+            (previous != null && next.messages.length > previous.messages.length))) {
+          
+          // Use SchedulerBinding for immediate scroll before first frame paint
+          // This makes the scroll imperceptible to users
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              // Jump immediately without animation for seamless experience
+              _scrollController.jumpTo(
+                _scrollController.position.maxScrollExtent,
+              );
             }
-          }
-        },
-      );
-    });
+          });
+          
+          // Add a safety net scroll slightly delayed to catch any late layout changes
+          // This ensures we're at the bottom even if cloud sync causes layout updates
+          Future.delayed(const Duration(milliseconds: 150), () {
+            if (mounted && _scrollController.hasClients) {
+              _scrollController.jumpTo(
+                _scrollController.position.maxScrollExtent,
+              );
+            }
+          });
+        }
+      },
+    );
+  });
 
     // Listen to text changes via ValueNotifier (no setState needed)
     _textController.addListener(() {
