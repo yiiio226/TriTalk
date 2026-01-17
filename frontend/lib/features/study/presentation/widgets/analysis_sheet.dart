@@ -635,14 +635,14 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: titleColor ?? AppColors.lightTextSecondary,
+                    color: titleColor ?? AppColors.lightTextPrimary,
                   ),
                 ),
                 Icon(
                   isExpanded
                       ? Icons.keyboard_arrow_up_rounded
                       : Icons.keyboard_arrow_down_rounded,
-                  color: titleColor ?? AppColors.lightTextSecondary,
+                  color: titleColor ?? AppColors.lightTextPrimary,
                   size: 24,
                 ),
               ],
