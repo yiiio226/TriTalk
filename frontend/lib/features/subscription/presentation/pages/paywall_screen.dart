@@ -101,7 +101,7 @@ class PaywallScreen extends StatelessWidget {
                         'Start 7-Day Free Trial',
                         style: AppTypography.button.copyWith(
                           fontSize: 18,
-                          color: AppColors.lightTextPrimary,
+                          color: AppColors.darkTextPrimary,
                         ),
                       ),
                     ),

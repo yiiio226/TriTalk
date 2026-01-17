@@ -142,7 +142,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.ln200,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -152,12 +152,12 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.purple.shade50,
+                          color: AppColors.secondary.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.auto_awesome_rounded,
-                          color: Colors.purple.shade400,
+                          color: AppColors.secondary,
                           size: 20,
                         ),
                       ),
@@ -175,7 +175,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.ln100,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.close, size: 20),
@@ -207,16 +207,16 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColors.ln100,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: AppColors.ln200),
                     ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         const style = TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: AppColors.lightTextPrimary,
                           height: 1.4,
                         );
 
@@ -244,7 +244,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey,
+                                    color: AppColors.lightTextSecondary,
                                   ),
                                 ),
                                 if (isOverflowing)
@@ -252,7 +252,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                                     _isOriginalSentenceExpanded
                                         ? Icons.keyboard_arrow_up_rounded
                                         : Icons.keyboard_arrow_down_rounded,
-                                    color: Colors.black54,
+                                    color: AppColors.lightTextSecondary,
                                     size: 24,
                                   ),
                               ],
@@ -306,13 +306,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.analysisPurpleLight,
+                color: AppColors.ln50,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 displayAnalysis.overallSummary,
                 style: TextStyle(
-                  color: Colors.purple[900],
+                  color: AppColors.lightTextPrimary,
                   fontSize: 15,
                   height: 1.5,
                 ),
@@ -329,7 +329,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -338,7 +338,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: const TextStyle(
                 fontSize: 15,
                 height: 1.5,
-                color: Colors.black87,
+                color: AppColors.lightTextPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -353,9 +353,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.analysisBlueLight,
+                        color: AppColors.lightBlue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: Colors.blue.shade100),
+                        border: Border.all(color: AppColors.lightBlue.withOpacity(0.3)),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -365,7 +365,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.lightTextPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -373,7 +373,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             segment.tag,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.blue[700],
+                              color: AppColors.lightBlue,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -393,7 +393,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -407,7 +407,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -424,7 +424,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -438,7 +438,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -455,7 +455,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.red,
+                color: AppColors.lightError,
               ),
             ),
             const SizedBox(height: 12),
@@ -480,7 +480,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     SizedBox(width: 12),
                     Text(
                       "Loading...",
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                      style: TextStyle(color: AppColors.lightTextSecondary, fontSize: 14),
                     ),
                   ],
                 ),
@@ -504,8 +504,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 showTopToast(context, "Saved to Vocabulary", isError: false);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.lightSurface,
                 minimumSize: const Size(double.infinity, 56),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -543,7 +543,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: AppColors.ln100,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -587,7 +587,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: AppColors.ln200,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -597,9 +597,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: AppColors.ln100,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        border: Border.all(color: AppColors.ln200, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -621,9 +621,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green[50],
+        color: AppColors.lg50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green[200]!, width: 1),
+        border: Border.all(color: AppColors.lg200, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -659,7 +659,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green[900],
+                        color: AppColors.lightSuccess,
                       ),
                     );
                   },
@@ -702,7 +702,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     padding: const EdgeInsets.all(4.0),
                     child: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color: Colors.green[700],
+                      color: AppColors.lightSuccess,
                       size: 20,
                     ),
                   ),
@@ -713,7 +713,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 4),
           Text(
             point.explanation,
-            style: TextStyle(fontSize: 13, color: Colors.green[800]),
+            style: const TextStyle(fontSize: 13, color: AppColors.lightSuccess),
           ),
           if (point.example.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -722,7 +722,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
-                color: Colors.green[700],
+                color: AppColors.lightSuccess,
               ),
             ),
           ],
@@ -738,9 +738,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: AppColors.ln50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue[200]!, width: 1),
+        border: Border.all(color: AppColors.ln200, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,10 +749,10 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             children: [
               Text(
                 vocab.word,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[900],
+                  color: AppColors.lightTextPrimary,
                 ),
               ),
               if (vocab.partOfSpeech != null &&
@@ -760,10 +760,10 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 const SizedBox(width: 6),
                 Text(
                   vocab.partOfSpeech!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.normal,
-                    color: Colors.grey[600],
+                    color: AppColors.lightTextSecondary,
                   ),
                 ),
               ],
@@ -795,7 +795,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     padding: const EdgeInsets.all(8.0),
                     child: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color: Colors.blue,
+                      color: AppColors.lightTextSecondary,
                       size: 20,
                     ),
                   ),
@@ -806,16 +806,16 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 4),
           Text(
             vocab.definition,
-            style: TextStyle(fontSize: 13, color: Colors.blue[800]),
+            style: const TextStyle(fontSize: 13, color: AppColors.lightTextPrimary),
           ),
           if (vocab.example.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               '例: ${vocab.example}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
-                color: Colors.blue[700],
+                color: AppColors.lightTextSecondary,
               ),
             ),
           ],
@@ -831,9 +831,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.analysisRedLight,
+        color: AppColors.lightError.withOpacity(0.05),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: Colors.red.shade100),
+        border: Border.all(color: AppColors.lightError.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,15 +841,15 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.stars_rounded, size: 18, color: Colors.red[700]),
+              Icon(Icons.stars_rounded, size: 18, color: AppColors.lightError),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   idiom.type.toUpperCase(),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.red[800],
+                    color: AppColors.lightError,
                   ),
                 ),
               ),
@@ -876,7 +876,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     padding: const EdgeInsets.all(4.0),
                     child: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color: Colors.red[700],
+                      color: AppColors.lightError,
                       size: 20,
                     ),
                   ),
@@ -890,13 +890,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.red[900],
+              color: AppColors.lightError,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             idiom.explanation,
-            style: TextStyle(fontSize: 14, color: Colors.red[900], height: 1.4),
+            style: const TextStyle(fontSize: 14, color: AppColors.lightError, height: 1.4),
           ),
         ],
       ),

@@ -46,7 +46,7 @@
 
 - ✅ **analysis_sheet.dart** - 分析面板
   - 紫色背景：使用 `AppColors.analysisPurpleLight` (#F3E5F5)
-  - 蓝色背景：使用 `AppColors.analysisBlueLight` (#E3F2FD)
+  - 蓝色背景：使用 `AppColors.lightBlue` (#E3F2FD)
   - 红色背景：使用 `AppColors.analysisRedLight` (#FFEBEE)
   - 圆角：使用 `AppRadius.lg`, `AppRadius.md`, `AppRadius.sm`
 

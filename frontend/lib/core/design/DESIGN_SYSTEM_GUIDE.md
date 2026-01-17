@@ -42,7 +42,7 @@ Container(
 
 // 蓝色背景 - 词汇
 Container(
-  color: AppColors.analysisBlueLight,  // #E3F2FD
+  color: AppColors.lightBlue,  // #E3F2FD
 )
 
 // 红色背景 - 纠错
@@ -374,5 +374,5 @@ class ExampleCard extends StatelessWidget {
 | 错误红色 | `Color(0xFFFF3B30)` | `AppColors.errorLight` |
 | 警告黄色 | `Color(0xFFFFF3CD)` | `AppColors.warningBackgroundLight` |
 | 分析紫色 | `Color(0xFFF3E5F5)` | `AppColors.analysisPurpleLight` |
-| 分析蓝色 | `Color(0xFFE3F2FD)` | `AppColors.analysisBlueLight` |
+| 分析蓝色 | `Color(0xFFE3F2FD)` | `AppColors.lightBlue` |
 | 分析红色 | `Color(0xFFFFEBEE)` | `AppColors.analysisRedLight` |

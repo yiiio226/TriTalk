@@ -46,7 +46,7 @@
 
 - ✅ **analysis_sheet.dart** - 分析面板
   - 紫色背景：使用 `AppColors.analysisPurpleLight` (#F3E5F5)
-  - 蓝色背景：使用 `AppColors.analysisBlueLight` (#E3F2FD)
+  - 蓝色背景：使用 `AppColors.lightBlue` (#E3F2FD)
   - 红色背景：使用 `AppColors.analysisRedLight` (#FFEBEE)
   - 圆角：使用 `AppRadius.lg`, `AppRadius.md`, `AppRadius.sm`
 
@@ -171,7 +171,7 @@ borderRadius: BorderRadius.circular(AppRadius.md)
 | `Color(0xFF34C759)` | `AppColors.successLight` | 成功状态 |
 | `Color(0xFFFFF3CD)` | `AppColors.warningBackgroundLight` | 警告背景 |
 | `Color(0xFFF3E5F5)` | `AppColors.analysisPurpleLight` | 分析卡片(紫) |
-| `Color(0xFFE3F2FD)` | `AppColors.analysisBlueLight` | 分析卡片(蓝) |
+| `Color(0xFFE3F2FD)` | `AppColors.lightBlue` | 分析卡片(蓝) |
 | `Color(0xFFFFEBEE)` | `AppColors.analysisRedLight` | 分析卡片(红) |
 | `Colors.grey[600]` | `AppColors.textSecondaryLight` | 次要文本 |
 | `Colors.grey.shade300` | `AppColors.dividerLight` | 分割线/边框 |
