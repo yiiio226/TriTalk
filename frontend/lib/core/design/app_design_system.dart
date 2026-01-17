@@ -80,8 +80,8 @@ class AppColors {
 
   // Green Success Shades (Light Theme)
   static const Color lightSuccessShade50 = Color(0xFFECFDF5); // Very light green
-  static const Color lightSuccessShade100 = Color(0xFFD1FAE5); // Light green
-  static const Color lightSuccessShade200 = Color(0xFFA7F3D0); // Medium light green
+  static const Color lightSuccessShade100 = Color(0xFFD1FAEB); // Light green
+  static const Color lightSuccessShade200 = Color(0xFF83E4BB); // Medium light green
 
     // Amber/Orange Warning Shades (Light Theme)
   static const Color lightWarningShade200 = Color(0xFFFDE68A); // Amber shade for borders

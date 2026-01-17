@@ -351,7 +351,7 @@ class _ChatBubbleState extends State<ChatBubble>
     if (isUser && isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
-          colors: [AppColors.lightSuccessShade50, AppColors.lightSuccessShade100],
+          colors: [AppColors.lightSuccessShade100, AppColors.lightSuccessShade200],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -443,7 +443,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.lightSurface.withValues(
-                                  alpha: 0.2,
+                                  alpha: 0.3,
                                 ), // Increased transparency
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -525,7 +525,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.lightSurface.withValues(
-                                    alpha: 0.2,
+                                    alpha: 0.3,
                                   ), // Match Perfect/Fix button background
                                   borderRadius: BorderRadius.circular(16),
                                 ),
