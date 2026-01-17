@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:shimmer/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
@@ -411,9 +412,17 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSkeletonCard(),
-            const SizedBox(height: 12),
-            _buildSkeletonCard(),
+            Shimmer.fromColors(
+              baseColor: AppColors.lightSkeletonBase,
+              highlightColor: AppColors.lightSkeletonHighlight,
+              child: Column(
+                children: [
+                  _buildSkeletonCard(),
+                  const SizedBox(height: 12),
+                  _buildSkeletonCard(),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
           ],
 
@@ -442,9 +451,17 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSkeletonCard(),
-            const SizedBox(height: 12),
-            _buildSkeletonCard(),
+            Shimmer.fromColors(
+              baseColor: AppColors.lightSkeletonBase,
+              highlightColor: AppColors.lightSkeletonHighlight,
+              child: Column(
+                children: [
+                  _buildSkeletonCard(),
+                  const SizedBox(height: 12),
+                  _buildSkeletonCard(),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
           ],
 
@@ -530,55 +547,59 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   }
 
   Widget _buildSkeletonLoader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Original sentence skeleton
-        _buildSkeletonBox(height: 12, width: 120),
-        const SizedBox(height: 8),
-        _buildSkeletonBox(height: 20, width: double.infinity),
-        const SizedBox(height: 20),
+    return Shimmer.fromColors(
+      baseColor: AppColors.lightSkeletonBase,
+      highlightColor: AppColors.lightSkeletonHighlight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Original sentence skeleton
+          _buildSkeletonBox(height: 12, width: 120),
+          const SizedBox(height: 8),
+          _buildSkeletonBox(height: 20, width: double.infinity),
+          const SizedBox(height: 20),
 
-        // Summary skeleton
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.ln100,
-            borderRadius: BorderRadius.circular(8),
+          // Summary skeleton
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                _buildSkeletonBox(height: 16, width: double.infinity),
+                const SizedBox(height: 8),
+                _buildSkeletonBox(height: 16, width: double.infinity),
+                const SizedBox(height: 8),
+                _buildSkeletonBox(height: 16, width: 200),
+              ],
+            ),
           ),
-          child: Column(
-            children: [
-              _buildSkeletonBox(height: 16, width: double.infinity),
-              const SizedBox(height: 8),
-              _buildSkeletonBox(height: 16, width: double.infinity),
-              const SizedBox(height: 8),
-              _buildSkeletonBox(height: 16, width: 200),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-        // Structure skeleton
-        _buildSkeletonBox(height: 12, width: 150),
-        const SizedBox(height: 8),
-        _buildSkeletonBox(height: 18, width: double.infinity),
-        const SizedBox(height: 20),
+          // Structure skeleton
+          _buildSkeletonBox(height: 12, width: 150),
+          const SizedBox(height: 8),
+          _buildSkeletonBox(height: 18, width: double.infinity),
+          const SizedBox(height: 20),
 
-        // Grammar points skeleton
-        _buildSkeletonBox(height: 12, width: 130),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-        const SizedBox(height: 20),
+          // Grammar points skeleton
+          _buildSkeletonBox(height: 12, width: 130),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+          const SizedBox(height: 20),
 
-        // Vocabulary skeleton
-        _buildSkeletonBox(height: 12, width: 100),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-      ],
+          // Vocabulary skeleton
+          _buildSkeletonBox(height: 12, width: 100),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+        ],
+      ),
     );
   }
 
@@ -587,7 +608,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: AppColors.ln200,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -597,9 +618,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.ln100,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.ln200, width: 1),
+        border: Border.all(color: AppColors.lightSurface, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
