@@ -8,8 +8,8 @@ class FavoritesSkeletonLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: AppColors.lightDivider,
-      highlightColor: AppColors.lightSurface,
+      baseColor: AppColors.lightSkeletonBase,
+      highlightColor: AppColors.lightSkeletonHighlight,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 6,

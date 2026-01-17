@@ -1348,8 +1348,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
   Widget _buildSkeletonLoader() {
     return Shimmer.fromColors(
-      baseColor: AppColors.lightDivider,
-      highlightColor: AppColors.lightSurface,
+      baseColor: AppColors.lightSkeletonBase,
+      highlightColor: AppColors.lightSkeletonHighlight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

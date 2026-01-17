@@ -131,6 +131,10 @@ class AppColors {
   static const Color lightTextDisabled = ln300;
   static const Color lightShadow = ln100;
 
+  // Skeleton Colors
+  static const Color lightSkeletonBase = Color(0xFFE2E8F0);
+  static const Color lightSkeletonHighlight = Color(0xFFFFFFFF);
+
   // ===========================================================================
   // Dark Theme Colors (自动生成的深色模式适配)
   // ===========================================================================
@@ -194,6 +198,10 @@ class AppColors {
   static const Color darkTextSecondary = dn500;
   static const Color darkTextDisabled = dn300;
   static const Color darkShadow = dn100;
+
+  // Skeleton Colors
+  static const Color darkSkeletonBase = dn200;
+  static const Color darkSkeletonHighlight = dn100;
 }
 
 
