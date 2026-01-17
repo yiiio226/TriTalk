@@ -3,6 +3,8 @@ import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../../study/data/vocab_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
+import '../../../study/presentation/widgets/shadowing_sheet.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 class FeedbackSheet extends StatefulWidget {
   final Message message;
@@ -115,12 +117,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.green[50],
+                        color: AppColors.lightSuccess.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '语法正确！表达很棒！',
-                        style: TextStyle(color: Colors.green[900]),
+                        style: TextStyle(color: AppColors.lightSuccess),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -161,6 +163,11 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         feedback.nativeExpression,
                         "Analyzed Sentence",
                       ),
+                      onShadowing: () => _openShadowingSheet(
+                        context,
+                        feedback.nativeExpression,
+                      ),
+                      showShadowing: true,
                     ),
                     if (feedback.nativeExpressionReason != null && feedback.nativeExpressionReason!.isNotEmpty) ...[
                       const SizedBox(height: 8),
@@ -191,6 +198,11 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         feedback.exampleAnswer,
                         "Analyzed Sentence",
                       ),
+                      onShadowing: () => _openShadowingSheet(
+                        context,
+                        feedback.exampleAnswer,
+                      ),
+                      showShadowing: true,
                     ),
                     if (feedback.exampleAnswerReason != null && feedback.exampleAnswerReason!.isNotEmpty) ...[
                       const SizedBox(height: 8),
@@ -232,7 +244,25 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         _savedItems.add(phrase);
       });
       showTopToast(context, 'Saved to Vocabulary', isError: false);
+    } else {
+      VocabService().remove(phrase);
+      setState(() {
+        _savedItems.remove(phrase);
+      });
+      showTopToast(context, 'Removed from Vocabulary', isError: false);
     }
+  }
+
+  void _openShadowingSheet(BuildContext context, String targetText) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ShadowingSheet(
+        targetText: targetText,
+        messageId: widget.message.id,
+      ),
+    );
   }
 
   Widget _buildSection(
@@ -244,11 +274,13 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     bool isSaved = false,
     BuildContext? context,
     VoidCallback? onSave,
+    VoidCallback? onShadowing,
+    bool showShadowing = false,
   }) {
     Color? textColor;
     if (isError) textColor = Colors.red[700];
     if (isSuccess) textColor = Colors.green[700];
-    if (isNative) textColor = Colors.purple[700];
+    if (isNative) textColor = AppColors.lightTextPrimary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,33 +296,58 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                 color: Colors.grey[600],
               ),
             ),
-            if (onSave != null)
-              GestureDetector(
-                onTap: onSave,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
-                  child: Icon(
-                    isSaved ? Icons.bookmark : Icons.bookmark_border,
-                    size: 20,
-                    color: isNative ? Colors.purple[700] : Colors.grey[600],
+            Row(
+              children: [
+                if (showShadowing && onShadowing != null) ...[
+                  _buildActionButton(
+                    icon: Icons.mic_rounded,
+                    onTap: onShadowing,
+                    color: AppColors.primary,
                   ),
-                ),
-              ),
+                  const SizedBox(width: 8),
+                ],
+                if (onSave != null)
+                  _buildActionButton(
+                    icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    onTap: onSave,
+                    color: isSaved ? AppColors.lightSuccess : AppColors.lightTextPrimary,
+                  ),
+              ],
+            ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Text(
           text,
           style: TextStyle(
             fontSize: 16,
             color: textColor ?? Colors.black87,
             fontWeight: (isSuccess || isNative)
-                ? FontWeight.w600
-                : FontWeight.normal,
+                ? FontWeight.w500
+                : FontWeight.w500,
             fontStyle: isNative ? FontStyle.italic : FontStyle.normal,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8), // Padding for hit target
+        color: Colors.transparent, // Ensure hit test works
+        child: Icon(
+          icon,
+          size: 20, // Slightly larger icon since it stands alone
+          color: color,
+        ),
+      ),
     );
   }
 
