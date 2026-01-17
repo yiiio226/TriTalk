@@ -66,25 +66,57 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         children: [
           // Fixed Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+            child: Column(
               children: [
-                Icon(
-                  feedback.isPerfect ? Icons.star : Icons.auto_fix_high,
-                  color: feedback.isPerfect ? AppColors.lg500 : AppColors.ly500,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  feedback.isPerfect ? 'Perfect!' : 'Feedback',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.ln200,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: feedback.isPerfect
+                            ? AppColors.lg100
+                            : AppColors.ly100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        feedback.isPerfect ? Icons.star : Icons.auto_fix_high,
+                        color: feedback.isPerfect
+                            ? AppColors.lg500
+                            : AppColors.ly500,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      feedback.isPerfect ? 'Perfect!' : 'Feedback',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.ln50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 20),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -117,14 +149,14 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                        color: AppColors.lg100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '语法正确！表达很棒！',
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
-                          color: AppColors.lightSuccess,
+                          color: AppColors.lg800,
                         ),
                       ),
                     ),

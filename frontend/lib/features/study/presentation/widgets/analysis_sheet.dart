@@ -153,12 +153,12 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.1),
+                          color: AppColors.lg100,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.auto_awesome_rounded,
-                          color: AppColors.secondary,
+                          color: AppColors.lg500,
                           size: 20,
                         ),
                       ),
@@ -176,7 +176,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.ln100,
+                            color: AppColors.ln50,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.close, size: 20),
@@ -354,9 +354,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.lightBlue.withOpacity(0.1),
+                        color: AppColors.lb100,
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.lightBlue.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.lb200),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -366,13 +366,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.lb800,
+                              color: AppColors.lightBlue,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             segment.tag,
-                            style: TextStyle(
+                            style: TextStyle(   
                               fontSize: 11,
                               color: AppColors.lightBlue,
                               fontWeight: FontWeight.w600,
