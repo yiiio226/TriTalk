@@ -122,7 +122,10 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       ),
                       child: Text(
                         '语法正确！表达很棒！',
-                        style: TextStyle(color: AppColors.lightSuccess),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.lightSuccess,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -140,12 +143,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
+                        color: AppColors.lightSuccess.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         feedback.explanation,
-                        style: TextStyle(color: Colors.blue[900]),
+                        style: TextStyle(color: AppColors.lightSuccess),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -174,12 +177,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: AppColors.lightSuccess.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           feedback.nativeExpressionReason!,
-                          style: TextStyle(color: Colors.blue[900]),
+                          style: TextStyle(color: AppColors.lightSuccess),
                         ),
                       ),
                     ],
@@ -209,12 +212,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: AppColors.lightSuccess.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           feedback.exampleAnswerReason!,
-                          style: TextStyle(color: Colors.blue[900]),
+                          style: TextStyle(color: AppColors.lightSuccess),
                         ),
                       ),
                     ],

@@ -37,7 +37,7 @@ class AppColors {
 
   // Light Theme State Colors
   static const Color lightError = Color(0xFFA63333); // Error
-  static const Color lightSuccess = Color(0xFF15AE7B); // Success
+  static const Color lightSuccess = Color(0xFF009071); // Success
   static const Color lightWarning = Color(0xFFC58B29); // Warning
   static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
 

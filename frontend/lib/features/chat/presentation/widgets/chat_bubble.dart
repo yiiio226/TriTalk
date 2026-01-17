@@ -456,9 +456,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                         : Icons.auto_fix_high_rounded,
                                     size: 14,
                                     color: isPerfect
-                                        ? Colors.green[800]
-                                        : Colors
-                                              .orange[600], // Darker for visibility
+                                        ? AppColors.lightSuccess
+                                        : AppColors.lightWarning,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -467,9 +466,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                       color: isPerfect
-                                          ? Colors.green[800]
-                                          : Colors
-                                                .orange[600], // Darker for visibility
+                                          ? AppColors.lightSuccess
+                                          : AppColors.lightWarning,
                                     ),
                                   ),
                                 ],
