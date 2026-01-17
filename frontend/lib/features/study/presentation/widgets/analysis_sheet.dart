@@ -208,9 +208,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.ln100,
+                      color: AppColors.ln50,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.ln200),
+                      border: Border.all(color: AppColors.ln100),
                     ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -356,7 +356,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       decoration: BoxDecoration(
                         color: AppColors.lb100,
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.lb200),
+                        border: Border.all(color: AppColors.lb100),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -644,7 +644,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       decoration: BoxDecoration(
         color: AppColors.lg50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.lg200, width: 1),
+        border: Border.all(color: AppColors.lg100, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,7 +761,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       decoration: BoxDecoration(
         color: AppColors.ln50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.ln200, width: 1),
+        border: Border.all(color: AppColors.ln100, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
