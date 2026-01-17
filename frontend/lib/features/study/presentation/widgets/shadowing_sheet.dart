@@ -812,10 +812,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildStatsRow(feedback),
-        if (feedback.azureProsodyScore != null)
-          _buildProsodySection(feedback),
         const SizedBox(height: 32),
         _buildAzureWordFeedback(feedback),
+        if (feedback.azureProsodyScore != null)
+          _buildProsodySection(feedback),
       ],
     );
   }
