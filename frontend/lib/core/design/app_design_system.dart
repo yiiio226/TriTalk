@@ -37,8 +37,8 @@ class AppColors {
 
   // Light Theme State Colors
   static const Color lightError = Color(0xFFA63333); // Error
-  static const Color lightSuccess = Color(0xFF009071); // Success
-  static const Color lightWarning = Color(0xFFC58B29); // Warning
+  static const Color lightSuccess = Color(0xFF008367); // Success
+  static const Color lightWarning = Color(0xFFD78700); // Warning
   static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
 
   // Light Theme Text Colors
@@ -65,6 +65,44 @@ class AppColors {
   // Shadows / Overlays
   static const Color lightShadow = Color(0x14000000);
   static const Color darkShadow = Color(0x66000000);
+
+  // -------------------- Additional UI Colors --------------------
+  
+  // Grey Shades (Light Theme)
+  static const Color lightGrey100 = Color(0xFFF3F4F6); // Very light grey for backgrounds
+  static const Color lightGrey200 = Color(0xFFE5E7EB); // Light grey for disabled states
+  static const Color lightGrey700 = Color(0xFF374151); // Dark grey for secondary text
+  
+  // Grey Shades (Dark Theme)
+  static const Color darkGrey100 = Color(0xFF1F2937); // Dark mode light grey
+  static const Color darkGrey200 = Color(0xFF374151); // Dark mode medium grey
+  static const Color darkGrey700 = Color(0xFFD1D5DB); // Dark mode text grey
+  
+  // Green Success Shades (Light Theme)
+  static const Color lightSuccessShade50 = Color(0xFFECFDF5); // Very light green
+  static const Color lightSuccessShade100 = Color(0xFFD1FAE5); // Light green
+  static const Color lightSuccessShade200 = Color(0xFFA7F3D0); // Medium light green
+  
+  // Green Success Shades (Dark Theme)
+  static const Color darkSuccessShade50 = Color(0xFF064E3B); // Dark mode very light green
+  static const Color darkSuccessShade100 = Color(0xFF065F46); // Dark mode light green
+  static const Color darkSuccessShade200 = Color(0xFF047857); // Dark mode medium light green
+  
+  // Blue/Info Colors (Light Theme)
+  static const Color lightInfo = Color(0xFF3B82F6); // Primary blue for info
+  static const Color lightInfoShade100 = Color(0xFFDBEAFE); // Light blue background
+  
+  // Blue/Info Colors (Dark Theme)
+  static const Color darkInfo = Color(0xFF60A5FA); // Dark mode info blue
+  static const Color darkInfoShade100 = Color(0xFF1E3A8A); // Dark mode light blue background
+  
+  // Amber/Orange Warning Shades (Light Theme)
+  static const Color lightWarningShade200 = Color(0xFFFDE68A); // Amber shade for borders
+  static const Color lightOrangeShade100 = Color(0xFFFFEDD5); // Light orange for borders
+  
+  // Amber/Orange Warning Shades (Dark Theme)
+  static const Color darkWarningShade200 = Color(0xFF92400E); // Dark mode amber shade
+  static const Color darkOrangeShade100 = Color(0xFF7C2D12); // Dark mode orange shade
 
   // -------------------- Analysis Card Colors (Preserved) --------------------
   

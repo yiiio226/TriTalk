@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../study/data/vocab_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;
@@ -18,7 +19,7 @@ class FavoritesSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bookmark, color:AppColors.primary),
+              const Icon(Icons.bookmark, color: AppColors.primary),
               const SizedBox(width: 8),
               const Text(
                 'Favorites',

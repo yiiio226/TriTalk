@@ -288,7 +288,7 @@ class _ChatBubbleState extends State<ChatBubble>
               style: const TextStyle(
                 fontSize: 14, // Reduced from 16
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                color: AppColors.lightTextPrimary,
               ),
             ),
             const SizedBox(width: 4),
@@ -296,14 +296,14 @@ class _ChatBubbleState extends State<ChatBubble>
                 ? const Icon(
                     Icons.pause_rounded,
                     size: 16,
-                    color: Colors.black87,
+                    color: AppColors.lightTextPrimary,
                   )
                 : RotatedBox(
                     quarterTurns: 1,
                     child: Icon(
                       Icons.wifi_rounded,
                       size: 16,
-                      color: Colors.black87,
+                      color: AppColors.lightTextPrimary,
                     ),
                   ),
           ],
@@ -333,8 +333,8 @@ class _ChatBubbleState extends State<ChatBubble>
 
     // Color logic: User messages are white until feedback received (yellow). AI messages are white.
     final Color color = isUser
-        ? (hasFeedback ? const Color(0xFFFFF3CD) : Colors.white)
-        : Colors.white;
+        ? (hasFeedback ? const Color(0xFFFFF3CD) : AppColors.lightSurface)
+        : AppColors.lightSurface;
 
     // Increased radius
     final radius = BorderRadius.circular(AppRadius.lg);
@@ -351,11 +351,11 @@ class _ChatBubbleState extends State<ChatBubble>
     if (isUser && isPerfect) {
       bubbleDecoration = bubbleDecoration.copyWith(
         gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.green.shade100],
+          colors: [AppColors.lightSuccessShade50, AppColors.lightSuccessShade100],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.green.shade200, width: 1),
+        border: Border.all(color: AppColors.lightSuccessShade200, width: 1),
       );
     } else if (isUser && isMagicWand) {
       bubbleDecoration = bubbleDecoration.copyWith(
@@ -364,11 +364,11 @@ class _ChatBubbleState extends State<ChatBubble>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.amber.shade200, width: 1),
+        border: Border.all(color: AppColors.lightWarningShade200, width: 1),
       );
     } else if (isUser && hasFeedback) {
       bubbleDecoration = bubbleDecoration.copyWith(
-        border: Border.all(color: Colors.orange.shade100, width: 1),
+        border: Border.all(color: AppColors.lightOrangeShade100, width: 1),
       );
     }
 
@@ -379,7 +379,7 @@ class _ChatBubbleState extends State<ChatBubble>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: bubbleDecoration.copyWith(
             border: message.isSelected
-                ? Border.all(color: Colors.black, width: 1)
+                ? Border.all(color: AppColors.lightTextPrimary, width: 1)
                 : bubbleDecoration.border,
           ),
           constraints: BoxConstraints(
@@ -409,15 +409,15 @@ class _ChatBubbleState extends State<ChatBubble>
                                   p: const TextStyle(
                                     fontSize: 16,
                                     height: 1.4,
-                                    color: Colors.black87,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                   strong: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                   em: const TextStyle(
                                     fontStyle: FontStyle.italic,
-                                    color: Colors.black87,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 ),
                                 selectable: !widget.isMultiSelectMode,
@@ -442,7 +442,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(
+                                color: AppColors.lightSurface.withValues(
                                   alpha: 0.2,
                                 ), // Increased transparency
                                 borderRadius: BorderRadius.circular(16),
@@ -524,7 +524,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(
+                                  color: AppColors.lightSurface.withValues(
                                     alpha: 0.2,
                                   ), // Match Perfect/Fix button background
                                   borderRadius: BorderRadius.circular(16),
@@ -540,7 +540,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                           strokeWidth: 1,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            Colors.black,
+                                            AppColors.lightTextPrimary,
                                           ),
                                         ),
                                       )
@@ -550,7 +550,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                             ? Icons.subtitles_off_rounded
                                             : Icons.subtitles_rounded,
                                         size: 14,
-                                        color: Colors.black,
+                                        color: AppColors.lightTextPrimary,
                                       ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -558,7 +558,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black,
+                                        color: AppColors.lightTextPrimary,
                                       ),
                                     ),
                                   ],
@@ -604,8 +604,8 @@ class _ChatBubbleState extends State<ChatBubble>
                               ),
                               decoration: BoxDecoration(
                                 color: widget.message.isAnalyzing
-                                    ? Colors.grey[200]
-                                    : Colors.grey[100],
+                                    ? AppColors.lightGrey200
+                                    : AppColors.lightGrey100,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
@@ -619,7 +619,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                         strokeWidth: 1,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
+                                              AppColors.lightTextPrimary,
                                             ),
                                       ),
                                     )
@@ -627,7 +627,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                     const Icon(
                                       Icons.auto_awesome_rounded,
                                       size: 14,
-                                      color: Colors.black,
+                                      color: AppColors.lightTextPrimary,
                                     ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -637,7 +637,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: AppColors.lightTextPrimary,
                                     ),
                                   ),
                                 ],
@@ -694,7 +694,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
+                                  color: AppColors.lightGrey100,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
@@ -708,7 +708,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                           strokeWidth: 1,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            Colors.black,
+                                            AppColors.lightTextPrimary,
                                           ),
                                         ),
                                       )
@@ -718,7 +718,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                             ? Icons.subtitles_off_rounded
                                             : Icons.subtitles_rounded,
                                         size: 14,
-                                        color: Colors.black,
+                                        color: AppColors.lightTextPrimary,
                                       ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -726,7 +726,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black,
+                                        color: AppColors.lightTextPrimary,
                                       ),
                                     ),
                                   ],
@@ -757,7 +757,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: AppColors.lightGrey100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -766,7 +766,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                 const Icon(
                                   Icons.auto_awesome_rounded,
                                   size: 14,
-                                  color: Colors.black,
+                                  color: AppColors.lightTextPrimary,
                                 ),
                                 const SizedBox(width: 4),
                                 const Text(
@@ -774,7 +774,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 ),
                               ],
@@ -792,8 +792,8 @@ class _ChatBubbleState extends State<ChatBubble>
                             ),
                             decoration: BoxDecoration(
                               color: _isTTSPlaying
-                                  ? Colors.blue[100]
-                                  : Colors.grey[100],
+                                  ? AppColors.lightInfoShade100
+                                  : AppColors.lightGrey100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -806,7 +806,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                     child: CircularProgressIndicator(
                                       strokeWidth: 1,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.black,
+                                        AppColors.lightTextPrimary,
                                       ),
                                     ),
                                   )
@@ -814,13 +814,13 @@ class _ChatBubbleState extends State<ChatBubble>
                                   const Icon(
                                     Icons.stop_rounded,
                                     size: 14,
-                                    color: Colors.blue,
+                                    color: AppColors.lightInfo,
                                   )
                                 else
                                   const Icon(
                                     Icons.volume_up_rounded,
                                     size: 14,
-                                    color: Colors.black,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -829,8 +829,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: _isTTSPlaying
-                                        ? Colors.blue
-                                        : Colors.black,
+                                        ? AppColors.lightInfo
+                                        : AppColors.lightTextPrimary,
                                   ),
                                 ),
                               ],
@@ -845,7 +845,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              barrierColor: Colors.white.withValues(alpha: 0.5),
+                              barrierColor: AppColors.lightSurface.withValues(alpha: 0.5),
                               builder: (context) => ShadowingSheet(
                                 targetText: message.content,
                                 messageId: message.id,
@@ -882,7 +882,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: AppColors.lightGrey100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -891,7 +891,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                 const Icon(
                                   Icons.mic_none_rounded,
                                   size: 14,
-                                  color: Colors.black,
+                                  color: AppColors.lightTextPrimary,
                                 ),
                                 const SizedBox(width: 4),
                                 const Text(
@@ -899,7 +899,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 ),
                               ],
@@ -916,7 +916,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: AppColors.lightGrey100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -929,7 +929,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                     child: CircularProgressIndicator(
                                       strokeWidth: 1,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.black,
+                                        AppColors.lightTextPrimary,
                                       ),
                                     ),
                                   )
@@ -937,7 +937,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   const Icon(
                                     Icons.translate_rounded,
                                     size: 14,
-                                    color: Colors.black,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 const SizedBox(width: 4),
                                 const Text(
@@ -945,7 +945,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 ),
                               ],
@@ -960,7 +960,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              barrierColor: Colors.white.withValues(alpha: 0.5),
+                              barrierColor: AppColors.lightSurface.withValues(alpha: 0.5),
                               builder: (context) => SaveNoteSheet(
                                 originalSentence: message.content,
                                 sceneId: widget.sceneId, // Pass sceneId
@@ -973,7 +973,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: AppColors.lightGrey100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
@@ -982,7 +982,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                 const Icon(
                                   Icons.bookmark_border_rounded,
                                   size: 14,
-                                  color: Colors.black,
+                                  color: AppColors.lightTextPrimary,
                                 ),
                                 const SizedBox(width: 4),
                                 const Text(
@@ -990,7 +990,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    color: AppColors.lightTextPrimary,
                                   ),
                                 ),
                               ],
@@ -1023,7 +1023,7 @@ class _ChatBubbleState extends State<ChatBubble>
                     const SizedBox(height: 8),
                     SelectableText(
                       _translatedText!,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 14, color: AppColors.lightGrey700),
                     ),
                   ],
                 ],
@@ -1040,11 +1040,11 @@ class _ChatBubbleState extends State<ChatBubble>
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppColors.lightTextPrimary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: AppColors.lightSurface, width: 2),
               ),
-              child: const Icon(Icons.check, size: 14, color: Colors.white),
+              child: const Icon(Icons.check, size: 14, color: AppColors.lightSurface),
             ),
           ),
       ], // Close Stack children
@@ -1124,7 +1124,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Translation failed: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.lightError,
           ),
         );
       }
@@ -1226,7 +1226,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to generate speech: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.lightError,
           ),
         );
       }
@@ -1247,7 +1247,7 @@ class _ChatBubbleState extends State<ChatBubble>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to play audio: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.lightError,
           ),
         );
       }
@@ -1279,7 +1279,7 @@ class _ChatBubbleState extends State<ChatBubble>
                   height: 6,
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: AppColors.lightTextPrimary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1307,7 +1307,7 @@ class _ChatBubbleState extends State<ChatBubble>
                 width: 4,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: AppColors.lightTextPrimary,
                   shape: BoxShape.circle,
                 ),
               ),
