@@ -313,7 +313,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     bool showShadowing = false,
   }) {
     Color? textColor;
-    if (isError) textColor = AppColors.lr800;
+    if (isError) textColor = AppColors.lr500;
     if (isSuccess) textColor = AppColors.lg800;
     if (isNative) textColor = AppColors.lightTextPrimary;
 
@@ -445,7 +445,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         spans.add(TextSpan(
           text: '${originalWords[i]} ',
           style: TextStyle(
-              color: AppColors.lr800,
+              color: AppColors.lr500,
             fontWeight: FontWeight.w500,
           ),
         ));
@@ -536,7 +536,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                 spans.add(TextSpan(
                   text: '${correctedWords[m]} ',
                   style: const TextStyle(
-                    color: Colors.green,
+                      color: AppColors.lg500,
                     fontWeight: FontWeight.w600,
                   ),
                 ));
@@ -557,7 +557,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                   spans.add(TextSpan(
                     text: '${originalWords[m]} ',
                     style: const TextStyle(
-                        color: AppColors.lr800,
+                        color: AppColors.lr500,
                       decoration: TextDecoration.lineThrough,
                     ),
                   ));
@@ -573,14 +573,14 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               spans.add(TextSpan(
                 text: '${originalWords[i]} ',
                 style: const TextStyle(
-                    color: AppColors.lr800,
+                    color: AppColors.lr500,
                   decoration: TextDecoration.lineThrough,
                 ),
               ));
               spans.add(TextSpan(
                 text: '${correctedWords[j]} ',
                 style: const TextStyle(
-                  color: Colors.green,
+                    color: AppColors.lg500,
                   fontWeight: FontWeight.w600,
                 ),
               ));
@@ -594,7 +594,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         spans.add(TextSpan(
           text: '${originalWords[i]} ',
           style: const TextStyle(
-            color: Colors.red,
+              color: AppColors.lr500,
             decoration: TextDecoration.lineThrough,
           ),
         ));
@@ -604,7 +604,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         spans.add(TextSpan(
           text: '${correctedWords[j]} ',
           style: const TextStyle(
-            color: Colors.green,
+              color: AppColors.lg500,
             fontWeight: FontWeight.w600,
           ),
         ));
