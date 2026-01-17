@@ -127,11 +127,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           
           // Add a safety net scroll slightly delayed to catch any late layout changes
           // This ensures we're at the bottom even if cloud sync causes layout updates
-          Future.delayed(const Duration(milliseconds: 150), () {
+          // Increased delay to 300ms to handle larger lists/slower devices
+          Future.delayed(const Duration(milliseconds: 300), () {
             if (mounted && _scrollController.hasClients) {
-              _scrollController.jumpTo(
-                _scrollController.position.maxScrollExtent,
-              );
+              // Only jump if we are not at the bottom (allow small tolerance)
+              final maxScroll = _scrollController.position.maxScrollExtent;
+              final currentScroll = _scrollController.position.pixels;
+              
+              if ((maxScroll - currentScroll).abs() > 20) {
+                _scrollController.jumpTo(maxScroll);
+              }
+            }
+          });
+
+          // Secondary safety net for edge cases (e.g. slow image loading or rapid syncs)
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted && _scrollController.hasClients) {
+              final maxScroll = _scrollController.position.maxScrollExtent;
+              final currentScroll = _scrollController.position.pixels;
+              
+              if ((maxScroll - currentScroll).abs() > 20) {
+                _scrollController.jumpTo(maxScroll);
+              }
             }
           });
         }
