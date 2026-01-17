@@ -39,19 +39,6 @@ class AppColors {
   static const Color ln900 = Color(0xE3000000);  // 89% black - Primary text, strong emphasis
 
 
-  // =============================
-  // Semantic Color Aliases (Backward Compatibility)
-  // =============================
-  // These maintain existing color names while using the new ln scale.
-  
-  // Light Theme Text Colors
-  static const Color lightTextPrimary = ln900; // Primary Text
-  static const Color lightTextSecondary = ln500; // Secondary Text
-  static const Color lightTextDisabled = ln300; // Placeholder/Disabled
-
-  // Shadows / Overlays
-  static const Color lightShadow = ln100;
-
 
   // =============================
   // Semantic Color Scales (Light Mode)
@@ -120,6 +107,8 @@ class AppColors {
   static const Color lightSurface = Color(0xFFFFFFFF); // Card/Container Background
   static const Color lightDivider = ln200; // Divider/Border
 
+
+
   // =============================
   // Light Theme State Colors
   // =============================
@@ -128,6 +117,22 @@ class AppColors {
   static const Color lightWarning = ly500; // Warning
   static const Color lightInfo = lb500; // Primary blue for info
   static const Color lightBlue = lb500; // Info blue
+
+
+  // =============================
+  // Semantic Color Aliases (Backward Compatibility)
+  // =============================
+  // These maintain existing color names while using the new ln scale.
+
+  // Light Theme Text Colors
+  static const Color lightTextPrimary = ln900; // Primary Text
+  static const Color lightTextSecondary = ln500; // Secondary Text
+  static const Color lightTextDisabled = ln300; // Placeholder/Disabled
+
+  // Shadows / Overlays
+  static const Color lightShadow = ln100;
+
+
 
 
 
