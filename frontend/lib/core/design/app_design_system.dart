@@ -24,31 +24,67 @@ class AppColors {
   AppColors._(); // Private constructor
 
   // =============================
-  // Color Palette (Semantic)
+  // Neutral Color Scale (Light Mode)
   // =============================
-  // Named by usage for direct reference in components.
+  // Unified neutral colors based on pure black (#000000) with percentage-based opacity.
+  // This provides a consistent, predictable scale for all neutral UI elements.
+  
+  static const Color ln50 = Color(0x08000000);   // 3% black - Subtle backgrounds, very light overlays
+  static const Color ln100 = Color(0x0D000000);  // 5% black - Shadows, very light grey backgrounds
+  static const Color ln200 = Color(0x1F000000);  // 12% black - Borders, dividers, light grey backgrounds
+  static const Color ln300 = Color(0x61000000);  // 38% black - Disabled states, placeholder text
+  static const Color ln400 = Color(0x73000000);  // 45% black - Medium grey for subtle emphasis
+  static const Color ln500 = Color(0xB8000000);  // 72% black - Secondary text, icons
+  static const Color ln700 = Color(0xC7000000);  // 78% black - Dark secondary text
+  static const Color ln900 = Color(0xE3000000);  // 89% black - Primary text, strong emphasis
+
+  // =============================
+  // Semantic Color Aliases (Backward Compatibility)
+  // =============================
+  // These maintain existing color names while using the new ln scale.
+  
+  // Light Theme Text Colors
+  static const Color lightTextPrimary = ln900; // Primary Text
+  static const Color lightTextSecondary = ln500; // Secondary Text
+  static const Color lightTextDisabled = ln300; // Placeholder/Disabled
+
+  // Shadows / Overlays
+  static const Color lightShadow = ln100;
+
+  // Grey Shades (Light Theme)
+  /// Special grey for backgrounds - not pure black based, kept for specific UI needs
+  static const Color lightGrey100 = Color(0xFFF3F4F6); // Very light grey for backgrounds
+  static const Color lightGrey200 = ln200; // Light grey for disabled states
+  static const Color lightGrey700 = ln700; // Dark grey for secondary text
+
+  // =============================
+  // Brand Colors
+  // =============================
   static const Color primary = Color(0xFF1D1D1D); // Main Brand Color (Buttons, Emphasis)
   static const Color secondary = Color(0xFF2BC3C9); // Secondary Brand Color (Auxiliary Emphasis)
 
+  // =============================
   // Light Theme Base Colors
+  // =============================
   static const Color lightBackground = Color(0xFFF8FAFC); // Page Background
   static const Color lightSurface = Color(0xFFFFFFFF); // Card/Container Background
-  static const Color lightDivider = Color(0xFFE2E8F0); // Divider/Border
+  static const Color lightDivider = ln200; // Divider/Border
 
+  // =============================
   // Light Theme State Colors
+  // =============================
   static const Color lightError = Color(0xFFA63333); // Error
   static const Color lightSuccess = Color(0xFF008367); // Success
   static const Color lightWarning = Color(0xFFD78700); // Warning
   static const Color lightWarningBackground = Color(0xFFFEF3C7); // Warning Background
 
-  // Light Theme Text Colors
-  static const Color lightTextPrimary = Color(0xFF1D1D1D); // Primary Text
-  static const Color lightTextSecondary = Color(0xFF474747); // Secondary Text
-  static const Color lightTextDisabled = Color(0xFF9CA3AF); // Placeholder/Disabled
-
+  // =============================
+  // Dark Theme Colors
+  // =============================
+  
   // Dark Theme Base Colors
   static const Color darkBackground = Color(0xFF0B1220);
-  static const Color darkSurface = Color(0xFF111827); //
+  static const Color darkSurface = Color(0xFF111827);
   static const Color darkDivider = Color(0xFF273042); // Divider/Border
 
   // Dark Theme State Colors
@@ -62,21 +98,17 @@ class AppColors {
   static const Color darkTextSecondary = Color(0xFFCBD5E1);
   static const Color darkTextDisabled = Color(0xFF9CA3AF); // Placeholder/Disabled
 
-  // Shadows / Overlays
-  static const Color lightShadow = Color(0x14000000);
+  // Dark Theme Shadows
   static const Color darkShadow = Color(0x66000000);
 
-  // -------------------- Additional UI Colors --------------------
-  
-  // Grey Shades (Light Theme)
-  static const Color lightGrey100 = Color(0xFFF3F4F6); // Very light grey for backgrounds
-  static const Color lightGrey200 = Color(0xFFE5E7EB); // Light grey for disabled states
-  static const Color lightGrey700 = Color(0xFF374151); // Dark grey for secondary text
-  
-  // Grey Shades (Dark Theme)
+  // Dark Theme Grey Shades
   static const Color darkGrey100 = Color(0xFF1F2937); // Dark mode light grey
   static const Color darkGrey200 = Color(0xFF374151); // Dark mode medium grey
   static const Color darkGrey700 = Color(0xFFD1D5DB); // Dark mode text grey
+
+  // =============================
+  // Additional UI Colors
+  // =============================
   
   // Green Success Shades (Light Theme)
   static const Color lightSuccessShade50 = Color(0xFFECFDF5); // Very light green
