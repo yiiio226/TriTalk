@@ -197,6 +197,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         context,
                         feedback.nativeExpression,
                         "Analyzed Sentence",
+                        reason: feedback.nativeExpressionReason,
                       ),
                       onShadowing: () => _openShadowingSheet(
                         context,
@@ -232,6 +233,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         context,
                         feedback.exampleAnswer,
                         "Analyzed Sentence",
+                        reason: feedback.exampleAnswerReason,
                       ),
                       onShadowing: () => _openShadowingSheet(
                         context,
@@ -267,13 +269,19 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     );
   }
 
-  void _saveToVocab(BuildContext context, String phrase, String tag) {
+  void _saveToVocab(
+    BuildContext context,
+    String phrase,
+    String tag, {
+    String? reason,
+  }) {
     if (!_savedItems.contains(phrase)) {
       VocabService().add(
         phrase,
         "Smart Feedback",
         tag,
         scenarioId: widget.sceneId,
+        reason: reason,
       );
       setState(() {
         _savedItems.add(phrase);

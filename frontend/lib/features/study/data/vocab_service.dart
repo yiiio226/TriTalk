@@ -9,6 +9,7 @@ class VocabItem {
   final String translation;
   final String tag;
   final String? scenarioId; // Added scenario link
+  final String? reason; // Added for explanation text
   final DateTime createdAt; // Added for sorting
 
   VocabItem({
@@ -16,6 +17,7 @@ class VocabItem {
     required this.translation,
     required this.tag,
     this.scenarioId,
+    this.reason,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -24,6 +26,7 @@ class VocabItem {
     'translation': translation,
     'tag': tag,
     'scenario_id': scenarioId,
+    'reason': reason,
     'created_at': createdAt.toIso8601String(),
   };
 
@@ -33,6 +36,7 @@ class VocabItem {
       translation: json['translation'] ?? '',
       tag: json['tag'] ?? '',
       scenarioId: json['scenario_id'],
+      reason: json['reason'],
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
@@ -98,6 +102,7 @@ class VocabService extends ChangeNotifier {
           translation: e['translation'] ?? '',
           tag: e['tag'] ?? '',
           scenarioId: e['scenario_id'],
+          reason: e['reason'],
           createdAt: e['created_at'] != null
               ? DateTime.parse(e['created_at'])
               : null,
@@ -140,6 +145,7 @@ class VocabService extends ChangeNotifier {
     String translation,
     String tag, {
     String? scenarioId,
+    String? reason,
   }) async {
     // Avoid duplicates based on phrase AND scenarioId
     // If scenarioId is provided, we check if there's already an item with this phrase AND this scenarioId.
@@ -154,6 +160,7 @@ class VocabService extends ChangeNotifier {
         translation: translation,
         tag: tag,
         scenarioId: scenarioId,
+        reason: reason,
       );
       // Add to top of list
       _items.insert(0, newItem);
@@ -180,6 +187,7 @@ class VocabService extends ChangeNotifier {
             'translation': item.translation,
             'tag': item.tag,
             'scenario_id': item.scenarioId,
+            'reason': item.reason,
           })
           .timeout(const Duration(seconds: 5));
     } catch (e) {

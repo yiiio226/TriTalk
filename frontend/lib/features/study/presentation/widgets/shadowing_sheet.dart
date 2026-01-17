@@ -15,6 +15,7 @@ import 'package:frontend/core/data/api/api_service.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
+import 'package:frontend/core/auth/auth_provider.dart';
 
 import 'package:frontend/core/widgets/top_toast.dart';
 
@@ -957,34 +958,17 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     final isQuestion = widget.targetText.trim().endsWith('?');
     final hasExclamation = widget.targetText.contains('!');
     
-    // Generate detailed feedback based on score and text pattern
-    String statusText;
-    String detailedTip;
+    // Get user's native language
+    final authState = ref.watch(authProvider);
+    final nativeLanguage = authState.user?.nativeLanguage ?? 'English';
     
-    if (score >= 80) {
-      statusText = 'Great intonation! You sound natural.';
-      detailedTip = isQuestion 
-          ? 'Your question intonation is spot-on! Keep it up.'
-          : 'Your tone matches the native speaker perfectly.';
-    } else if (score >= 60) {
-      statusText = 'Good start. Try to express more emotion.';
-      if (isQuestion) {
-        detailedTip = '💡 Tip: Raise your pitch more at the end of the question.';
-      } else if (hasExclamation) {
-        detailedTip = '💡 Tip: Add more energy and emphasis on key words.';
-      } else {
-        detailedTip = '💡 Tip: Vary your pitch to sound less monotone.';
-      }
-    } else {
-      statusText = 'Too flat. Mimic the ups and downs.';
-      if (isQuestion) {
-        detailedTip = '💡 Tip: Questions should rise at the end ↗️. Practice with exaggerated pitch.';
-      } else if (hasExclamation) {
-        detailedTip = '💡 Tip: Show excitement! Emphasize important words with higher pitch.';
-      } else {
-        detailedTip = '💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.';
-      }
-    }
+    // Generate detailed feedback based on score and text pattern
+    final (statusText, detailedTip) = _getLocalizedProsodyFeedback(
+      score: score,
+      isQuestion: isQuestion,
+      hasExclamation: hasExclamation,
+      nativeLanguage: nativeLanguage,
+    );
 
     return Container(
       margin: const EdgeInsets.only(top: 24),
