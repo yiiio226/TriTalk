@@ -115,7 +115,7 @@ class AppColors {
   static const Color lightError = lr500; // Error
   static const Color lightSuccess = lg500; // Success
   static const Color lightWarning = ly500; // Warning
-  static const Color lightInfo = lb500; // Primary blue for info
+  static const Color lightInfo = ln500; // Primary blue for info
   static const Color lightBlue = lb500; // Info blue
 
 
