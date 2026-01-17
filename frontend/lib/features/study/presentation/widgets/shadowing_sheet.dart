@@ -993,7 +993,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.lightDivider),
-        boxShadow: AppShadows.sm,
+        boxShadow: AppShadows.xs,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
