@@ -296,7 +296,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
+                color: AppColors.lightTextSecondary,
               ),
             ),
             Row(
@@ -324,7 +324,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
           text,
           style: TextStyle(
             fontSize: 16,
-            color: textColor ?? Colors.black87,
+            color: textColor ?? AppColors.lightTextPrimary,
             fontWeight: (isSuccess || isNative)
                 ? FontWeight.w500
                 : FontWeight.w500,

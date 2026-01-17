@@ -365,7 +365,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.lightTextPrimary,
+                              color: AppColors.lb800,
                             ),
                           ),
                           const SizedBox(height: 2),
