@@ -110,8 +110,8 @@ class _HintsSheetState extends State<HintsSheet> {
   Widget _buildContent() {
     if (_isLoading) {
       return Shimmer.fromColors(
-        baseColor: AppColors.lightDivider,
-        highlightColor: AppColors.lightSurface,
+        baseColor: AppColors.lightSkeletonBase,
+        highlightColor: AppColors.lightSkeletonHighlight,
         child: Column(
           children: List.generate(3, (index) => _buildSkeletonItem()),
         ),

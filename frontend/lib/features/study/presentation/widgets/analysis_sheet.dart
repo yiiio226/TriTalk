@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:shimmer/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
@@ -152,12 +153,12 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.1),
+                          color: AppColors.lg100,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.auto_awesome_rounded,
-                          color: AppColors.secondary,
+                          color: AppColors.lg500,
                           size: 20,
                         ),
                       ),
@@ -175,7 +176,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.ln100,
+                            color: AppColors.ln50,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.close, size: 20),
@@ -353,9 +354,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.lightBlue.withOpacity(0.1),
+                        color: AppColors.lb100,
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.lightBlue.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.lb200),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -365,13 +366,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.lightTextPrimary,
+                              color: AppColors.lightBlue,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             segment.tag,
-                            style: TextStyle(
+                            style: TextStyle(   
                               fontSize: 11,
                               color: AppColors.lightBlue,
                               fontWeight: FontWeight.w600,
@@ -411,9 +412,17 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSkeletonCard(),
-            const SizedBox(height: 12),
-            _buildSkeletonCard(),
+            Shimmer.fromColors(
+              baseColor: AppColors.lightSkeletonBase,
+              highlightColor: AppColors.lightSkeletonHighlight,
+              child: Column(
+                children: [
+                  _buildSkeletonCard(),
+                  const SizedBox(height: 12),
+                  _buildSkeletonCard(),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
           ],
 
@@ -442,9 +451,17 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSkeletonCard(),
-            const SizedBox(height: 12),
-            _buildSkeletonCard(),
+            Shimmer.fromColors(
+              baseColor: AppColors.lightSkeletonBase,
+              highlightColor: AppColors.lightSkeletonHighlight,
+              child: Column(
+                children: [
+                  _buildSkeletonCard(),
+                  const SizedBox(height: 12),
+                  _buildSkeletonCard(),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
           ],
 
@@ -530,55 +547,59 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   }
 
   Widget _buildSkeletonLoader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Original sentence skeleton
-        _buildSkeletonBox(height: 12, width: 120),
-        const SizedBox(height: 8),
-        _buildSkeletonBox(height: 20, width: double.infinity),
-        const SizedBox(height: 20),
+    return Shimmer.fromColors(
+      baseColor: AppColors.lightSkeletonBase,
+      highlightColor: AppColors.lightSkeletonHighlight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Original sentence skeleton
+          _buildSkeletonBox(height: 12, width: 120),
+          const SizedBox(height: 8),
+          _buildSkeletonBox(height: 20, width: double.infinity),
+          const SizedBox(height: 20),
 
-        // Summary skeleton
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.ln100,
-            borderRadius: BorderRadius.circular(8),
+          // Summary skeleton
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                _buildSkeletonBox(height: 16, width: double.infinity),
+                const SizedBox(height: 8),
+                _buildSkeletonBox(height: 16, width: double.infinity),
+                const SizedBox(height: 8),
+                _buildSkeletonBox(height: 16, width: 200),
+              ],
+            ),
           ),
-          child: Column(
-            children: [
-              _buildSkeletonBox(height: 16, width: double.infinity),
-              const SizedBox(height: 8),
-              _buildSkeletonBox(height: 16, width: double.infinity),
-              const SizedBox(height: 8),
-              _buildSkeletonBox(height: 16, width: 200),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-        // Structure skeleton
-        _buildSkeletonBox(height: 12, width: 150),
-        const SizedBox(height: 8),
-        _buildSkeletonBox(height: 18, width: double.infinity),
-        const SizedBox(height: 20),
+          // Structure skeleton
+          _buildSkeletonBox(height: 12, width: 150),
+          const SizedBox(height: 8),
+          _buildSkeletonBox(height: 18, width: double.infinity),
+          const SizedBox(height: 20),
 
-        // Grammar points skeleton
-        _buildSkeletonBox(height: 12, width: 130),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-        const SizedBox(height: 20),
+          // Grammar points skeleton
+          _buildSkeletonBox(height: 12, width: 130),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+          const SizedBox(height: 20),
 
-        // Vocabulary skeleton
-        _buildSkeletonBox(height: 12, width: 100),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-        const SizedBox(height: 12),
-        _buildSkeletonCard(),
-      ],
+          // Vocabulary skeleton
+          _buildSkeletonBox(height: 12, width: 100),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+          const SizedBox(height: 12),
+          _buildSkeletonCard(),
+        ],
+      ),
     );
   }
 
@@ -587,7 +608,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: AppColors.ln200,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -597,9 +618,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.ln100,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.ln200, width: 1),
+        border: Border.all(color: AppColors.lightSurface, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

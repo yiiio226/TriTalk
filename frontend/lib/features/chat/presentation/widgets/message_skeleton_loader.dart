@@ -8,8 +8,9 @@ class MessageSkeletonLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: AppColors.lightDivider, // Much lighter base
-      highlightColor: AppColors.lightSurface, // Much lighter highlight
+      baseColor: AppColors.lightSkeletonBase, // Much lighter base
+      highlightColor:
+          AppColors.lightSkeletonHighlight, // Much lighter highlight
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         itemCount: 6,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 class HistorySkeletonLoader extends StatelessWidget {
   const HistorySkeletonLoader({super.key});
@@ -7,8 +8,8 @@ class HistorySkeletonLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.lightSkeletonBase,
+      highlightColor: AppColors.lightSkeletonHighlight,
       child: ListView.separated(
         itemCount: 8, // Show a few skeleton items
         separatorBuilder: (_, __) => const Divider(height: 1),

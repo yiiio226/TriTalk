@@ -581,11 +581,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.lightSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.ln100,
             blurRadius: 15,
             offset: const Offset(0, -4),
           ),
@@ -607,7 +607,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.lightDivider,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -619,9 +619,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         decoration: BoxDecoration(
                           color: _feedback != null
                               ? (_feedback!.pronunciationScore >= 80
-                                  ? AppColors.lightSuccess.withValues(alpha: 0.1)
-                                  : AppColors.lightError.withValues(alpha: 0.1))
-                              : Colors.blue.shade50,
+                                    ? AppColors.lg50
+                                    : AppColors.lr50)
+                              : AppColors.ln50,
                           shape: BoxShape.circle,
                         ),
                         child: _feedback != null
@@ -631,7 +631,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                               )
                             : Icon(
                                 Icons.record_voice_over_rounded,
-                                color: AppColors.secondary,
+                                color: AppColors.primary,
                                 size: 20,
                               ),
                       ),
@@ -640,7 +640,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.lightSuccess,
+                            color: AppColors.lg500,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -674,7 +674,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.ln50,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.close, size: 20),
@@ -817,7 +817,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 child: Icon(
                   Icons.mic_rounded,
                   size: 32,
-                  color: Colors.white,
+                  color: AppColors.lightSurface,
                 ),
               ),
             ),
@@ -847,7 +847,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       child: Text(
                         '${_feedback!.pronunciationScore}',
                         style: const TextStyle(
-                          color:  Colors.white,
+                          color: AppColors.lightSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -990,12 +990,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.lightDivider),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.ln100.withValues(
+              alpha: 0.8,
+            ), // Adjusted for roughly 4% depending on ln100 opacity
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1009,13 +1011,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
+                  color: AppColors.lb500.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.graphic_eq_rounded,
                   size: 20,
-                  color: Colors.blue,
+                  color: AppColors.lb500,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1126,20 +1128,20 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
 
   Color _getScoreColor(double score) {
-     if (score >= 80) return const Color(0xFF10B981); // Green
-     if (score >= 60) return const Color(0xFFF59E0B); // Orange
-     return const Color(0xFFEF4444); // Red
+    if (score >= 80) return AppColors.lg500; // Green
+    if (score >= 60) return AppColors.ly500; // Warning/Orange-ish
+    return AppColors.lightError; // Red
   }
 
   Widget _buildStatItem(String label, double? score) {
     final value = score?.round() ?? 0;
     Color valueColor;
     if (value >= 80) {
-      valueColor = const Color(0xFF10B981); // Green
+      valueColor = AppColors.lg500; // Green
     } else if (value >= 60) {
-      valueColor = const Color(0xFFF59E0B); // Orange
+      valueColor = AppColors.ly500; // Orange
     } else {
-      valueColor = const Color(0xFFEF4444); // Red
+      valueColor = AppColors.lightError; // Red
     }
 
     return Column(
@@ -1157,7 +1159,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           label,
           style: const TextStyle(
             fontSize: 12,
-            color: Color(0xFF6B7280),
+            color: AppColors.lightTextSecondary,
           ),
         ),
       ],
@@ -1176,7 +1178,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               'Pronunciation:',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: AppColors.lightTextSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1184,14 +1186,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.blue[100],
+                color: AppColors.lb100,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
                 'Azure AI',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.blue,
+                  color: AppColors.lb500,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1223,19 +1225,19 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       Color color;
       switch (word.level) {
         case 'perfect':
-          color = Colors.green;
+          color = AppColors.lg500;
           break;
         case 'warning':
-          color = Colors.orange;
+          color = AppColors.ly500;
           break;
         case 'error':
-          color = Colors.red;
+          color = AppColors.lightError;
           break;
         case 'missing':
-          color = Colors.grey;
+          color = AppColors.lightTextDisabled;
           break;
         default:
-          color = Colors.grey;
+          color = AppColors.lightTextDisabled;
       }
 
       // Add word widget
@@ -1251,8 +1253,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                     color: word.level == 'missing'
-                        ? Colors.grey
-                        : Colors.black87,
+                        ? AppColors.lightTextDisabled
+                        : AppColors.lightTextPrimary,
                     decoration: word.level == 'missing'
                         ? TextDecoration.lineThrough
                         : null,
@@ -1270,7 +1272,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 const SizedBox(height: 2),
                 Text(
                   '${word.score.round()}',
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.lightTextSecondary,
+                  ),
                 ),
               ],
             ),
@@ -1292,7 +1297,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: AppColors.lightTextPrimary,
                 ),
               ),
             ),
@@ -1308,7 +1313,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.lightBackground,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1326,11 +1331,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     final displayScore = score?.round() ?? 0;
     Color color;
     if (displayScore >= 80) {
-      color = Colors.green;
+      color = AppColors.lg500;
     } else if (displayScore >= 60) {
-      color = Colors.orange;
+      color = AppColors.ly500;
     } else {
-      color = Colors.red;
+      color = AppColors.lightError;
     }
 
     return Column(
@@ -1348,8 +1353,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
   Widget _buildSkeletonLoader() {
     return Shimmer.fromColors(
-      baseColor: AppColors.lightDivider,
-      highlightColor: AppColors.lightSurface,
+      baseColor: AppColors.lightSkeletonBase,
+      highlightColor: AppColors.lightSkeletonHighlight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1381,30 +1386,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           ),
           const SizedBox(height: 32),
           
-          // Words Skeleton
-          Row(
-            children: [
-              _buildSkeletonBox(height: 16, width: 80, radius: 4),
-              const SizedBox(width: 8),
-              _buildSkeletonBox(height: 20, width: 60, radius: 4),
-            ],
-          ),
-          const SizedBox(height: 12),
+          // Simplified Words Skeleton
           Wrap(
             spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: List.generate(8, (index) {
-               final width = 40.0 + (index % 3) * 20.0;
-               return Column(
-                 children: [
-                   _buildSkeletonBox(height: 20, width: width, radius: 4),
-                   const SizedBox(height: 4),
-                   _buildSkeletonBox(height: 4, width: 20, radius: 2),
-                   const SizedBox(height: 2),
-                   _buildSkeletonBox(height: 10, width: 15, radius: 2),
-                 ],
-               );
+            runSpacing: 12,
+            children: List.generate(12, (index) {
+              final width = 60.0 + (index % 4) * 20.0;
+              return _buildSkeletonBox(height: 20, width: width, radius: 4);
             }),
           ),
         ],
@@ -1548,7 +1536,7 @@ class IntonationPainter extends CustomPainter {
 
     final markerPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = const Color(0xFF3B82F6); // Blue marker
+      ..color = AppColors.lb500; // Blue marker
 
     // Question mark - show rise at end
     if (isQuestion) {
@@ -1579,7 +1567,7 @@ class IntonationPainter extends CustomPainter {
       final starPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
-        ..color = const Color(0xFF3B82F6);
+        ..color = AppColors.lb500;
       
       for (int i = 0; i < 4; i++) {
         final angle = (i * math.pi / 2);

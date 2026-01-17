@@ -66,25 +66,57 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         children: [
           // Fixed Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+            child: Column(
               children: [
-                Icon(
-                  feedback.isPerfect ? Icons.star : Icons.auto_fix_high,
-                  color: feedback.isPerfect ? Colors.amber : Colors.orange,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  feedback.isPerfect ? 'Perfect!' : 'Feedback',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.ln200,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: feedback.isPerfect
+                            ? AppColors.lg100
+                            : AppColors.ly100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        feedback.isPerfect ? Icons.star : Icons.auto_fix_high,
+                        color: feedback.isPerfect
+                            ? AppColors.lg500
+                            : AppColors.ly500,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      feedback.isPerfect ? 'Perfect!' : 'Feedback',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.ln50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 20),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -117,14 +149,14 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                        color: AppColors.lg100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '语法正确！表达很棒！',
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
-                          color: AppColors.lightSuccess,
+                          color: AppColors.lg800,
                         ),
                       ),
                     ),
@@ -143,12 +175,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                        color: AppColors.lg100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         feedback.explanation,
-                        style: TextStyle(color: AppColors.lightSuccess),
+                        style: TextStyle(color: AppColors.lg800),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -177,12 +209,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                          color: AppColors.lg100,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           feedback.nativeExpressionReason!,
-                          style: TextStyle(color: AppColors.lightSuccess),
+                          style: TextStyle(color: AppColors.lg800),
                         ),
                       ),
                     ],
@@ -212,12 +244,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.lightSuccess.withValues(alpha: 0.1),
+                          color: AppColors.lg100,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           feedback.exampleAnswerReason!,
-                          style: TextStyle(color: AppColors.lightSuccess),
+                          style: TextStyle(color: AppColors.lg800),
                         ),
                       ),
                     ],
@@ -281,8 +313,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     bool showShadowing = false,
   }) {
     Color? textColor;
-    if (isError) textColor = Colors.red[700];
-    if (isSuccess) textColor = Colors.green[700];
+    if (isError) textColor = AppColors.lr800;
+    if (isSuccess) textColor = AppColors.lg800;
     if (isNative) textColor = AppColors.lightTextPrimary;
 
     return Column(
@@ -296,7 +328,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
+                color: AppColors.lightTextSecondary,
               ),
             ),
             Row(
@@ -324,7 +356,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
           text,
           style: TextStyle(
             fontSize: 16,
-            color: textColor ?? Colors.black87,
+            color: textColor ?? AppColors.lightTextPrimary,
             fontWeight: (isSuccess || isNative)
                 ? FontWeight.w500
                 : FontWeight.w500,

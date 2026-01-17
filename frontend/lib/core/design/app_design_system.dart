@@ -20,226 +20,188 @@ import 'package:flutter/material.dart';
 /// 
 /// Defines all colors used throughout the app for both light and dark modes.
 /// Colors are organized by purpose (primary, secondary, background, etc.)
+
+
 class AppColors {
   AppColors._(); // Private constructor
 
-  // =============================
-  // Neutral Color Scale (Light Mode)
-  // =============================
-  // Unified neutral colors based on pure black (#000000) with percentage-based opacity.
-  // This provides a consistent, predictable scale for all neutral UI elements.
-  
-  static const Color ln50 = Color(0x08000000);   // 3% black - Subtle backgrounds, very light overlays
-  static const Color ln100 = Color(0x0D000000);  // 5% black - Shadows, very light grey backgrounds
-  static const Color ln200 = Color(0x1F000000);  // 12% black - Borders, dividers, light grey backgrounds
-  static const Color ln300 = Color(0x61000000);  // 38% black - Disabled states, placeholder text
-  static const Color ln400 = Color(0x73000000);  // 45% black - Medium grey for subtle emphasis
-  static const Color ln500 = Color(0xB8000000);  // 72% black - Secondary text, icons
-  static const Color ln700 = Color(0xC7000000);  // 78% black - Dark secondary text
-  static const Color ln900 = Color(0xE3000000);  // 89% black - Primary text, strong emphasis
+  // ===========================================================================
+  // Neutral Color Scale (Light Mode) - 保持了透明度逻辑，但调整为更暖的灰度以匹配柔和氛围
+  // ===========================================================================
+  // TriTalk 的文字并非冷冰冰的纯黑，而是带有一点点暖意的深灰。
+  // 我们沿用透明度方案，这能让文字更好地融合在彩色卡片背景上。
+  static const Color ln50 = Color(0x08000000); // 3% - 极淡的分割线
+  static const Color ln100 = Color(0x0D000000); // 5% - 投影
+  static const Color ln200 = Color(0x1F000000); // 12% - 边框
+  static const Color ln300 = Color(0x61000000); // 38% - 失效状态
+  static const Color ln400 = Color(0x73000000); // 45% - 辅助图标
+  static const Color ln500 = Color(0xB8000000); // 72% - 次要文字 (Subtitle)
+  static const Color ln700 = Color(0xC7000000); // 78% - 深色次要文字
+  static const Color ln900 = Color(0xE6000000); // 90% - 主要标题 (TriTalk Header)
 
+  // ===========================================================================
+  // Semantic Color Scales (Light Mode) - 核心修改区域
+  // ===========================================================================
+  // 这里的 xx50 和 xx100 色值直接取样于你的 App 卡片背景。
 
+  // 1. Blue Scale (Light Mode) - 对应 "The Shirt Dilemma" 中的蓝色衬衫元素
+  // 即使卡片是米色，蓝色依然是重要的信息色。
+  static const Color lb50 = Color(0xFFF0F7FF); // 极淡蓝背景
+  static const Color lb100 = Color(0xFFE0F0FF); // 淡蓝
+  static const Color lb200 = Color(0xFFBAE0FF); // 边框蓝
+  static const Color lb300 = Color(0xFF7CC0FF); // 悬停
+  static const Color lb400 = Color(0xFF369EFF); // 强调
+  static const Color lb500 = Color(0xFF007AFF); // 标准交互蓝 (iOS风格)
+  static const Color lb800 = Color(0xFF1E40AF); // 深邃蓝
 
-  // =============================
-  // Semantic Color Scales (Light Mode)
-  // =============================
-  // Comprehensive color scales for UI components, states, and semantic meanings.
-  // Each color has 6 shades from very light (50) to saturated (500).
-  
-  // Blue Scale (Light Mode) - For info, links, and primary actions
-  static const Color lb50 = Color(0xFFEFF6FF);   // Very light blue background
-  static const Color lb100 = Color(0xFFDBEAFE);  // Light blue background
-  static const Color lb200 = Color(0xFFBFDBFE);  // Soft blue for borders
-  static const Color lb300 = Color(0xFF93C5FD);  // Medium blue for hover states
-  static const Color lb400 = Color(0xFF60A5FA);  // Bright blue for accents
-  static const Color lb500 = Color(0xFF3B82F6);  // Saturated blue for primary info
-  
-  // Green Scale (Light Mode) - For success, positive states, and growth
-  static const Color lg50 = Color(0xFFECFDF5);   // Very light green background
-  static const Color lg100 = Color(0xFFD1FAE5);  // Light green background
-  static const Color lg200 = Color(0xFFA7F3D0);  // Soft green for borders
-  static const Color lg300 = Color(0xFF6EE7B7);  // Medium green for hover states
-  static const Color lg400 = Color(0xFF34D399);  // Bright green for accents
-  static const Color lg500 = Color(0xFF10B981);  // Saturated green for success
-  
-  // Red Scale (Light Mode) - For errors, warnings, and destructive actions
-  static const Color lr50 = Color(0xFFFEF2F2);   // Very light red background
-  static const Color lr100 = Color(0xFFFEE2E2);  // Light red background
-  static const Color lr200 = Color(0xFFFECACA);  // Soft red for borders
-  static const Color lr300 = Color(0xFFFCA5A5);  // Medium red for hover states
-  static const Color lr400 = Color(0xFFF87171);  // Bright red for accents
-  static const Color lr500 = Color(0xFFEF4444);  // Saturated red for errors
-  
-  // Yellow Scale (Light Mode) - For warnings, highlights, and attention
-  static const Color ly50 = Color(0xFFFEFCE8);   // Very light yellow background
-  static const Color ly100 = Color(0xFFFEF9C3);  // Light yellow background
-  static const Color ly200 = Color(0xFFFEF08A);  // Soft yellow for borders
-  static const Color ly300 = Color(0xFFFDE047);  // Medium yellow for hover states
-  static const Color ly400 = Color(0xFFFACC15);  // Bright yellow for accents
-  static const Color ly500 = Color(0xFFEAB308);  // Saturated yellow for warnings
-  
-  // Orange Scale (Light Mode) - For alerts, energy, and secondary warnings
-  static const Color lo50 = Color(0xFFFFF7ED);   // Very light orange background
-  static const Color lo100 = Color(0xFFFFEDD5);  // Light orange background
-  static const Color lo200 = Color(0xFFFED7AA);  // Soft orange for borders
-  static const Color lo300 = Color(0xFFFDBA74);  // Medium orange for hover states
-  static const Color lo400 = Color(0xFFFB923C);  // Bright orange for accents
-  static const Color lo500 = Color(0xFFF97316);  // Saturated orange for alerts
-  
-  // Purple Scale (Light Mode) - For premium, creative, and special features
-  static const Color lp50 = Color(0xFFFAF5FF);   // Very light purple background
-  static const Color lp100 = Color(0xFFF3E8FF);  // Light purple background
-  static const Color lp200 = Color(0xFFE9D5FF);  // Soft purple for borders
-  static const Color lp300 = Color(0xFFD8B4FE);  // Medium purple for hover states
-  static const Color lp400 = Color(0xFFC084FC);  // Bright purple for accents
-  static const Color lp500 = Color(0xFFA855F7);  // Saturated purple for premium
+  // 2. Green Scale (Light Mode) - 对应右下角 "Fireworks" 卡片的薄荷绿背景
+  static const Color lg50 = Color(0xFFF2FBF6); // TriTalk 卡片背景: 薄荷白
+  static const Color lg100 = Color(0xFFE0F5EA); // 稍深薄荷
+  static const Color lg200 = Color(0xFFB8E8D0);
+  static const Color lg300 = Color(0xFF85D6B2);
+  static const Color lg400 = Color(0xFF4DBF91);
+  static const Color lg500 = Color(0xFF10B981); // 成功状态绿色
+  static const Color lg800 = Color(0xFF065F46); // 深翠绿
 
-  // =============================
-  // Brand Colors
-  // =============================
-  static const Color primary = Color(0xFF1D1D1D); // Main Brand Color (Buttons, Emphasis)
-  static const Color secondary = Color(0xFF2BC3C9); // Secondary Brand Color (Auxiliary Emphasis)
+  // 3. Red Scale (Light Mode) - 对应 "Bohol Island Bound" 卡片的淡粉色背景
+  // 我们将 Red Scale 调整为 Rose/Pink 倾向，更符合 App 的气质。
+  static const Color lr50 = Color(0xFFFFF0F5); // TriTalk 卡片背景: 樱花粉
+  static const Color lr100 = Color(0xFFFFE0EB); // 淡粉
+  static const Color lr200 = Color(0xFFFFC2D6);
+  static const Color lr300 = Color(0xFFFF94B8);
+  static const Color lr400 = Color(0xFFFF5C94);
+  static const Color lr500 = Color(0xFFFF3366); // 错误/警告红 (偏洋红，更年轻)
+  static const Color lr800 = Color(0xFF9F1239); // 深玫瑰红
 
-  // =============================
+  // 4. Yellow Scale (Light Mode) - 对应 "Check-in at Immigration" 卡片的奶油黄背景
+  static const Color ly50 = Color(0xFFFFFCF0); // TriTalk 卡片背景: 象牙奶油色
+  static const Color ly100 = Color(0xFFFFF7D6); // 淡黄
+  static const Color ly200 = Color(0xFFFFECAD);
+  static const Color ly300 = Color(0xFFFFDE7A);
+  static const Color ly400 = Color(0xFFFFCF47);
+  static const Color ly500 = Color(0xFFFFB800); // 警告黄
+  static const Color ly800 = Color(0xFF854D0E); // 古铜金
+
+  // 5. Orange Scale (Light Mode) - 对应头像及部分暖色高光
+  static const Color lo50 = Color(0xFFFFF5EB);
+  static const Color lo100 = Color(0xFFFFE6CC);
+  static const Color lo200 = Color(0xFFFFC999);
+  static const Color lo300 = Color(0xFFFFAC66);
+  static const Color lo400 = Color(0xFFFF8F33);
+  static const Color lo500 = Color(0xFFFF7200); // 活力橙
+  static const Color lo800 = Color(0xFF9A3412); // 焦糖橙
+
+  // 6. Purple Scale (Light Mode) - 对应 "Gym Buddy" 和 "Taxi" 卡片的淡紫背景
+  static const Color lp50 = Color(0xFFF7F5FF); // TriTalk 卡片背景: 极淡薰衣草
+  static const Color lp100 = Color(0xFFEDE8FF); // 淡紫
+  static const Color lp200 = Color(0xFFD6CCFF);
+  static const Color lp300 = Color(0xFFB5A3FF);
+  static const Color lp400 = Color(0xFF947AFF);
+  static const Color lp500 = Color(0xFF7A5CFF); // 优质/会员紫
+  static const Color lp800 = Color(0xFF5B21B6); // 深紫罗兰
+
+  // ===========================================================================
+  // Brand Colors (核心品牌色)
+  // ===========================================================================
+  // 基于截图中的 FAB (浮动按钮) 和 "TriTalk" 标题
+  static const Color primary = Color(0xFF1D1D1F); // Apple 风格的深黑，非纯黑，更有质感
+  static const Color secondary = Color(0xFFFF7200); // 提取自头像的橙色，作为点缀
+
+  // ===========================================================================
   // Light Theme Base Colors
-  // =============================
+  // ===========================================================================
   static const Color lightBackground = Color(0xFFF8FAFC); // Page Background
-  static const Color lightSurface = Color(0xFFFFFFFF); // Card/Container Background
-  static const Color lightDivider = ln200; // Divider/Border
+  static const Color lightSurface = Color(0xFFFFFFFF); // 卡片表面
+  static const Color lightDivider = ln200;
 
-
-
-  // =============================
+  // ===========================================================================
   // Light Theme State Colors
-  // =============================
-  static const Color lightError = lr500; // Error
-  static const Color lightSuccess = lg500; // Success
-  static const Color lightWarning = ly500; // Warning
-  static const Color lightInfo = ln500; // Primary blue for info
-  static const Color lightBlue = lb500; // Info blue
+  // ===========================================================================
+  static const Color lightError = lr800;
+  static const Color lightSuccess = lg800;
+  static const Color lightWarning = ly800;
+  static const Color lightInfo = ln700;
+  static const Color lightBlue = lb800;
 
-
-  // =============================
+  // ===========================================================================
   // Semantic Color Aliases (Backward Compatibility)
-  // =============================
-  // These maintain existing color names while using the new ln scale.
-
-  // Light Theme Text Colors
-  static const Color lightTextPrimary = ln900; // Primary Text
-  static const Color lightTextSecondary = ln500; // Secondary Text
-  static const Color lightTextDisabled = ln300; // Placeholder/Disabled
-
-  // Shadows / Overlays
+  // ===========================================================================
+  static const Color lightTextPrimary = ln900;
+  static const Color lightTextSecondary = ln500;
+  static const Color lightTextDisabled = ln300;
   static const Color lightShadow = ln100;
 
+  // Skeleton Colors
+  static const Color lightSkeletonBase = Color(0xFFE2E8F0);
+  static const Color lightSkeletonHighlight = Color(0xFFFFFFFF);
 
-
-
-
-
-  // =============================
-  // Dark Theme Colors
-  // =============================
-
-  // =============================
-  // Neutral Color Scale (Dark Mode)
-  // =============================
-  // Unified neutral colors based on pure white (#FFFFFF) with percentage-based opacity.
-  // This provides a consistent, predictable scale for all neutral UI elements in dark mode.
+  // ===========================================================================
+  // Dark Theme Colors (自动生成的深色模式适配)
+  // ===========================================================================
+  // 既然 TriTalk 是高亮风格，深色模式需要反转为"深邃背景+高亮卡片"或"暗色柔彩"
   
-  static const Color dn50 = Color(0x08FFFFFF);   // 3% white - Subtle backgrounds, very light overlays
-  static const Color dn100 = Color(0x0DFFFFFF);  // 5% white - Shadows, very light grey backgrounds
-  static const Color dn200 = Color(0x1FFFFFFF);  // 12% white - Borders, dividers, light grey backgrounds
-  static const Color dn300 = Color(0x61FFFFFF);  // 38% white - Disabled states, placeholder text
-  static const Color dn400 = Color(0x73FFFFFF);  // 45% white - Medium grey for subtle emphasis
-  static const Color dn500 = Color(0xB8FFFFFF);  // 72% white - Secondary text, icons
-  static const Color dn700 = Color(0xC7FFFFFF);  // 78% white - Dark secondary text
-  static const Color dn900 = Color(0xE3FFFFFF);  // 89% white - Primary text, strong emphasis
+  // Neutral Color Scale (Dark Mode) - 基于纯白
+  static const Color dn50 = Color(0x08FFFFFF);
+  static const Color dn100 = Color(0x0DFFFFFF);
+  static const Color dn200 = Color(0x1FFFFFFF);
+  static const Color dn300 = Color(0x61FFFFFF);
+  static const Color dn400 = Color(0x73FFFFFF);
+  static const Color dn500 = Color(0xB8FFFFFF);
+  static const Color dn700 = Color(0xC7FFFFFF);
+  static const Color dn900 = Color(0xE3FFFFFF); 
 
+  // Dark Mode Variants (调整了饱和度以适应深色背景)
+  // Blue
+  static const Color db50 = Color(0xFF0D1C2E);
+  static const Color db100 = Color(0xFF162C46);
+  static const Color db500 = Color(0xFF3A91FF); // 提亮
 
+  // Green
+  static const Color dg50 = Color(0xFF0E291E);
+  static const Color dg100 = Color(0xFF153D2D);
+  static const Color dg500 = Color(0xFF34D399);
 
-  // =============================
-  // Semantic Color Scales (Dark Mode)
-  // =============================
-  // Dark mode variants optimized for dark backgrounds.
-  // Colors are adjusted for proper contrast and visual comfort in dark environments.
-  
-  // Blue Scale (Dark Mode)
-  static const Color db50 = Color(0xFF172554);   // Very dark blue background
-  static const Color db100 = Color(0xFF1E3A8A);  // Dark blue background
-  static const Color db200 = Color(0xFF1E40AF);  // Medium dark blue
-  static const Color db300 = Color(0xFF2563EB);  // Medium blue
-  static const Color db400 = Color(0xFF3B82F6);  // Bright blue
-  static const Color db500 = Color(0xFF60A5FA);  // Light blue for dark mode
-  
-  // Green Scale (Dark Mode)
-  static const Color dg50 = Color(0xFF064E3B);   // Very dark green background
-  static const Color dg100 = Color(0xFF065F46);  // Dark green background
-  static const Color dg200 = Color(0xFF047857);  // Medium dark green
-  static const Color dg300 = Color(0xFF059669);  // Medium green
-  static const Color dg400 = Color(0xFF10B981);  // Bright green
-  static const Color dg500 = Color(0xFF34D399);  // Light green for dark mode
-  
-  // Red Scale (Dark Mode)
-  static const Color dr50 = Color(0xFF7F1D1D);   // Very dark red background
-  static const Color dr100 = Color(0xFF991B1B);  // Dark red background
-  static const Color dr200 = Color(0xFFB91C1C);  // Medium dark red
-  static const Color dr300 = Color(0xFFDC2626);  // Medium red
-  static const Color dr400 = Color(0xFFEF4444);  // Bright red
-  static const Color dr500 = Color(0xFFF87171);  // Light red for dark mode
-  
-  // Yellow Scale (Dark Mode)
-  static const Color dy50 = Color(0xFF713F12);   // Very dark yellow background
-  static const Color dy100 = Color(0xFF854D0E);  // Dark yellow background
-  static const Color dy200 = Color(0xFFA16207);  // Medium dark yellow
-  static const Color dy300 = Color(0xFFCA8A04);  // Medium yellow
-  static const Color dy400 = Color(0xFFEAB308);  // Bright yellow
-  static const Color dy500 = Color(0xFFFACC15);  // Light yellow for dark mode
-  
-  // Orange Scale (Dark Mode)
-  static const Color do50 = Color(0xFF7C2D12);   // Very dark orange background
-  static const Color do100 = Color(0xFF9A3412);  // Dark orange background
-  static const Color do200 = Color(0xFFC2410C);  // Medium dark orange
-  static const Color do300 = Color(0xFFEA580C);  // Medium orange
-  static const Color do400 = Color(0xFFF97316);  // Bright orange
-  static const Color do500 = Color(0xFFFB923C);  // Light orange for dark mode
-  
-  // Purple Scale (Dark Mode)
-  static const Color dp50 = Color(0xFF581C87);   // Very dark purple background
-  static const Color dp100 = Color(0xFF6B21A8);  // Dark purple background
-  static const Color dp200 = Color(0xFF7E22CE);  // Medium dark purple
-  static const Color dp300 = Color(0xFF9333EA);  // Medium purple
-  static const Color dp400 = Color(0xFFA855F7);  // Bright purple
-  static const Color dp500 = Color(0xFFC084FC);  // Light purple for dark mode
+  // Red
+  static const Color dr50 = Color(0xFF2E1218);
+  static const Color dr100 = Color(0xFF451A24);
+  static const Color dr500 = Color(0xFFFF6B90); // 提亮
 
-  
+  // Yellow
+  static const Color dy50 = Color(0xFF2E260D);
+  static const Color dy100 = Color(0xFF453913);
+  static const Color dy500 = Color(0xFFFFD166);
+
+  // Orange
+  static const Color do50 = Color(0xFF2E1A0D);
+  static const Color do100 = Color(0xFF452713);
+  static const Color do500 = Color(0xFFFF9F5C);
+
+  // Purple
+  static const Color dp50 = Color(0xFF1E1A2E);
+  static const Color dp100 = Color(0xFF2D2645);
+  static const Color dp500 = Color(0xFFA68CFF);
+
   // Dark Theme Base Colors
-  static const Color darkBackground = Color(0xFF0B1220);
-  static const Color darkSurface = Color(0xFF111827);
-  static const Color darkDivider = ln200; // Divider/Border
+  static const Color darkBackground = Color(0xFF000000); // 纯黑 OLED 友好
+  static const Color darkSurface = Color(0xFF1C1C1E); // 深灰卡片
+  static const Color darkDivider = dn200;
 
   // Dark Theme State Colors
-  static const Color darkError = dr500; // Error
-  static const Color darkSuccess = dg500; // Success
-  static const Color darkWarning = dy500; // Warning
-  static const Color darkWarningBackground = dy50; // Warning Background
-  static const Color darkInfo = db500; // Info blue
-  static const Color darkBlue = db500; // Info blue
-
-
-  
+  static const Color darkError = dr500;
+  static const Color darkSuccess = dg500;
+  static const Color darkWarning = dy500;
+  static const Color darkInfo = db500;
+  static const Color darkBlue = db500;
 
   // Dark Theme Text Colors
-  static const Color darkTextPrimary = dn900; // Primary Text
-  static const Color darkTextSecondary = dn500; // Secondary Text
-  static const Color darkTextDisabled = dn300; // Placeholder/Disabled
-
-  // Dark Theme Shadows
+  static const Color darkTextPrimary = dn900;
+  static const Color darkTextSecondary = dn500;
+  static const Color darkTextDisabled = dn300;
   static const Color darkShadow = dn100;
 
-
-
-
+  // Skeleton Colors
+  static const Color darkSkeletonBase = dn200;
+  static const Color darkSkeletonHighlight = dn100;
 }
 
 
