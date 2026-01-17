@@ -541,23 +541,57 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
+                          color: _feedback != null
+                              ? (_feedback!.pronunciationScore >= 80
+                                  ? AppColors.lightSuccess.withValues(alpha: 0.1)
+                                  : AppColors.lightError.withValues(alpha: 0.1))
+                              : Colors.blue.shade50,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          Icons.record_voice_over_rounded,
-                          color: AppColors.secondary,
-                          size: 20,
-                        ),
+                        child: _feedback != null
+                            ? Text(
+                                _feedback!.pronunciationScore >= 80 ? '🎉' : '😔',
+                                style: const TextStyle(fontSize: 20, height: 1),
+                              )
+                            : Icon(
+                                Icons.record_voice_over_rounded,
+                                color: AppColors.secondary,
+                                size: 20,
+                              ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Shadowing Practice',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      if (_feedback != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.lightSuccess,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Score: ${_feedback!.pronunciationScore}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _feedback!.pronunciationScore >= 80 ? 'Great Job!' : 'Keep Practicing!',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ] else
+                        const Text(
+                          'Shadowing Practice',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
@@ -776,9 +810,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildScoreHeader(feedback),
-        const SizedBox(height: 24),
         _buildStatsRow(feedback),
+        if (feedback.azureProsodyScore != null)
+          _buildProsodySection(feedback),
         const SizedBox(height: 32),
         _buildAzureWordFeedback(feedback),
       ],
@@ -835,6 +869,100 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       ),
     );
   }
+
+  Widget _buildProsodySection(VoiceFeedback feedback) {
+    if (feedback.azureProsodyScore == null) return const SizedBox.shrink();
+
+    final score = feedback.azureProsodyScore!;
+    final normalizedScore = (score / 100.0).clamp(0.0, 1.0);
+
+    Color scoreColor;
+    String feedbackText;
+    if (score >= 80) {
+      scoreColor = const Color(0xFF10B981); // Green
+      feedbackText = 'Natural and expressive intonation.';
+    } else if (score >= 60) {
+      scoreColor = const Color(0xFFF59E0B); // Orange
+      feedbackText = 'Good intonation, keep practicing the rhythm.';
+    } else {
+      scoreColor = const Color(0xFFEF4444); // Red
+      feedbackText = 'Try to mimic the ups and downs of the native speaker.';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.lightDivider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: scoreColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.graphic_eq_rounded,
+                  size: 20,
+                  color: scoreColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Intonation',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.lightTextPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${score.round()}',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: scoreColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: normalizedScore,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+              minHeight: 10,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            feedbackText,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.lightTextSecondary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
 
   Widget _buildStatItem(String label, double? score) {
     final value = score?.round() ?? 0;
