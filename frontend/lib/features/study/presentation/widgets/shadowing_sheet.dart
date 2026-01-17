@@ -51,7 +51,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   bool _isPlaying = false;
   VoiceFeedback?
   _feedback; // Use VoiceFeedback to unify with initial and new results
-  String _errorMessage = '';
+  // _errorMessage removed
   String? _currentRecordingPath; // Track current recording for replay/cleanup
   DateTime? _recordingStartTime; // Track recording duration
 
@@ -209,8 +209,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       if (mounted) {
         setState(() {
           _isTTSLoading = false;
-          _errorMessage = 'Failed to generate speech: $e';
         });
+        showTopToast(context, 'Failed to generate speech: $e', isError: true);
       }
     }
   }
@@ -226,9 +226,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to play audio: $e';
-        });
+        showTopToast(context, 'Failed to play audio: $e', isError: true);
       }
     }
   }
@@ -300,12 +298,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           _isRecording = true;
           _feedback = null;
           _currentRecordingPath = null;
-          _errorMessage = '';
           _recordingStartTime = DateTime.now(); // Record start time
         });
       }
     } catch (e) {
-      setState(() => _errorMessage = 'Could not start recording: $e');
+      if (mounted) {
+        showTopToast(context, 'Could not start recording: $e', isError: true);
+      }
     }
   }
 
@@ -350,7 +349,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         });
       }
     } catch (e) {
-      setState(() => _errorMessage = 'Error stopping recording: $e');
+      if (mounted) {
+        showTopToast(context, 'Error stopping recording: $e', isError: true);
+      }
     }
   }
 
@@ -366,7 +367,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         );
       }
     } catch (e) {
-      setState(() => _errorMessage = 'Failed to play recording: $e');
+      if (mounted) {
+        showTopToast(context, 'Failed to play recording: $e', isError: true);
+      }
     }
   }
 
@@ -480,24 +483,22 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
   @override
   Widget build(BuildContext context) {
-    // Listen for specific errors to show toast
+    // Listen for ALL errors to show toast
     ref.listen(pronunciationAssessmentProvider, (previous, next) {
       if (next.error != null && next.error != previous?.error) {
-        if (next.error!.contains('InitialSilenceTimeout')) {
-           // Show friendly toast for silence timeout
-           showTopToast(context, 'No voice detected, please try again', isError: true);
+        String msg = next.error!;
+        // Handle specific error cases for friendlier messages
+        if (msg.contains('InitialSilenceTimeout') || msg.contains('500')) {
+           msg = 'No voice detected, please try again';
         }
+        showTopToast(context, msg, isError: true);
       }
     });
-
     // Watch the provider state for loading and error
     final assessmentState = ref.watch(pronunciationAssessmentProvider);
     final isAnalyzing = assessmentState.isLoading;
-    final providerError = assessmentState.error;
+    // providerError handled via toaster, not displayed persistently
 
-    // Filter out errors that are handled by toasts
-    final shouldShowProviderError = providerError != null && !providerError.contains('InitialSilenceTimeout');
-    final displayError = _errorMessage.isNotEmpty ? _errorMessage : (shouldShowProviderError ? providerError : '');
 
     final screenHeight = MediaQuery.of(context).size.height;
     final maxSheetHeight = screenHeight * 0.9;
@@ -611,16 +612,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Error Message
-                  if (displayError.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        displayError,
-                        style: const TextStyle(color: Colors.red, fontSize: 13),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  // Bottom Controls (Always visible)
 
                   // Bottom Controls (Always visible)
                   _buildBottomControls(),
@@ -637,16 +629,16 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB), // Very light grey
+        color: AppColors.lightBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: AppColors.lightDivider),
       ),
       child: Text(
         widget.targetText,
         style: const TextStyle(
           fontSize: 16, 
           height: 1.5,
-          color: Color(0xFF1F2937),
+          color: AppColors.lightTextPrimary,
         ),
         textAlign: TextAlign.center,
       ),
@@ -667,7 +659,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 width: 56,
                 height: 56,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF3F4F6),
+                  color: AppColors.lightBackground,
                   shape: BoxShape.circle,
                 ),
                 child: _isTTSLoading
@@ -678,14 +670,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     : Icon(
                         _isTTSPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
                         size: 28,
-                        color: const Color(0xFF374151),
+                        color: AppColors.lightTextPrimary,
                       ),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Listen',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
             ),
           ],
         ),
@@ -701,13 +693,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+                  color: _isRecording ? AppColors.lightError : AppColors.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6))
+                      color: (_isRecording ? AppColors.lightError : AppColors.primary)
                           .withValues(alpha: 0.3),
-                      blurRadius: 12,
+                      blurRadius: 12, 
                       offset: const Offset(0, 4),
                     ),
                   ],
@@ -722,7 +714,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             const SizedBox(height: 8),
             Text(
               _feedback == null ? 'Hold to Record' : 'Record Again',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
             ),
           ],
         ),
@@ -738,14 +730,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF10B981), // Green
+                        color: AppColors.lightSuccess, // Green
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         '${_feedback!.pronunciationScore}',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color:  Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -756,7 +748,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     width: 56,
                     height: 56,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF3F4F6),
+                      color: AppColors.lightBackground,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -765,14 +757,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF9CA3AF),
+                        color: AppColors.lightTextSecondary,
                       ),
                     ),
                   ),
             const SizedBox(height: 8),
             Text(
               _feedback == null ? 'Not Rated' : 'My Score',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
             ),
           ],
         ),
@@ -800,16 +792,16 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFDCFCE7), // Light green
+            color: AppColors.lightSuccess,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF86EFAC)),
+            border: Border.all(color: AppColors.lightSuccess),
           ),
           child: Text(
             'Score: ${feedback.pronunciationScore}',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF166534), // Dark green
+              color: AppColors.lightTextPrimary,
             ),
           ),
         ),
@@ -819,7 +811,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
+            color: AppColors.lightTextPrimary,
           ),
         ),
       ],
@@ -830,7 +822,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB), // Very light grey
+        color: AppColors.lightBackground,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1128,7 +1120,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 height: 24,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.primary : Colors.grey[300],
+                  color: isDark ? AppColors.primary : AppColors.lightBackground,
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
