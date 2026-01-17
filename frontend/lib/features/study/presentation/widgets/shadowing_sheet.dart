@@ -619,8 +619,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         decoration: BoxDecoration(
                           color: _feedback != null
                               ? (_feedback!.pronunciationScore >= 80
-                                  ? AppColors.lightSuccess.withValues(alpha: 0.1)
-                                  : AppColors.lightError.withValues(alpha: 0.1))
+                                    ? AppColors.lg50
+                                    : AppColors.lr50)
                               : AppColors.ln50,
                           shape: BoxShape.circle,
                         ),
@@ -640,7 +640,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.lightSuccess,
+                            color: AppColors.lg500,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -1386,30 +1386,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           ),
           const SizedBox(height: 32),
           
-          // Words Skeleton
-          Row(
-            children: [
-              _buildSkeletonBox(height: 16, width: 80, radius: 4),
-              const SizedBox(width: 8),
-              _buildSkeletonBox(height: 20, width: 60, radius: 4),
-            ],
-          ),
-          const SizedBox(height: 12),
+          // Simplified Words Skeleton
           Wrap(
             spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: List.generate(8, (index) {
-               final width = 40.0 + (index % 3) * 20.0;
-               return Column(
-                 children: [
-                   _buildSkeletonBox(height: 20, width: width, radius: 4),
-                   const SizedBox(height: 4),
-                   _buildSkeletonBox(height: 4, width: 20, radius: 2),
-                   const SizedBox(height: 2),
-                   _buildSkeletonBox(height: 10, width: 15, radius: 2),
-                 ],
-               );
+            runSpacing: 12,
+            children: List.generate(12, (index) {
+              final width = 60.0 + (index % 4) * 20.0;
+              return _buildSkeletonBox(height: 20, width: width, radius: 4);
             }),
           ),
         ],
