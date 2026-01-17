@@ -41,8 +41,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   bool _isStreaming = false;
   StreamSubscription<MessageAnalysis>? _subscription;
 
-  // Track original sentence expand/collapse state
+  // Track expand/collapse states for all sections (default collapsed)
   bool _isOriginalSentenceExpanded = false;
+  bool _isSummaryExpanded = true;
+  bool _isSentenceStructureExpanded = false;
+  bool _isGrammarPointsExpanded = false;
+  bool _isVocabularyExpanded = false;
+  bool _isIdiomsExpanded = false;
 
   @override
   void dispose() {
@@ -127,12 +132,12 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     final displayAnalysis = _currentAnalysis ?? widget.analysis;
     final isStillLoading = widget.isLoading || _isStreaming;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: screenHeight * 0.85),
+    return SizedBox(
+      height: screenHeight * 0.90,
       child: StyledDrawer(
         padding: EdgeInsets.zero, // Padding handled inside children
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
             // Drag Handle & Header
             Padding(
@@ -301,16 +306,15 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           // Nothing loaded yet, show full skeleton
           _buildSkeletonLoader(),
         ] else if (displayAnalysis != null) ...[
-          // Summary
+          // Summary (Collapsible)
           if (displayAnalysis.overallSummary.isNotEmpty &&
               displayAnalysis.overallSummary != 'No summary available.') ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.ln50,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Text(
+            _buildCollapsibleSection(
+              title: 'SUMMARY',
+              isExpanded: _isSummaryExpanded,
+              onToggle: () =>
+                  setState(() => _isSummaryExpanded = !_isSummaryExpanded),
+              content: Text(
                 displayAnalysis.overallSummary,
                 style: TextStyle(
                   color: AppColors.lightTextPrimary,
@@ -319,165 +323,161 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
           ],
 
-          // Sentence Structure
+          // Sentence Structure (Collapsible)
           if (displayAnalysis.sentenceStructure.isNotEmpty &&
               displayAnalysis.sentenceBreakdown.isNotEmpty) ...[
-            const Text(
-              'SENTENCE STRUCTURE',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.lightTextSecondary,
+            _buildCollapsibleSection(
+              title: 'SENTENCE STRUCTURE',
+              isExpanded: _isSentenceStructureExpanded,
+              onToggle: () => setState(
+                () => _isSentenceStructureExpanded =
+                    !_isSentenceStructureExpanded,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              displayAnalysis.sentenceStructure,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.5,
-                color: AppColors.lightTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 12,
-              children: displayAnalysis.sentenceBreakdown
-                  .map(
-                    (segment) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.lb100,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.lb100),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            segment.text,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.lightBlue,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            segment.tag,
-                            style: TextStyle(   
-                              fontSize: 11,
-                              color: AppColors.lightBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayAnalysis.sentenceStructure,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: AppColors.lightTextPrimary,
                     ),
-                  )
-                  .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 12,
+                    children: displayAnalysis.sentenceBreakdown
+                        .map(
+                          (segment) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.ln50,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(color: AppColors.ln100),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  segment.text,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.lightTextPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  segment.tag,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.lightTextSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
           ],
 
-          // Grammar Points
+          // Grammar Points (Collapsible)
           if (displayAnalysis.grammarPoints.isNotEmpty) ...[
-            const Text(
-              'GRAMMAR POINTS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.lightTextSecondary,
+            _buildCollapsibleSection(
+              title: 'GRAMMAR POINTS',
+              isExpanded: _isGrammarPointsExpanded,
+              onToggle: () => setState(
+                () => _isGrammarPointsExpanded = !_isGrammarPointsExpanded,
               ),
-            ),
-            const SizedBox(height: 12),
-            ...displayAnalysis.grammarPoints.map(
-              (point) => _buildGrammarPoint(context, point),
+              content: Column(
+                children: displayAnalysis.grammarPoints
+                    .map((point) => _buildGrammarPoint(context, point))
+                    .toList(),
+              ),
             ),
             const SizedBox(height: 12),
           ] else if (_isStreaming) ...[
-            const Text(
-              'GRAMMAR POINTS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.lightTextSecondary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Shimmer.fromColors(
-              baseColor: AppColors.lightSkeletonBase,
-              highlightColor: AppColors.lightSkeletonHighlight,
-              child: Column(
-                children: [
-                  _buildSkeletonCard(),
-                  const SizedBox(height: 12),
-                  _buildSkeletonCard(),
-                ],
+            _buildCollapsibleSection(
+              title: 'GRAMMAR POINTS',
+              isExpanded: false,
+              onToggle: () {},
+              content: Shimmer.fromColors(
+                baseColor: AppColors.lightSkeletonBase,
+                highlightColor: AppColors.lightSkeletonHighlight,
+                child: Column(
+                  children: [
+                    _buildSkeletonCard(),
+                    const SizedBox(height: 12),
+                    _buildSkeletonCard(),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          // Vocabulary
+          // Vocabulary (Collapsible)
           if (displayAnalysis.vocabulary.isNotEmpty) ...[
-            const Text(
-              'VOCABULARY',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.lightTextSecondary,
+            _buildCollapsibleSection(
+              title: 'VOCABULARY',
+              isExpanded: _isVocabularyExpanded,
+              onToggle: () => setState(
+                () => _isVocabularyExpanded = !_isVocabularyExpanded,
               ),
-            ),
-            const SizedBox(height: 12),
-            ...displayAnalysis.vocabulary.map(
-              (vocab) => _buildVocabularyItem(context, vocab),
+              content: Column(
+                children: displayAnalysis.vocabulary
+                    .map((vocab) => _buildVocabularyItem(context, vocab))
+                    .toList(),
+              ),
             ),
             const SizedBox(height: 12),
           ] else if (_isStreaming) ...[
-            const Text(
-              'VOCABULARY',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.lightTextSecondary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Shimmer.fromColors(
-              baseColor: AppColors.lightSkeletonBase,
-              highlightColor: AppColors.lightSkeletonHighlight,
-              child: Column(
-                children: [
-                  _buildSkeletonCard(),
-                  const SizedBox(height: 12),
-                  _buildSkeletonCard(),
-                ],
+            _buildCollapsibleSection(
+              title: 'VOCABULARY',
+              isExpanded: false,
+              onToggle: () {},
+              content: Shimmer.fromColors(
+                baseColor: AppColors.lightSkeletonBase,
+                highlightColor: AppColors.lightSkeletonHighlight,
+                child: Column(
+                  children: [
+                    _buildSkeletonCard(),
+                    const SizedBox(height: 12),
+                    _buildSkeletonCard(),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
           ],
 
-          // Idioms
+          // Idioms (Collapsible)
           if (displayAnalysis.idioms.isNotEmpty) ...[
-            const Text(
-              'IDIOMS & SLANG',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.lightError,
+            _buildCollapsibleSection(
+              title: 'IDIOMS & SLANG',
+              isExpanded: _isIdiomsExpanded,
+              onToggle: () =>
+                  setState(() => _isIdiomsExpanded = !_isIdiomsExpanded),
+              titleColor: AppColors.lightTextPrimary,
+              content: Column(
+                children: displayAnalysis.idioms
+                    .map((idiom) => _buildIdiomItem(context, idiom))
+                    .toList(),
               ),
-            ),
-            const SizedBox(height: 12),
-            ...displayAnalysis.idioms.map(
-              (idiom) => _buildIdiomItem(context, idiom),
             ),
             const SizedBox(height: 12),
           ],
@@ -505,35 +505,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             ),
           ],
 
-          // Save button - only show when finished? Or always allow saving partial?
-          // Better to show when at least something is there or finished.
-          const SizedBox(height: 12),
-          if (!_isStreaming)
-            ElevatedButton(
-              onPressed: () {
-                VocabService().add(
-                  widget.message.content,
-                  "AI Message Analysis",
-                  "Analyzed Sentence",
-                  scenarioId: widget.sceneId, // Link to current conversation
-                );
-                Navigator.pop(context);
-                showTopToast(context, "Saved to Vocabulary", isError: false);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.lightSurface,
-                minimumSize: const Size(double.infinity, 56),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
-              ),
-              child: const Text(
-                'Save Sentence',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
+
         ] else ...[
           const Center(
             child: Padding(
@@ -635,6 +607,53 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     );
   }
 
+  /// Reusable collapsible section widget
+  Widget _buildCollapsibleSection({
+    required String title,
+    required bool isExpanded,
+    required VoidCallback onToggle,
+    required Widget content,
+    Color? titleColor,
+  }) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.ln50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.ln100),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: titleColor ?? AppColors.lightTextSecondary,
+                  ),
+                ),
+                Icon(
+                  isExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: titleColor ?? AppColors.lightTextSecondary,
+                  size: 24,
+                ),
+              ],
+            ),
+            if (isExpanded) ...[const SizedBox(height: 12), content],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildGrammarPoint(BuildContext context, GrammarPoint point) {
     final isSaved = _savedGrammarPoints.contains(point.structure);
 
@@ -642,9 +661,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.lg50,
+        color: AppColors.ln50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.lg100, width: 1),
+        border: Border.all(color: AppColors.ln100, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,7 +699,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.lightSuccess,
+                        color: AppColors.lightTextPrimary,
                       ),
                     );
                   },
@@ -723,7 +742,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     padding: const EdgeInsets.all(4.0),
                     child: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color: AppColors.lightSuccess,
+                      color: AppColors.lightTextSecondary,
                       size: 20,
                     ),
                   ),
@@ -734,7 +753,10 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 4),
           Text(
             point.explanation,
-            style: const TextStyle(fontSize: 13, color: AppColors.lightSuccess),
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.lightTextPrimary,
+            ),
           ),
           if (point.example.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -743,7 +765,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
-                color: AppColors.lightSuccess,
+                color: AppColors.lightTextSecondary,
               ),
             ),
           ],
@@ -852,9 +874,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.lightError.withOpacity(0.05),
+        color: AppColors.ln50,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.lightError.withOpacity(0.2)),
+        border: Border.all(color: AppColors.ln100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -862,15 +884,13 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.stars_rounded, size: 18, color: AppColors.lightError),
-              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   idiom.type.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.lightError,
+                    color: AppColors.lightTextSecondary,
                   ),
                 ),
               ),
@@ -897,7 +917,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                     padding: const EdgeInsets.all(4.0),
                     child: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color: AppColors.lightError,
+                      color: AppColors.lightTextSecondary,
                       size: 20,
                     ),
                   ),
@@ -911,13 +931,17 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.lightError,
+              color: AppColors.lightTextPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             idiom.explanation,
-            style: const TextStyle(fontSize: 14, color: AppColors.lightError, height: 1.4),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.lightTextPrimary,
+              height: 1.4,
+            ),
           ),
         ],
       ),
