@@ -1200,68 +1200,108 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         ),
         const SizedBox(height: 12),
         Wrap(
-          spacing: 8,
+          spacing: 4,
           runSpacing: 8,
           alignment: WrapAlignment.center,
-          children: words.map((word) {
-            Color color;
-            switch (word.level) {
-              case 'perfect':
-                color = Colors.green;
-                break;
-              case 'warning':
-                color = Colors.orange;
-                break;
-              case 'error':
-                color = Colors.red;
-                break;
-              case 'missing':
-                color = Colors.grey;
-                break;
-              default:
-                color = Colors.grey;
-            }
-
-            return GestureDetector(
-              onTap: () => _playWordPronunciation(word.text),
-              child: IntrinsicWidth(
-                child: Column(
-                  children: [
-                    Text(
-                      word.text,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: word.level == 'missing'
-                            ? Colors.grey
-                            : Colors.black87,
-                        decoration: word.level == 'missing'
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      height: 4,
-                      width: 20,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${word.score.round()}',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+          children: _buildWordsWithPunctuation(words),
         ),
       ],
     );
+  }
+
+  /// Build word widgets with punctuation marks inserted
+  List<Widget> _buildWordsWithPunctuation(List<AzureWordFeedback> words) {
+    final List<Widget> widgets = [];
+    
+    // Parse target text to extract punctuation
+    final targetWords = widget.targetText.split(RegExp(r'\s+'));
+    
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      
+      // Determine color based on level
+      Color color;
+      switch (word.level) {
+        case 'perfect':
+          color = Colors.green;
+          break;
+        case 'warning':
+          color = Colors.orange;
+          break;
+        case 'error':
+          color = Colors.red;
+          break;
+        case 'missing':
+          color = Colors.grey;
+          break;
+        default:
+          color = Colors.grey;
+      }
+
+      // Add word widget
+      widgets.add(
+        GestureDetector(
+          onTap: () => _playWordPronunciation(word.text),
+          child: IntrinsicWidth(
+            child: Column(
+              children: [
+                Text(
+                  word.text,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: word.level == 'missing'
+                        ? Colors.grey
+                        : Colors.black87,
+                    decoration: word.level == 'missing'
+                        ? TextDecoration.lineThrough
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  height: 4,
+                  width: 20,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${word.score.round()}',
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Extract punctuation from target text if available
+      if (i < targetWords.length) {
+        final targetWord = targetWords[i];
+        final punctuation = targetWord.replaceAll(RegExp(r"[a-zA-Z0-9'\-]"), '');
+        
+        if (punctuation.isNotEmpty) {
+          widgets.add(
+            Padding(
+              padding: const EdgeInsets.only(right: 4, bottom: 20),
+              child: Text(
+                punctuation,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    }
+    
+    return widgets;
   }
 
   Widget _buildAzureScores(VoiceFeedback feedback) {
