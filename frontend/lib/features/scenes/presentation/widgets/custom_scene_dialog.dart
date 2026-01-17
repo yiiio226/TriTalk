@@ -125,14 +125,16 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                       children: [
                         const Icon(Icons.auto_awesome, color: AppColors.primary),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Create Your Own Scenario',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        const Expanded(
+                          child: Text(
+                            'Create Scenario',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.close),
                           onPressed: () => Navigator.of(context).pop(),
