@@ -31,37 +31,56 @@
 
 ## 🔀 云端 TTS 服务选型
 
-> ⚠️ **待决策**：以下两个服务均可使用，需根据实际需求选择。
+> ✅ **最终决策**：选择 **Gemini 2.5 Flash Preview TTS** (通过 Vertex AI)
+>
+> 理由：已有 $25,000 GCP 额度，质量优秀，低延迟，支持流式输出。
 
-### 方案 A: MiniMax TTS（已集成）
+### ✅ 方案: Gemini 2.5 Flash Preview TTS（已选择）
 
-| 维度       | 说明                                |
-| ---------- | ----------------------------------- |
-| **状态**   | ✅ 已集成，`/tts/generate` 端点可用 |
-| **多语言** | ⚠️ 主要优化中文，英语质量一般       |
-| **延迟**   | 流式响应，首字节较快                |
-| **优势**   | 无需额外开发，复用现有服务          |
-| **劣势**   | 单价较高，非中文语言质量不确定      |
+| 维度         | 说明                                                          |
+| ------------ | ------------------------------------------------------------- |
+| **状态**     | ✅ 已集成，`/tts/gcp/generate` (流式) 和 `/tts/word` (非流式) |
+| **模型**     | `gemini-2.5-flash-preview-tts`                                |
+| **多语言**   | ✅ 支持多语言，内置语音可自动适配                             |
+| **延迟**     | 🚀 流式输出，首字节延迟低                                     |
+| **输出格式** | WAV (PCM 24kHz 16-bit mono)                                   |
+| **优势**     | $25,000 GCP 额度可用，质量高，低延迟                          |
+| **音色**     | Kore(默认), Aoede, Charon, Fenrir, Puck, Orbit                |
 
-### 方案 B: Azure Speech TTS（需新增）
+#### 价格 (Vertex AI)
 
-| 维度       | 说明                                         |
-| ---------- | -------------------------------------------- |
-| **状态**   | ⚠️ 需新增集成（已有 Azure 账号用于发音评估） |
-| **多语言** | ✅ 140+ 语言，400+ 神经语音                  |
-| **延迟**   | ~100-200ms                                   |
-| **优势**   | 多语言质量稳定，与发音评估服务统一           |
-| **劣势**   | 需额外开发                                   |
+| 项目   | Free Tier      | Paid Tier (per 1M tokens) |
+| ------ | -------------- | ------------------------- |
+| Input  | Free of charge | $0.50 (text)              |
+| Output | Free of charge | $10.00 (audio)            |
 
-### 对比总结
+> 💡 **注意**：Preview 模型有 Free Tier 额度，且我们有 $25,000 GCP 信用额度。
 
-| 维度       | MiniMax         | Azure                           |
-| ---------- | --------------- | ------------------------------- |
-| 开发成本   | 🟢 低（已集成） | 🟡 中（需新增）                 |
-| 单价       | 🟡 ¥3.5/万字符  | 🟢 $15/百万字符 (≈¥1.08/万字符) |
-| 中文质量   | 🟢 优秀         | 🟢 优秀                         |
-| 英语质量   | 🟡 一般         | 🟢 优秀                         |
-| 多语言支持 | 🟡 有限         | 🟢 140+ 语言                    |
+### 历史方案参考
+
+<details>
+<summary>方案 A: MiniMax TTS（已弃用）</summary>
+
+| 维度       | 说明                           |
+| ---------- | ------------------------------ |
+| **状态**   | ⚠️ 已弃用，替换为 Gemini TTS   |
+| **多语言** | ⚠️ 主要优化中文，英语质量一般  |
+| **延迟**   | 流式响应，首字节较快           |
+| **劣势**   | 单价较高，非中文语言质量不确定 |
+
+</details>
+
+<details>
+<summary>方案 B: Azure Speech TTS（未使用）</summary>
+
+| 维度       | 说明                        |
+| ---------- | --------------------------- |
+| **状态**   | 未集成                      |
+| **多语言** | ✅ 140+ 语言，400+ 神经语音 |
+| **延迟**   | ~100-200ms                  |
+| **劣势**   | 需额外开发，无现有额度      |
+
+</details>
 
 ---
 
@@ -73,7 +92,44 @@
 - 用户每天练习：100 个单词
 - 月活跃用户：1000 DAU
 
-### MiniMax TTS 成本
+### ✅ Gemini 2.5 Flash Preview TTS 成本（当前使用）
+
+| 项目   | Free Tier      | Paid Tier          |
+| ------ | -------------- | ------------------ |
+| Input  | Free of charge | $0.50 / 1M tokens  |
+| Output | Free of charge | $10.00 / 1M tokens |
+
+#### Free Tier（当前使用）
+
+| 场景                   | 说明                  | 成本      |
+| ---------------------- | --------------------- | --------- |
+| Preview 模型           | 免费使用              | **$0**    |
+| 1000 DAU / 月          | Free Tier 内          | **$0/月** |
+| 备用: $25,000 GCP 额度 | 超出 Free Tier 时使用 | -         |
+
+#### Paid Tier（超出 Free Tier 后预估）
+
+> 💡 **Token 估算**：
+>
+> - 输入：约 1 token ≈ 4 字符，7 字符单词 ≈ 2 tokens
+> - 输出：音频 token 按生成的音频长度计算，单词约产生 ~50-100 audio tokens
+
+| 场景                     | 计算                     | 成本                     |
+| ------------------------ | ------------------------ | ------------------------ |
+| Output 单价              | $10.00 / 1M audio tokens | -                        |
+| 每次单词 TTS (估)        | ~100 tokens × $0.00001   | ~$0.001                  |
+| 用户每天 100 词          | 100 × $0.001             | $0.10                    |
+| 1000 DAU / 月 (无缓存)   | 1000 × 30 × $0.10        | **$3,000/月 (≈¥21,600)** |
+| 1000 DAU / 月 (90% 缓存) | $3,000 × 10%             | **$300/月 (≈¥2,160)**    |
+
+> ⚠️ **注意**：以上 Paid Tier 成本为估算值，实际 audio token 计算方式可能不同。
+>
+> ✅ **我们的情况**：目前使用 Free Tier，成本为 **$0/月**。拥有 $25,000 GCP 额度作为备用。
+
+### 其他服务成本对比（参考）
+
+<details>
+<summary>MiniMax TTS 成本（已弃用）</summary>
 
 | 场景                     | 计算               | 成本 (RMB)    |
 | ------------------------ | ------------------ | ------------- |
@@ -82,6 +138,8 @@
 | 用户每天 100 词          | 100 × ¥0.00245     | ¥0.245        |
 | 1000 DAU / 月 (无缓存)   | 1000 × 30 × ¥0.245 | **¥7,350/月** |
 | 1000 DAU / 月 (90% 缓存) | ¥7,350 × 10%       | **¥735/月**   |
+
+</details>
 
 ### Azure TTS 成本
 
@@ -187,26 +245,24 @@
 
 ### 成本对比
 
-| 服务                   | 单价 (百万字符) | 无缓存 (¥/月) | 90% 缓存 (¥/月) | 质量评价      |
-| ---------------------- | --------------- | ------------- | --------------- | ------------- |
-| Google/AWS Standard    | $4              | ¥605          | ¥60             | 🟡 机械       |
-| Azure Neural           | $15             | ¥2,268        | ¥227            | 🟢 优秀       |
-| OpenAI TTS-1           | $15             | ¥2,268        | ¥227            | 🟢 优秀       |
-| Google WaveNet/Neural2 | $16             | ¥2,419        | ¥242            | 🟢 优秀       |
-| AWS Polly Neural       | $16             | ¥2,419        | ¥242            | 🟢 优秀       |
-| OpenAI TTS-1-HD        | $30             | ¥4,536        | ¥454            | 🟢 高清       |
-| AWS Polly Generative   | $30             | ¥4,536        | ¥454            | 🟢 高清       |
-| MiniMax                | ¥3.5/万 (~$49)  | ¥7,350        | ¥735            | 🟢 中文优秀   |
-| ElevenLabs (~$150)     | ~$150           | ¥22,680       | ¥2,268          | 🟢 声音克隆强 |
+| 服务                    | 单价           | 无缓存 (¥/月) | 90% 缓存 (¥/月) | 质量评价      |
+| ----------------------- | -------------- | ------------- | --------------- | ------------- |
+| **✅ Gemini 2.5 Flash** | **Free Tier**  | **¥0**        | **¥0**          | 🟢 优秀       |
+| Google/AWS Standard     | $4/百万字符    | ¥605          | ¥60             | 🟡 机械       |
+| Azure Neural            | $15/百万字符   | ¥2,268        | ¥227            | 🟢 优秀       |
+| OpenAI TTS-1            | $15/百万字符   | ¥2,268        | ¥227            | 🟢 优秀       |
+| Google WaveNet/Neural2  | $16/百万字符   | ¥2,419        | ¥242            | 🟢 优秀       |
+| AWS Polly Neural        | $16/百万字符   | ¥2,419        | ¥242            | 🟢 优秀       |
+| OpenAI TTS-1-HD         | $30/百万字符   | ¥4,536        | ¥454            | 🟢 高清       |
+| AWS Polly Generative    | $30/百万字符   | ¥4,536        | ¥454            | 🟢 高清       |
+| MiniMax                 | ¥3.5/万 (~$49) | ¥7,350        | ¥735            | 🟢 中文优秀   |
+| ElevenLabs (~$150)      | ~$150/百万字符 | ¥22,680       | ¥2,268          | 🟢 声音克隆强 |
 
 > 💡 **缓存策略至关重要**：无论选择哪个服务，90% 缓存命中率可降低 90% 成本。
 >
-> 📊 **推荐选择**：
+> ✅ **最终选择**：
 >
-> - **性价比首选**：Google Cloud Standard 或 AWS Polly Standard（最便宜，但质量一般）
-> - **质量与成本平衡**：Azure Neural / OpenAI TTS-1 / Google WaveNet（$15-16/百万字符）
-> - **中文场景**：MiniMax（已集成，中文质量优秀）
-> - **声音克隆需求**：ElevenLabs（最贵，但功能最强大）
+> - **Gemini 2.5 Flash Preview TTS**：Free Tier + $25,000 GCP 额度，成本为 $0，质量优秀，已集成。
 
 ---
 
@@ -214,9 +270,9 @@
 
 ### Phase 1: 后端 API
 
-- [x] **1.1** 新增 `/tts/word` 端点（复用现有 TTS 服务或新增 Azure）
-- [x] **1.2** 支持多语言参数（language, voice）
-- [x] **1.3** 返回 MP3 音频数据（base64 或 binary）
+- [x] **1.1** 新增 `/tts/word` 端点（使用 GCP Vertex AI Gemini TTS）
+- [x] **1.2** 支持多语言参数（language, voice_name）
+- [x] **1.3** 返回 WAV 音频数据（base64）
 - [ ] **1.4** 添加 API 测试用例
 
 ### Phase 2: 前端基础
@@ -267,65 +323,69 @@ Content-Type: application/json
 Request:
 {
   "word": "pineapple",
-  "language": "en-US",
-  "voice": "..."  // 可选，服务端有默认值
+  "language": "en-US",       // 用于自动选择语音
+  "voice_name": "Kore"       // 可选，Gemini TTS 语音名称
 }
 
 Response:
 {
-  "audio_base64": "//uQxAAAAAANIAAAAAE...",
-  "format": "mp3",      // 见下方说明
-  "duration_ms": 850    // 可选
+  "audio_base64": "UklGRi...",  // WAV 格式音频
+  "format": "wav",               // PCM 24kHz 16-bit mono
+  "mime_type": "audio/wav"
 }
 ```
 
-> ⚠️ **音频格式说明**：
+> ✅ **音频格式说明**：
 >
-> | 服务    | 默认格式 | 备注                                   |
-> | ------- | -------- | -------------------------------------- |
-> | MiniMax | MP3      | 现有配置 `audio_setting.format: "mp3"` |
-> | Azure   | 可配置   | 支持 MP3、WAV、OGG 等，实现时确认      |
+> | 服务                     | 格式 | 采样率 | 备注                           |
+> | ------------------------ | ---- | ------ | ------------------------------ |
+> | **Gemini 2.5 Flash TTS** | WAV  | 24kHz  | PCM 16-bit mono，已包含 header |
 >
-> 实现时根据实际选用的服务调整 `format` 字段。前端播放器需兼容对应格式。
+> 前端播放器需支持 WAV 格式音频。
+
+### Gemini TTS 语音选择
+
+| 语音名称 | 特点                         | 推荐场景   |
+| -------- | ---------------------------- | ---------- |
+| Kore     | Clear, natural female (默认) | 英语       |
+| Aoede    | Warm, expressive female      | 表达性内容 |
+| Charon   | Deep, authoritative male     | 正式场合   |
+| Fenrir   | Energetic, dynamic male      | 日语       |
+| Puck     | Friendly, conversational     | 韩语       |
+| Orbit    | Neutral, professional        | 中文兼容   |
 
 ### 多语言配置
 
 ```dart
 class LanguageConfig {
-  final String minimaxVoice;  // MiniMax voice ID
-  final String azureVoice;    // Azure voice ID
+  final String geminiVoice;   // Gemini TTS voice name
   final String localTtsLocale;
   final String displayName;
 }
 
 const Map<String, LanguageConfig> languageConfigs = {
   'en-US': LanguageConfig(
-    minimaxVoice: 'English_Trustworthy_Man',
-    azureVoice: 'en-US-JennyNeural',
+    geminiVoice: 'Kore',
     localTtsLocale: 'en-US',
     displayName: 'English (US)',
   ),
   'en-GB': LanguageConfig(
-    minimaxVoice: 'English_Trustworthy_Man',
-    azureVoice: 'en-GB-SoniaNeural',
+    geminiVoice: 'Kore',
     localTtsLocale: 'en-GB',
     displayName: 'English (UK)',
   ),
   'zh-CN': LanguageConfig(
-    minimaxVoice: 'female-tianmei',
-    azureVoice: 'zh-CN-XiaoxiaoNeural',
+    geminiVoice: 'Orbit',  // Neutral, 中文兼容
     localTtsLocale: 'zh-CN',
     displayName: '中文（简体）',
   ),
   'ja-JP': LanguageConfig(
-    minimaxVoice: 'Japanese_IntellectualFemale',
-    azureVoice: 'ja-JP-NanamiNeural',
+    geminiVoice: 'Fenrir',  // Dynamic, 日语适配
     localTtsLocale: 'ja-JP',
     displayName: '日本語',
   ),
   'ko-KR': LanguageConfig(
-    minimaxVoice: 'Korean_IntellectualFemale',
-    azureVoice: 'ko-KR-SunHiNeural',
+    geminiVoice: 'Puck',  // Friendly, 韩语适配
     localTtsLocale: 'ko-KR',
     displayName: '한국어',
   ),
@@ -466,17 +526,32 @@ abstract class WordTtsService {
 
 ## 📚 相关资源
 
-### MiniMax TTS
+### ✅ Gemini 2.5 Flash TTS（当前使用）
+
+- [Vertex AI Gemini TTS 定价](https://cloud.google.com/vertex-ai/generative-ai/pricing)
+- [Gemini TTS 文档](https://cloud.google.com/vertex-ai/generative-ai/docs/speech/text-to-speech)
+- [后端集成代码](../../backend/src/services/gcp-tts.ts)
+- [TTS 端点](../../backend/src/server.ts) - `/tts/gcp/generate` (流式) 和 `/tts/word` (非流式)
+- [GCP TTS 实现指南](../../backend/docs/gcp_tts.md)
+
+### 历史参考（已弃用）
+
+<details>
+<summary>MiniMax TTS</summary>
 
 - [MiniMax API 文档](https://www.minimax.chat/document/guides/T2A)
-- [现有集成代码](../../backend/src/services/minimax.ts)
-- [现有 TTS 端点](../../backend/src/server.ts) - `/tts/generate`
+- [旧集成代码](../../backend/src/services/minimax.ts)
 
-### Azure Speech TTS
+</details>
+
+<details>
+<summary>Azure Speech TTS</summary>
 
 - [Azure Speech TTS 文档](https://learn.microsoft.com/azure/ai-services/speech-service/text-to-speech)
 - [Azure 支持的语音列表](https://learn.microsoft.com/azure/ai-services/speech-service/language-support?tabs=tts)
 - [Azure 定价](https://azure.microsoft.com/en-us/pricing/details/speech/)
+
+</details>
 
 ### 前端
 

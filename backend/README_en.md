@@ -38,11 +38,13 @@ TriTalk backend service, deployed on Cloudflare Workers, providing global edge c
 
 ### Streaming Endpoints (Manually Defined)
 
-| Endpoint           | Method | Description                        |
-| ------------------ | ------ | ---------------------------------- |
-| `/chat/send-voice` | POST   | Voice message + Streaming AI reply |
-| `/chat/analyze`    | POST   | Streaming grammar analysis         |
-| `/tts/generate`    | POST   | Streaming Text-to-Speech           |
+| Endpoint            | Method | Description                                    |
+| ------------------- | ------ | ---------------------------------------------- |
+| `/chat/send-voice`  | POST   | Voice message + Streaming AI reply             |
+| `/chat/analyze`     | POST   | Streaming grammar analysis                     |
+| `/tts/generate`     | POST   | Streaming TTS (MiniMax, deprecated)            |
+| `/tts/gcp/generate` | POST   | Streaming TTS (GCP Gemini TTS) ✅              |
+| `/tts/word`         | POST   | Word pronunciation (GCP Gemini, non-stream) ✅ |
 
 ### System Endpoints
 
@@ -108,9 +110,13 @@ backend/
 │   ├── services/
 │   │   ├── index.ts       # Service exports
 │   │   ├── openrouter.ts  # OpenRouter API client
-│   │   ├── minimax.ts     # MiniMax TTS API client
+│   │   ├── gcp-tts.ts     # GCP Gemini TTS API client ✅ (primary)
+│   │   ├── minimax.ts     # MiniMax TTS API client (deprecated)
+│   │   ├── azure-speech.ts # Azure Speech pronunciation assessment
 │   │   ├── supabase.ts    # Supabase client utils
-│   │   └── auth.ts        # Auth service and middleware
+│   │   ├── auth.ts        # Auth service and middleware
+│   │   └── auth/
+│   │       └── gcp-auth.ts # GCP Service Account auth
 │   └── prompts/
 │       ├── index.ts       # Prompt template exports
 │       ├── chat.ts        # Chat relevant prompts
@@ -130,7 +136,9 @@ backend/
 │   ├── openapi_backend.md     # OpenAPI Backend Guide
 │   ├── development_guide.md   # Development & Deployment Guide
 │   ├── database_migration.md  # Database Migration Guide
-│   └── security.md            # Security documentation
+│   ├── security.md            # Security documentation
+│   ├── azure_speech.md        # Azure Speech Assessment Guide
+│   └── gcp_tts.md             # GCP Gemini TTS Integration Guide ✅
 ├── .dev.vars.example      # Environment variables example
 └── README.md              # This document
 ```

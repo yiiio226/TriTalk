@@ -38,11 +38,13 @@ TriTalk 后端服务，部署在 Cloudflare Workers 上，提供全球边缘计�
 
 ### 流式端点（手动定义）
 
-| 端点               | 方法 | 描述                    |
-| ------------------ | ---- | ----------------------- |
-| `/chat/send-voice` | POST | 语音消息 + 流式 AI 回复 |
-| `/chat/analyze`    | POST | 流式语法分析            |
-| `/tts/generate`    | POST | 流式语音合成            |
+| 端点                | 方法 | 描述                                 |
+| ------------------- | ---- | ------------------------------------ |
+| `/chat/send-voice`  | POST | 语音消息 + 流式 AI 回复              |
+| `/chat/analyze`     | POST | 流式语法分析                         |
+| `/tts/generate`     | POST | 流式语音合成 (MiniMax, 已弃用)       |
+| `/tts/gcp/generate` | POST | 流式语音合成 (GCP Gemini TTS) ✅     |
+| `/tts/word`         | POST | 单词发音 (GCP Gemini TTS, 非流式) ✅ |
 
 ### 语音评估端点 (Azure Speech)
 
@@ -116,11 +118,13 @@ backend/
 │   ├── services/
 │   │   ├── index.ts       # 服务导出
 │   │   ├── openrouter.ts  # OpenRouter API 客户端
-│   │   ├── minimax.ts     # MiniMax TTS API 客户端
-│   │   ├── gcp-tts.ts     # GCP Text-to-Speech API 客户端
+│   │   ├── gcp-tts.ts     # GCP Gemini TTS API 客户端 ✅ (主要)
+│   │   ├── minimax.ts     # MiniMax TTS API 客户端 (已弃用)
 │   │   ├── azure-speech.ts # Azure Speech 发音评估 API 客户端
 │   │   ├── supabase.ts    # Supabase 客户端工具
 │   │   └── auth.ts        # 认证服务和中间件
+│   │   └── auth/
+│   │       └── gcp-auth.ts # GCP Service Account 认证
 │   └── prompts/
 │       ├── index.ts       # Prompt 模板导出
 │       ├── chat.ts        # 对话相关 prompts
@@ -140,7 +144,9 @@ backend/
 │   ├── openapi_backend.md     # OpenAPI 后端指南
 │   ├── development_guide.md   # 开发与部署指南
 │   ├── database_migration.md  # 数据库迁移指南
-│   └── security.md            # 安全文档
+│   ├── security.md            # 安全文档
+│   ├── azure_speech.md        # Azure Speech 发音评估指南
+│   └── gcp_tts.md             # GCP Gemini TTS 集成指南 ✅
 ├── .dev.vars.example      # 环境变量示例
 └── README.md              # 本文档
 ```
