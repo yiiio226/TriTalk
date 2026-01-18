@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,21 +9,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'dart:math' as math;
-import 'package:frontend/features/speech/speech.dart';
-import 'package:frontend/features/chat/domain/models/message.dart';
-import 'package:frontend/core/data/api/api_service.dart';
 import 'package:shimmer/shimmer.dart';
+
 import 'package:frontend/core/design/app_design_system.dart';
-import 'package:frontend/core/data/local/storage_key_service.dart';
 import 'package:frontend/core/auth/auth_provider.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
-
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/features/study/data/shadowing_history_service.dart';
+import 'package:frontend/features/speech/speech.dart';
+import 'package:frontend/features/chat/domain/models/message.dart';
+
 
 class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
@@ -282,7 +281,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     }
   }
 
-  /// Play audio for a specific segment of the target text using Azure TTS
+  /// Play audio for a specific segment of the target text using true streaming
+  /// Uses StreamingTtsService for low-latency playback (audio starts as chunks arrive)
   Future<void> _playSegmentAudio(int segmentIndex) async {
     // Split target text into roughly 3 equal segments by word count
     final words = widget.targetText.split(' ');
@@ -312,43 +312,20 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
     if (segmentText.isEmpty) return;
 
+    final streamingTts = StreamingTtsService.instance;
+
+    // Stop any current playback before starting segment
+    if (streamingTts.isPlaying) {
+      await streamingTts.stop();
+    }
+
     try {
-      // Use GCP TTS streaming API
-      final apiService = ApiService();
-
-      // Use streaming API to receive audio chunks
-      // GCP TTS returns PCM audio; the 'done' chunk has the complete WAV with header
-      String? finalWavBase64;
-      await for (final chunk in apiService.generateTTSStream(segmentText)) {
-        if (!mounted) break;
-
-        switch (chunk.type) {
-          case TTSChunkType.audioChunk:
-            // PCM chunks are being collected internally
-            break;
-          case TTSChunkType.done:
-            // The 'done' chunk contains the complete WAV audio with header
-            finalWavBase64 = chunk.audioBase64;
-            break;
-          case TTSChunkType.error:
-            throw Exception(chunk.error ?? 'Segment TTS generation failed');
-          default:
-            break;
-        }
-      }
-
-      if (!mounted || finalWavBase64 == null) return;
-
-      // Decode the WAV audio
-      final audioBytes = base64Decode(finalWavBase64);
-
-      // Save to temporary file and play (WAV format)
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/segment_$segmentIndex.wav');
-      await tempFile.writeAsBytes(audioBytes);
-
-      // Play the segment audio
-      await _ttsPlayer.play(DeviceFileSource(tempFile.path));
+      // Use StreamingTtsService for true streaming playback
+      // Audio starts playing as soon as chunks arrive (no caching for segments)
+      await streamingTts.playStreaming(
+        segmentText,
+        messageId: 'segment_${widget.messageId}_$segmentIndex',
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Segment TTS error: $e');
