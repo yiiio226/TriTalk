@@ -13,14 +13,14 @@
 5. **目标 API**: Google Vertex AI REST API (`aiplatform.googleapis.com`)
 6. **模型**: `gemini-2.5-flash-preview-tts`
 
-## 音频格式差异 ⚠️
+## 音频格式说明
 
-| 属性       | GCP Gemini TTS              | MiniMax TTS  |
-| ---------- | --------------------------- | ------------ |
-| **格式**   | 原始 16-bit PCM (无 header) | MP3          |
-| **采样率** | 24kHz                       | 32kHz        |
-| **MIME**   | `audio/L16;rate=24000`      | `audio/mpeg` |
-| **处理**   | 需添加 WAV 头才能播放       | 直接可用     |
+| 属性       | GCP Gemini TTS              |
+| ---------- | --------------------------- |
+| **格式**   | 原始 16-bit PCM (无 header) |
+| **采样率** | 24kHz                       |
+| **MIME**   | `audio/L16;rate=24000`      |
+| **处理**   | 需添加 WAV 头才能播放       |
 
 ## 项目结构（符合现有架构）
 

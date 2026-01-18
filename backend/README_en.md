@@ -42,7 +42,6 @@ TriTalk backend service, deployed on Cloudflare Workers, providing global edge c
 | ------------------- | ------ | ---------------------------------------------- |
 | `/chat/send-voice`  | POST   | Voice message + Streaming AI reply             |
 | `/chat/analyze`     | POST   | Streaming grammar analysis                     |
-| `/tts/generate`     | POST   | Streaming TTS (MiniMax, deprecated)            |
 | `/tts/gcp/generate` | POST   | Streaming TTS (GCP Gemini TTS) ✅              |
 | `/tts/word`         | POST   | Word pronunciation (GCP Gemini, non-stream) ✅ |
 
@@ -110,8 +109,7 @@ backend/
 │   ├── services/
 │   │   ├── index.ts       # Service exports
 │   │   ├── openrouter.ts  # OpenRouter API client
-│   │   ├── gcp-tts.ts     # GCP Gemini TTS API client ✅ (primary)
-│   │   ├── minimax.ts     # MiniMax TTS API client (deprecated)
+│   │   ├── gcp-tts.ts     # GCP Gemini TTS API client ✅
 │   │   ├── azure-speech.ts # Azure Speech pronunciation assessment
 │   │   ├── supabase.ts    # Supabase client utils
 │   │   ├── auth.ts        # Auth service and middleware
