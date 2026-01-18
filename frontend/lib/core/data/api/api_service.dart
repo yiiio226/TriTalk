@@ -210,6 +210,12 @@ class ApiService {
       // Get user's target language setting
       final prefs = PreferencesService();
       final targetLang = await prefs.getTargetLanguage();
+      
+      if (kDebugMode) {
+        debugPrint(
+          '🎯 [generateScene] Target Language from prefs: $targetLang',
+        );
+      }
 
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
