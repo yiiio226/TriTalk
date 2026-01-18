@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../data/vocab_service.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 
@@ -35,6 +37,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   final Set<String> _savedGrammarPoints = {};
   final Set<String> _savedVocabulary = {};
   final Set<String> _savedIdioms = {};
+
+  final WordTtsService _wordTtsService = WordTtsService();
 
   // Local analysis state for streaming
   MessageAnalysis? _currentAnalysis;
@@ -122,6 +126,21 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
         if (vocabService.exists(idiom.text, scenarioId: widget.sceneId)) {
           _savedIdioms.add(idiom.text);
         }
+      }
+    }
+  }
+
+  Future<void> _playWordPronunciation(String word) async {
+    // Clean the word (keep hyphens and apostrophes for proper pronunciation)
+    // Remove only sentence-ending punctuation like . , ! ? ; :
+    final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
+    if (cleanWord.isEmpty) return;
+
+    try {
+      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Word TTS error: $e');
       }
     }
   }
@@ -770,7 +789,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
               if (vocab.partOfSpeech != null &&
                   vocab.partOfSpeech!.isNotEmpty) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
                   vocab.partOfSpeech!,
                   style: const TextStyle(
@@ -780,6 +799,26 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   ),
                 ),
               ],
+              const SizedBox(width: 8),
+              // Play Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _playWordPronunciation(vocab.word);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Icon(
+                      Icons.volume_up_outlined,
+                      color: AppColors.lightTextSecondary,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ),
               const Spacer(),
               // Save Button
               Material(

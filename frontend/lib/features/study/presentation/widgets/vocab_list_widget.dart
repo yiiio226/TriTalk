@@ -1,13 +1,32 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../data/vocab_service.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
+import 'package:frontend/features/speech/speech.dart';
 import 'favorites_skeleton_loader.dart';
 
 class VocabListWidget extends StatelessWidget {
   final String? sceneId;
+  final WordTtsService _wordTtsService = WordTtsService();
 
-  const VocabListWidget({super.key, this.sceneId});
+  VocabListWidget({super.key, this.sceneId});
+
+  Future<void> _playWordPronunciation(String word) async {
+    // Clean the word (keep hyphens and apostrophes for proper pronunciation)
+    // Remove only sentence-ending punctuation like . , ! ? ; :
+    final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
+    if (cleanWord.isEmpty) return;
+
+    try {
+      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Word TTS error: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +85,25 @@ class VocabListWidget extends StatelessWidget {
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.lightTextPrimary,
+                            ),
+                          ),
+                        ),
+                        // Play Button
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _playWordPronunciation(item.phrase);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Icon(
+                                Icons.volume_up_outlined,
+                                color: AppColors.lightTextSecondary,
+                                size: 16,
+                              ),
                             ),
                           ),
                         ),

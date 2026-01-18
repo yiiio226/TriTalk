@@ -1,13 +1,28 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../study/data/vocab_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/features/speech/speech.dart';
 
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;
+  final WordTtsService _wordTtsService = WordTtsService();
 
-  const FavoritesSheet({super.key, required this.scenarioId});
+  FavoritesSheet({super.key, required this.scenarioId});
+
+  Future<void> _playWordPronunciation(String word) async {
+    final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
+    if (cleanWord.isEmpty) return;
+
+    try {
+      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Word TTS error: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +71,36 @@ class FavoritesSheet extends StatelessWidget {
                     final item = items[index];
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        item.phrase,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item.phrase,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                _playWordPronunciation(item.phrase);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Icon(
+                                  Icons.volume_up_outlined,
+                                  color: AppColors.lightTextSecondary,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
