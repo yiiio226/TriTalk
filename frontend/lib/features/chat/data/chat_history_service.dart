@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../scenes/data/scene_service.dart';
 import '../../../core/data/local/storage_key_service.dart';
+import '../../../core/cache/cache_constants.dart';
 
 enum SyncStatus { synced, syncing, offline }
 
@@ -37,7 +38,9 @@ class ChatHistoryService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storageKey = StorageKeyService();
-      final key = storageKey.getUserScopedKey('chat_history_$sceneKey');
+      final key = storageKey.getUserScopedKey(
+        '${CacheConstants.chatHistoryPrefix}$sceneKey',
+      );
       final jsonString = prefs.getString(key);
 
       if (jsonString != null) {
@@ -78,7 +81,9 @@ class ChatHistoryService {
       try {
         final prefs = await SharedPreferences.getInstance();
         final storageKey = StorageKeyService();
-        final key = storageKey.getUserScopedKey('chat_history_$sceneKey');
+        final key = storageKey.getUserScopedKey(
+          '${CacheConstants.chatHistoryPrefix}$sceneKey',
+        );
         final jsonString = prefs.getString(key);
 
         if (jsonString != null) {
@@ -154,7 +159,9 @@ class ChatHistoryService {
         final prefs = await SharedPreferences.getInstance();
         final storageKey = StorageKeyService();
         final localUpdatedAtStr = prefs.getString(
-          storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
+          storageKey.getUserScopedKey(
+            '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
+          ),
         );
         final localUpdatedAt = localUpdatedAtStr != null
             ? DateTime.parse(localUpdatedAtStr)
@@ -174,7 +181,7 @@ class ChatHistoryService {
             await _saveToLocal(sceneKey, cloudMessages);
             await prefs.setString(
               storageKey.getUserScopedKey(
-                'chat_history_${sceneKey}_updated_at',
+                '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
               ),
               cloudUpdatedAt.toIso8601String(),
             );
@@ -194,7 +201,7 @@ class ChatHistoryService {
             final storageKeyForTimestamp = StorageKeyService();
             await prefs.setString(
               storageKeyForTimestamp.getUserScopedKey(
-                'chat_history_${sceneKey}_updated_at',
+                '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
               ),
               cloudUpdatedAt.toIso8601String(),
             );
@@ -224,7 +231,7 @@ class ChatHistoryService {
           final storageKeyForDelete = StorageKeyService();
           await prefsForDelete.remove(
             storageKeyForDelete.getUserScopedKey(
-              'chat_history_${sceneKey}_updated_at',
+              '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
             ),
           );
           debugPrint(
@@ -277,7 +284,9 @@ class ChatHistoryService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storageKey = StorageKeyService();
-      final key = storageKey.getUserScopedKey('chat_history_$sceneKey');
+      final key = storageKey.getUserScopedKey(
+        '${CacheConstants.chatHistoryPrefix}$sceneKey',
+      );
       final messagesJson = messages.map((m) => m.toJson()).toList();
       await prefs.setString(key, json.encode(messagesJson));
     } catch (e) {
@@ -349,9 +358,15 @@ class ChatHistoryService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storageKey = StorageKeyService();
-      await prefs.remove(storageKey.getUserScopedKey('chat_history_$sceneKey'));
       await prefs.remove(
-        storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
+        storageKey.getUserScopedKey(
+          '${CacheConstants.chatHistoryPrefix}$sceneKey',
+        ),
+      );
+      await prefs.remove(
+        storageKey.getUserScopedKey(
+          '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
+        ),
       );
     } catch (e) {
       if (kDebugMode) {
@@ -442,7 +457,9 @@ class ChatHistoryService {
           final prefs = await SharedPreferences.getInstance();
           final storageKey = StorageKeyService();
           await prefs.setString(
-            storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
+            storageKey.getUserScopedKey(
+              '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
+            ),
             now.toIso8601String(),
           );
 
@@ -484,7 +501,9 @@ class ChatHistoryService {
       final prefs = await SharedPreferences.getInstance();
       final storageKey = StorageKeyService();
       await prefs.setString(
-        storageKey.getUserScopedKey('chat_history_${sceneKey}_updated_at'),
+        storageKey.getUserScopedKey(
+          '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
+        ),
         now.toIso8601String(),
       );
     } catch (e) {
