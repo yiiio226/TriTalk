@@ -1031,7 +1031,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
 
               // Spacer for Center Button (72 + padding)
-              const SizedBox(width: 140),
+              const SizedBox(width: 180),
 
               // 3. Right Button (Score or Complete)
               SizedBox(
