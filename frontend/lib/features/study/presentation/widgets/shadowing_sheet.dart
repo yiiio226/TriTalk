@@ -1267,30 +1267,28 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           color: AppColors.lightDivider,
         ),
         // Pitch Contour content
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.lb500.withValues(alpha: 0.1),
+                    color: AppColors.ln100,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.graphic_eq_rounded,
-                  size: 20,
-                  color: AppColors.lb500,
+                    size: 16,
+                    color: AppColors.lightTextSecondary,
                 ),
               ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 10),
               const Text(
                 'Pitch Contour',
                 style: TextStyle(
-                  fontSize: 16,
+                    fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: AppColors.lightTextPrimary,
                 ),
@@ -1405,8 +1403,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ],
             ),
           ),
-            ],
-          ),
+          ],
         ),
       ],
     );
@@ -1614,22 +1611,22 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.lb500.withValues(alpha: 0.1),
+                color: AppColors.ln100,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.mic_rounded,
-                size: 20,
-                color: AppColors.lb500,
+                size: 16,
+                color: AppColors.lightTextSecondary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             const Text(
               'Pronunciation',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: AppColors.lightTextPrimary,
               ),
