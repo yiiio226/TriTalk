@@ -642,7 +642,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           maxHeight: maxSheetHeight,
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
             // Fixed Header: Drag Handle & Title
             Padding(
@@ -739,7 +739,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             ),
 
             // Scrollable Content Area
-            Flexible(
+            Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
