@@ -34,3 +34,19 @@ export {
   type PhonemeAssessment,
   type WordFeedback,
 } from "./azure-speech";
+
+export {
+  callGCPTTS,
+  callGCPTTSStreaming,
+  parseGCPTTSStreamChunk,
+  buildVertexAITTSRequest,
+  createWavHeader,
+  isGCPTTSConfigured,
+  getGCPTTSConfig,
+  getGeminiVoiceFromLanguage,
+  GEMINI_TTS_VOICES,
+  GCP_TTS_AUDIO_FORMAT,
+  type GCPTTSRequestOptions,
+  type GCPVertexAIConfig,
+  type GeminiTTSVoice,
+} from "./gcp-tts";

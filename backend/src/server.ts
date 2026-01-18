@@ -30,6 +30,13 @@ import {
   isAzureSpeechConfigured,
   isTTSConfigured,
   processWordsForUI,
+  // GCP TTS
+  callGCPTTSStreaming,
+  parseGCPTTSStreamChunk,
+  createWavHeader,
+  isGCPTTSConfigured,
+  getGCPTTSConfig,
+  GCP_TTS_AUDIO_FORMAT,
 } from "./services";
 
 // Prompts
@@ -97,7 +104,7 @@ function logError(error: unknown, context: ErrorLogContext): void {
         stack: errorObj.stack?.split("\n").slice(0, 5).join("\n"), // First 5 lines of stack
       },
       requestData: context.requestData,
-    })
+    }),
   );
 
   // Also log in human-readable format for quick debugging
@@ -136,7 +143,7 @@ app.onError((err, c) => {
       message: err.message || "An unexpected error occurred",
       requestId,
     },
-    500
+    500,
   );
 });
 
@@ -159,7 +166,7 @@ app.use(
     allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
     exposeHeaders: ["Content-Length"],
-  })
+  }),
 );
 
 // Apply auth middleware to protected routes
@@ -179,7 +186,7 @@ app.get("/", (c) => {
     {
       message: "TriTalk Backend Running on Cloudflare Workers with OpenAPIHono",
     },
-    200
+    200,
   );
 });
 
@@ -235,7 +242,7 @@ app.openapi(chatSendRoute, async (c) => {
     // Check if this is the initial message (empty history + simple greeting)
     const isInitialMessage =
       (!body.history || body.history.length === 0) &&
-      body.message.trim().toLowerCase() === 'hi';
+      body.message.trim().toLowerCase() === "hi";
 
     if (isInitialMessage) {
       // For initial message, just generate AI's greeting without analysis
@@ -259,17 +266,19 @@ Generate ONLY a JSON response with this format:
       const content = await callOpenRouter(
         env.OPENROUTER_API_KEY,
         env.OPENROUTER_CHAT_MODEL,
-        messages
+        messages,
       );
       const data = parseJSON(content);
-      const replyText = sanitizeText(data.reply || "Hello! How can I help you today?");
+      const replyText = sanitizeText(
+        data.reply || "Hello! How can I help you today?",
+      );
 
       return c.json(
         {
           message: replyText,
           review_feedback: null, // No feedback for initial greeting
         },
-        200
+        200,
       );
     }
 
@@ -277,7 +286,7 @@ Generate ONLY a JSON response with this format:
     const systemPrompt = buildChatSystemPrompt(
       body.scene_context,
       nativeLang,
-      targetLang
+      targetLang,
     );
 
     const messages = [{ role: "system", content: systemPrompt }];
@@ -295,7 +304,7 @@ Generate ONLY a JSON response with this format:
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
     const data = parseJSON(content);
 
@@ -306,11 +315,19 @@ Generate ONLY a JSON response with this format:
       is_perfect: analysisData.is_perfect || false,
       corrected_text: sanitizeText(analysisData.corrected_text || body.message),
       native_expression: sanitizeText(analysisData.native_expression || ""),
-      explanation: sanitizeText(analysisData.grammar_explanation || analysisData.explanation || ""), // Backward compatibility
-      grammar_explanation: sanitizeText(analysisData.grammar_explanation || analysisData.explanation || ""),
-      native_expression_reason: sanitizeText(analysisData.native_expression_reason || ""),
+      explanation: sanitizeText(
+        analysisData.grammar_explanation || analysisData.explanation || "",
+      ), // Backward compatibility
+      grammar_explanation: sanitizeText(
+        analysisData.grammar_explanation || analysisData.explanation || "",
+      ),
+      native_expression_reason: sanitizeText(
+        analysisData.native_expression_reason || "",
+      ),
       example_answer: sanitizeText(analysisData.example_answer || ""),
-      example_answer_reason: sanitizeText(analysisData.example_answer_reason || ""),
+      example_answer_reason: sanitizeText(
+        analysisData.example_answer_reason || "",
+      ),
     };
 
     return c.json(
@@ -318,7 +335,7 @@ Generate ONLY a JSON response with this format:
         message: replyText,
         review_feedback: feedback,
       },
-      200
+      200,
     );
   } catch (error) {
     const user = c.get("user");
@@ -332,7 +349,7 @@ Generate ONLY a JSON response with this format:
         message: "Sorry, I'm having trouble connecting to the AI right now.",
         debug_error: String(error),
       },
-      500
+      500,
     );
   }
 });
@@ -382,7 +399,7 @@ app.openapi(transcribeRoute, async (c) => {
     const audioFormat = detectAudioFormat(fileName);
 
     console.log(
-      `[Transcribe] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
+      `[Transcribe] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`,
     );
 
     const transcribePrompt = buildTranscribePrompt();
@@ -403,7 +420,7 @@ app.openapi(transcribeRoute, async (c) => {
             format: audioFormat,
           },
         },
-      ]
+      ],
     );
 
     const parsedData = parseJSON(content);
@@ -412,7 +429,7 @@ app.openapi(transcribeRoute, async (c) => {
         text: parsedData.optimized_text || "",
         raw_text: parsedData.raw_text || "",
       },
-      200
+      200,
     );
   } catch (error) {
     const user = c.get("user");
@@ -423,7 +440,7 @@ app.openapi(transcribeRoute, async (c) => {
     });
     return c.json(
       { error: "Failed to transcribe audio", details: String(error) },
-      500
+      500,
     );
   }
 });
@@ -450,7 +467,7 @@ app.post("/chat/send-voice", async (c) => {
     let history: any[] = [];
     try {
       history = JSON.parse(historyStr);
-    } catch (e) { }
+    } catch (e) {}
 
     if (!audioFile || typeof audioFile === "string") {
       throw new Error("No audio file uploaded");
@@ -463,7 +480,7 @@ app.post("/chat/send-voice", async (c) => {
     const audioFormat = detectAudioFormat(fileName);
 
     console.log(
-      `[Send Voice] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`
+      `[Send Voice] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`,
     );
 
     // ============================================
@@ -489,11 +506,14 @@ app.post("/chat/send-voice", async (c) => {
           },
         },
       ],
-      false  // Plain text mode for transcription
+      false, // Plain text mode for transcription
     );
 
     const transcript = sanitizeText(transcriptResponse).trim();
-    console.log("[Send Voice] Step 1 complete. Transcript:", transcript.substring(0, 50));
+    console.log(
+      "[Send Voice] Step 1 complete. Transcript:",
+      transcript.substring(0, 50),
+    );
 
     // ============================================
     // STEP 2: Generate AI response based on transcript
@@ -502,7 +522,7 @@ app.post("/chat/send-voice", async (c) => {
     const systemPrompt = buildChatSystemPrompt(
       sceneContext,
       nativeLang,
-      targetLang
+      targetLang,
     );
 
     const messages = [{ role: "system", content: systemPrompt }];
@@ -521,7 +541,7 @@ app.post("/chat/send-voice", async (c) => {
     const response = await callOpenRouterStreaming(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
 
     c.header("Content-Type", "application/x-ndjson");
@@ -559,7 +579,10 @@ app.post("/chat/send-voice", async (c) => {
           const replyText = sanitizeText(data.reply || "");
           const analysisData = data.analysis || {};
 
-          console.log("[Send Voice] Step 2 complete. Reply:", replyText.substring(0, 50));
+          console.log(
+            "[Send Voice] Step 2 complete. Reply:",
+            replyText.substring(0, 50),
+          );
 
           // Send combined metadata with transcript only
           // Note: Analysis is NOT included here - it's triggered on-demand when user clicks "Analyze"
@@ -567,31 +590,34 @@ app.post("/chat/send-voice", async (c) => {
             JSON.stringify({
               type: "metadata",
               data: {
-                transcript,  // From Step 1
+                transcript, // From Step 1
                 translation: null, // TODO: Add translation step if needed
               },
-            })
+            }),
           );
 
           // Stream the reply text character by character for smooth UX
           // (simulate streaming even though we have the full text)
           for (let i = 0; i < replyText.length; i++) {
             await stream.writeln(
-              JSON.stringify({ type: "token", content: replyText[i] })
+              JSON.stringify({ type: "token", content: replyText[i] }),
             );
             // Small delay to simulate natural streaming (optional)
             // await new Promise(resolve => setTimeout(resolve, 10));
           }
         } catch (e) {
           console.error("[Send Voice] Failed to parse response:", e);
-          console.error("[Send Voice] Raw response:", fullResponse.substring(0, 200));
+          console.error(
+            "[Send Voice] Raw response:",
+            fullResponse.substring(0, 200),
+          );
 
           // Send error
           await stream.writeln(
             JSON.stringify({
               type: "error",
               error: "Failed to parse AI response",
-            })
+            }),
           );
         }
 
@@ -600,9 +626,9 @@ app.post("/chat/send-voice", async (c) => {
       async (err, stream) => {
         console.error("Stream error in /chat/send-voice:", err);
         await stream.writeln(
-          JSON.stringify({ type: "error", error: String(err) })
+          JSON.stringify({ type: "error", error: String(err) }),
         );
-      }
+      },
     );
   } catch (error) {
     const user = c.get("user");
@@ -616,7 +642,7 @@ app.post("/chat/send-voice", async (c) => {
         message: "Sorry, I'm having trouble processing your voice message.",
         debug_error: String(error),
       },
-      500
+      500,
     );
   }
 });
@@ -657,7 +683,7 @@ app.openapi(hintRoute, async (c) => {
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
     const data = parseJSON(content);
 
@@ -682,7 +708,7 @@ app.openapi(hintRoute, async (c) => {
           "Please continue.",
         ],
       },
-      200
+      200,
     );
   }
 });
@@ -700,7 +726,7 @@ app.post("/chat/analyze", async (c) => {
     const response = await callOpenRouterStreaming(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
 
     c.header("Content-Type", "application/x-ndjson");
@@ -721,14 +747,14 @@ app.post("/chat/analyze", async (c) => {
                 if (content.includes("```")) continue;
                 await stream.write(content);
               }
-            } catch (e) { }
+            } catch (e) {}
           }
         }
       },
       async (err, stream) => {
         console.error("Stream error in /chat/analyze:", err);
         await stream.write(JSON.stringify({ error: String(err) }));
-      }
+      },
     );
   } catch (error) {
     const user = c.get("user");
@@ -745,7 +771,7 @@ app.post("/chat/analyze", async (c) => {
         overall_summary: "Description unavailable.",
         debug_error: String(error),
       },
-      500
+      500,
     );
   }
 });
@@ -786,7 +812,7 @@ app.openapi(sceneGenerateRoute, async (c) => {
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
     let data = parseJSON(content);
     if (Array.isArray(data) && data.length > 0) data = data[0];
@@ -801,7 +827,7 @@ app.openapi(sceneGenerateRoute, async (c) => {
         initial_message: data.initial_message || "Hello! Ready to practice?",
         emoji: data.emoji || "✨",
       },
-      200
+      200,
     );
   } catch (error) {
     const user = c.get("user");
@@ -821,7 +847,7 @@ app.openapi(sceneGenerateRoute, async (c) => {
         initial_message: "Hi! Let's start practicing.",
         emoji: "📝",
       },
-      500
+      500,
     );
   }
 });
@@ -855,12 +881,12 @@ app.openapi(scenePolishRoute, async (c) => {
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
     const data = parseJSON(content);
     return c.json(
       { polished_text: data.polished_text || body.description },
-      200
+      200,
     );
   } catch (error) {
     const user = c.get("user");
@@ -871,7 +897,7 @@ app.openapi(scenePolishRoute, async (c) => {
     });
     return c.json(
       { polished_text: "Could not polish text at this time." },
-      500
+      500,
     );
   }
 });
@@ -905,7 +931,7 @@ app.openapi(translateRoute, async (c) => {
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
     const data = parseJSON(content);
     return c.json({ translation: data.translation || body.text }, 200);
@@ -949,7 +975,7 @@ app.openapi(shadowRoute, async (c) => {
     const userWords = user.split(/\s+/);
     const matchCount = userWords.filter((w) => targetWords.includes(w)).length;
     let score = Math.round(
-      (matchCount / Math.max(targetWords.length, 1)) * 100
+      (matchCount / Math.max(targetWords.length, 1)) * 100,
     );
     score = Math.max(0, Math.min(100, score));
 
@@ -970,7 +996,7 @@ app.openapi(shadowRoute, async (c) => {
           feedback,
         },
       },
-      200
+      200,
     );
   } catch (error) {
     const user = c.get("user");
@@ -988,7 +1014,7 @@ app.openapi(shadowRoute, async (c) => {
           feedback: "Analysis failed.",
         },
       },
-      500
+      500,
     );
   }
 });
@@ -1021,7 +1047,7 @@ app.openapi(optimizeRoute, async (c) => {
     const prompt = buildOptimizePrompt(
       body.scene_context,
       body.message,
-      targetLang
+      targetLang,
     );
     const messages = [{ role: "system", content: prompt }];
     if (body.history && body.history.length > 0) {
@@ -1030,7 +1056,7 @@ app.openapi(optimizeRoute, async (c) => {
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
-      messages
+      messages,
     );
     const data = parseJSON(content);
     return c.json({ optimized_text: data.optimized_text || body.message }, 200);
@@ -1066,7 +1092,7 @@ app.post("/tts/generate", async (c) => {
       console.error("MiniMax TTS API Error:", errorText);
       return c.json(
         { error: `TTS generation failed: ${ttsResponse.status}` },
-        502
+        502,
       );
     }
 
@@ -1090,7 +1116,7 @@ app.post("/tts/generate", async (c) => {
                 JSON.stringify({
                   type: "error",
                   error: chunkData.base_resp.status_msg,
-                })
+                }),
               );
               continue;
             }
@@ -1102,7 +1128,7 @@ app.post("/tts/generate", async (c) => {
                   type: "audio_chunk",
                   chunk_index: chunkIndex++,
                   audio_base64: audioBase64,
-                })
+                }),
               );
             }
             if (chunkData.extra_info?.audio_length) {
@@ -1110,7 +1136,7 @@ app.post("/tts/generate", async (c) => {
                 JSON.stringify({
                   type: "info",
                   duration_ms: chunkData.extra_info.audio_length,
-                })
+                }),
               );
             }
           } catch (e) {
@@ -1122,9 +1148,9 @@ app.post("/tts/generate", async (c) => {
       async (err, stream) => {
         console.error("Stream error in /tts/generate:", err);
         await stream.writeln(
-          JSON.stringify({ type: "error", error: String(err) })
+          JSON.stringify({ type: "error", error: String(err) }),
         );
-      }
+      },
     );
   } catch (error) {
     const user = c.get("user");
@@ -1134,6 +1160,151 @@ app.post("/tts/generate", async (c) => {
       userId: user?.id,
     });
     return c.json({ error: "TTS generation failed." }, 500);
+  }
+});
+
+// POST /tts/gcp/generate - Streaming TTS using GCP Vertex AI Gemini
+// NOTE: Audio format is WAV (PCM 24kHz 16-bit), different from MiniMax's MP3
+app.post("/tts/gcp/generate", async (c) => {
+  try {
+    const env = c.env as Env;
+    if (!isGCPTTSConfigured(env)) {
+      console.log("[GCP TTS Route] GCP TTS service not configured");
+      return c.json({ error: "GCP TTS service not configured." }, 503);
+    }
+
+    const body = (await c.req.json()) as {
+      text: string;
+      voice_name?: string;
+      language_code?: string;
+    };
+
+    if (!body.text || body.text.trim().length === 0) {
+      return c.json({ error: "Text is required." }, 400);
+    }
+
+    console.log("[GCP TTS Route] Starting TTS generation", {
+      textLength: body.text.length,
+      textPreview: body.text.substring(0, 50),
+      voiceName: body.voice_name,
+      languageCode: body.language_code,
+    });
+
+    const gcpConfig = getGCPTTSConfig(env);
+    const ttsResponse = await callGCPTTSStreaming(gcpConfig, {
+      text: body.text,
+      voiceName: body.voice_name,
+      languageCode: body.language_code,
+    });
+
+    if (!ttsResponse.ok) {
+      const errorText = await ttsResponse.text();
+      console.error("[GCP TTS Route] GCP TTS API Error:", errorText);
+      return c.json(
+        { error: `GCP TTS generation failed: ${ttsResponse.status}` },
+        502,
+      );
+    }
+
+    c.header("Content-Type", "application/x-ndjson");
+    c.header("Content-Encoding", "Identity");
+
+    return stream(
+      c,
+      async (stream) => {
+        stream.onAbort(() =>
+          console.log("[GCP TTS Route] Stream aborted: /tts/gcp/generate"),
+        );
+
+        let chunkIndex = 0;
+        const audioChunks: string[] = []; // Collect all audio chunks for WAV header
+
+        for await (const line of iterateStreamLines(ttsResponse)) {
+          console.log("[GCP TTS Route] Raw SSE line:", line.substring(0, 200));
+
+          // SSE format: "data: {json}"
+          if (!line.startsWith("data:")) continue;
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
+
+          try {
+            const parsed = parseGCPTTSStreamChunk(jsonStr);
+
+            if (parsed.error) {
+              console.error(
+                "[GCP TTS Route] Stream chunk error:",
+                parsed.error,
+              );
+              await stream.writeln(
+                JSON.stringify({
+                  type: "error",
+                  error: parsed.error,
+                }),
+              );
+              continue;
+            }
+
+            if (parsed.audioBase64) {
+              audioChunks.push(parsed.audioBase64);
+
+              // For streaming, we send PCM chunks directly
+              // Client needs to handle WAV header construction
+              await stream.writeln(
+                JSON.stringify({
+                  type: "audio_chunk",
+                  chunk_index: chunkIndex++,
+                  audio_base64: parsed.audioBase64,
+                  // Additional info for client-side WAV construction
+                  audio_format: {
+                    mime_type: parsed.mimeType || GCP_TTS_AUDIO_FORMAT.mimeType,
+                    sample_rate: GCP_TTS_AUDIO_FORMAT.sampleRate,
+                    bits_per_sample: GCP_TTS_AUDIO_FORMAT.bitsPerSample,
+                    num_channels: GCP_TTS_AUDIO_FORMAT.numChannels,
+                  },
+                }),
+              );
+            }
+
+            if (parsed.isComplete) {
+              console.log("[GCP TTS Route] Stream completed", {
+                totalChunks: chunkIndex,
+                totalAudioChunks: audioChunks.length,
+              });
+            }
+          } catch (e) {
+            console.error("[GCP TTS Route] Error processing chunk:", e);
+          }
+        }
+
+        // Send completion info
+        await stream.writeln(
+          JSON.stringify({
+            type: "info",
+            total_chunks: chunkIndex,
+            audio_format: "pcm_24khz_16bit_mono",
+            note: "Use WAV header for playback",
+          }),
+        );
+        await stream.writeln(JSON.stringify({ type: "done" }));
+      },
+      async (err, stream) => {
+        console.error(
+          "[GCP TTS Route] Stream error in /tts/gcp/generate:",
+          err,
+        );
+        await stream.writeln(
+          JSON.stringify({ type: "error", error: String(err) }),
+        );
+      },
+    );
+  } catch (error) {
+    const user = c.get("user");
+    logError(error, {
+      route: "/tts/gcp/generate",
+      method: "POST",
+      userId: user?.id,
+    });
+    return c.json({ error: "GCP TTS generation failed." }, 500);
   }
 });
 
@@ -1268,7 +1439,7 @@ app.openapi(deleteMessagesRoute, async (c) => {
     }
     const currentMessages = chatHistory.messages as any[];
     const filteredMessages = currentMessages.filter(
-      (msg) => !messageIds.includes(msg.id)
+      (msg) => !messageIds.includes(msg.id),
     );
     const deletedCount = currentMessages.length - filteredMessages.length;
 
@@ -1333,16 +1504,16 @@ app.post("/speech/assess", async (c) => {
     const headerBytes = new Uint8Array(arrayBuffer.slice(0, 44));
     const headerStr = String.fromCharCode(...headerBytes.slice(0, 4));
     console.log(
-      `[Speech/Assess] Reference: "${referenceText}", Language: ${language}`
+      `[Speech/Assess] Reference: "${referenceText}", Language: ${language}`,
     );
     console.log(
-      `[Speech/Assess] File: ${audioBlob.name}, Size: ${arrayBuffer.byteLength} bytes, Header: "${headerStr}"`
+      `[Speech/Assess] File: ${audioBlob.name}, Size: ${arrayBuffer.byteLength} bytes, Header: "${headerStr}"`,
     );
     console.log(
       `[Speech/Assess] First 12 header bytes:`,
       Array.from(headerBytes.slice(0, 12))
         .map((b) => b.toString(16).padStart(2, "0"))
-        .join(" ")
+        .join(" "),
     );
 
     // Call Azure Speech Pronunciation Assessment API
@@ -1352,7 +1523,7 @@ app.post("/speech/assess", async (c) => {
       arrayBuffer,
       referenceText,
       language,
-      enableProsody
+      enableProsody,
     );
 
     // Process words for UI display (Traffic Light system)
@@ -1405,7 +1576,7 @@ app.post("/speech/assess", async (c) => {
         error: "Failed to assess pronunciation",
         details: String(error),
       },
-      500
+      500,
     );
   }
 });
@@ -1439,7 +1610,7 @@ app.openapi(userSyncRoute, async (c) => {
   console.log("Received user sync:", body.id, body.email);
   return c.json(
     { status: "success", synced_at: new Date().toISOString() },
-    200
+    200,
   );
 });
 
