@@ -1293,16 +1293,19 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                   color: AppColors.lightTextPrimary,
                 ),
               ),
-            ],
-          ),
-            const SizedBox(height: 8),
-            const Text(
-              'Tap curve to play segment',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.lightTextSecondary,
-                fontWeight: FontWeight.w400,
-              ),
+                const SizedBox(width: 12),
+                Container(width: 1, height: 12, color: AppColors.lightDivider),
+                const SizedBox(width: 12),
+                const Text(
+                  //'Tap curve to play segment',
+                  'Tap curve',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.lightTextSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
           // Pitch Contour Visualization with Interactive Segments
@@ -1640,37 +1643,19 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 color: AppColors.lightTextPrimary,
               ),
             ),
-            const SizedBox(width: 8),
-            // Container(
-            //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            //   decoration: BoxDecoration(
-            //     color: AppColors.lb500.withValues(alpha: 0.1),
-            //     borderRadius: BorderRadius.circular(12),
-            //     border: Border.all(
-            //       color: AppColors.lb500.withValues(alpha: 0.2),
-            //       width: 1,
-            //     ),
-            //   ),
-            //   child: const Text(
-            //     'Azure AI',
-            //     style: TextStyle(
-            //       fontSize: 11,
-            //       color: AppColors.lb500,
-            //       fontWeight: FontWeight.w600,
-            //       letterSpacing: 0.3,
-            //     ),
-            //   ),
-            // ),
+            const SizedBox(width: 12),
+            Container(width: 1, height: 12, color: AppColors.lightDivider),
+            const SizedBox(width: 12),
+            const Text(
+              //'Tap words to play pronunciation',
+              'Tap words',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.lightTextSecondary,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
           ],
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Tap words to play pronunciation',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.lightTextSecondary,
-            fontWeight: FontWeight.w400,
-          ),
         ),
         const SizedBox(height: 12),
         Wrap(
