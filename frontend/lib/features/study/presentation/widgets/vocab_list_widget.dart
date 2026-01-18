@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter/services.dart';
 import '../../data/vocab_service.dart';
 import 'package:frontend/core/design/app_design_system.dart';
@@ -78,7 +79,7 @@ class VocabListWidget extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(
+                        Flexible(
                           child: Text(
                             item.phrase,
                             style: TextStyle(
@@ -88,6 +89,7 @@ class VocabListWidget extends StatelessWidget {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         // Play Button
                         Material(
                           color: Colors.transparent,
@@ -107,6 +109,7 @@ class VocabListWidget extends StatelessWidget {
                             ),
                           ),
                         ),
+                        const Spacer(),
                         IconButton(
                           icon: Icon(
                             Icons.delete_outline,
