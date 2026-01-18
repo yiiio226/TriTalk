@@ -13,6 +13,8 @@ import '../../../study/presentation/widgets/save_note_sheet.dart';
 import 'package:frontend/core/data/api/api_service.dart';
 import '../../../../core/data/local/preferences_service.dart';
 import '../../../../core/services/streaming_tts_service.dart';
+import '../../../../features/study/data/shadowing_history_service.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -75,6 +77,9 @@ class _ChatBubbleState extends State<ChatBubble>
   String? _ttsAudioPath; // Cached TTS audio file path
   StreamSubscription<void>?
   _ttsCompleteSubscription; // Single TTS completion listener
+
+  // Shadow loading state
+  bool _isShadowLoading = false;
 
   @override
   void initState() {
@@ -846,65 +851,42 @@ class _ChatBubbleState extends State<ChatBubble>
 
                         // Shadowing
                         GestureDetector(
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              barrierColor: AppColors.lightSurface.withValues(
-                                alpha: 0.5,
-                              ),
-                              builder: (context) => ShadowingSheet(
-                                targetText: message.content,
-                                messageId: message.id,
-                                initialFeedback: message.shadowingFeedback,
-                                initialAudioPath: message.shadowingAudioPath,
-                                initialTtsAudioPath:
-                                    message.ttsAudioPath ??
-                                    _ttsAudioPath, // Use message cache or bubble cache
-                                onFeedbackUpdate: (feedback, audioPath) {
-                                  // Persist the shadowing result with audio path
-                                  widget.onMessageUpdate?.call(
-                                    message.copyWith(
-                                      shadowingFeedback: feedback,
-                                      shadowingAudioPath: audioPath,
-                                    ),
-                                  );
-                                },
-                                onTtsUpdate: (ttsPath) {
-                                  // Persist the TTS audio path to message
-                                  widget.onMessageUpdate?.call(
-                                    message.copyWith(ttsAudioPath: ttsPath),
-                                  );
-                                  // Also update local cache
-                                  setState(() {
-                                    _ttsAudioPath = ttsPath;
-                                  });
-                                },
-                              ),
-                            );
-                          },
+                          onTap: _handleShadowClick,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.ln100,
+                              color: _isShadowLoading
+                                  ? AppColors.ln200
+                                  : AppColors.ln100,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.mic_none_rounded,
-                                  size: 14,
-                                  color: AppColors.lightTextPrimary,
-                                ),
+                                if (_isShadowLoading)
+                                  const SizedBox(
+                                    width: 10,
+                                    height: 10,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.lightTextPrimary,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.mic_none_rounded,
+                                    size: 14,
+                                    color: AppColors.lightTextPrimary,
+                                  ),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  "Shadow",
-                                  style: TextStyle(
+                                Text(
+                                  _isShadowLoading ? "Loading..." : "Shadow",
+                                  style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.lightTextPrimary,
@@ -1098,6 +1080,103 @@ class _ChatBubbleState extends State<ChatBubble>
       _isTranslating = true;
     });
 
+    // Continue with the actual translation logic
+    await _continueHandleTranslate();
+  }
+
+  /// Handle Shadow button click: fetch cloud data and open ShadowingSheet
+  Future<void> _handleShadowClick() async {
+    final message = widget.message;
+
+    setState(() {
+      _isShadowLoading = true;
+    });
+
+    VoiceFeedback? cloudFeedback;
+    String? cloudAudioPath;
+
+    try {
+      // Fetch latest practice data from cloud
+      final latestPractice = await ShadowingHistoryService().getLatestPractice(
+        message.content,
+      );
+
+      if (latestPractice != null) {
+        // Convert ShadowingPractice to VoiceFeedback format
+        cloudFeedback = VoiceFeedback(
+          pronunciationScore: latestPractice.pronunciationScore,
+          correctedText: latestPractice.targetText,
+          nativeExpression: '',
+          feedback: latestPractice.feedbackText ?? '',
+          azureAccuracyScore: latestPractice.accuracyScore,
+          azureFluencyScore: latestPractice.fluencyScore,
+          azureCompletenessScore: latestPractice.completenessScore,
+          azureProsodyScore: latestPractice.prosodyScore,
+          azureWordFeedback: latestPractice.wordFeedback,
+        );
+        cloudAudioPath = latestPractice.audioPath;
+
+        if (kDebugMode) {
+          debugPrint(
+            '📊 Loaded cloud shadowing data: score=${latestPractice.pronunciationScore}',
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Failed to fetch cloud shadowing data: $e');
+      }
+      // Show error toast but continue to open sheet
+      if (mounted) {
+        showTopToast(
+          context,
+          'Failed to load previous practice data',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isShadowLoading = false;
+        });
+      }
+    }
+
+    // Open ShadowingSheet with cloud data (or null if fetch failed)
+    if (mounted) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: AppColors.lightSurface.withValues(alpha: 0.5),
+        builder: (context) => ShadowingSheet(
+          targetText: message.content,
+          messageId: message.id,
+          initialFeedback: cloudFeedback ?? message.shadowingFeedback,
+          initialAudioPath: cloudAudioPath ?? message.shadowingAudioPath,
+          initialTtsAudioPath: message.ttsAudioPath ?? _ttsAudioPath,
+          onFeedbackUpdate: (feedback, audioPath) {
+            widget.onMessageUpdate?.call(
+              message.copyWith(
+                shadowingFeedback: feedback,
+                shadowingAudioPath: audioPath,
+              ),
+            );
+          },
+          onTtsUpdate: (ttsPath) {
+            widget.onMessageUpdate?.call(
+              message.copyWith(ttsAudioPath: ttsPath),
+            );
+            setState(() {
+              _ttsAudioPath = ttsPath;
+            });
+          },
+        ),
+      );
+    }
+  }
+
+  Future<void> _continueHandleTranslate() async {
     try {
       final prefs = PreferencesService();
       final nativeLang = await prefs.getNativeLanguage();

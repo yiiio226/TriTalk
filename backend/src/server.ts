@@ -173,6 +173,7 @@ app.use("/scene/*", authMiddleware);
 app.use("/common/*", authMiddleware);
 app.use("/tts/*", authMiddleware);
 app.use("/speech/*", authMiddleware);
+app.use("/shadowing/*", authMiddleware);
 
 // ============================================
 // Routes
