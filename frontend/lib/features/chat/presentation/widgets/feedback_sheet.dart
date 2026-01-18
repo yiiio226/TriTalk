@@ -145,7 +145,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  
+
                   if (feedback.isPerfect) ...[
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -163,7 +163,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   if (!feedback.isPerfect) const SizedBox(height: 8),
 
                   if (!feedback.isPerfect) ...[
@@ -207,7 +207,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       ),
                       showShadowing: true,
                     ),
-                    if (feedback.nativeExpressionReason != null && feedback.nativeExpressionReason!.isNotEmpty) ...[
+                    if (feedback.nativeExpressionReason != null &&
+                        feedback.nativeExpressionReason!.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -244,7 +245,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       ),
                       showShadowing: true,
                     ),
-                    if (feedback.exampleAnswerReason != null && feedback.exampleAnswerReason!.isNotEmpty) ...[
+                    if (feedback.exampleAnswerReason != null &&
+                        feedback.exampleAnswerReason!.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -260,7 +262,6 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     ],
                     const SizedBox(height: 16),
                   ],
-
 
                   const SizedBox(height: 40), // Bottom padding
                 ],
@@ -321,7 +322,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
           // This callback will be called by ShadowingSheet to load cloud data
           try {
             final latestPractice = await ShadowingHistoryService()
-                .getLatestPractice(targetText);
+                .getLatestPractice(sourceType, widget.message.id);
 
             if (latestPractice != null) {
               // Convert ShadowingPractice to VoiceFeedback format
@@ -336,16 +337,13 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                 azureProsodyScore: latestPractice.prosodyScore,
                 azureWordFeedback: latestPractice.wordFeedback,
               );
-              
-              return (
-                feedback: cloudFeedback,
-                audioPath: latestPractice.audioPath,
-              );
+
+              return (feedback: cloudFeedback);
             }
           } catch (e) {
             debugPrint('⚠️ Failed to fetch cloud shadowing data: $e');
           }
-          
+
           return null;
         },
       ),
@@ -397,7 +395,9 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                   _buildActionButton(
                     icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
                     onTap: onSave,
-                    color: isSaved ? AppColors.lightSuccess : AppColors.lightTextPrimary,
+                    color: isSaved
+                        ? AppColors.lightSuccess
+                        : AppColors.lightTextPrimary,
                   ),
               ],
             ),
@@ -462,13 +462,10 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
 
   Widget _buildErrorHighlightText(String original, String corrected) {
     final errorSpans = _computeErrorHighlight(original, corrected);
-    
+
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.black87,
-        ),
+        style: const TextStyle(fontSize: 16, color: Colors.black87),
         children: errorSpans,
       ),
     );
@@ -476,37 +473,42 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
 
   List<TextSpan> _computeErrorHighlight(String original, String corrected) {
     final List<TextSpan> spans = [];
-    
+
     // Simple word-based diff to identify errors
     final originalWords = original.split(' ');
     final correctedWords = corrected.split(' ');
-    
+
     int i = 0, j = 0;
-    
+
     while (i < originalWords.length) {
       if (j < correctedWords.length && originalWords[i] == correctedWords[j]) {
         // Word is correct - show in black
-        spans.add(TextSpan(
-          text: '${originalWords[i]} ',
-          style: const TextStyle(color: Colors.black87),
-        ));
+        spans.add(
+          TextSpan(
+            text: '${originalWords[i]} ',
+            style: const TextStyle(color: Colors.black87),
+          ),
+        );
         i++;
         j++;
       } else {
         // Word is incorrect - show in red
-        spans.add(TextSpan(
-          text: '${originalWords[i]} ',
-          style: TextStyle(
+        spans.add(
+          TextSpan(
+            text: '${originalWords[i]} ',
+            style: TextStyle(
               color: AppColors.lr500,
-            fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ));
+        );
         i++;
-        
+
         // Skip ahead in corrected text to find next match
         bool foundMatch = false;
         for (int k = j; k < correctedWords.length && k < j + 3; k++) {
-          if (i < originalWords.length && originalWords[i] == correctedWords[k]) {
+          if (i < originalWords.length &&
+              originalWords[i] == correctedWords[k]) {
             j = k;
             foundMatch = true;
             break;
@@ -517,7 +519,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         }
       }
     }
-    
+
     return spans;
   }
 
@@ -545,13 +547,10 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
 
   Widget _buildDiffText(String original, String corrected) {
     final diffSpans = _computeDiff(original, corrected);
-    
+
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.black87,
-        ),
+        style: const TextStyle(fontSize: 16, color: Colors.black87),
         children: diffSpans,
       ),
     );
@@ -559,46 +558,50 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
 
   List<TextSpan> _computeDiff(String original, String corrected) {
     final List<TextSpan> spans = [];
-    
+
     // Simple word-based diff algorithm
     final originalWords = original.split(' ');
     final correctedWords = corrected.split(' ');
-    
+
     int i = 0, j = 0;
-    
+
     while (i < originalWords.length || j < correctedWords.length) {
       if (i < originalWords.length && j < correctedWords.length) {
         if (originalWords[i] == correctedWords[j]) {
           // Words match - show in normal style
-          spans.add(TextSpan(
-            text: '${originalWords[i]} ',
-            style: const TextStyle(color: Colors.black87),
-          ));
+          spans.add(
+            TextSpan(
+              text: '${originalWords[i]} ',
+              style: const TextStyle(color: Colors.black87),
+            ),
+          );
           i++;
           j++;
         } else {
           // Words differ - check if it's a replacement or insertion/deletion
           bool foundMatch = false;
-          
+
           // Look ahead in corrected text for the original word
           for (int k = j + 1; k < correctedWords.length && k < j + 3; k++) {
             if (originalWords[i] == correctedWords[k]) {
               // Found the word later - means insertion happened
               for (int m = j; m < k; m++) {
-                spans.add(TextSpan(
-                  text: '${correctedWords[m]} ',
-                  style: const TextStyle(
+                spans.add(
+                  TextSpan(
+                    text: '${correctedWords[m]} ',
+                    style: const TextStyle(
                       color: AppColors.lg500,
-                    fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ));
+                );
               }
               j = k;
               foundMatch = true;
               break;
             }
           }
-          
+
           if (!foundMatch) {
             // Look ahead in original text for the corrected word
             bool foundInOriginal = false;
@@ -606,36 +609,42 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
               if (originalWords[k] == correctedWords[j]) {
                 // Found the word later in original - means deletion happened
                 for (int m = i; m < k; m++) {
-                  spans.add(TextSpan(
-                    text: '${originalWords[m]} ',
-                    style: const TextStyle(
+                  spans.add(
+                    TextSpan(
+                      text: '${originalWords[m]} ',
+                      style: const TextStyle(
                         color: AppColors.lr500,
-                      decoration: TextDecoration.lineThrough,
+                        decoration: TextDecoration.lineThrough,
+                      ),
                     ),
-                  ));
+                  );
                 }
                 i = k;
                 foundInOriginal = true;
                 break;
               }
             }
-            
+
             if (!foundInOriginal) {
               // Simple replacement - show deletion then addition
-              spans.add(TextSpan(
-                text: '${originalWords[i]} ',
-                style: const TextStyle(
+              spans.add(
+                TextSpan(
+                  text: '${originalWords[i]} ',
+                  style: const TextStyle(
                     color: AppColors.lr500,
-                  decoration: TextDecoration.lineThrough,
+                    decoration: TextDecoration.lineThrough,
+                  ),
                 ),
-              ));
-              spans.add(TextSpan(
-                text: '${correctedWords[j]} ',
-                style: const TextStyle(
+              );
+              spans.add(
+                TextSpan(
+                  text: '${correctedWords[j]} ',
+                  style: const TextStyle(
                     color: AppColors.lg500,
-                  fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ));
+              );
               i++;
               j++;
             }
@@ -643,27 +652,31 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         }
       } else if (i < originalWords.length) {
         // Remaining words in original - deletions
-        spans.add(TextSpan(
-          text: '${originalWords[i]} ',
-          style: const TextStyle(
+        spans.add(
+          TextSpan(
+            text: '${originalWords[i]} ',
+            style: const TextStyle(
               color: AppColors.lr500,
-            decoration: TextDecoration.lineThrough,
+              decoration: TextDecoration.lineThrough,
+            ),
           ),
-        ));
+        );
         i++;
       } else {
         // Remaining words in corrected - additions
-        spans.add(TextSpan(
-          text: '${correctedWords[j]} ',
-          style: const TextStyle(
+        spans.add(
+          TextSpan(
+            text: '${correctedWords[j]} ',
+            style: const TextStyle(
               color: AppColors.lg500,
-            fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ));
+        );
         j++;
       }
     }
-    
+
     return spans;
   }
 }

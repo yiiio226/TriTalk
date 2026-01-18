@@ -267,15 +267,14 @@ export const ErrorSchema = z.object({
 
 // --- Shadowing Practice Schemas ---
 
-export const ShadowingPracticeSaveSchema = z.object({
+// New: Upsert schema for PUT /shadowing/upsert
+// - source_id is now required (no longer optional)
+// - removed 'custom' source_type
+// - removed audio_path (local path meaningless in cloud)
+export const ShadowingUpsertSchema = z.object({
   target_text: z.string(),
-  source_type: z.enum([
-    "ai_message",
-    "native_expression",
-    "reference_answer",
-    "custom",
-  ]),
-  source_id: z.string().optional(),
+  source_type: z.enum(["ai_message", "native_expression", "reference_answer"]),
+  source_id: z.string(), // Required for unique key
   scene_key: z.string().nullable(),
   pronunciation_score: z.number(),
   accuracy_score: z.number().optional(),
@@ -284,11 +283,10 @@ export const ShadowingPracticeSaveSchema = z.object({
   prosody_score: z.number().optional(),
   word_feedback: z.array(WordFeedbackSchema).optional(),
   feedback_text: z.string().optional(),
-  audio_path: z.string().optional(),
-  // Smart segments based on natural pauses (optional for backward compatibility)
   segments: z.array(SmartSegmentSchema).optional(),
 });
 
+// Response schema for upsert operation
 export const ShadowingPracticeResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
@@ -297,27 +295,32 @@ export const ShadowingPracticeResponseSchema = z.object({
   }),
 });
 
-export const ShadowingHistoryResponseSchema = z.object({
+// New: Query params schema for GET /shadowing/get
+export const ShadowingGetQuerySchema = z.object({
+  source_type: z.enum(["ai_message", "native_expression", "reference_answer"]),
+  source_id: z.string(),
+});
+
+// New: Response schema for GET /shadowing/get
+// Returns single record or null (not an array)
+export const ShadowingGetResponseSchema = z.object({
   success: z.boolean(),
-  data: z.object({
-    practices: z.array(
-      z.object({
-        id: z.string(),
-        target_text: z.string(),
-        source_type: z.string(),
-        source_id: z.string().nullable(),
-        pronunciation_score: z.number(),
-        accuracy_score: z.number().nullable(),
-        fluency_score: z.number().nullable(),
-        completeness_score: z.number().nullable(),
-        prosody_score: z.number().nullable(),
-        word_feedback: z.array(WordFeedbackSchema).nullable(),
-        feedback_text: z.string().nullable(),
-        audio_path: z.string().nullable(),
-        segments: z.array(SmartSegmentSchema).nullable(), // Smart segments (null for historical data)
-        practiced_at: z.string(),
-      }),
-    ),
-    total: z.number(),
-  }),
+  data: z
+    .object({
+      id: z.string(),
+      source_type: z.string(),
+      source_id: z.string(),
+      target_text: z.string(),
+      scene_key: z.string().nullable(),
+      pronunciation_score: z.number(),
+      accuracy_score: z.number().nullable(),
+      fluency_score: z.number().nullable(),
+      completeness_score: z.number().nullable(),
+      prosody_score: z.number().nullable(),
+      word_feedback: z.array(WordFeedbackSchema).nullable(),
+      feedback_text: z.string().nullable(),
+      segments: z.array(SmartSegmentSchema).nullable(),
+      practiced_at: z.string(),
+    })
+    .nullable(), // Returns single record or null
 });
