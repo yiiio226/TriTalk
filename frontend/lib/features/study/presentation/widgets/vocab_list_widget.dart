@@ -78,38 +78,44 @@ class VocabListWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
-                          child: Text(
-                            item.phrase,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.lightTextPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Play Button
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              _playWordPronunciation(item.phrase);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: Icon(
-                                Icons.volume_up_outlined,
-                                color: AppColors.lightTextSecondary,
-                                size: 16,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  item.phrase,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.lightTextPrimary,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              // Play Button
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    _playWordPronunciation(item.phrase);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Icon(
+                                      Icons.volume_up_outlined,
+                                      color: AppColors.lightTextSecondary,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const Spacer(),
                         IconButton(
                           icon: Icon(
                             Icons.delete_outline,
