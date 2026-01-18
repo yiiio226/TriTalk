@@ -1819,42 +1819,84 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Score Header Skeleton
-          // Row(
-          //   children: [
-          //     _buildSkeletonBox(height: 32, width: 100, radius: 8),
-          //     const SizedBox(width: 12),
-          //     _buildSkeletonBox(height: 24, width: 120, radius: 4),
-          //   ],
-          // ),
-          const SizedBox(height: 24),
-
-          // Stats Row Skeleton
+          // Score Card Skeleton
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: AppColors.lightSurface.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.lightDivider),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            child: Column(
               children: [
-                _buildStatsSkeletonItem(),
-                _buildStatsSkeletonItem(),
-                _buildStatsSkeletonItem(),
+                // Header Row
+                Row(
+                  children: [
+                    _buildSkeletonBox(height: 24, width: 24, radius: 12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSkeletonBox(
+                        height: 20,
+                        width: double.infinity,
+                        radius: 4,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildSkeletonBox(height: 50, width: 50, radius: 25),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Stats Row
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatsSkeletonItem(),
+                      _buildStatsSkeletonItem(),
+                      _buildStatsSkeletonItem(),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 32),
 
-          // Simplified Words Skeleton
-          Wrap(
-            spacing: 8,
-            runSpacing: 12,
-            children: List.generate(12, (index) {
-              final width = 60.0 + (index % 4) * 20.0;
-              return _buildSkeletonBox(height: 20, width: width, radius: 4);
-            }),
+          // Pronunciation Section Skeleton
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section Title
+              Row(
+                children: [
+                  _buildSkeletonBox(height: 16, width: 16, radius: 8),
+                  const SizedBox(width: 8),
+                  _buildSkeletonBox(height: 16, width: 100, radius: 4),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Word Pills
+              Wrap(
+                spacing: 8,
+                runSpacing: 12,
+                children: List.generate(8, (index) {
+                  final width = 50.0 + (index % 3) * 25.0;
+                  return _buildSkeletonBox(
+                    height: 32,
+                    width: width,
+                    radius: 16,
+                  );
+                }),
+              ),
+            ],
           ),
         ],
       ),
