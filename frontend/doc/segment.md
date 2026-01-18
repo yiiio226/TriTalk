@@ -113,8 +113,102 @@ Row(
 )
 ```
 
-## 4. Implementation Steps
+## 4. Implementation Status
 
-1.  **Backend**: Update `analyzeShadow` logic to calculate and return `segments` based on Azure `Break` data.
-2.  **Frontend Service**: Update `StreamingTtsService` or a helper to generate the new Hash-based cache keys (ignoring voiceName).
-3.  **Frontend UI**: Refactor `ShadowingSheet` to use the new `segments` data for the visual waveform and click-to-play interactions.
+### ✅ Completed (2026-01-18)
+
+#### Backend
+
+- ✅ **Azure Speech Service** (`backend/src/services/azure-speech.ts`)
+  - Added `BreakInfo` interface to capture Azure Prosody Break data
+  - Added `SmartSegment` interface for segment representation
+  - Updated `WordAssessment` to include optional `break` field
+  - Updated `PronunciationAssessmentResult` to include `segments` array
+  - Implemented `calculateSmartSegments()` algorithm:
+    - Finds breaks > 300ms (3000000 units)
+    - Min 3 words per segment
+    - Max 5 segments
+    - Fallback to single segment if no valid breaks
+  - Updated `transformAssessmentResult()` to extract Break data from Azure response
+
+- ✅ **API Schema** (`backend/src/schemas.ts`)
+  - Added `SmartSegmentSchema` for OpenAPI documentation
+  - Updated `PronunciationAssessmentResponseSchema` to include segments
+
+- ✅ **API Endpoint** (`backend/src/server.ts`)
+  - Updated `/speech/assess` to return segments in response
+
+#### Frontend
+
+- ✅ **Data Models**
+  - `SmartSegment` class in `pronunciation_result.dart`
+  - `SmartSegmentFeedback` class in `message.dart`
+  - Updated `PronunciationResult` to include `segments` field
+  - Updated `VoiceFeedback` to include `smartSegments` field
+
+- ✅ **ShadowingSheet Updates** (`shadowing_sheet.dart`)
+  - Updated `_analyzeAudio()` to convert and store smart segments from pronunciation result
+  - Updated `_playSegmentAudio()` to use smart segments when available
+  - Added fallback to fixed 3-segment approach when no segments data
+
+- ✅ **Backward Compatibility**
+  - All new fields are optional/nullable
+  - Historical data continues to work with fixed 3-segment fallback
+  - No database migration required
+
+### ⏸️ Not Implemented (Out of Scope)
+
+#### Caching Strategy (Section 2)
+
+- ❌ Hash-based segment cache keys (`seg_{hash}.wav`)
+- ❌ Segment-specific caching logic
+- **Decision**: Current implementation uses streaming playback without segment-level caching, which is acceptable for the initial version
+
+#### UI Visualization (Section 3)
+
+- ❌ Segmented Pitch Contour widget
+- ❌ Color-coded segment visualization (🟢🟡🔴)
+- ❌ Interactive segment separators
+- **Reason**: Current fixed pitch contour UI works with both smart segments (via `_playSegmentAudio`) and maintains visual consistency. UI enhancement can be done in a future iteration.
+
+### Current User Experience
+
+| Scenario                         | Behavior                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| **New pronunciation assessment** | ✅ Azure returns smart segments based on natural pauses                        |
+| **Playing segment audio**        | ✅ Uses smart segment text when available, falls back to fixed 3-segment split |
+| **Historical practice data**     | ✅ Works with fixed 3-segment fallback (no segments stored)                    |
+| **Visual feedback**              | ⏸️ Uses existing pitch contour (not yet segmented visually)                    |
+
+### Technical Notes
+
+#### Why `/speech/assess` doesn't use Swagger Client
+
+The endpoint uses `app.post()` instead of `createRoute()` because:
+
+- It handles `multipart/form-data` file uploads
+- `@hono/zod-openapi` has limited support for binary file types
+- Frontend uses manual HTTP calls (`SpeechAssessmentService`) for better control over file encoding
+
+#### Data Flow
+
+```
+Backend /speech/assess
+  ↓ Returns segments in JSON
+SpeechAssessmentService (HTTP)
+  ↓ Parses with PronunciationResult.fromJson()
+ShadowingSheet._analyzeAudio()
+  ↓ Converts to SmartSegmentFeedback
+VoiceFeedback stored with smartSegments
+  ↓ Used by _playSegmentAudio()
+StreamingTtsService plays segment text
+```
+
+### Future Enhancements
+
+If needed, consider implementing:
+
+1. **Segmented Pitch Contour UI** - Visual representation matching segment boundaries
+2. **Segment-level caching** - Hash-based cache keys for frequently used segments
+3. **Segment statistics** - Track which segments users struggle with most
+4. **Database storage** - Store segments in `shadowing_practices` table for historical analysis

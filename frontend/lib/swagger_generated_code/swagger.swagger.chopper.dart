@@ -320,4 +320,71 @@ final class _$Swagger extends Swagger {
     );
     return client.send<UserSyncPost$Response, UserSyncPost$Response>($request);
   }
+
+  @override
+  Future<Response<ShadowingSavePost$Response>> _shadowingSavePost({
+    required ShadowingSavePost$RequestBody? body,
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  }) {
+    final Uri $url = Uri.parse('/shadowing/save');
+    final $body = body;
+    final Request $request = Request(
+      'POST',
+      $url,
+      client.baseUrl,
+      body: $body,
+      tag: swaggerMetaData,
+    );
+    return client.send<ShadowingSavePost$Response, ShadowingSavePost$Response>(
+      $request,
+    );
+  }
+
+  @override
+  Future<Response<ShadowingHistoryGet$Response>> _shadowingHistoryGet({
+    String? sourceId,
+    String? targetText,
+    String? sceneKey,
+    String? limit,
+    String? offset,
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  }) {
+    final Uri $url = Uri.parse('/shadowing/history');
+    final Map<String, dynamic> $params = <String, dynamic>{
+      'source_id': sourceId,
+      'target_text': targetText,
+      'scene_key': sceneKey,
+      'limit': limit,
+      'offset': offset,
+    };
+    final Request $request = Request(
+      'GET',
+      $url,
+      client.baseUrl,
+      parameters: $params,
+      tag: swaggerMetaData,
+    );
+    return client
+        .send<ShadowingHistoryGet$Response, ShadowingHistoryGet$Response>(
+          $request,
+        );
+  }
 }
