@@ -3,20 +3,24 @@ import 'package:frontend/features/chat/domain/models/message.dart';
 class ShadowingPractice {
   final String id;
   final String targetText;
-  final String sourceType; // 'ai_message', 'native_expression', 'reference_answer', 'custom'
+  final String
+  sourceType; // 'ai_message', 'native_expression', 'reference_answer', 'custom'
   final String? sourceId;
   final String? sceneKey;
-  
+
   final int pronunciationScore;
   final double? accuracyScore;
   final double? fluencyScore;
   final double? completenessScore;
   final double? prosodyScore;
-  
+
   final List<AzureWordFeedback>? wordFeedback;
   final String? feedbackText;
   final String? audioPath; // Local path only
-  
+
+  // Smart segments based on natural pauses (optional for backward compatibility)
+  final List<SmartSegmentFeedback>? segments;
+
   final DateTime practicedAt;
 
   ShadowingPractice({
@@ -33,6 +37,7 @@ class ShadowingPractice {
     this.wordFeedback,
     this.feedbackText,
     this.audioPath,
+    this.segments,
     required this.practicedAt,
   });
 
@@ -51,6 +56,7 @@ class ShadowingPractice {
       'word_feedback': wordFeedback?.map((w) => w.toJson()).toList(),
       'feedback_text': feedbackText,
       'audio_path': audioPath,
+      'segments': segments?.map((s) => s.toJson()).toList(),
       'practiced_at': practicedAt.toIso8601String(),
     };
   }
@@ -72,6 +78,10 @@ class ShadowingPractice {
           .toList(),
       feedbackText: json['feedback_text'],
       audioPath: json['audio_path'],
+      // Smart segments (null for historical data)
+      segments: (json['segments'] as List?)
+          ?.map((s) => SmartSegmentFeedback.fromJson(s))
+          .toList(),
       practicedAt: DateTime.parse(json['practiced_at']),
     );
   }

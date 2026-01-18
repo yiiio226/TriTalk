@@ -45,3 +45,11 @@ cd frontend
 TriTalk follows a comprehensive Feature-First, Layered architecture utilizing Riverpod for state management.
 
 - **[Current Architecture Guide](guide/Architecture.md)**: Detailed breakdown of the project structure and layers.
+
+## 🎤 Voice Features
+
+### Shadowing Smart Segmentation
+
+Intelligently segment shadowing text based on natural pauses detected by Azure Speech API.
+
+> 📖 Detailed Spec: [doc/access_segment_en.md](doc/access_segment_en.md)

@@ -1582,6 +1582,7 @@ app.openapi(shadowingSaveRoute, async (c) => {
         word_feedback: body.word_feedback,
         feedback_text: body.feedback_text,
         audio_path: body.audio_path,
+        segments: body.segments, // Smart segments (optional, nullable)
       })
       .select("id, practiced_at")
       .single();

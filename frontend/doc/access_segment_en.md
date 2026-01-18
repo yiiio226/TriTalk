@@ -214,4 +214,51 @@ If needed, consider implementing:
 1. **Segmented Pitch Contour UI** - Visual representation matching segment boundaries
 2. **Segment-level caching** - Hash-based cache keys for frequently used segments
 3. **Segment statistics** - Track which segments users struggle with most
-4. **Database storage** - Store segments in `shadowing_practices` table for historical analysis
+4. ~~**Database storage** - Store segments in `shadowing_practices` table for historical analysis~~ ✅ Implemented (2026-01-18)
+
+---
+
+## 5. Database Storage for Segments (2026-01-18)
+
+### ✅ Completed
+
+Segments data is now persisted to the database for historical analysis.
+
+#### Migration
+
+```sql
+-- 20260118100000_add_segments_to_shadowing_practices.sql
+ALTER TABLE shadowing_practices
+ADD COLUMN segments JSONB DEFAULT NULL;
+```
+
+#### Schema Updates
+
+- **Backend**: `ShadowingPracticeSaveSchema` now includes optional `segments` field
+- **Backend**: `ShadowingHistoryResponseSchema` returns `segments` (nullable for historical data)
+- **Frontend**: `ShadowingPractice` model includes `segments` field
+- **Frontend**: `ShadowingHistoryService.savePractice()` accepts `segments` parameter
+
+#### Backward Compatibility
+
+| Scenario                               | Behavior                                                   |
+| -------------------------------------- | ---------------------------------------------------------- |
+| **New practices**                      | ✅ Segments saved to database                              |
+| **Historical data (before migration)** | ✅ `segments` is `NULL`, fallback to 3-segment split works |
+| **Frontend display**                   | ✅ Uses smart segments if available, otherwise fallback    |
+
+#### Data Flow
+
+```
+/speech/assess returns segments
+    ↓
+ShadowingSheet._analyzeAudio() extracts SmartSegmentFeedback
+    ↓
+ShadowingHistoryService.savePractice(segments: ...)
+    ↓
+Backend /shadowing/save stores to shadowing_practices.segments (JSONB)
+    ↓
+/shadowing/history returns segments (null for old records)
+    ↓
+ShadowingPractice.fromJson() parses segments
+```

@@ -325,48 +325,61 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     }
   }
 
+  /// Get display segments (using smart segments or fallback)
+  List<SmartSegmentFeedback> _getDisplaySegments() {
+    if (_feedback?.hasSmartSegments == true) {
+      return _feedback!.smartSegments!;
+    }
+
+    // Fallback logic matching _playSegmentAudio fallback
+    // We create fake SmartSegmentFeedback objects dividing text into 3 parts
+    final words = widget.targetText.split(' ');
+    // Handle empty text
+    if (words.isEmpty || (words.length == 1 && words[0].isEmpty)) {
+      return [];
+    }
+
+    final segmentSize = (words.length / 3).ceil();
+    final List<SmartSegmentFeedback> fallback = [];
+    final currentScore = _feedback?.pronunciationScore.toDouble() ?? 0.0;
+
+    for (int i = 0; i < 3; i++) {
+      int start = i * segmentSize;
+      if (start >= words.length) break;
+      int end = (start + segmentSize).clamp(0, words.length); // clamp is safer
+
+      final sublist = words.sublist(start, end);
+      if (sublist.isEmpty) continue;
+
+      final text = sublist.join(' ');
+      fallback.add(
+        SmartSegmentFeedback(
+          text: text,
+          startIndex: start,
+          endIndex: end,
+          score: currentScore,
+          hasError: false,
+          wordCount: end - start,
+        ),
+      );
+    }
+    return fallback;
+  }
+
   /// Play audio for a specific segment of the target text using true streaming
   /// Uses StreamingTtsService for low-latency playback (audio starts as chunks arrive)
   /// When smart segments are available (from Azure Break data), uses those for precise segmentation
   /// Caches segment audio for subsequent plays
   Future<void> _playSegmentAudio(int segmentIndex) async {
-    String segmentText;
+    final segments = _getDisplaySegments();
+    if (segmentIndex >= segments.length) return;
 
-    // Use smart segments if available from pronunciation assessment
-    if (_feedback?.hasSmartSegments == true) {
-      final segments = _feedback!.smartSegments!;
-      if (segmentIndex >= segments.length) return;
-      segmentText = segments[segmentIndex].text;
+    final segmentText = segments[segmentIndex].text;
 
-      if (kDebugMode) {
-        debugPrint('🔊 Playing smart segment $segmentIndex: "$segmentText"');
-      }
-    } else {
-      // Fallback: Split target text into roughly 3 equal segments by word count
-      final words = widget.targetText.split(' ');
-      final segmentSize = (words.length / 3).ceil();
-
-      int startIndex, endIndex;
-      switch (segmentIndex) {
-        case 0: // First segment
-          startIndex = 0;
-          endIndex = segmentSize;
-          break;
-        case 1: // Middle segment
-          startIndex = segmentSize;
-          endIndex = segmentSize * 2;
-          break;
-        case 2: // Last segment
-          startIndex = segmentSize * 2;
-          endIndex = words.length;
-          break;
-        default:
-          return;
-      }
-
-      segmentText = words
-          .sublist(startIndex, endIndex.clamp(0, words.length))
-          .join(' ');
+    if (kDebugMode) {
+      debugPrint(
+        '🔊 Playing segment $segmentIndex (smart=${_feedback?.hasSmartSegments}): "$segmentText"',
+      );
     }
 
     if (segmentText.isEmpty) return;
@@ -697,6 +710,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           wordFeedback: voiceFeedback.azureWordFeedback,
           feedbackText: voiceFeedback.feedback,
           audioPath: _currentRecordingPath,
+          segments: voiceFeedback.smartSegments,
         );
       } catch (e) {
         if (kDebugMode) {
@@ -1340,29 +1354,63 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           ),
           const SizedBox(height: 20),
           // Pitch Contour Visualization with Interactive Segments
-          GestureDetector(
-            onTapDown: (details) {
-              // Determine which segment was tapped
-              final tapX = details.localPosition.dx;
-              final width =
-                  MediaQuery.of(context).size.width - 80; // Account for padding
-              final segmentIndex = (tapX / width * 3).floor().clamp(0, 2);
+          // Pitch Contour Visualization with Interactive Segments
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return GestureDetector(
+                onTapDown: (details) {
+                  final segments = _getDisplaySegments();
+                  if (segments.isEmpty) return;
 
-              // Split target text into 3 segments and play the tapped segment
-              _playSegmentAudio(segmentIndex);
-            },
-            child: SizedBox(
-              height: 80,
-              width: double.infinity,
-              child: CustomPaint(
-                painter: IntonationPainter(
-                  score: score,
-                  primaryColor: AppColors.primary,
-                  userColor: _getScoreColor(score),
-                  targetText: widget.targetText,
+                  // Calculate geometry to find tapped segment
+                  // Must match IntonationPainter's layout logic!
+                  const double gap = 12.0;
+                  final int count = segments.length;
+                  final double totalGapWidth = gap * (count - 1);
+                  final double availableWidth =
+                      constraints.maxWidth - totalGapWidth;
+
+                  int totalWords = 0;
+                  for (var seg in segments) totalWords += seg.wordCount;
+                  if (totalWords == 0)
+                    totalWords = count; // Avoid division by zero
+
+                  double currentX = 0;
+                  for (int i = 0; i < count; i++) {
+                    final seg = segments[i];
+                    final double weight = seg.wordCount > 0
+                        ? seg.wordCount.toDouble()
+                        : 1.0;
+                    final double fraction = totalWords > 0
+                        ? weight / totalWords
+                        : 1.0 / count;
+                    final double segWidth = availableWidth * fraction;
+
+                    // Allow tapping slightly into the gap for easier touch
+                    if (details.localPosition.dx >= currentX &&
+                        details.localPosition.dx <=
+                            currentX + segWidth + (gap / 2)) {
+                      _playSegmentAudio(i);
+                      break;
+                    }
+                    currentX += segWidth + gap;
+                  }
+                },
+                child: SizedBox(
+                  height: 80,
+                  width: double.infinity,
+                  child: CustomPaint(
+                    painter: IntonationPainter(
+                      overallScore: score,
+                      primaryColor: AppColors.primary,
+                      userColor: _getScoreColor(score),
+                      targetText: widget.targetText,
+                      segments: _getDisplaySegments(),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           // Legend
@@ -1939,17 +1987,26 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
 /// Custom painter for drawing pitch contour visualization with key point annotations
 class IntonationPainter extends CustomPainter {
-  final double score;
+  final double overallScore;
   final Color primaryColor;
-  final Color userColor;
+  final Color userColor; // Kept for legacy/fallback usage
   final String targetText;
+  final List<SmartSegmentFeedback>? segments;
 
   IntonationPainter({
-    required this.score,
+    required this.overallScore,
     required this.primaryColor,
     required this.userColor,
     required this.targetText,
+    this.segments,
   });
+
+  // Helper for colors specific to segment
+  Color _getSegmentColor(double score) {
+    if (score >= 80) return AppColors.lg500;
+    if (score >= 60) return AppColors.ly500;
+    return AppColors.lightError;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1958,65 +2015,164 @@ class IntonationPainter extends CustomPainter {
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round;
 
-    // AI Curve (Standard) - draw first so user curve is on top
-    final aiPath = Path();
-    paint.color = primaryColor.withValues(alpha: 0.3);
-
-    for (double x = 0; x <= size.width; x += 2) {
-      final normalizedX = x / size.width;
-      final y =
-          size.height * 0.5 +
-          (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
-          (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
-
-      if (x == 0) {
-        aiPath.moveTo(x, y);
-      } else {
-        aiPath.lineTo(x, y);
-      }
+    if (segments != null && segments!.isNotEmpty) {
+      _paintSegments(canvas, size, paint);
+    } else {
+      _paintContinuous(canvas, size, paint);
     }
-    canvas.drawPath(aiPath, paint);
 
-    // User Curve
-    final userPath = Path();
-    paint.color = userColor;
-
-    for (double x = 0; x <= size.width; x += 2) {
-      final normalizedX = x / size.width;
-
-      final aiY =
-          size.height * 0.5 +
-          (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
-          (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
-
-      double userY;
-      if (score >= 90) {
-        userY = aiY + (math.sin(x * 0.1) * 2);
-      } else if (score >= 60) {
-        userY =
-            size.height * 0.5 +
-            (aiY - size.height * 0.5) * 0.7 +
-            (math.sin(x * 0.05) * 5);
-      } else {
-        userY =
-            size.height * 0.5 +
-            (aiY - size.height * 0.5) * 0.2 +
-            (math.sin(x * 0.1) * 3);
-      }
-
-      if (x == 0) {
-        userPath.moveTo(x, userY);
-      } else {
-        userPath.lineTo(x, userY);
-      }
-    }
-    canvas.drawPath(userPath, paint);
-
-    // Draw key point markers
+    // Draw key point markers (annotations)
     _drawKeyPointMarkers(canvas, size);
   }
 
+  void _paintSegments(Canvas canvas, Size size, Paint paint) {
+    // Determine layout
+    // Gap between segments
+    const double gap = 12.0;
+    final int count = segments!.length;
+    final double totalGapWidth = gap * (count - 1);
+    final double availableWidth = size.width - totalGapWidth;
+
+    // Calculate total weight (word count)
+    int totalWords = 0;
+    for (var seg in segments!) totalWords += seg.wordCount;
+    // If no word counts, assume equal weight
+    if (totalWords == 0) totalWords = count * 10;
+
+    double currentX = 0;
+
+    for (int i = 0; i < count; i++) {
+      final seg = segments![i];
+      final double weight = seg.wordCount > 0
+          ? seg.wordCount.toDouble()
+          : (totalWords / count);
+      final double fraction = totalWords > 0
+          ? weight / totalWords
+          : 1.0 / count;
+      final double segWidth = availableWidth * fraction;
+
+      final segRect = Rect.fromLTWH(currentX, 0, segWidth, size.height);
+
+      // Draw AI Curve for this segment (faint native speaker line)
+      _drawCurve(
+        canvas,
+        segRect,
+        primaryColor.withValues(alpha: 0.3),
+        isAi: true,
+      );
+
+      // Draw User Curve for this segment with segment-specific color
+      _drawCurve(
+        canvas,
+        segRect,
+        _getSegmentColor(seg.score),
+        isAi: false,
+        score: seg.score,
+      );
+
+      // Separator UI: Draw a light vertical line in the gap to make it clearer?
+      // The user asked for "gap UI more obvious". A gap is empty space.
+      // Let's add a small vertical ticker in the gap.
+      if (i < count - 1) {
+        final sepX = currentX + segWidth + (gap / 2);
+        final sepPaint = Paint()
+          ..color = AppColors.lightDivider
+          ..strokeWidth = 1.0
+          ..style = PaintingStyle.stroke;
+
+        canvas.drawLine(
+          Offset(sepX, size.height * 0.3),
+          Offset(sepX, size.height * 0.7),
+          sepPaint,
+        );
+      }
+
+      currentX += segWidth + gap;
+    }
+  }
+
+  void _paintContinuous(Canvas canvas, Size size, Paint paint) {
+    _drawCurve(
+      canvas,
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      primaryColor.withValues(alpha: 0.3),
+      isAi: true,
+    );
+    _drawCurve(
+      canvas,
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      userColor,
+      isAi: false,
+      score: overallScore,
+    );
+  }
+
+  void _drawCurve(
+    Canvas canvas,
+    Rect rect,
+    Color color, {
+    required bool isAi,
+    double score = 0,
+  }) {
+    final path = Path();
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+
+    // Step size relative to width (ensure smoother curve)
+    final double step = math.max(1.0, rect.width / 40.0);
+
+    for (double localX = 0; localX <= rect.width; localX += step) {
+      final double t = localX / rect.width;
+
+      // Base curve (Standard AI intonation pattern simulation)
+      final baseY =
+          rect.top +
+          rect.height * 0.5 +
+          (math.sin(t * math.pi * 2) * rect.height * 0.15) +
+          (math.sin(t * math.pi * 6) * rect.height * 0.05);
+
+      double y = baseY;
+
+      if (!isAi) {
+        // User deviation based on score
+        if (score >= 90) {
+          // Close to original
+          y = baseY + (math.sin(t * 10) * 2);
+        } else if (score >= 60) {
+          // Mild distortion
+          y =
+              rect.center.dy +
+              (baseY - rect.center.dy) * 0.7 +
+              (math.sin(t * 15) * 4);
+        } else {
+          // Flat/Poor
+          y =
+              rect.center.dy +
+              (baseY - rect.center.dy) * 0.3 +
+              (math.sin(t * 10) * 3);
+        }
+      }
+
+      if (localX == 0)
+        path.moveTo(rect.left + localX, y);
+      else
+        path.lineTo(rect.left + localX, y);
+    }
+
+    // Ensure we draw to the very end
+    if (rect.width > 0) {
+      // Last point calculation
+      // redundant if loop hits it, but loop might miss exact end due to step
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
   void _drawKeyPointMarkers(Canvas canvas, Size size) {
+    // Draw markers on top of everything (global position)
     final isQuestion = targetText.trim().endsWith('?');
     final hasExclamation = targetText.contains('!');
 
@@ -2026,13 +2182,11 @@ class IntonationPainter extends CustomPainter {
 
     // Question mark - show rise at end
     if (isQuestion) {
-      final x = size.width * 0.9; // Near the end
+      final x = size.width * 0.95; // Near the end
       final y = size.height * 0.3; // Upper part (rising pitch)
 
-      // Draw upward arrow
       canvas.drawCircle(Offset(x, y), 4, markerPaint);
 
-      // Draw small arrow pointing up
       final arrowPath = Path()
         ..moveTo(x, y - 8)
         ..lineTo(x - 3, y - 2)
@@ -2046,10 +2200,8 @@ class IntonationPainter extends CustomPainter {
       final x = size.width * 0.5; // Middle (emphasis point)
       final y = size.height * 0.25; // High point
 
-      // Draw emphasis marker
       canvas.drawCircle(Offset(x, y), 4, markerPaint);
 
-      // Draw small star-like shape for emphasis
       final starPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
@@ -2066,10 +2218,11 @@ class IntonationPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant IntonationPainter oldDelegate) {
-    return oldDelegate.score != score ||
+    // Deep compare of segments would be expensive, but generally they don't change often
+    return oldDelegate.overallScore != overallScore ||
         oldDelegate.primaryColor != primaryColor ||
-        oldDelegate.userColor != userColor ||
-        oldDelegate.targetText != targetText;
+        oldDelegate.targetText != targetText ||
+        oldDelegate.segments != segments;
   }
 }
 

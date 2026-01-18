@@ -55,13 +55,7 @@ class StreamingTtsService {
   /// Should be called once at app startup
   Future<void> initialize() async {
     if (!_soloud.isInitialized) {
-      if (kDebugMode) {
-        debugPrint('🔊 [StreamingTTS] Initializing SoLoud engine...');
-      }
       await _soloud.init();
-      if (kDebugMode) {
-        debugPrint('🔊 [StreamingTTS] SoLoud engine initialized');
-      }
     }
   }
 
@@ -87,14 +81,6 @@ class StreamingTtsService {
     _isLoading = true;
     _notifyState(StreamingTtsState.loading);
 
-    final startTime = DateTime.now();
-    if (kDebugMode) {
-      debugPrint('🔊 [StreamingTTS] Starting streaming playback');
-      debugPrint(
-        '   Text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."',
-      );
-    }
-
     // Collect all PCM chunks for caching
     final List<Uint8List> pcmChunks = [];
     String? cachedFilePath;
@@ -112,11 +98,6 @@ class StreamingTtsService {
         bufferingType: BufferingType.released, // Free memory after playing
         bufferingTimeNeeds: 0.3, // 300ms buffer before starting playback
         onBuffering: (isBuffering, handle, time) {
-          if (kDebugMode) {
-            debugPrint(
-              '🔊 [StreamingTTS] Buffering: $isBuffering, time: ${time}s',
-            );
-          }
           if (isBuffering) {
             _notifyState(StreamingTtsState.buffering);
           } else {
@@ -125,29 +106,13 @@ class StreamingTtsService {
         },
       );
 
-      if (kDebugMode) {
-        debugPrint('🔊 [StreamingTTS] Buffer stream created');
-      }
-
       // Start playback immediately (will auto-pause until enough data)
       _currentHandle = await _soloud.play(_currentSource!);
       _isPlaying = true;
       _isLoading = false;
 
-      if (kDebugMode) {
-        final playStartTime = DateTime.now();
-        debugPrint(
-          '🔊 [StreamingTTS] ▶️ Playback started at ${playStartTime.toIso8601String()}',
-        );
-        debugPrint(
-          '   Time to first play: ${playStartTime.difference(startTime).inMilliseconds}ms',
-        );
-      }
-
       // Start receiving audio chunks from API
       final apiService = ApiService();
-      int totalChunks = 0;
-      int totalBytes = 0;
       bool firstChunkReceived = false;
 
       await for (final chunk in apiService.generateTTSStream(
@@ -157,9 +122,6 @@ class StreamingTtsService {
       )) {
         // Check if we've been stopped
         if (!_isPlaying || _currentSource == null) {
-          if (kDebugMode) {
-            debugPrint('🔊 [StreamingTTS] Playback stopped, aborting stream');
-          }
           break;
         }
 
@@ -170,59 +132,28 @@ class StreamingTtsService {
               final pcmBytes = Uint8List.fromList(
                 base64Decode(chunk.audioBase64!),
               );
-              totalChunks++;
-              totalBytes += pcmBytes.length;
 
               // Store for caching
               pcmChunks.add(pcmBytes);
 
               if (!firstChunkReceived) {
                 firstChunkReceived = true;
-                final firstChunkTime = DateTime.now();
-                if (kDebugMode) {
-                  debugPrint('🔊 [StreamingTTS] First audio chunk received');
-                  debugPrint(
-                    '   Time since start: ${firstChunkTime.difference(startTime).inMilliseconds}ms',
-                  );
-                  debugPrint('   Chunk size: ${pcmBytes.length} bytes');
-                }
                 _notifyState(StreamingTtsState.playing);
               }
 
               // Add PCM data to the buffer stream for playback
               _soloud.addAudioDataStream(_currentSource!, pcmBytes);
-
-              if (kDebugMode && totalChunks % 5 == 0) {
-                debugPrint(
-                  '🔊 [StreamingTTS] Chunks: $totalChunks, Total: $totalBytes bytes',
-                );
-              }
             }
             break;
 
           case TTSChunkType.info:
             // Duration info received
-            if (kDebugMode) {
-              debugPrint(
-                '🔊 [StreamingTTS] Info received: duration=${chunk.durationMs}ms',
-              );
-            }
             break;
 
           case TTSChunkType.done:
             // Mark the stream as complete
             if (_currentSource != null) {
               _soloud.setDataIsEnded(_currentSource!);
-            }
-
-            final doneTime = DateTime.now();
-            if (kDebugMode) {
-              debugPrint('🔊 [StreamingTTS] ✅ All data received');
-              debugPrint(
-                '   Total time: ${doneTime.difference(startTime).inMilliseconds}ms',
-              );
-              debugPrint('   Total chunks: $totalChunks');
-              debugPrint('   Total bytes: $totalBytes');
             }
 
             // Save to cache file
@@ -288,13 +219,6 @@ class StreamingTtsService {
               .replaceAll(RegExp(r'[^a-zA-Z0-9-_]'), '_');
       final audioFile = File('${ttsCacheDir.path}/$safeFileName.wav');
       await audioFile.writeAsBytes(wavData);
-
-      if (kDebugMode) {
-        debugPrint(
-          '🔊 [StreamingTTS] 💾 Cached audio saved: ${audioFile.path}',
-        );
-        debugPrint('   Size: ${wavData.length} bytes');
-      }
 
       return audioFile.path;
     } catch (e) {
@@ -371,10 +295,6 @@ class StreamingTtsService {
       _isLoading = false;
       _notifyState(StreamingTtsState.playing);
 
-      if (kDebugMode) {
-        debugPrint('🔊 [StreamingTTS] Playing cached file: $audioPath');
-      }
-
       _listenForCompletion();
     } catch (e) {
       _isLoading = false;
@@ -403,9 +323,6 @@ class StreamingTtsService {
         _currentHandle = null;
         _currentSource = null;
         _notifyState(StreamingTtsState.completed);
-        if (kDebugMode) {
-          debugPrint('🔊 [StreamingTTS] Playback completed');
-        }
       }
     });
   }
@@ -425,10 +342,6 @@ class StreamingTtsService {
     _isPlaying = false;
     _isLoading = false;
     _notifyState(StreamingTtsState.stopped);
-
-    if (kDebugMode) {
-      debugPrint('🔊 [StreamingTTS] Stopped');
-    }
   }
 
   /// Notify state change
