@@ -1257,18 +1257,21 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       nativeLanguage: nativeLanguage,
     );
 
-    return Container(
-      margin: const EdgeInsets.only(top: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightDivider),
-        boxShadow: AppShadows.xs,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Divider above Pitch Contour
+        Container(
+          margin: const EdgeInsets.only(top: 24, bottom: 20),
+          height: 1,
+          color: AppColors.lightDivider,
+        ),
+        // Pitch Contour content
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Row(
             children: [
               Container(
@@ -1402,8 +1405,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ],
             ),
           ),
-        ],
-      ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1608,27 +1613,45 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       children: [
         Row(
           children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.lb500.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                size: 20,
+                color: AppColors.lb500,
+              ),
+            ),
+            const SizedBox(width: 12),
             const Text(
-              'Pronunciation:',
+              'Pronunciation',
               style: TextStyle(
-                fontSize: 14,
-                color: AppColors.lightTextSecondary,
-                fontWeight: FontWeight.w500,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.lightTextPrimary,
               ),
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.lb100,
-                borderRadius: BorderRadius.circular(4),
+                color: AppColors.lb500.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.lb500.withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
               child: const Text(
                 'Azure AI',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   color: AppColors.lb500,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
