@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:frontend/core/data/api/api_service.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
+import 'package:frontend/core/cache/cache_constants.dart';
 
 /// Streaming TTS Service using flutter_soloud
 ///
@@ -211,7 +212,7 @@ class StreamingTtsService {
       final cacheDir = await getApplicationDocumentsDirectory();
       final storageKey = StorageKeyService();
       final ttsCacheDir = Directory(
-        storageKey.getUserScopedPath(cacheDir.path, 'tts_cache'),
+        storageKey.getUserScopedPath(cacheDir.path, CacheConstants.ttsCacheDir),
       );
       if (!await ttsCacheDir.exists()) {
         await ttsCacheDir.create(recursive: true);

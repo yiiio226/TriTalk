@@ -45,6 +45,7 @@ cd frontend
 TriTalk follows a comprehensive Feature-First, Layered architecture utilizing Riverpod for state management.
 
 - **[Current Architecture Guide](guide/Architecture.md)**: Detailed breakdown of the project structure and layers.
+- **[Cache Strategy](doc/cache_strategy_en.md)**: Detailed guide on caching architecture, CacheManager, and caching rules for each module.
 
 ## 🎤 Voice Features
 

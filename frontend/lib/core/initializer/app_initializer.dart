@@ -7,6 +7,7 @@ import 'package:frontend/core/env/env.dart';
 import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
 import '../services/streaming_tts_service.dart';
+import '../cache/cache_initializer.dart';
 
 /// Provider for SharedPreferences instance
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -115,6 +116,12 @@ class AppBootstrap {
 
     // Initialize PreferencesService
     await PreferencesService().init();
+
+    // Initialize Cache System
+    await initializeCacheSystem();
+    if (kDebugMode) {
+      debugPrint('AppBootstrap: Cache system initialized');
+    }
 
     // Initialize SoLoud audio engine for streaming TTS
     try {

@@ -12,6 +12,7 @@ import 'package:frontend/core/env/env.dart';
 import 'package:frontend/features/auth/domain/models/user.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
 import 'package:frontend/core/data/local/preferences_service.dart';
+import 'package:frontend/core/cache/cache_initializer.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -310,6 +311,18 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    // Clear all user caches before signing out
+    try {
+      await clearAllUserCaches();
+      if (kDebugMode) {
+        debugPrint('AuthService: User caches cleared');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('AuthService: Error clearing caches: $e');
+      }
+    }
+
     await Supabase.instance.client.auth.signOut();
     _currentUser = null;
     _profileExistsInDatabase = false;
