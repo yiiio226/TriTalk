@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:frontend/core/env/env.dart';
 import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
+import '../services/streaming_tts_service.dart';
 
 /// Provider for SharedPreferences instance
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -114,6 +115,19 @@ class AppBootstrap {
 
     // Initialize PreferencesService
     await PreferencesService().init();
+
+    // Initialize SoLoud audio engine for streaming TTS
+    try {
+      await StreamingTtsService.instance.initialize();
+      if (kDebugMode) {
+        debugPrint('AppBootstrap: SoLoud audio engine initialized');
+      }
+    } catch (e) {
+      // Non-fatal: app can still work without streaming TTS
+      if (kDebugMode) {
+        debugPrint('AppBootstrap: ⚠️ SoLoud init failed (non-fatal): $e');
+      }
+    }
 
     if (kDebugMode) {
       debugPrint('AppBootstrap: ✅ Bootstrap complete');
