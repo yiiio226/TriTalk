@@ -275,7 +275,7 @@ export const ShadowingPracticeSaveSchema = z.object({
     "custom",
   ]),
   source_id: z.string().optional(),
-  scene_key: z.string().optional(),
+  scene_key: z.string().nullable(),
   pronunciation_score: z.number(),
   accuracy_score: z.number().optional(),
   fluency_score: z.number().optional(),

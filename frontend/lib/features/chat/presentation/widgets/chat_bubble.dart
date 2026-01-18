@@ -1152,6 +1152,7 @@ class _ChatBubbleState extends State<ChatBubble>
         builder: (context) => ShadowingSheet(
           targetText: message.content,
           messageId: message.id,
+          sceneKey: widget.sceneId,
           initialFeedback: cloudFeedback ?? message.shadowingFeedback,
           initialAudioPath: cloudAudioPath ?? message.shadowingAudioPath,
           initialTtsAudioPath: message.ttsAudioPath ?? _ttsAudioPath,
