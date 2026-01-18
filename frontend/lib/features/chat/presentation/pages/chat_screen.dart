@@ -98,22 +98,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
 
     // Initial load
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _notifier.loadMessages();
-    
-    // Listen for when messages are loaded and scroll to bottom
-    ref.listenManual(
-      chatPageNotifierProvider(widget.scene),
-      (previous, next) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifier.loadMessages();
+
+      // Listen for when messages are loaded and scroll to bottom
+      ref.listenManual(chatPageNotifierProvider(widget.scene), (
+        previous,
+        next,
+      ) {
         // Detect when loading completes (transition from loading to not loading)
-        final loadingJustCompleted = (previous?.isLoading ?? false) && !next.isLoading;
-        
+        final loadingJustCompleted =
+            (previous?.isLoading ?? false) && !next.isLoading;
+
         // Scroll to bottom when:
         // 1. Loading just completed and we have messages
         // 2. Messages were added (count increased)
-        if (next.messages.isNotEmpty && (loadingJustCompleted || 
-            (previous != null && next.messages.length > previous.messages.length))) {
-          
+        if (next.messages.isNotEmpty &&
+            (loadingJustCompleted ||
+                (previous != null &&
+                    next.messages.length > previous.messages.length))) {
           // Use SchedulerBinding for immediate scroll before first frame paint
           // This makes the scroll imperceptible to users
           SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -124,7 +127,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               );
             }
           });
-          
+
           // Add a safety net scroll slightly delayed to catch any late layout changes
           // This ensures we're at the bottom even if cloud sync causes layout updates
           // Increased delay to 300ms to handle larger lists/slower devices
@@ -133,7 +136,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               // Only jump if we are not at the bottom (allow small tolerance)
               final maxScroll = _scrollController.position.maxScrollExtent;
               final currentScroll = _scrollController.position.pixels;
-              
+
               if ((maxScroll - currentScroll).abs() > 20) {
                 _scrollController.jumpTo(maxScroll);
               }
@@ -145,16 +148,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             if (mounted && _scrollController.hasClients) {
               final maxScroll = _scrollController.position.maxScrollExtent;
               final currentScroll = _scrollController.position.pixels;
-              
+
               if ((maxScroll - currentScroll).abs() > 20) {
                 _scrollController.jumpTo(maxScroll);
               }
             }
           });
         }
-      },
-    );
-  });
+      });
+    });
 
     // Listen to text changes via ValueNotifier (no setState needed)
     _textController.addListener(() {
@@ -269,7 +271,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }) async {
     // Capture duration BEFORE stopping timer (which resets it to 0)
     final capturedDuration = _currentRecordingDuration;
-    
+
     _stopRecordingTimer();
 
     // Stop pulsing animation
@@ -418,9 +420,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               Text(
+              Text(
                 'Delete ${_selectedMessageIds.length} Messages?',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -454,7 +459,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (shouldDelete == true) {
       final deletedCount = _selectedMessageIds.length;
       await _notifier.deleteSelectedMessages();
-      
+
       if (mounted) {
         showTopToast(
           context,
@@ -633,6 +638,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               key: ValueKey(msg.id),
                               message: msg,
                               sceneId: widget.scene.id, // Pass sceneId
+                              targetLanguage:
+                                  widget.scene.targetLanguage, // Pass language
                               isMultiSelectMode: _isMultiSelectMode,
                               onLongPress:
                                   null, // Handled by outer GestureDetector
@@ -673,22 +680,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                   final isNearBottom =
                                       position.maxScrollExtent -
                                           position.pixels <
-                                          200;
+                                      200;
 
                                   if (isNearBottom) {
                                     // Schedule scroll after the current frame
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
-                                      if (_scrollController.hasClients) {
-                                        _scrollController.animateTo(
-                                          _scrollController
-                                              .position.maxScrollExtent,
-                                          duration: const Duration(
-                                              milliseconds: 100),
-                                          curve: Curves.easeOut,
-                                        );
-                                      }
-                                    });
+                                          if (_scrollController.hasClients) {
+                                            _scrollController.animateTo(
+                                              _scrollController
+                                                  .position
+                                                  .maxScrollExtent,
+                                              duration: const Duration(
+                                                milliseconds: 100,
+                                              ),
+                                              curve: Curves.easeOut,
+                                            );
+                                          }
+                                        });
                                   }
                                 }
                               },
@@ -1298,27 +1307,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       while (attempts < maxAttempts) {
         await Future.delayed(const Duration(milliseconds: 100));
         attempts++;
-        
+
         // Get the latest message state
         final currentMsg = _messages.firstWhere(
           (m) => m.id == message.id,
           orElse: () => message,
         );
-        
+
         if (currentMsg.content.isNotEmpty) {
           // Transcript is ready, proceed with analysis
           break;
         }
-        
+
         if (!mounted) return;
       }
-      
+
       // Get the updated message with transcript
       final updatedMessage = _messages.firstWhere(
         (m) => m.id == message.id,
         orElse: () => message,
       );
-      
+
       // If still no transcript after timeout, show error
       if (updatedMessage.content.isEmpty) {
         if (mounted) {
@@ -1397,8 +1406,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.white.withValues(alpha: 0.5),
-      builder: (context) =>
-          FeedbackSheet(message: message, sceneId: widget.scene.id),
+      builder: (context) => FeedbackSheet(
+        message: message,
+        sceneId: widget.scene.id,
+        targetLanguage: widget.scene.targetLanguage,
+      ),
     );
   }
 

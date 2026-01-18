@@ -42,6 +42,9 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   final Future<({VoiceFeedback? feedback})?> Function()?
   onLoadInitialData; // Callback to load cloud data
 
+  final String
+  targetLanguage; // Language code for assessment (e.g. 'en-US', 'zh-CN')
+
   const ShadowingSheet({
     super.key,
     required this.targetText,
@@ -55,6 +58,8 @@ class ShadowingSheet extends ConsumerStatefulWidget {
     this.onTtsUpdate,
     this.isLoadingInitialData = false,
     this.onLoadInitialData,
+    this.targetLanguage =
+        'en-US', // Default to en-US for backward compatibility
   });
 
   @override
@@ -582,7 +587,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         .assessFromPath(
           audioPath: audioPath,
           referenceText: widget.targetText,
-          language: 'en-US',
+          language: widget.targetLanguage,
           enableProsody: true,
         );
 

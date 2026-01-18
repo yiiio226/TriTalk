@@ -280,7 +280,7 @@ export const ShadowingUpsertSchema = z.object({
   accuracy_score: z.number().optional(),
   fluency_score: z.number().optional(),
   completeness_score: z.number().optional(),
-  prosody_score: z.number().optional(),
+  prosody_score: z.number().nullable().optional(),
   word_feedback: z.array(WordFeedbackSchema).optional(),
   feedback_text: z.string().optional(),
   segments: z.array(SmartSegmentSchema).optional(),
