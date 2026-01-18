@@ -452,7 +452,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
 
     if (shouldDelete == true) {
+      final deletedCount = _selectedMessageIds.length;
       await _notifier.deleteSelectedMessages();
+      
+      if (mounted) {
+        showTopToast(
+          context,
+          'Deleted $deletedCount message${deletedCount > 1 ? 's' : ''}',
+          isError: false,
+        );
+      }
     }
   }
 
@@ -936,7 +945,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         IconButton(
           icon: const Icon(
             Icons.lightbulb_outline_rounded,
-            color: Colors.amber,
+            color: AppColors.ly500,
           ),
           onPressed: _showHintsSheet,
         ),
@@ -945,7 +954,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.ln100,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Colors.transparent, width: 0),
             ),
@@ -987,7 +996,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.auto_fix_high, color: Colors.green),
+                        : const Icon(
+                            Icons.auto_fix_high,
+                            color: AppColors.lg500,
+                          ),
                     tooltip: 'Optimize with AI',
                     onPressed: _isOptimizing ? null : _optimizeMessage,
                   ),

@@ -15,8 +15,10 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/auth/auth_provider.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
+import 'package:frontend/features/study/data/shadowing_history_service.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
+
 
 class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
@@ -24,6 +26,13 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   final VoiceFeedback? initialFeedback; // Previous shadowing result to display
   final String? initialAudioPath; // Previous recording path
   final String? initialTtsAudioPath; // Previous TTS audio path (cached)
+  
+  // Practice context for history tracking
+  final String
+  sourceType; // 'ai_message', 'native_expression', 'reference_answer'
+  final String? sourceId;
+  final String? sceneKey;
+
   final Function(VoiceFeedback, String?)?
   onFeedbackUpdate; // Callback with feedback and audio path
   final Function(String)? onTtsUpdate; // Callback when TTS audio is generated
@@ -35,6 +44,9 @@ class ShadowingSheet extends ConsumerStatefulWidget {
     this.initialFeedback,
     this.initialAudioPath,
     this.initialTtsAudioPath,
+    this.sourceType = 'ai_message',
+    this.sourceId,
+    this.sceneKey,
     this.onFeedbackUpdate,
     this.onTtsUpdate,
   });
@@ -564,6 +576,28 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       setState(() {
         _feedback = voiceFeedback;
       });
+
+      // Save to practice history
+      try {
+        await ShadowingHistoryService().savePractice(
+          targetText: widget.targetText,
+          sourceType: widget.sourceType,
+          sourceId: widget.sourceId ?? widget.messageId,
+          sceneKey: widget.sceneKey,
+          pronunciationScore: voiceFeedback.pronunciationScore,
+          accuracyScore: voiceFeedback.azureAccuracyScore,
+          fluencyScore: voiceFeedback.azureFluencyScore,
+          completenessScore: voiceFeedback.azureCompletenessScore,
+          prosodyScore: voiceFeedback.azureProsodyScore,
+          wordFeedback: voiceFeedback.azureWordFeedback,
+          feedbackText: voiceFeedback.feedback,
+          audioPath: _currentRecordingPath,
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Failed to save practice history: $e');
+        }
+      }
 
       // Notify parent to persist the result with audio path
       widget.onFeedbackUpdate?.call(voiceFeedback, _currentRecordingPath);
