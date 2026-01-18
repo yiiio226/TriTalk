@@ -812,7 +812,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // 1. Left Button (Listen or Cancel)
-              Column(
+              SizedBox(
+                width: 80,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   GestureDetector(
@@ -876,12 +878,15 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                   ),
                 ],
               ),
+              ),
 
               // Spacer for Center Button (72 + padding)
-              const SizedBox(width: 120),
+              const SizedBox(width: 96),
 
               // 3. Right Button (Score or Complete)
-              Column(
+              SizedBox(
+                width: 80,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _isRecording
@@ -965,6 +970,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                   ),
                 ],
               ),
+              ),
             ],
           ),
 
@@ -1030,24 +1036,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color:
-                                    (_isRecording
-                                            ? AppColors.lg500
-                                            : AppColors.primary)
-                                        .withValues(
-                                          alpha:
-                                              (_isRecording &&
-                                                  _dragOffset.abs() > 0)
-                                              ? 0.6
-                                              : 0.3,
-                                        ),
-                                blurRadius:
-                                    (_isRecording && _dragOffset.abs() > 0)
-                                    ? 16
-                                    : 12,
-                                offset: (_isRecording && _dragOffset.abs() > 0)
-                                    ? const Offset(0, 8)
-                                    : const Offset(0, 4),
+                                color: (_isRecording && _dragOffset.abs() > 0)
+                                    ? Colors.black.withValues(alpha: 0.2)
+                                    : (_isRecording
+                                              ? AppColors.lg500
+                                              : AppColors.primary)
+                                          .withValues(alpha: 0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
