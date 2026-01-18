@@ -885,7 +885,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _isShadowLoading ? "Loading..." : "Shadow",
+                                  _isShadowLoading ? "Shadow" : "Shadow",
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,

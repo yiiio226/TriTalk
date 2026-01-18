@@ -299,42 +299,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     }
   }
 
-  Future<void> _openShadowingSheet(
+  void _openShadowingSheet(
     BuildContext context,
     String targetText,
     String sourceType,
-  ) async {
-    VoiceFeedback? cloudFeedback;
-    String? cloudAudioPath;
-
-    try {
-      // Fetch latest practice data from cloud
-      final latestPractice = await ShadowingHistoryService().getLatestPractice(
-        targetText,
-      );
-
-      if (latestPractice != null) {
-        // Convert ShadowingPractice to VoiceFeedback format
-        cloudFeedback = VoiceFeedback(
-          pronunciationScore: latestPractice.pronunciationScore,
-          correctedText: latestPractice.targetText,
-          nativeExpression: '',
-          feedback: latestPractice.feedbackText ?? '',
-          azureAccuracyScore: latestPractice.accuracyScore,
-          azureFluencyScore: latestPractice.fluencyScore,
-          azureCompletenessScore: latestPractice.completenessScore,
-          azureProsodyScore: latestPractice.prosodyScore,
-          azureWordFeedback: latestPractice.wordFeedback,
-        );
-        cloudAudioPath = latestPractice.audioPath;
-      }
-    } catch (e) {
-      // Silently fail - sheet will open without previous data
-      debugPrint('⚠️ Failed to fetch cloud shadowing data: $e');
-    }
-
-    if (!context.mounted) return;
-
+  ) {
+    // Open sheet immediately with loading state
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -345,8 +315,38 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         sourceType: sourceType,
         sourceId: widget.message.id,
         sceneKey: widget.sceneId,
-        initialFeedback: cloudFeedback,
-        initialAudioPath: cloudAudioPath,
+        isLoadingInitialData: true,
+        onLoadInitialData: () async {
+          // This callback will be called by ShadowingSheet to load cloud data
+          try {
+            final latestPractice = await ShadowingHistoryService()
+                .getLatestPractice(targetText);
+
+            if (latestPractice != null) {
+              // Convert ShadowingPractice to VoiceFeedback format
+              final cloudFeedback = VoiceFeedback(
+                pronunciationScore: latestPractice.pronunciationScore,
+                correctedText: latestPractice.targetText,
+                nativeExpression: '',
+                feedback: latestPractice.feedbackText ?? '',
+                azureAccuracyScore: latestPractice.accuracyScore,
+                azureFluencyScore: latestPractice.fluencyScore,
+                azureCompletenessScore: latestPractice.completenessScore,
+                azureProsodyScore: latestPractice.prosodyScore,
+                azureWordFeedback: latestPractice.wordFeedback,
+              );
+              
+              return (
+                feedback: cloudFeedback,
+                audioPath: latestPractice.audioPath,
+              );
+            }
+          } catch (e) {
+            debugPrint('⚠️ Failed to fetch cloud shadowing data: $e');
+          }
+          
+          return null;
+        },
       ),
     );
   }

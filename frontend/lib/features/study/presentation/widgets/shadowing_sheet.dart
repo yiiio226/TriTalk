@@ -36,6 +36,12 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   final Function(VoiceFeedback, String?)?
   onFeedbackUpdate; // Callback with feedback and audio path
   final Function(String)? onTtsUpdate; // Callback when TTS audio is generated
+  
+  // Async loading support
+  final bool
+  isLoadingInitialData; // Show skeleton loader while loading cloud data
+  final Future<({VoiceFeedback? feedback, String? audioPath})?> Function()?
+  onLoadInitialData; // Callback to load cloud data
 
   const ShadowingSheet({
     super.key,
@@ -49,6 +55,8 @@ class ShadowingSheet extends ConsumerStatefulWidget {
     this.sceneKey,
     this.onFeedbackUpdate,
     this.onTtsUpdate,
+    this.isLoadingInitialData = false,
+    this.onLoadInitialData,
   });
 
   @override
@@ -67,6 +75,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   // _errorMessage removed
   String? _currentRecordingPath; // Track current recording for replay/cleanup
   DateTime? _recordingStartTime; // Track recording duration
+  
+  // Loading state for initial data
+  bool _isLoadingInitialData = false;
 
   // Drag state for recording button
   double _dragOffset = 0; // Horizontal offset during drag
@@ -92,6 +103,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     _feedback = widget.initialFeedback;
     _currentRecordingPath = widget.initialAudioPath;
     _ttsAudioPath = widget.initialTtsAudioPath; // Initialize cached TTS path
+    _isLoadingInitialData = widget.isLoadingInitialData;
 
     // Initialize waveform animation controller
     _waveformController = AnimationController(
@@ -116,6 +128,35 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         });
       }
     });
+    
+    // Load initial data asynchronously if callback is provided
+    if (widget.onLoadInitialData != null && _isLoadingInitialData) {
+      _loadInitialData();
+    }
+  }
+
+  /// Load initial feedback data from cloud asynchronously
+  Future<void> _loadInitialData() async {
+    try {
+      final result = await widget.onLoadInitialData!();
+
+      if (mounted && result != null) {
+        setState(() {
+          _feedback = result.feedback;
+          _currentRecordingPath = result.audioPath;
+          _isLoadingInitialData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingInitialData = false;
+        });
+      }
+      if (kDebugMode) {
+        debugPrint('⚠️ Failed to load initial data: $e');
+      }
+    }
   }
 
   @override
@@ -762,8 +803,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                   ),
                   const SizedBox(height: 24),
                   // Target Text - Show only when idle or recording
-                  if (!isAnalyzing && _feedback == null) _buildTargetTextView(),
-                  if (!isAnalyzing && _feedback == null)
+                  if (!isAnalyzing &&
+                      !_isLoadingInitialData &&
+                      _feedback == null)
+                    _buildTargetTextView(),
+                  if (!isAnalyzing &&
+                      !_isLoadingInitialData &&
+                      _feedback == null)
                     const SizedBox(height: 16),
                 ],
               ),
@@ -776,7 +822,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isAnalyzing)
+                    if (isAnalyzing || _isLoadingInitialData)
                       _buildSkeletonLoader()
                     else if (_isRecording)
                       // Show waveform during recording
