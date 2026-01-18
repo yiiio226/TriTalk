@@ -569,60 +569,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
 
   /// Three dots loading indicator with sequential fade animation
   Widget _buildThreeDotsLoader() {
-    // Define three different colors for the dots
-    final dotColors = [
-      AppColors.ln400, // First dot - lighter gray
-      AppColors.ln500, // Second dot - medium gray
-      AppColors.ln700, // Third dot - darker gray
-    ];
-
-    return SizedBox(
-      width: 24,
-      height: 16,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: List.generate(3, (index) {
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 1200),
-            curve: Curves.easeInOut,
-            builder: (context, value, child) {
-              // Sequential animation - each dot fades in one after another
-              final dotDelay = index * 0.33; // Each dot starts 33% later
-              final adjustedValue = (value - dotDelay).clamp(0.0, 1.0);
-
-              // Create fade in/out effect
-              double opacity;
-              if (adjustedValue < 0.5) {
-                // Fade in
-                opacity = adjustedValue * 2;
-              } else {
-                // Fade out
-                opacity = (1.0 - adjustedValue) * 2;
-              }
-
-              return Opacity(
-                opacity: opacity.clamp(0.2, 1.0),
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: dotColors[index],
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              );
-            },
-            onEnd: () {
-              if (mounted) {
-                setState(() {});
-              }
-            },
-          );
-        }),
-      ),
-    );
+    return const _ThreeDotsLoadingAnimation();
   }
 
   /// Reusable collapsible section widget
@@ -967,6 +914,89 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Stateful widget for continuous three-dot loading animation
+class _ThreeDotsLoadingAnimation extends StatefulWidget {
+  const _ThreeDotsLoadingAnimation();
+
+  @override
+  State<_ThreeDotsLoadingAnimation> createState() =>
+      _ThreeDotsLoadingAnimationState();
+}
+
+class _ThreeDotsLoadingAnimationState extends State<_ThreeDotsLoadingAnimation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat(); // Loop the animation continuously
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Define three different colors for the dots
+    final dotColors = [
+      AppColors.ln400, // First dot - lighter gray
+      AppColors.ln500, // Second dot - medium gray
+      AppColors.ln700, // Third dot - darker gray
+    ];
+
+    return SizedBox(
+      width: 24,
+      height: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(3, (index) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              // Sequential animation - each dot fades in one after another
+              final dotDelay = index * 0.33; // Each dot starts 33% later
+              final adjustedValue = (_controller.value - dotDelay).clamp(
+                0.0,
+                1.0,
+              );
+
+              // Create fade in/out effect
+              double opacity;
+              if (adjustedValue < 0.5) {
+                // Fade in
+                opacity = adjustedValue * 2;
+              } else {
+                // Fade out
+                opacity = (1.0 - adjustedValue) * 2;
+              }
+
+              return Opacity(
+                opacity: opacity.clamp(0.2, 1.0),
+                child: Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: dotColors[index],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            },
+          );
+        }),
       ),
     );
   }
