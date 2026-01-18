@@ -57,6 +57,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   String? _currentRecordingPath; // Track current recording for replay/cleanup
   DateTime? _recordingStartTime; // Track recording duration
 
+  // Drag state for recording button
+  double _dragOffset = 0; // Horizontal offset during drag
+  String? _dragAction; // 'cancel' or 'complete' based on drag direction
+  static const double _dragThreshold = 60; // Threshold to trigger action
+
   // TTS state for "Listen" button
   bool _isTTSLoading = false;
   bool _isTTSPlaying = false;
@@ -382,6 +387,12 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
 
   Future<void> _stopRecording() async {
+    // Reset drag state
+    setState(() {
+      _dragOffset = 0;
+      _dragAction = null;
+    });
+
     try {
       final path = await _audioRecorder.stop();
 
@@ -428,6 +439,40 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     } catch (e) {
       if (mounted) {
         showTopToast(context, 'Error stopping recording: $e', isError: true);
+      }
+    }
+  }
+
+  /// Cancel the current recording without saving or analyzing
+  Future<void> _cancelRecording() async {
+    // Reset drag state
+    setState(() {
+      _dragOffset = 0;
+      _dragAction = null;
+    });
+
+    try {
+      final path = await _audioRecorder.stop();
+
+      // Delete the cancelled recording
+      if (path != null) {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+
+      setState(() {
+        _isRecording = false;
+        _currentRecordingPath = null;
+      });
+
+      if (mounted) {
+        showTopToast(context, 'Recording cancelled', isError: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        showTopToast(context, 'Error cancelling recording: $e', isError: true);
       }
     }
   }
@@ -594,7 +639,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxSheetHeight),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
             // Fixed Header: Drag Handle & Title
             Padding(
@@ -697,7 +742,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             ),
 
             // Scrollable Content Area
-            Flexible(
+            Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
@@ -760,145 +805,274 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
 
   Widget _buildBottomControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        // 1. Play Original (Left)
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: _playTextToSpeech,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.lightBackground,
-                  shape: BoxShape.circle,
-                ),
-                child: _isTTSLoading
-                    ? const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        _isTTSPlaying
-                            ? Icons.stop_rounded
-                            : Icons.play_arrow_rounded,
-                        size: 28,
-                        color: AppColors.lightTextPrimary,
-                      ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Listen',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.lightTextSecondary,
-              ),
-            ),
-          ],
-        ),
-
-        // 2. Record Button (Center)
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onLongPressStart: (_) => _startRecording(),
-              onLongPressEnd: (_) => _stopRecording(),
-              child: Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: _isRecording
-                      ? AppColors.lightError
-                      : AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          (_isRecording
-                                  ? AppColors.lightError
-                                  : AppColors.primary)
-                              .withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  size: 32,
-                  color: AppColors.lightSurface,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _feedback == null ? 'Hold to Record' : 'Record Again',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.lightTextSecondary,
-              ),
-            ),
-          ],
-        ),
-
-        // 3. Score/Status (Right)
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _feedback != null
-                ? GestureDetector(
-                    onTap: _playRecording, // Play recording on tap
-                    child: Container(
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Layer 1: Side Controls (Left/Right)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 1. Left Button (Listen or Cancel)
+              SizedBox(
+                width: 80,
+                child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: _isRecording ? null : _playTextToSpeech,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       width: 56,
                       height: 56,
-                      decoration: const BoxDecoration(
-                        color: AppColors.lg500, // Green
+                      decoration: BoxDecoration(
+                        color: _isRecording
+                            ? (_dragAction == 'cancel'
+                                  ? AppColors.lr500
+                                  : AppColors.lr50)
+                            : AppColors.lightBackground,
                         shape: BoxShape.circle,
+                        border: _isRecording
+                            ? Border.all(
+                                color: _dragAction == 'cancel'
+                                    ? AppColors.lr500
+                                    : AppColors.lr200,
+                                width: 2,
+                              )
+                            : null,
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${_feedback!.pronunciationScore}',
-                        style: const TextStyle(
-                          color: AppColors.lightSurface,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                      child: _isRecording
+                          ? Icon(
+                              Icons.close_rounded,
+                              size: 28,
+                              color: _dragAction == 'cancel'
+                                  ? Colors.white
+                                  : AppColors.lr500,
+                            )
+                          : (_isTTSLoading
+                                ? const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Icon(
+                                    _isTTSPlaying
+                                        ? Icons.stop_rounded
+                                        : Icons.play_arrow_rounded,
+                                    size: 28,
+                                    color: AppColors.lightTextPrimary,
+                                  )),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isRecording ? 'Cancel' : 'Listen',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _isRecording && _dragAction == 'cancel'
+                          ? AppColors.lr500
+                          : AppColors.lightTextSecondary,
+                      fontWeight: _isRecording && _dragAction == 'cancel'
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              ),
+
+              // Spacer for Center Button (72 + padding)
+              const SizedBox(width: 96),
+
+              // 3. Right Button (Score or Complete)
+              SizedBox(
+                width: 80,
+                child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isRecording
+                      ? AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: _dragAction == 'complete'
+                                ? AppColors.lg500
+                                : AppColors.lg50,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _dragAction == 'complete'
+                                  ? AppColors.lg500
+                                  : AppColors.lg200,
+                              width: 2,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.check_rounded,
+                            size: 28,
+                            color: _dragAction == 'complete'
+                                ? Colors.white
+                                : AppColors.lg500,
+                          ),
+                        )
+                      : (_feedback != null
+                            ? GestureDetector(
+                                onTap: _playRecording,
+                                child: Container(
+                                  width: 56,
+                                  height: 56,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.lg500,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${_feedback!.pronunciationScore}',
+                                    style: const TextStyle(
+                                      color: AppColors.lightSurface,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                width: 56,
+                                height: 56,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.lightBackground,
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  '0',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.lightTextSecondary,
+                                  ),
+                                ),
+                              )),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isRecording
+                        ? 'Complete'
+                        : (_feedback == null ? 'Not Rated' : 'My Score'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _isRecording && _dragAction == 'complete'
+                          ? AppColors.lg500
+                          : AppColors.lightTextSecondary,
+                      fontWeight: _isRecording && _dragAction == 'complete'
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              ),
+            ],
+          ),
+
+          // Layer 2: Record Button & Tail (Centered)
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none, // Allow tail to draw outside
+                  children: [
+                    // Tail Effect (Behind Button)
+                    if (_isRecording && _dragOffset.abs() > 0)
+                      CustomPaint(
+                        painter: DragTailPainter(
+                          offset: _dragOffset,
+                          color: AppColors.lg500,
+                        ),
+                      ),
+
+                    // Draggable Button
+                    Transform.translate(
+                      offset: Offset(_dragOffset, 0),
+                      child: GestureDetector(
+                        onLongPressStart: (_) {
+                          _startRecording();
+                        },
+                        onLongPressMoveUpdate: (details) {
+                          if (!_isRecording) return;
+
+                          setState(() {
+                            _dragOffset = details.localOffsetFromOrigin.dx;
+
+                            // Determine action based on drag position
+                            if (_dragOffset < -_dragThreshold) {
+                              _dragAction = 'cancel';
+                            } else if (_dragOffset > _dragThreshold) {
+                              _dragAction = 'complete';
+                            } else {
+                              _dragAction = null;
+                            }
+                          });
+                        },
+                        onLongPressEnd: (_) {
+                          if (!_isRecording) return;
+
+                          if (_dragAction == 'cancel') {
+                            _cancelRecording();
+                          } else if (_dragAction == 'complete') {
+                            _stopRecording();
+                          } else {
+                            _stopRecording();
+                          }
+                        },
+                        child: Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: _isRecording
+                                ? AppColors.lg500
+                                : AppColors.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: (_isRecording && _dragOffset.abs() > 0)
+                                    ? Colors.black.withValues(alpha: 0.2)
+                                    : (_isRecording
+                                              ? AppColors.lg500
+                                              : AppColors.primary)
+                                          .withValues(alpha: 0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.mic_rounded,
+                            size: 32,
+                            color: AppColors.lightSurface,
+                          ),
                         ),
                       ),
                     ),
-                  )
-                : Container(
-                    width: 56,
-                    height: 56,
-                    decoration: const BoxDecoration(
-                      color: AppColors.lightBackground,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      '0',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.lightTextSecondary,
-                      ),
-                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _feedback == null ? 'Hold to Record' : 'Record Again',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.lightTextSecondary,
                   ),
-            const SizedBox(height: 8),
-            Text(
-              _feedback == null ? 'Not Rated' : 'My Score',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.lightTextSecondary,
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1758,4 +1932,61 @@ class IntonationPainter extends CustomPainter {
         oldDelegate.userColor != userColor ||
         oldDelegate.targetText != targetText;
   }
+}
+
+/// Custom painter to draw a sticky/gooey connection tail during drag
+class DragTailPainter extends CustomPainter {
+  final double offset;
+  final Color color;
+
+  DragTailPainter({required this.offset, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (offset.abs() < 5) return;
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Radius of the circle button (approx 72/2 = 36)
+    const double radius = 36.0;
+
+    // We want to draw a connection from center (0,0) to button center (offset, 0)
+    // However, the button itself is drawing the circle at (offset, 0).
+    // We also draw a circle at (0,0) to act as the "anchor".
+
+    // 1. Draw Anchor Circle
+    canvas.drawCircle(Offset.zero, radius, paint);
+
+    // 2. Draw Connection
+    // Calculate pinch effect
+    double dist = offset.abs();
+    double pinch = dist * 0.15; // Amount to pinch in y-axis
+    if (pinch > radius * 0.6) pinch = radius * 0.6; // Max pinch limit
+
+    // Midpoint x
+    double midX = offset / 2;
+
+    final path = Path();
+
+    // Top line
+    path.moveTo(0, -radius);
+    path.quadraticBezierTo(midX, -radius + pinch, offset, -radius);
+
+    // Right cap
+    path.lineTo(offset, radius);
+
+    // Bottom line
+    path.quadraticBezierTo(midX, radius - pinch, 0, radius);
+
+    // Close
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(DragTailPainter oldDelegate) =>
+      oldDelegate.offset != offset || oldDelegate.color != color;
 }

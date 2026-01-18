@@ -45,9 +45,9 @@ color: Colors.grey[600],      // Grey shades | 灰色阴影
 
 | Light Mode 浅色模式 | Dark Mode 深色模式 | Usage 用途 |
 |---------------------|-------------------|------------|
-| ln50-ln200 | dn700-dn900 | Backgrounds 背景 |
-| ln300-ln500 | dn400-dn600 | Borders, dividers 边框、分隔线 |
-| ln600-ln900 | dn50-dn300 | Text, icons 文字、图标 |
+| ln50 | dn900 | Backgrounds 背景 |
+| ln100-ln200 | dn700-dn800 | Borders, dividers 边框、分隔线|
+| ln300-ln900 | dn50-dn300 | Text, icons 文字、图标 |
 
 ## Common Patterns | 常用模式
 
