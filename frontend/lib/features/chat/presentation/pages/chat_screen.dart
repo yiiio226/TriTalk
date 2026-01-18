@@ -532,7 +532,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       case SyncStatus.synced:
                         return const Icon(
                           Icons.circle,
-                          color: Color(0xFF34C759),
+                          color: AppColors.lg500,
                           size: 12,
                         );
                       case SyncStatus.offline:

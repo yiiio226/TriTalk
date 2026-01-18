@@ -2148,31 +2148,32 @@ class IntonationPainter extends CustomPainter {
       final double t = localX / rect.width;
 
       // Base curve (Standard AI intonation pattern simulation)
+      // Maximize amplitude to use full height for better visibility
       final baseY =
           rect.top +
           rect.height * 0.5 +
-          (math.sin(t * math.pi * 2) * rect.height * 0.15) +
-          (math.sin(t * math.pi * 6) * rect.height * 0.05);
+          (math.sin(t * math.pi * 2) * rect.height * 0.30) +
+          (math.sin(t * math.pi * 6) * rect.height * 0.15);
 
       double y = baseY;
 
       if (!isAi) {
         // User deviation based on score
         if (score >= 90) {
-          // Close to original
-          y = baseY + (math.sin(t * 10) * 2);
+          // Close to original but with enough jitter to be visible
+          y = baseY + (math.sin(t * 12) * 6);
         } else if (score >= 60) {
-          // Mild distortion
+          // Mild distortion - flatter and more wobble
           y =
               rect.center.dy +
-              (baseY - rect.center.dy) * 0.7 +
-              (math.sin(t * 15) * 4);
+              (baseY - rect.center.dy) * 0.6 +
+              (math.sin(t * 18) * 12);
         } else {
-          // Flat/Poor
+          // Flat/Poor - very different from native
           y =
               rect.center.dy +
-              (baseY - rect.center.dy) * 0.3 +
-              (math.sin(t * 10) * 3);
+              (baseY - rect.center.dy) * 0.2 +
+              (math.sin(t * 10) * 10);
         }
       }
 
