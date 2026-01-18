@@ -1344,44 +1344,57 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       nativeLanguage: nativeLanguage,
     );
 
-    return Container(
-      margin: const EdgeInsets.only(top: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightDivider),
-        boxShadow: AppShadows.xs,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Divider above Pitch Contour
+        Container(
+          margin: const EdgeInsets.only(top: 24, bottom: 20),
+          height: 1,
+          color: AppColors.lightDivider,
+        ),
+        // Pitch Contour content
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.lb500.withValues(alpha: 0.1),
+                    color: AppColors.ln100,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.graphic_eq_rounded,
-                  size: 20,
-                  color: AppColors.lb500,
+                    size: 16,
+                    color: AppColors.lightTextSecondary,
                 ),
               ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 10),
               const Text(
                 'Pitch Contour',
                 style: TextStyle(
-                  fontSize: 16,
+                    fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: AppColors.lightTextPrimary,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
+                const SizedBox(width: 12),
+                Container(width: 1, height: 12, color: AppColors.lightDivider),
+                const SizedBox(width: 12),
+                const Text(
+                  //'Tap curve to play segment',
+                  'Tap curve',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.lightTextSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
           // Pitch Contour Visualization with Interactive Segments
           // Pitch Contour Visualization with Interactive Segments
           LayoutBuilder(
@@ -1489,8 +1502,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ],
             ),
           ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1695,33 +1709,42 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       children: [
         Row(
           children: [
-            const Text(
-              'Pronunciation:',
-              style: TextStyle(
-                fontSize: 14,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.ln100,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                size: 16,
                 color: AppColors.lightTextSecondary,
-                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.lb100,
-                borderRadius: BorderRadius.circular(4),
+            const SizedBox(width: 10),
+            const Text(
+              'Pronunciation',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.lightTextPrimary,
               ),
-              child: const Text(
-                'Azure AI',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: AppColors.lb500,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            const SizedBox(width: 12),
+            Container(width: 1, height: 12, color: AppColors.lightDivider),
+            const SizedBox(width: 12),
+            const Text(
+              //'Tap words to play pronunciation',
+              'Tap words',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.lightTextSecondary,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 24),
         Wrap(
           spacing: 4,
           runSpacing: 8,
@@ -1883,42 +1906,119 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Score Header Skeleton
-          // Row(
-          //   children: [
-          //     _buildSkeletonBox(height: 32, width: 100, radius: 8),
-          //     const SizedBox(width: 12),
-          //     _buildSkeletonBox(height: 24, width: 120, radius: 4),
-          //   ],
-          // ),
-          const SizedBox(height: 24),
-
-          // Stats Row Skeleton
+          // Score Card Skeleton
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: AppColors.lightSurface.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.lightDivider),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            child: Column(
               children: [
-                _buildStatsSkeletonItem(),
-                _buildStatsSkeletonItem(),
-                _buildStatsSkeletonItem(),
+                // Header Row
+                Row(
+                  children: [
+                    _buildSkeletonBox(height: 24, width: 24, radius: 12),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSkeletonBox(
+                        height: 20,
+                        width: double.infinity,
+                        radius: 4,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildSkeletonBox(height: 50, width: 50, radius: 25),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Stats Row
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatsSkeletonItem(),
+                      _buildStatsSkeletonItem(),
+                      _buildStatsSkeletonItem(),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 32),
 
-          // Simplified Words Skeleton
-          Wrap(
-            spacing: 8,
-            runSpacing: 12,
-            children: List.generate(12, (index) {
-              final width = 60.0 + (index % 4) * 20.0;
-              return _buildSkeletonBox(height: 20, width: width, radius: 4);
-            }),
+          // Pronunciation Section Skeleton
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section Title
+              Row(
+                children: [
+                  _buildSkeletonBox(height: 16, width: 16, radius: 8),
+                  const SizedBox(width: 8),
+                  _buildSkeletonBox(height: 16, width: 100, radius: 4),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Word Pills
+              Wrap(
+                spacing: 8,
+                runSpacing: 12,
+                children: List.generate(8, (index) {
+                  final width = 50.0 + (index % 3) * 25.0;
+                  return _buildSkeletonBox(
+                    height: 32,
+                    width: width,
+                    radius: 16,
+                  );
+                }),
+              ),
+            ],
+          ),
+          
+          // Pitch Contour Section Skeleton
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Divider
+              Container(
+                margin: const EdgeInsets.only(top: 24, bottom: 20),
+                height: 1,
+                color: AppColors.lightDivider,
+              ),
+              // Section Title
+              Row(
+                children: [
+                  _buildSkeletonBox(height: 16, width: 16, radius: 8),
+                  const SizedBox(width: 8),
+                  _buildSkeletonBox(height: 16, width: 100, radius: 4),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Pitch Visualization Area
+              _buildSkeletonBox(height: 80, width: double.infinity, radius: 16),
+              const SizedBox(height: 16),
+              // Legend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildSkeletonBox(height: 12, width: 80, radius: 4),
+                  const SizedBox(width: 24),
+                  _buildSkeletonBox(height: 12, width: 80, radius: 4),
+                ],
+              ),
+            ],
           ),
         ],
       ),

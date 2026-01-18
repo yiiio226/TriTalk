@@ -1062,8 +1062,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         .toList();
 
     final currentMessageCount = _messages.length;
-    final isCacheValid =
-        _cachedHints != null && _hintsMessageCount == currentMessageCount;
+    
+    // Check both memory cache and persisted hints in last message
+    List<String>? hintsToUse;
+
+    // First, try memory cache if valid
+    if (_cachedHints != null && _hintsMessageCount == currentMessageCount) {
+      hintsToUse = _cachedHints;
+    }
+    // Otherwise, check if last message has persisted hints
+    else if (_messages.isNotEmpty && _messages.last.hints != null) {
+      hintsToUse = _messages.last.hints;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -1074,7 +1084,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         sceneDescription:
             'AI Role: ${widget.scene.aiRole}, User Role: ${widget.scene.userRole}. ${widget.scene.description}',
         history: history,
-        cachedHints: isCacheValid ? _cachedHints : null,
+        cachedHints: hintsToUse,
         onHintsCached: (hints) {
           _notifier.cacheHints(hints, currentMessageCount);
         },
