@@ -11,6 +11,7 @@ import 'package:frontend/core/env/env.dart';
 
 import 'package:frontend/features/auth/domain/models/user.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
+import 'package:frontend/core/data/local/preferences_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -88,6 +89,12 @@ class AuthService {
 
         // Cache user data locally
         await _saveUserToLocal(_currentUser!, true);
+
+        // Sync language preferences from cloud to local PreferencesService
+        // This ensures API calls use the latest language settings across devices
+        final prefs = PreferencesService();
+        await prefs.setNativeLanguage(_currentUser!.nativeLanguage);
+        await prefs.setTargetLanguage(_currentUser!.targetLanguage);
 
         // Migrate old data to user-scoped keys
         await StorageKeyService().migrateOldDataIfNeeded();
