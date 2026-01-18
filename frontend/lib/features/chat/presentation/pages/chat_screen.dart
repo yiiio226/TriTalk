@@ -452,7 +452,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
 
     if (shouldDelete == true) {
+      final deletedCount = _selectedMessageIds.length;
       await _notifier.deleteSelectedMessages();
+      
+      if (mounted) {
+        showTopToast(
+          context,
+          'Deleted $deletedCount message${deletedCount > 1 ? 's' : ''}',
+          isError: false,
+        );
+      }
     }
   }
 

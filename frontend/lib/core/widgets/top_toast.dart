@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 void showTopToast(BuildContext context, String message, {bool isError = false}) {
   final overlay = Overlay.of(context);
@@ -66,8 +67,8 @@ class _TopToastWidgetState extends State<_TopToastWidget>
   Widget build(BuildContext context) {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 10,
-      left: 20,
-      right: 20,
+      left: 24,
+      right: 24,
       child: Material(
         color: Colors.transparent,
         child: Align(
@@ -77,13 +78,16 @@ class _TopToastWidgetState extends State<_TopToastWidget>
             child: FadeTransition(
               opacity: _opacity,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.dn900,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: AppColors.lightShadow,
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -94,7 +98,7 @@ class _TopToastWidgetState extends State<_TopToastWidget>
                   children: [
                     Icon(
                       widget.isError ? Icons.error_outline : Icons.check_circle,
-                      color: widget.isError ? Colors.red : Colors.green,
+                      color: widget.isError ? AppColors.lr500 : AppColors.lg500,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -102,7 +106,7 @@ class _TopToastWidgetState extends State<_TopToastWidget>
                       child: Text(
                         widget.message,
                         style: const TextStyle(
-                          color: Colors.black87,
+                          color: AppColors.lightTextPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
