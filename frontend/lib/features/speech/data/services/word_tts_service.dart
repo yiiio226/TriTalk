@@ -240,8 +240,16 @@ class WordTtsService {
 
   /// Stop current playback
   Future<void> stop() async {
-    await _audioPlayer.stop();
-    await _flutterTts.stop();
+    try {
+      await _audioPlayer.stop();
+    } catch (e) {
+      // Ignore errors - player may not be initialized
+    }
+    try {
+      await _flutterTts.stop();
+    } catch (e) {
+      // Ignore errors
+    }
     _currentlyPlayingWord = null;
     _isLoading = false;
   }

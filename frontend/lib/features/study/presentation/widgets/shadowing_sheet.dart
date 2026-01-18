@@ -151,11 +151,84 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     }
   }
 
+  /// Stop all audio playback and perform cleanup before closing the sheet.
+  /// This ensures a clean experience when the sheet is dismissed.
+  Future<void> _stopAllAudioAndCleanup() async {
+    // Stop StreamingTtsService (main TTS and segment TTS)
+    final streamingTts = StreamingTtsService.instance;
+    if (streamingTts.isPlaying) {
+      await streamingTts.stop();
+    }
+
+    // Stop recording playback
+    if (_isPlaying) {
+      await _audioPlayer.stop();
+    }
+
+    // Stop recording if in progress
+    if (_isRecording) {
+      try {
+        await _audioRecorder.stop();
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+    }
+
+    // Stop word TTS (may throw if player not initialized)
+    try {
+      await _wordTtsService.stop();
+    } catch (e) {
+      // Ignore errors - player may not be initialized
+    }
+
+    // Update state
+    if (mounted) {
+      setState(() {
+        _isTTSLoading = false;
+        _isTTSPlaying = false;
+        _isPlaying = false;
+        _isRecording = false;
+      });
+    }
+  }
+
+  /// Close the sheet with proper cleanup
+  Future<void> _closeSheet() async {
+    await _stopAllAudioAndCleanup();
+    if (mounted) {
+      Navigator.pop(context);
+    }
+  }
+
   @override
   void dispose() {
+    // Stop StreamingTtsService synchronously (best effort)
+    final streamingTts = StreamingTtsService.instance;
+    if (streamingTts.isPlaying) {
+      streamingTts.stop(); // Fire and forget - can't await in dispose
+    }
+
     _waveformController.dispose();
-    _audioRecorder.dispose();
-    _audioPlayer.dispose();
+
+    // Wrap dispose calls in try-catch to handle uninitialized resources
+    try {
+      _audioRecorder.dispose();
+    } catch (e) {
+      // Ignore - recorder may not have been initialized
+    }
+
+    try {
+      _audioPlayer.dispose();
+    } catch (e) {
+      // Ignore - player may not have been initialized
+    }
+
+    try {
+      _wordTtsService.dispose();
+    } catch (e) {
+      // Ignore - service may not have been used
+    }
+
     disposeTtsPlayback(); // Clean up TTS mixin resources
     // Note: We do NOT delete the recording on dispose anymore since it's persisted
     super.dispose();
@@ -657,127 +730,141 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     final screenHeight = MediaQuery.of(context).size.height;
     final maxSheetHeight = screenHeight * 0.9;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ln100,
-            blurRadius: 15,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxSheetHeight),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            // Fixed Header: Drag Handle & Title
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.lightDivider,
-                      borderRadius: BorderRadius.circular(2),
+    return PopScope(
+      canPop: false, // We handle the pop manually to stop audio first
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return; // Already popped, nothing to do
+
+        // Stop all audio before closing
+        await _stopAllAudioAndCleanup();
+
+        // Now allow the pop
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.lightSurface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.ln100,
+              blurRadius: 15,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxSheetHeight),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Fixed Header: Drag Handle & Title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.lightDivider,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.ln50,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.record_voice_over_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Shadowing Practice',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: AppColors.ln50,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, size: 20),
+                          child: Icon(
+                            Icons.record_voice_over_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Target Text - Show only when idle or recording
-                  if (!isAnalyzing &&
-                      !_isLoadingInitialData &&
-                      _feedback == null)
-                    _buildTargetTextView(),
-                  if (!isAnalyzing &&
-                      !_isLoadingInitialData &&
-                      _feedback == null)
-                    const SizedBox(height: 16),
-                ],
-              ),
-            ),
-
-            // Scrollable Content Area
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isAnalyzing || _isLoadingInitialData)
-                      _buildSkeletonLoader()
-                    else if (_isRecording)
-                      // Show waveform during recording
-                      _buildWaveform()
-                    else if (_feedback != null)
-                      // Show feedback after analysis (without target text)
-                      _buildVoiceFeedbackContent(_feedback!)
-                    else
-                      // Empty space when idle
-                      const SizedBox(height: 40),
-                    const SizedBox(height: 16),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Shadowing Practice',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: _closeSheet,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.ln50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Target Text - Show only when idle or recording
+                    if (!isAnalyzing &&
+                        !_isLoadingInitialData &&
+                        _feedback == null)
+                      _buildTargetTextView(),
+                    if (!isAnalyzing &&
+                        !_isLoadingInitialData &&
+                        _feedback == null)
+                      const SizedBox(height: 16),
                   ],
                 ),
               ),
-            ),
 
-            // Fixed Bottom Section: Error Message + Controls
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 64),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Bottom Controls (Always visible)
-
-                  // Bottom Controls (Always visible)
-                  _buildBottomControls(),
-                ],
+              // Scrollable Content Area
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isAnalyzing || _isLoadingInitialData)
+                        _buildSkeletonLoader()
+                      else if (_isRecording)
+                        // Show waveform during recording
+                        _buildWaveform()
+                      else if (_feedback != null)
+                        // Show feedback after analysis (without target text)
+                        _buildVoiceFeedbackContent(_feedback!)
+                      else
+                        // Empty space when idle
+                        const SizedBox(height: 40),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+
+              // Fixed Bottom Section: Error Message + Controls
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 64),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Bottom Controls (Always visible)
+
+                    // Bottom Controls (Always visible)
+                    _buildBottomControls(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      ), // Close PopScope child
     );
   }
 
