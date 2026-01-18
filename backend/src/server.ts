@@ -31,11 +31,13 @@ import {
   isTTSConfigured,
   processWordsForUI,
   // GCP TTS
+  callGCPTTS,
   callGCPTTSStreaming,
   parseGCPTTSStreamChunk,
   createWavHeader,
   isGCPTTSConfigured,
   getGCPTTSConfig,
+  getGeminiVoiceFromLanguage,
   GCP_TTS_AUDIO_FORMAT,
 } from "./services";
 
@@ -1308,18 +1310,19 @@ app.post("/tts/gcp/generate", async (c) => {
   }
 });
 
-// POST /tts/word - Generate TTS for a single word (non-streaming)
+// POST /tts/word - Generate TTS for a single word (non-streaming, GCP Vertex AI)
 app.post("/tts/word", async (c) => {
   try {
     const env = c.env as Env;
-    if (!isTTSConfigured(env)) {
+    if (!isGCPTTSConfigured(env)) {
+      console.log("[TTS Word] GCP TTS service not configured");
       return c.json({ error: "TTS service not configured." }, 503);
     }
 
     const body = (await c.req.json()) as {
       word: string;
       language?: string;
-      voice_id?: string;
+      voice_name?: string;
     };
 
     if (!body.word || body.word.trim().length === 0) {
@@ -1331,32 +1334,31 @@ app.post("/tts/word", async (c) => {
       return c.json({ error: "Word is too long (max 100 characters)." }, 400);
     }
 
-    const ttsConfig = getTTSConfig(env);
+    const gcpConfig = getGCPTTSConfig(env);
 
     // Select voice based on language (default to English)
-    let voiceId = body.voice_id;
-    if (!voiceId && body.language) {
-      // Map language codes to MiniMax voice IDs
-      const voiceMap: Record<string, string> = {
-        "en-US": "English_Trustworthy_Man",
-        "en-GB": "English_Trustworthy_Man",
-        "zh-CN": "female-tianmei",
-        "ja-JP": "Japanese_IntellectualFemale",
-        "ko-KR": "Korean_IntellectualFemale",
-      };
-      voiceId = voiceMap[body.language] || "English_Trustworthy_Man";
-    }
+    // Use provided voice_name, or auto-select based on language
+    const voiceName =
+      body.voice_name ||
+      (body.language ? getGeminiVoiceFromLanguage(body.language) : "Kore");
 
-    const result = await callMiniMaxTTSNonStreaming(ttsConfig, {
-      text: body.word.trim(),
-      voiceId: voiceId,
-      speed: 0.9, // Slightly slower for clearer word pronunciation
+    console.log("[TTS Word] Generating TTS", {
+      word: body.word.trim(),
+      language: body.language,
+      voiceName,
     });
 
+    const result = await callGCPTTS(gcpConfig, {
+      text: body.word.trim(),
+      voiceName: voiceName,
+      languageCode: body.language,
+    });
+
+    // Note: callGCPTTS returns WAV format audio (PCM with header)
     return c.json({
       audio_base64: result.audioBase64,
-      format: "mp3",
-      duration_ms: result.durationMs,
+      format: "wav", // GCP TTS returns WAV (PCM 24kHz 16-bit mono)
+      mime_type: result.mimeType,
     });
   } catch (error) {
     const user = c.get("user");
@@ -1365,7 +1367,7 @@ app.post("/tts/word", async (c) => {
       method: "POST",
       userId: user?.id,
     });
-    console.error("TTS word generation error:", error);
+    console.error("[TTS Word] Generation error:", error);
     return c.json({ error: "TTS word generation failed." }, 500);
   }
 });
