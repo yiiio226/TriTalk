@@ -29,7 +29,7 @@ import 'package:frontend/core/env/env.dart';
 /// Features:
 /// - Local cache for repeated playback
 /// - Local TTS for supported languages (zero cost)
-/// - Cloud TTS via MiniMax API as fallback
+/// - Cloud TTS via GCP Vertex AI as fallback
 /// - Debounce for rapid taps
 class WordTtsService {
   static final WordTtsService _instance = WordTtsService._internal();
@@ -88,7 +88,8 @@ class WordTtsService {
 
       if (kDebugMode) {
         debugPrint(
-            '🎤 Local TTS initialized. Supported languages: ${_supportedLanguages.length}');
+          '🎤 Local TTS initialized. Supported languages: ${_supportedLanguages.length}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -143,6 +144,27 @@ class WordTtsService {
       _isLoading = true;
       _currentlyPlayingWord = word;
 
+      // Debug: Force cloud TTS (skip cache and local TTS)
+      if (Env.forceCloudTTS) {
+        if (kDebugMode) {
+          debugPrint(
+            '🔧 WordTTS: [DEBUG] forceCloudTTS enabled, skipping cache and local TTS',
+          );
+          debugPrint('🌐 WordTTS: Fetching from cloud API: $word');
+        }
+
+        final audioBase64 = await _fetchWordAudio(word, language);
+        if (audioBase64 == null) {
+          _isLoading = false;
+          _currentlyPlayingWord = null;
+          return false;
+        }
+
+        // Play from base64 (save to temp file for iOS compatibility)
+        await _playAudioFromBase64(audioBase64);
+        return true;
+      }
+
       // ========== Step 1: Check local cache ==========
       final cachedPath = await _getCachedAudioPath(word, language);
       if (cachedPath != null) {
@@ -184,10 +206,8 @@ class WordTtsService {
         return true;
       }
 
-      // Fallback: play directly from base64
-      final bytes = base64Decode(audioBase64);
-      await _audioPlayer.play(BytesSource(bytes));
-      _isLoading = false;
+      // Fallback: play from base64 (save to temp file for iOS compatibility)
+      await _playAudioFromBase64(audioBase64);
       return true;
     } catch (e) {
       if (kDebugMode) {
@@ -253,7 +273,8 @@ class WordTtsService {
 
       if (kDebugMode) {
         debugPrint(
-            '🗑️ WordTTS: Cache cleared ${language != null ? "for $language" : "(all)"}');
+          '🗑️ WordTTS: Cache cleared ${language != null ? "for $language" : "(all)"}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -328,10 +349,7 @@ class WordTtsService {
       final response = await http.post(
         Uri.parse('$_baseUrl/tts/word'),
         headers: _headers(),
-        body: jsonEncode({
-          'word': word,
-          'language': language,
-        }),
+        body: jsonEncode({'word': word, 'language': language}),
       );
 
       if (response.statusCode == 200) {
@@ -360,14 +378,14 @@ class WordTtsService {
     try {
       final cacheDir = await _getCacheDir(language);
       final cacheKey = _getCacheKey(word);
-      final filePath = '${cacheDir.path}/$cacheKey.mp3';
+      final filePath = '${cacheDir.path}/$cacheKey.wav';
 
       final file = File(filePath);
       final bytes = base64Decode(audioBase64);
       await file.writeAsBytes(bytes);
 
       if (kDebugMode) {
-        debugPrint('💾 WordTTS: Cached $word -> $cacheKey.mp3');
+        debugPrint('💾 WordTTS: Cached $word -> $cacheKey.wav');
       }
 
       return filePath;
@@ -389,5 +407,39 @@ class WordTtsService {
     });
 
     await _audioPlayer.play(UrlSource(Uri.file(filePath).toString()));
+  }
+
+  /// Play audio from base64 string (saves to temp file for iOS compatibility)
+  /// iOS doesn't support BytesSource, so we write to a temp file first
+  Future<void> _playAudioFromBase64(String audioBase64) async {
+    _isLoading = false;
+
+    try {
+      // Decode base64 to bytes
+      final bytes = base64Decode(audioBase64);
+
+      // Save to temp file
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/word_tts_temp.wav');
+      await tempFile.writeAsBytes(bytes);
+
+      if (kDebugMode) {
+        debugPrint('🔊 WordTTS: Playing from temp file: ${tempFile.path}');
+      }
+
+      // Setup completion listener
+      _audioPlayer.onPlayerComplete.listen((_) {
+        _currentlyPlayingWord = null;
+      });
+
+      // Play from file
+      await _audioPlayer.play(UrlSource(Uri.file(tempFile.path).toString()));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ WordTTS: Failed to play from base64: $e');
+      }
+      _currentlyPlayingWord = null;
+      rethrow;
+    }
   }
 }
