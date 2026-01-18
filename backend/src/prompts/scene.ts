@@ -32,13 +32,17 @@ export function buildSceneGeneratePrompt(
 
 /**
  * Build the scene polish prompt for scene/polish endpoint.
+ * The polished text will be in the same language as the user's input.
  */
 export function buildScenePolishPrompt(description: string): string {
-  return `Refine and expand the following scenario description for an English roleplay practice session. 
+  return `Refine and expand the following scenario description for a roleplay practice session.
     User Input: "${description}"
     
     Make it more specific and suitable for setting up a roleplay context in a few sentences. 
-    IMPORTANT: Write the description from the USER's first-person perspective. Use "I" to refer to the user, and "you" to refer to what the user is doing.
-    The description should clearly set up the roleplay situation so the AI knows its role.
+    IMPORTANT RULES:
+    1. Write the description from the USER's first-person perspective. Use "I" to refer to the user, and "you" to refer to what the user is doing.
+    2. The description should clearly set up the roleplay situation so the AI knows its role.
+    3. **CRITICAL**: The polished text MUST be in the SAME LANGUAGE as the user's input. If the user wrote in Chinese, output in Chinese. If in English, output in English. If in Japanese, output in Japanese. Etc.
+    
     Output JSON ONLY: { "polished_text": "..." }`;
 }
