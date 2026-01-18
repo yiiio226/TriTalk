@@ -150,19 +150,22 @@ Row(
   - Updated `_analyzeAudio()` to convert and store smart segments from pronunciation result
   - Updated `_playSegmentAudio()` to use smart segments when available
   - Added fallback to fixed 3-segment approach when no segments data
+  - Added segment audio caching using `_segmentCachePaths` map
+  - First play: streams audio and caches to WAV file
+  - Subsequent plays: uses `playCached()` for instant playback
 
 - ✅ **Backward Compatibility**
   - All new fields are optional/nullable
   - Historical data continues to work with fixed 3-segment fallback
   - No database migration required
 
+- ✅ **Segment Caching**
+  - Cache key format: `seg_{messageId}_{segmentIndex}`
+  - Uses `StreamingTtsService.onCacheSaved` callback to store cache path
+  - Checks cache before each playback to avoid duplicate TTS API calls
+  - Note: Hash-based caching (for cross-message reuse) not implemented
+
 ### ⏸️ Not Implemented (Out of Scope)
-
-#### Caching Strategy (Section 2)
-
-- ❌ Hash-based segment cache keys (`seg_{hash}.wav`)
-- ❌ Segment-specific caching logic
-- **Decision**: Current implementation uses streaming playback without segment-level caching, which is acceptable for the initial version
 
 #### UI Visualization (Section 3)
 

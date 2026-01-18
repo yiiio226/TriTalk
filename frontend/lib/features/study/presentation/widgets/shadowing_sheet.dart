@@ -328,6 +328,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   /// Play audio for a specific segment of the target text using true streaming
   /// Uses StreamingTtsService for low-latency playback (audio starts as chunks arrive)
   /// When smart segments are available (from Azure Break data), uses those for precise segmentation
+  /// Caches segment audio for subsequent plays
   Future<void> _playSegmentAudio(int segmentIndex) async {
     String segmentText;
 
@@ -372,24 +373,45 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
     final streamingTts = StreamingTtsService.instance;
 
+    // Generate consistent cache key for this segment
+    final segmentCacheKey = 'seg_${widget.messageId}_$segmentIndex';
+
     // Stop any current playback before starting segment
     if (streamingTts.isPlaying) {
       await streamingTts.stop();
     }
 
     try {
-      // Use StreamingTtsService for true streaming playback
-      // Audio starts playing as soon as chunks arrive (no caching for segments)
-      await streamingTts.playStreaming(
-        segmentText,
-        messageId: 'segment_${widget.messageId}_$segmentIndex',
-      );
+      // Check if we have a cached audio file for this segment
+      final cachedPath = _segmentCachePaths[segmentCacheKey];
+      if (cachedPath != null && await File(cachedPath).exists()) {
+        if (kDebugMode) {
+          debugPrint('🔊 [Segment] Using cached audio: $cachedPath');
+        }
+        await streamingTts.playCached(cachedPath);
+        return;
+      }
+
+      // Setup callback to save cache path when audio is saved
+      streamingTts.onCacheSaved = (cachePath) {
+        _segmentCachePaths[segmentCacheKey] = cachePath;
+        if (kDebugMode) {
+          debugPrint('🔊 [Segment] Cached segment $segmentIndex: $cachePath');
+        }
+      };
+
+      // Use StreamingTtsService for streaming playback with caching
+      await streamingTts.playStreaming(segmentText, messageId: segmentCacheKey);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Segment TTS error: $e');
       }
     }
   }
+
+  /// Cache for segment audio file paths
+  /// Key: 'seg_{messageId}_{segmentIndex}', Value: cached audio path
+  final Map<String, String> _segmentCachePaths = {};
 
   Future<void> _deleteCurrentRecording() async {
     if (_currentRecordingPath != null) {
