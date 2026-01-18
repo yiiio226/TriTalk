@@ -174,6 +174,19 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   Future<void> _playTextToSpeech() async {
     final streamingTts = StreamingTtsService.instance;
 
+    // Debug log: cache hit/miss info
+    if (kDebugMode) {
+      final cacheKey = widget.messageId;
+      final cachedPath = _ttsAudioPath;
+      final fileExists = cachedPath != null
+          ? await File(cachedPath).exists()
+          : false;
+      final cacheStatus = (cachedPath != null && fileExists)
+          ? "✅ CACHE HIT"
+          : "❌ CACHE MISS";
+      debugPrint('🎧 [TTS Cache] Key: $cacheKey | $cacheStatus');
+    }
+
     // If already playing TTS, stop it
     if (_isTTSPlaying || streamingTts.isPlaying) {
       await streamingTts.stop();

@@ -90,6 +90,11 @@ class _ChatBubbleState extends State<ChatBubble>
       _translatedText = widget.message.translation;
     }
 
+    // Initialize TTS audio path from message if it exists
+    if (widget.message.ttsAudioPath != null) {
+      _ttsAudioPath = widget.message.ttsAudioPath;
+    }
+
     // Setup loading controller
     _loadingController = AnimationController(
       vsync: this,
@@ -1231,6 +1236,19 @@ class _ChatBubbleState extends State<ChatBubble>
   Future<void> _playTextToSpeech() async {
     final streamingTts = StreamingTtsService.instance;
 
+    // Debug log: cache hit/miss info
+    if (kDebugMode) {
+      final cacheKey = widget.message.id;
+      final cachedPath = _ttsAudioPath;
+      final fileExists = cachedPath != null
+          ? await File(cachedPath).exists()
+          : false;
+      final cacheStatus = (cachedPath != null && fileExists)
+          ? "✅ CACHE HIT"
+          : "❌ CACHE MISS";
+      debugPrint('🎧 [TTS Cache] Key: $cacheKey | $cacheStatus');
+    }
+
     // If already playing, stop it
     if (_isTTSPlaying || streamingTts.isPlaying) {
       await streamingTts.stop();
@@ -1284,8 +1302,13 @@ class _ChatBubbleState extends State<ChatBubble>
         setState(() {
           _ttsAudioPath = cachePath;
         });
+        // Persist to Message object so it survives page navigation
+        widget.onMessageUpdate?.call(
+          widget.message.copyWith(ttsAudioPath: cachePath),
+        );
         if (kDebugMode) {
           debugPrint('🔊 [TTS] Cache saved: $cachePath');
+          debugPrint('🔊 [TTS] Persisted to Message object');
         }
       }
     };

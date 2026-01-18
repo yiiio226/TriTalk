@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:frontend/core/data/api/api_service.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
@@ -27,8 +28,14 @@ class StreamingTtsService {
 
   StreamingTtsService._();
 
-  /// SoLoud instance
+  /// SoLoud instance (for streaming playback)
   SoLoud get _soloud => SoLoud.instance;
+
+  /// AudioPlayer instance (for cached file playback - more reliable on iOS)
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  /// Track if we're using AudioPlayer for current playback
+  bool _usingAudioPlayer = false;
 
   /// Current audio source for streaming
   AudioSource? _currentSource;
@@ -175,9 +182,6 @@ class StreamingTtsService {
 
       return cachedFilePath;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('🔊 [StreamingTTS] Error: $e');
-      }
       _isLoading = false;
       _isPlaying = false;
       _notifyState(StreamingTtsState.error);
@@ -222,9 +226,6 @@ class StreamingTtsService {
 
       return audioFile.path;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('🔊 [StreamingTTS] Failed to save cache: $e');
-      }
       return null;
     }
   }
@@ -279,26 +280,35 @@ class StreamingTtsService {
   }
 
   /// Play a cached audio file directly (for subsequent plays)
+  /// Uses loadMem instead of loadFile to avoid iOS file locking issues
   Future<void> playCached(String audioPath) async {
+    // Stop and clean up any previous playback
     await stop();
 
     _isLoading = true;
+    _usingAudioPlayer = true;
     _notifyState(StreamingTtsState.loading);
 
     try {
-      await initialize();
+      // Setup completion listener
+      _audioPlayer.onPlayerComplete.listen((_) {
+        if (_usingAudioPlayer) {
+          _isPlaying = false;
+          _usingAudioPlayer = false;
+          _notifyState(StreamingTtsState.completed);
+        }
+      });
 
-      final source = await _soloud.loadFile(audioPath);
-      _currentHandle = await _soloud.play(source);
-      _currentSource = source;
+      // Play using AudioPlayer (more reliable on iOS)
+      await _audioPlayer.play(DeviceFileSource(audioPath));
+
       _isPlaying = true;
       _isLoading = false;
       _notifyState(StreamingTtsState.playing);
-
-      _listenForCompletion();
     } catch (e) {
       _isLoading = false;
       _isPlaying = false;
+      _usingAudioPlayer = false;
       _notifyState(StreamingTtsState.error);
       rethrow;
     }
@@ -329,12 +339,23 @@ class StreamingTtsService {
 
   /// Stop current playback
   Future<void> stop() async {
-    if (_currentHandle != null) {
-      await _soloud.stop(_currentHandle!);
-    }
+    try {
+      // Stop AudioPlayer if it was being used
+      if (_usingAudioPlayer) {
+        await _audioPlayer.stop();
+        _usingAudioPlayer = false;
+      }
 
-    if (_currentSource != null) {
-      await _soloud.disposeSource(_currentSource!);
+      // Stop SoLoud if it was being used
+      if (_currentHandle != null) {
+        await _soloud.stop(_currentHandle!);
+      }
+
+      if (_currentSource != null) {
+        await _soloud.disposeSource(_currentSource!);
+      }
+    } catch (e) {
+      // Ignore errors during cleanup
     }
 
     _currentHandle = null;
