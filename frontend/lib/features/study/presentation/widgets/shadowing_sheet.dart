@@ -1268,18 +1268,17 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
               // Score Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: _getScoreColor(feedback.pronunciationScore.toDouble()),
-                  borderRadius: BorderRadius.circular(8),
+                  shape: BoxShape.circle,
                 ),
                 child: Text(
                   '${feedback.pronunciationScore}',
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
