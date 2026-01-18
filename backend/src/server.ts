@@ -806,6 +806,14 @@ app.openapi(sceneGenerateRoute, async (c) => {
     const env = c.env as Env;
     const { description, tone, target_language } = body;
     const targetLang = target_language || "English";
+    
+    console.log("[/scene/generate] Request received:", {
+      description: description?.substring(0, 50),
+      tone,
+      target_language,
+      targetLang,
+    });
+    
     const prompt = buildSceneGeneratePrompt(description, tone, targetLang);
     const messages = [{ role: "user", content: prompt }];
 

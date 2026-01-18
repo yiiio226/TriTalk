@@ -44,52 +44,23 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   }
 
   /// Generate the initial AI greeting message for new conversations
+  /// Uses the pre-generated initialMessage from scene creation which is already
+  /// in the user's target language
   Future<void> _generateInitialAIMessage() async {
-    // Add loading placeholder for AI
-    final loadingId = 'loading_initial_${DateTime.now().millisecondsSinceEpoch}';
-    final loadingMsg = Message(
-      id: loadingId,
-      content: '',
+    // Use the initial message from scene generation directly
+    // This message is already in the user's target learning language
+    final aiMessage = Message(
+      id: _uuid.v4(),
+      content: _scene.initialMessage,
       isUser: false,
       timestamp: DateTime.now(),
-      isLoading: true,
+      isAnimated: true,
     );
 
-    state = state.copyWith(messages: [loadingMsg]);
+    final finalMessages = [aiMessage];
+    state = state.copyWith(messages: finalMessages);
 
-    try {
-      final sceneContext = _buildSceneContext();
-      
-      // Send a simple greeting to trigger AI's first response
-      // The AI will respond based on the scene context and its role
-      final response = await _repository.sendMessage(
-        text: 'Hi', // Simple greeting to start the conversation
-        sceneContext: sceneContext,
-        history: [],
-      );
-
-      // Replace loading message with actual AI response
-      final aiMessage = Message(
-        id: _uuid.v4(),
-        content: response.message,
-        isUser: false,
-        timestamp: DateTime.now(),
-        translation: response.translation,
-        feedback: response.feedback,
-        isAnimated: true,
-      );
-
-      final finalMessages = [aiMessage];
-      state = state.copyWith(messages: finalMessages);
-
-      _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
-    } catch (e) {
-      // Remove loading message on error
-      state = state.copyWith(
-        messages: [],
-        error: 'Failed to generate initial message: $e',
-      );
-    }
+    _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
   }
 
   /// Send a text message
