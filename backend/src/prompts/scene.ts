@@ -7,20 +7,24 @@
  */
 export function buildSceneGeneratePrompt(
   description: string,
-  tone: string | undefined
+  tone: string | undefined,
+  targetLanguage: string = "English"
 ): string {
   return `Act as a creative educational scenario designer.
     User Request: "${description}"
     Tone: ${tone || "Casual"}
+    Target Language: ${targetLanguage}
     
-    Create a roleplay scenario for learning English.
+    Create a roleplay scenario for learning ${targetLanguage}.
+    IMPORTANT: The initial_message MUST be written entirely in ${targetLanguage}.
+    
     Output JSON ONLY with these fields:
-    - title: Short, catchy title (e.g. "Coffee Shop Chat")
-    - ai_role: Who you (AI) will play (e.g. "Barista")
-    - user_role: Who the user will play (e.g. "Customer")
-    - goal: The user's objective (e.g. "Order a latte with oat milk")
-    - description: A brief context setting (e.g. "You are at a busy cafe in London...")
-    - initial_message: The first thing the AI says to start the conversation.
+    - title: Short, catchy title (in English for UI display)
+    - ai_role: Who you (AI) will play (in English for UI display)
+    - user_role: Who the user will play (in English for UI display)
+    - goal: The user's objective (in English for UI display)
+    - description: A brief context setting (in English for UI display)
+    - initial_message: The first thing the AI says to start the conversation. MUST BE IN ${targetLanguage}.
     - emoji: A single relevant emoji char.`;
 }
 

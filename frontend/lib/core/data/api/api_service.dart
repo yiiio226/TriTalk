@@ -207,14 +207,18 @@ class ApiService {
     String tone,
   ) async {
     try {
-      // Scene generation might mostly depend on target language for the content,
-      // but we pass it anyway if the backend uses it.
-      // Currently backend doesn't explicitly look for it in generate_scene but it's good practice.
+      // Get user's target language setting
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
 
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),
         headers: _headers(),
-        body: jsonEncode({'description': description, 'tone': tone}),
+        body: jsonEncode({
+          'description': description,
+          'tone': tone,
+          'target_language': targetLang,
+        }),
       );
 
       if (response.statusCode == 200) {

@@ -109,6 +109,7 @@ export const AnalyzeResponseSchema = z.object({
 export const SceneGenerationRequestSchema = z.object({
   description: z.string().openapi({ example: "Booking a flight ticket." }),
   tone: z.string().optional().openapi({ example: "Polite" }),
+  target_language: z.string().optional().openapi({ example: "Spanish" }),
 });
 
 export const SceneGenerationResponseSchema = z.object({
