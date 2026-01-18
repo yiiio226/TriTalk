@@ -31,11 +31,11 @@
 
 ### ⚡ 使用手动服务 (ApiService)
 
-| 端点               | 方法 | 描述                    | 原因                  |
-| ------------------ | ---- | ----------------------- | --------------------- |
-| `/chat/send-voice` | POST | 语音消息 + 流式 AI 回复 | Multipart + NDJSON 流 |
-| `/chat/analyze`    | POST | 流式语法分析            | NDJSON 流             |
-| `/tts/generate`    | POST | 流式语音合成            | 音频流分块传输        |
+| 端点                | 方法 | 描述                    | 原因                  |
+| ------------------- | ---- | ----------------------- | --------------------- |
+| `/chat/send-voice`  | POST | 语音消息 + 流式 AI 回复 | Multipart + NDJSON 流 |
+| `/chat/analyze`     | POST | 流式语法分析            | NDJSON 流             |
+| `/tts/gcp/generate` | POST | 流式语音合成            | 音频流分块传输        |
 
 ---
 
