@@ -815,64 +815,23 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: _feedback != null
-                              ? (_feedback!.pronunciationScore >= 80
-                                    ? AppColors.lg50
-                                    : AppColors.lr50)
-                              : AppColors.ln50,
+                          color: AppColors.ln50,
                           shape: BoxShape.circle,
                         ),
-                        child: _feedback != null
-                            ? Text(
-                                _feedback!.pronunciationScore >= 80
-                                    ? '🎉'
-                                    : '😔',
-                                style: const TextStyle(fontSize: 20, height: 1),
-                              )
-                            : Icon(
-                                Icons.record_voice_over_rounded,
-                                color: AppColors.primary,
-                                size: 20,
-                              ),
+                        child: Icon(
+                          Icons.record_voice_over_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
-                      if (_feedback != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.lg500,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'Score: ${_feedback!.pronunciationScore}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                      const Text(
+                        'Shadowing Practice',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _feedback!.pronunciationScore >= 80
-                              ? 'Great Job!'
-                              : 'Keep Practicing!',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ] else
-                        const Text(
-                          'Shadowing Practice',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      ),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
@@ -1044,7 +1003,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
 
               // Spacer for Center Button (72 + padding)
-              const SizedBox(width: 140),
+              const SizedBox(width: 180),
 
               // 3. Right Button (Score or Complete)
               SizedBox(
@@ -1241,7 +1200,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildStatsRow(feedback),
+        _buildScoreCard(feedback),
         const SizedBox(height: 32),
         _buildAzureWordFeedback(feedback),
         if (feedback.azureProsodyScore != null) _buildProsodySection(feedback),
@@ -1282,23 +1241,120 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     );
   }
 
-  Widget _buildStatsRow(VoiceFeedback feedback) {
+  Widget _buildScoreCard(VoiceFeedback feedback) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.lightBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: AppColors.lightDivider),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _buildStatItem('Accuracy', feedback.azureAccuracyScore),
-          _buildStatItem('Fluency', feedback.azureFluencyScore),
-          _buildStatItem('Complete', feedback.azureCompletenessScore),
-          if (feedback.azureProsodyScore != null)
-            _buildStatItem('Prosody', feedback.azureProsodyScore),
+          // Header: Icon + Title + Score Badge
+          Row(
+            children: [
+              // Icon & Title
+              Text(
+                feedback.pronunciationScore >= 80 ? '🎉' : '💪',
+                style: const TextStyle(fontSize: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  feedback.pronunciationScore >= 80
+                      ? 'Great Job!'
+                      : 'Keep Practicing!',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.lightTextPrimary,
+                  ),
+                ),
+              ),
+              // Score Badge
+              Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _getScoreColor(feedback.pronunciationScore.toDouble()),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${feedback.pronunciationScore}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Stats Row
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            decoration: BoxDecoration(
+              color: AppColors.lightBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNewStatItem(
+                  'Accuracy',
+                  feedback.azureAccuracyScore?.round() ?? 0,
+                ),
+                _buildNewStatItem(
+                  'Fluency',
+                  feedback.azureFluencyScore?.round() ?? 0,
+                ),
+                _buildNewStatItem(
+                  'Complete',
+                  feedback.azureCompletenessScore?.round() ?? 0,
+                ),
+                if (feedback.azureProsodyScore != null)
+                  _buildNewStatItem(
+                    'Prosody',
+                    feedback.azureProsodyScore!.round(),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNewStatItem(String label, int score) {
+    return Column(
+      children: [
+        Text(
+          '$score',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: _getScoreColor(score.toDouble()),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.lightTextSecondary,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1663,38 +1719,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     return AppColors.lightError; // Red
   }
 
-  Widget _buildStatItem(String label, double? score) {
-    final value = score?.round() ?? 0;
-    Color valueColor;
-    if (value >= 80) {
-      valueColor = AppColors.lg500; // Green
-    } else if (value >= 60) {
-      valueColor = AppColors.ly500; // Orange
-    } else {
-      valueColor = AppColors.lightError; // Red
-    }
 
-    return Column(
-      children: [
-        Text(
-          '$value',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.lightTextSecondary,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildAzureWordFeedback(VoiceFeedback feedback) {
     final words = feedback.azureWordFeedback ?? [];
@@ -1893,13 +1918,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Score Header Skeleton
-          Row(
-            children: [
-              _buildSkeletonBox(height: 32, width: 100, radius: 8),
-              const SizedBox(width: 12),
-              _buildSkeletonBox(height: 24, width: 120, radius: 4),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     _buildSkeletonBox(height: 32, width: 100, radius: 8),
+          //     const SizedBox(width: 12),
+          //     _buildSkeletonBox(height: 24, width: 120, radius: 4),
+          //   ],
+          // ),
           const SizedBox(height: 24),
 
           // Stats Row Skeleton
@@ -2136,31 +2161,32 @@ class IntonationPainter extends CustomPainter {
       final double t = localX / rect.width;
 
       // Base curve (Standard AI intonation pattern simulation)
+      // Maximize amplitude to use full height for better visibility
       final baseY =
           rect.top +
           rect.height * 0.5 +
-          (math.sin(t * math.pi * 2) * rect.height * 0.15) +
-          (math.sin(t * math.pi * 6) * rect.height * 0.05);
+          (math.sin(t * math.pi * 2) * rect.height * 0.30) +
+          (math.sin(t * math.pi * 6) * rect.height * 0.15);
 
       double y = baseY;
 
       if (!isAi) {
         // User deviation based on score
         if (score >= 90) {
-          // Close to original
-          y = baseY + (math.sin(t * 10) * 2);
+          // Close to original but with enough jitter to be visible
+          y = baseY + (math.sin(t * 12) * 6);
         } else if (score >= 60) {
-          // Mild distortion
+          // Mild distortion - flatter and more wobble
           y =
               rect.center.dy +
-              (baseY - rect.center.dy) * 0.7 +
-              (math.sin(t * 15) * 4);
+              (baseY - rect.center.dy) * 0.6 +
+              (math.sin(t * 18) * 12);
         } else {
-          // Flat/Poor
+          // Flat/Poor - very different from native
           y =
               rect.center.dy +
-              (baseY - rect.center.dy) * 0.3 +
-              (math.sin(t * 10) * 3);
+              (baseY - rect.center.dy) * 0.2 +
+              (math.sin(t * 10) * 10);
         }
       }
 
