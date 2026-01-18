@@ -140,10 +140,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     try {
       final result = await widget.onLoadInitialData!();
 
-      if (mounted && result != null) {
+      if (mounted) {
         setState(() {
-          _feedback = result.feedback;
-          _currentRecordingPath = result.audioPath;
+          if (result != null) {
+            // Cloud data found - show historical feedback
+            _feedback = result.feedback;
+            _currentRecordingPath = result.audioPath;
+          }
+          // Always stop loading, whether data was found or not
           _isLoadingInitialData = false;
         });
       }
