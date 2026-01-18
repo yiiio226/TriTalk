@@ -1898,6 +1898,40 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
             ],
           ),
+          
+          // Pitch Contour Section Skeleton
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Divider
+              Container(
+                margin: const EdgeInsets.only(top: 24, bottom: 20),
+                height: 1,
+                color: AppColors.lightDivider,
+              ),
+              // Section Title
+              Row(
+                children: [
+                  _buildSkeletonBox(height: 16, width: 16, radius: 8),
+                  const SizedBox(width: 8),
+                  _buildSkeletonBox(height: 16, width: 100, radius: 4),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Pitch Visualization Area
+              _buildSkeletonBox(height: 80, width: double.infinity, radius: 8),
+              const SizedBox(height: 16),
+              // Legend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildSkeletonBox(height: 12, width: 80, radius: 4),
+                  const SizedBox(width: 24),
+                  _buildSkeletonBox(height: 12, width: 80, radius: 4),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );
