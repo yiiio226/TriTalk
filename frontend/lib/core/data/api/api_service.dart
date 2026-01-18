@@ -572,7 +572,8 @@ class ApiService {
                   final response = VoiceMessageResponse(
                     message: '',
                     translation: data['translation'],
-                    voiceFeedback: voiceFeedback ??
+                    voiceFeedback:
+                        voiceFeedback ??
                         VoiceFeedback(
                           pronunciationScore: 0,
                           correctedText: '',
@@ -630,19 +631,26 @@ class ApiService {
     }
   }
 
-  /// Generate text-to-speech audio from text using streaming API
+  /// Generate text-to-speech audio from text using GCP Vertex AI streaming API
   /// Returns a Stream of TTSStreamChunk that yields audio data as it arrives
+  ///
+  /// NOTE: GCP TTS returns raw PCM audio (24kHz, 16-bit, mono).
+  /// The final 'done' chunk includes WAV header for proper playback.
   Stream<TTSStreamChunk> generateTTSStream(
     String text, {
     String? messageId,
-    String? voiceId,
+    String? voiceName,
+    String? languageCode,
   }) async* {
-    final request = http.Request('POST', Uri.parse('$baseUrl/tts/generate'));
+    final request = http.Request(
+      'POST',
+      Uri.parse('$baseUrl/tts/gcp/generate'),
+    );
     request.headers.addAll(_headers());
     request.body = jsonEncode({
       'text': text,
-      if (messageId != null) 'message_id': messageId,
-      if (voiceId != null) 'voice_id': voiceId,
+      if (voiceName != null) 'voice_name': voiceName,
+      if (languageCode != null) 'language_code': languageCode,
     });
 
     final client = http.Client();
@@ -657,8 +665,9 @@ class ApiService {
 
       // Buffer for incomplete lines
       String buffer = '';
-      final List<String> audioChunks = [];
+      final List<String> audioChunksBase64 = [];
       int? durationMs;
+      Map<String, dynamic>? audioFormat;
 
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
         buffer += chunk;
@@ -678,13 +687,18 @@ class ApiService {
               switch (type) {
                 case 'audio_chunk':
                   final audioBase64 = json['audio_base64'] as String?;
+                  // Store audio format info (PCM specs from GCP)
+                  if (json['audio_format'] != null) {
+                    audioFormat = json['audio_format'] as Map<String, dynamic>;
+                  }
                   if (audioBase64 != null) {
-                    audioChunks.add(audioBase64);
+                    audioChunksBase64.add(audioBase64);
                     yield TTSStreamChunk(
                       type: TTSChunkType.audioChunk,
                       audioBase64: audioBase64,
                       chunkIndex: json['chunk_index'] as int? ?? 0,
-                      allChunksBase64: List.from(audioChunks),
+                      allChunksBase64: List.from(audioChunksBase64),
+                      audioFormat: audioFormat,
                     );
                   }
                   break;
@@ -693,13 +707,23 @@ class ApiService {
                   yield TTSStreamChunk(
                     type: TTSChunkType.info,
                     durationMs: durationMs,
+                    audioFormat: audioFormat,
                   );
                   break;
                 case 'done':
+                  // Combine all PCM chunks and add WAV header
+                  String? finalAudioBase64;
+                  if (audioChunksBase64.isNotEmpty) {
+                    finalAudioBase64 = _combinePcmChunksWithWavHeader(
+                      audioChunksBase64,
+                    );
+                  }
                   yield TTSStreamChunk(
                     type: TTSChunkType.done,
-                    allChunksBase64: List.from(audioChunks),
+                    allChunksBase64: List.from(audioChunksBase64),
+                    audioBase64: finalAudioBase64,
                     durationMs: durationMs,
+                    audioFormat: audioFormat,
                   );
                   break;
                 case 'error':
@@ -721,40 +745,89 @@ class ApiService {
     }
   }
 
+  /// Combine PCM audio chunks and add WAV header for playback
+  /// GCP TTS returns raw 16-bit PCM at 24kHz mono
+  String _combinePcmChunksWithWavHeader(List<String> chunksBase64) {
+    // Decode all base64 chunks and combine
+    final List<int> pcmBytes = [];
+    for (final chunk in chunksBase64) {
+      pcmBytes.addAll(base64Decode(chunk));
+    }
+
+    // Create WAV header (44 bytes)
+    const int sampleRate = 24000;
+    const int bitsPerSample = 16;
+    const int numChannels = 1;
+    final int dataSize = pcmBytes.length;
+    final int byteRate = sampleRate * numChannels * bitsPerSample ~/ 8;
+    const int blockAlign = numChannels * bitsPerSample ~/ 8;
+
+    final wavHeader = <int>[
+      // RIFF header
+      0x52, 0x49, 0x46, 0x46, // "RIFF"
+      ...(_intToBytes(36 + dataSize, 4)), // File size - 8
+      0x57, 0x41, 0x56, 0x45, // "WAVE"
+      // fmt subchunk
+      0x66, 0x6D, 0x74, 0x20, // "fmt "
+      0x10, 0x00, 0x00, 0x00, // Subchunk1Size (16 for PCM)
+      0x01, 0x00, // AudioFormat (1 for PCM)
+      ...(_intToBytes(numChannels, 2)), // NumChannels
+      ...(_intToBytes(sampleRate, 4)), // SampleRate
+      ...(_intToBytes(byteRate, 4)), // ByteRate
+      ...(_intToBytes(blockAlign, 2)), // BlockAlign
+      ...(_intToBytes(bitsPerSample, 2)), // BitsPerSample
+      // data subchunk
+      0x64, 0x61, 0x74, 0x61, // "data"
+      ...(_intToBytes(dataSize, 4)), // Subchunk2Size
+    ];
+
+    // Combine header and PCM data
+    final wavData = [...wavHeader, ...pcmBytes];
+
+    // Encode to base64
+    return base64Encode(Uint8List.fromList(wavData));
+  }
+
+  /// Convert integer to little-endian bytes
+  List<int> _intToBytes(int value, int numBytes) {
+    final bytes = <int>[];
+    for (int i = 0; i < numBytes; i++) {
+      bytes.add((value >> (8 * i)) & 0xFF);
+    }
+    return bytes;
+  }
+
   /// Generate text-to-speech audio from text (non-streaming fallback)
-  /// Returns TTSResponse with base64-encoded audio data
+  /// Returns TTSResponse with base64-encoded WAV audio data
   Future<TTSResponse> generateTTS(
     String text, {
-    String? messageId,
-    String? voiceId,
+    String? voiceName,
+    String? languageCode,
   }) async {
     try {
-      // Use streaming API and accumulate all chunks
-      final List<String> allChunks = [];
+      // Use streaming API and get the final WAV audio
+      String? finalAudioBase64;
       int? durationMs;
 
       await for (final chunk in generateTTSStream(
         text,
-        messageId: messageId,
-        voiceId: voiceId,
+        voiceName: voiceName,
+        languageCode: languageCode,
       )) {
-        if (chunk.type == TTSChunkType.audioChunk &&
-            chunk.audioBase64 != null) {
-          allChunks.add(chunk.audioBase64!);
+        // The 'done' chunk contains the complete WAV with header
+        if (chunk.type == TTSChunkType.done && chunk.audioBase64 != null) {
+          finalAudioBase64 = chunk.audioBase64;
         }
         if (chunk.durationMs != null) {
           durationMs = chunk.durationMs;
         }
       }
 
-      if (allChunks.isEmpty) {
+      if (finalAudioBase64 == null) {
         return TTSResponse(error: 'No audio received');
       }
 
-      // Combine all base64 chunks into one
-      final combinedBase64 = allChunks.join('');
-
-      return TTSResponse(audioBase64: combinedBase64, durationMs: durationMs);
+      return TTSResponse(audioBase64: finalAudioBase64, durationMs: durationMs);
     } catch (e) {
       return TTSResponse(error: e.toString());
     }
@@ -879,6 +952,7 @@ class TTSResponse {
 enum TTSChunkType { audioChunk, info, done, error }
 
 /// A chunk of streaming TTS audio data
+/// NOTE: GCP TTS returns PCM audio; WAV header is added in the 'done' chunk
 class TTSStreamChunk {
   final TTSChunkType type;
   final String? audioBase64;
@@ -887,6 +961,9 @@ class TTSStreamChunk {
   final List<String>? allChunksBase64;
   final String? error;
 
+  /// Audio format info from GCP (PCM specs: sample_rate, bits_per_sample, etc.)
+  final Map<String, dynamic>? audioFormat;
+
   TTSStreamChunk({
     required this.type,
     this.audioBase64,
@@ -894,9 +971,10 @@ class TTSStreamChunk {
     this.durationMs,
     this.allChunksBase64,
     this.error,
+    this.audioFormat,
   });
 
-  /// Combine all collected chunks into a single base64 string
+  /// Combine all collected chunks into a single base64 string (raw PCM, no WAV header)
   String? get combinedAudioBase64 =>
       allChunksBase64?.isNotEmpty == true ? allChunksBase64!.join('') : null;
 }
