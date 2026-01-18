@@ -23,7 +23,6 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
   final String messageId; // Message ID for file naming
   final VoiceFeedback? initialFeedback; // Previous shadowing result to display
-  final String? initialAudioPath; // Previous recording path
   final String? initialTtsAudioPath; // Previous TTS audio path (cached)
 
   // Practice context for history tracking
@@ -33,13 +32,13 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   final String? sceneKey;
 
   final Function(VoiceFeedback, String?)?
-  onFeedbackUpdate; // Callback with feedback and audio path
+  onFeedbackUpdate; // Callback with feedback and local audio path
   final Function(String)? onTtsUpdate; // Callback when TTS audio is generated
 
   // Async loading support
   final bool
   isLoadingInitialData; // Show skeleton loader while loading cloud data
-  final Future<({VoiceFeedback? feedback, String? audioPath})?> Function()?
+  final Future<({VoiceFeedback? feedback})?> Function()?
   onLoadInitialData; // Callback to load cloud data
 
   const ShadowingSheet({
@@ -47,7 +46,6 @@ class ShadowingSheet extends ConsumerStatefulWidget {
     required this.targetText,
     required this.messageId,
     this.initialFeedback,
-    this.initialAudioPath,
     this.initialTtsAudioPath,
     this.sourceType = 'ai_message',
     this.sourceId,
@@ -98,9 +96,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   @override
   void initState() {
     super.initState();
-    // Initialize with previous feedback and audio path if available
+    // Initialize with previous feedback if available
     _feedback = widget.initialFeedback;
-    _currentRecordingPath = widget.initialAudioPath;
     _ttsAudioPath = widget.initialTtsAudioPath; // Initialize cached TTS path
     _isLoadingInitialData = widget.isLoadingInitialData;
 
@@ -144,7 +141,6 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           if (result != null) {
             // Cloud data found - show historical feedback
             _feedback = result.feedback;
-            _currentRecordingPath = result.audioPath;
           }
           // Always stop loading, whether data was found or not
           _isLoadingInitialData = false;
@@ -709,7 +705,6 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           prosodyScore: voiceFeedback.azureProsodyScore,
           wordFeedback: voiceFeedback.azureWordFeedback,
           feedbackText: voiceFeedback.feedback,
-          audioPath: _currentRecordingPath,
           segments: voiceFeedback.smartSegments,
         );
       } catch (e) {

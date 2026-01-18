@@ -99,6 +99,37 @@ class ApiService {
     }
   }
 
+  // Generic PUT for authenticated requests
+  Future<Map<String, dynamic>> put(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _headers(),
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        if (kDebugMode) {
+          debugPrint('❌ [PUT $endpoint] Status: ${response.statusCode}');
+          debugPrint('❌ [PUT $endpoint] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed request to $endpoint: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [PUT $endpoint] Exception: $e');
+      }
+      throw Exception('Error calling $endpoint: $e');
+    }
+  }
+
   // Generic GET for authenticated requests
   Future<Map<String, dynamic>> get(
     String endpoint, [
@@ -210,7 +241,6 @@ class ApiService {
       // Get user's target language setting
       final prefs = PreferencesService();
       final targetLang = await prefs.getTargetLanguage();
-      
 
       final response = await http.post(
         Uri.parse('$baseUrl/scene/generate'),

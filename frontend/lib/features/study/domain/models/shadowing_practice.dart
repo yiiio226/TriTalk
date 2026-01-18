@@ -1,11 +1,18 @@
 import 'package:frontend/features/chat/domain/models/message.dart';
 
+/// Shadowing practice record
+///
+/// Represents a single practice session for shadowing/pronunciation.
+/// Each record is uniquely identified by user_id + source_type + source_id.
 class ShadowingPractice {
   final String id;
   final String targetText;
-  final String
-  sourceType; // 'ai_message', 'native_expression', 'reference_answer', 'custom'
-  final String? sourceId;
+
+  /// Source type: 'ai_message', 'native_expression', 'reference_answer'
+  final String sourceType;
+
+  /// Source ID: required for unique identification (typically message_id)
+  final String sourceId;
   final String? sceneKey;
 
   final int pronunciationScore;
@@ -16,7 +23,6 @@ class ShadowingPractice {
 
   final List<AzureWordFeedback>? wordFeedback;
   final String? feedbackText;
-  final String? audioPath; // Local path only
 
   // Smart segments based on natural pauses (optional for backward compatibility)
   final List<SmartSegmentFeedback>? segments;
@@ -27,7 +33,7 @@ class ShadowingPractice {
     required this.id,
     required this.targetText,
     required this.sourceType,
-    this.sourceId,
+    required this.sourceId,
     this.sceneKey,
     required this.pronunciationScore,
     this.accuracyScore,
@@ -36,7 +42,6 @@ class ShadowingPractice {
     this.prosodyScore,
     this.wordFeedback,
     this.feedbackText,
-    this.audioPath,
     this.segments,
     required this.practicedAt,
   });
@@ -55,7 +60,6 @@ class ShadowingPractice {
       'prosody_score': prosodyScore,
       'word_feedback': wordFeedback?.map((w) => w.toJson()).toList(),
       'feedback_text': feedbackText,
-      'audio_path': audioPath,
       'segments': segments?.map((s) => s.toJson()).toList(),
       'practiced_at': practicedAt.toIso8601String(),
     };
@@ -66,7 +70,7 @@ class ShadowingPractice {
       id: json['id'],
       targetText: json['target_text'],
       sourceType: json['source_type'],
-      sourceId: json['source_id'],
+      sourceId: json['source_id'] ?? '', // Fallback for old data
       sceneKey: json['scene_key'],
       pronunciationScore: json['pronunciation_score'],
       accuracyScore: (json['accuracy_score'] as num?)?.toDouble(),
@@ -77,7 +81,6 @@ class ShadowingPractice {
           ?.map((w) => AzureWordFeedback.fromJson(w))
           .toList(),
       feedbackText: json['feedback_text'],
-      audioPath: json['audio_path'],
       // Smart segments (null for historical data)
       segments: (json['segments'] as List?)
           ?.map((s) => SmartSegmentFeedback.fromJson(s))

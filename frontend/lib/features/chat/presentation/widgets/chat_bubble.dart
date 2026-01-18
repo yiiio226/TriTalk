@@ -1093,12 +1093,12 @@ class _ChatBubbleState extends State<ChatBubble>
     });
 
     VoiceFeedback? cloudFeedback;
-    String? cloudAudioPath;
 
     try {
-      // Fetch latest practice data from cloud
+      // Fetch latest practice data from cloud using new API
       final latestPractice = await ShadowingHistoryService().getLatestPractice(
-        message.content,
+        'ai_message', // source_type for chat bubble
+        message.id, // source_id (message_id)
       );
 
       if (latestPractice != null) {
@@ -1114,7 +1114,6 @@ class _ChatBubbleState extends State<ChatBubble>
           azureProsodyScore: latestPractice.prosodyScore,
           azureWordFeedback: latestPractice.wordFeedback,
         );
-        cloudAudioPath = latestPractice.audioPath;
 
         if (kDebugMode) {
           debugPrint(
@@ -1152,9 +1151,10 @@ class _ChatBubbleState extends State<ChatBubble>
         builder: (context) => ShadowingSheet(
           targetText: message.content,
           messageId: message.id,
+          sourceType: 'ai_message',
+          sourceId: message.id,
           sceneKey: widget.sceneId,
           initialFeedback: cloudFeedback ?? message.shadowingFeedback,
-          initialAudioPath: cloudAudioPath ?? message.shadowingAudioPath,
           initialTtsAudioPath: message.ttsAudioPath ?? _ttsAudioPath,
           onFeedbackUpdate: (feedback, audioPath) {
             widget.onMessageUpdate?.call(

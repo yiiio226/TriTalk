@@ -63,9 +63,10 @@ import {
   SceneGenerationResponseSchema,
   ShadowRequestSchema,
   ShadowResponseSchema,
-  ShadowingHistoryResponseSchema,
+  ShadowingGetQuerySchema,
+  ShadowingGetResponseSchema,
   ShadowingPracticeResponseSchema,
-  ShadowingPracticeSaveSchema,
+  ShadowingUpsertSchema,
   TranscribeResponseSchema,
   TranslateRequestSchema,
   TranslateResponseSchema,
@@ -806,14 +807,14 @@ app.openapi(sceneGenerateRoute, async (c) => {
     const env = c.env as Env;
     const { description, tone, target_language } = body;
     const targetLang = target_language || "English";
-    
+
     console.log("[/scene/generate] Request received:", {
       description: description?.substring(0, 50),
       tone,
       target_language,
       targetLang,
     });
-    
+
     const prompt = buildSceneGeneratePrompt(description, tone, targetLang);
     const messages = [{ role: "user", content: prompt }];
 
@@ -1540,16 +1541,17 @@ app.openapi(userSyncRoute, async (c) => {
 });
 
 // ============================================
-// Shadowing Practice History API
+// Shadowing Practice API (v2 - Latest Only)
 // ============================================
 
-// POST /shadowing/save
-const shadowingSaveRoute = createRoute({
-  method: "post",
-  path: "/shadowing/save",
+// PUT /shadowing/upsert - Save or update latest practice record
+// Uses UPSERT pattern: user_id + source_type + source_id is unique
+const shadowingUpsertRoute = createRoute({
+  method: "put",
+  path: "/shadowing/upsert",
   request: {
     body: {
-      content: { "application/json": { schema: ShadowingPracticeSaveSchema } },
+      content: { "application/json": { schema: ShadowingUpsertSchema } },
     },
   },
   responses: {
@@ -1557,7 +1559,7 @@ const shadowingSaveRoute = createRoute({
       content: {
         "application/json": { schema: ShadowingPracticeResponseSchema },
       },
-      description: "Practice saved",
+      description: "Practice saved/updated",
     },
     500: {
       content: { "application/json": { schema: ErrorSchema } },
@@ -1566,7 +1568,7 @@ const shadowingSaveRoute = createRoute({
   },
 });
 
-app.openapi(shadowingSaveRoute, async (c) => {
+app.openapi(shadowingUpsertRoute, async (c) => {
   try {
     const body = c.req.valid("json");
     const user = c.get("user");
@@ -1576,23 +1578,28 @@ app.openapi(shadowingSaveRoute, async (c) => {
     const supabase = createSupabaseClient(env, token);
 
     const { data, error } = await supabase
-      .from("shadowing_practices")
-      .insert({
-        user_id: user.id,
-        target_text: body.target_text,
-        source_type: body.source_type,
-        source_id: body.source_id,
-        scene_key: body.scene_key,
-        pronunciation_score: body.pronunciation_score,
-        accuracy_score: body.accuracy_score,
-        fluency_score: body.fluency_score,
-        completeness_score: body.completeness_score,
-        prosody_score: body.prosody_score,
-        word_feedback: body.word_feedback,
-        feedback_text: body.feedback_text,
-        audio_path: body.audio_path,
-        segments: body.segments, // Smart segments (optional, nullable)
-      })
+      .from("shadowing_latest")
+      .upsert(
+        {
+          user_id: user.id,
+          source_type: body.source_type,
+          source_id: body.source_id,
+          target_text: body.target_text,
+          scene_key: body.scene_key,
+          pronunciation_score: body.pronunciation_score,
+          accuracy_score: body.accuracy_score,
+          fluency_score: body.fluency_score,
+          completeness_score: body.completeness_score,
+          prosody_score: body.prosody_score,
+          word_feedback: body.word_feedback,
+          feedback_text: body.feedback_text,
+          segments: body.segments,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,source_type,source_id",
+        },
+      )
       .select("id, practiced_at")
       .single();
 
@@ -1602,33 +1609,27 @@ app.openapi(shadowingSaveRoute, async (c) => {
   } catch (error) {
     const user = c.get("user");
     logError(error, {
-      route: "/shadowing/save",
-      method: "POST",
+      route: "/shadowing/upsert",
+      method: "PUT",
       userId: user?.id,
     });
     return c.json({ error: String(error) }, 500);
   }
 });
 
-// GET /shadowing/history
-const shadowingHistoryRoute = createRoute({
+// GET /shadowing/get - Get single practice record by source_type + source_id
+const shadowingGetRoute = createRoute({
   method: "get",
-  path: "/shadowing/history",
+  path: "/shadowing/get",
   request: {
-    query: z.object({
-      source_id: z.string().optional(),
-      target_text: z.string().optional(),
-      scene_key: z.string().optional(),
-      limit: z.string().optional(),
-      offset: z.string().optional(),
-    }),
+    query: ShadowingGetQuerySchema,
   },
   responses: {
     200: {
       content: {
-        "application/json": { schema: ShadowingHistoryResponseSchema },
+        "application/json": { schema: ShadowingGetResponseSchema },
       },
-      description: "Practice history",
+      description: "Practice record or null",
     },
     500: {
       content: { "application/json": { schema: ErrorSchema } },
@@ -1637,7 +1638,7 @@ const shadowingHistoryRoute = createRoute({
   },
 });
 
-app.openapi(shadowingHistoryRoute, async (c) => {
+app.openapi(shadowingGetRoute, async (c) => {
   try {
     const user = c.get("user");
     const env = c.env as Env;
@@ -1645,38 +1646,23 @@ app.openapi(shadowingHistoryRoute, async (c) => {
     const token = extractToken(authHeader)!;
     const supabase = createSupabaseClient(env, token);
 
-    const { source_id, target_text, scene_key, limit, offset } =
-      c.req.valid("query");
+    const { source_type, source_id } = c.req.valid("query");
 
-    const limitVal = parseInt(limit || "50");
-    const offsetVal = parseInt(offset || "0");
-
-    let query = supabase
-      .from("shadowing_practices")
-      .select("*", { count: "exact" })
+    const { data, error } = await supabase
+      .from("shadowing_latest")
+      .select("*")
       .eq("user_id", user.id)
-      .order("practiced_at", { ascending: false })
-      .range(offsetVal, offsetVal + limitVal - 1);
-
-    if (source_id) query = query.eq("source_id", source_id);
-    if (target_text) query = query.eq("target_text", target_text);
-    if (scene_key) query = query.eq("scene_key", scene_key);
-
-    const { data, error, count } = await query;
+      .eq("source_type", source_type)
+      .eq("source_id", source_id)
+      .maybeSingle(); // Returns single record or null
 
     if (error) throw error;
 
-    return c.json(
-      {
-        success: true,
-        data: { practices: data || [], total: count || 0 },
-      },
-      200,
-    );
+    return c.json({ success: true, data }, 200);
   } catch (error) {
     const user = c.get("user");
     logError(error, {
-      route: "/shadowing/history",
+      route: "/shadowing/get",
       method: "GET",
       userId: user?.id,
     });
