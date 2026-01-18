@@ -63,6 +63,9 @@ import {
   SceneGenerationResponseSchema,
   ShadowRequestSchema,
   ShadowResponseSchema,
+  ShadowingHistoryResponseSchema,
+  ShadowingPracticeResponseSchema,
+  ShadowingPracticeSaveSchema,
   TranscribeResponseSchema,
   TranslateRequestSchema,
   TranslateResponseSchema,
@@ -1515,6 +1518,150 @@ app.openapi(userSyncRoute, async (c) => {
     { status: "success", synced_at: new Date().toISOString() },
     200,
   );
+});
+
+// ============================================
+// Shadowing Practice History API
+// ============================================
+
+// POST /shadowing/save
+const shadowingSaveRoute = createRoute({
+  method: "post",
+  path: "/shadowing/save",
+  request: {
+    body: {
+      content: { "application/json": { schema: ShadowingPracticeSaveSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: ShadowingPracticeResponseSchema },
+      },
+      description: "Practice saved",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Error",
+    },
+  },
+});
+
+app.openapi(shadowingSaveRoute, async (c) => {
+  try {
+    const body = c.req.valid("json");
+    const user = c.get("user");
+    const env = c.env as Env;
+    const authHeader = c.req.header("Authorization");
+    const token = extractToken(authHeader)!;
+    const supabase = createSupabaseClient(env, token);
+
+    const { data, error } = await supabase
+      .from("shadowing_practices")
+      .insert({
+        user_id: user.id,
+        target_text: body.target_text,
+        source_type: body.source_type,
+        source_id: body.source_id,
+        scene_key: body.scene_key,
+        pronunciation_score: body.pronunciation_score,
+        accuracy_score: body.accuracy_score,
+        fluency_score: body.fluency_score,
+        completeness_score: body.completeness_score,
+        prosody_score: body.prosody_score,
+        word_feedback: body.word_feedback,
+        feedback_text: body.feedback_text,
+        audio_path: body.audio_path,
+      })
+      .select("id, practiced_at")
+      .single();
+
+    if (error) throw error;
+
+    return c.json({ success: true, data }, 200);
+  } catch (error) {
+    const user = c.get("user");
+    logError(error, {
+      route: "/shadowing/save",
+      method: "POST",
+      userId: user?.id,
+    });
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// GET /shadowing/history
+const shadowingHistoryRoute = createRoute({
+  method: "get",
+  path: "/shadowing/history",
+  request: {
+    query: z.object({
+      source_id: z.string().optional(),
+      target_text: z.string().optional(),
+      scene_key: z.string().optional(),
+      limit: z.string().optional(),
+      offset: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: ShadowingHistoryResponseSchema },
+      },
+      description: "Practice history",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Error",
+    },
+  },
+});
+
+app.openapi(shadowingHistoryRoute, async (c) => {
+  try {
+    const user = c.get("user");
+    const env = c.env as Env;
+    const authHeader = c.req.header("Authorization");
+    const token = extractToken(authHeader)!;
+    const supabase = createSupabaseClient(env, token);
+
+    const { source_id, target_text, scene_key, limit, offset } =
+      c.req.valid("query");
+
+    const limitVal = parseInt(limit || "50");
+    const offsetVal = parseInt(offset || "0");
+
+    let query = supabase
+      .from("shadowing_practices")
+      .select("*", { count: "exact" })
+      .eq("user_id", user.id)
+      .order("practiced_at", { ascending: false })
+      .range(offsetVal, offsetVal + limitVal - 1);
+
+    if (source_id) query = query.eq("source_id", source_id);
+    if (target_text) query = query.eq("target_text", target_text);
+    if (scene_key) query = query.eq("scene_key", scene_key);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    return c.json(
+      {
+        success: true,
+        data: { practices: data || [], total: count || 0 },
+      },
+      200,
+    );
+  } catch (error) {
+    const user = c.get("user");
+    logError(error, {
+      route: "/shadowing/history",
+      method: "GET",
+      userId: user?.id,
+    });
+    return c.json({ error: String(error) }, 500);
+  }
 });
 
 // API Docs

@@ -68,6 +68,67 @@ class ApiService {
     }
   }
 
+  // Generic POST for authenticated requests
+  Future<Map<String, dynamic>> post(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _headers(),
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        if (kDebugMode) {
+          debugPrint('❌ [POST $endpoint] Status: ${response.statusCode}');
+          debugPrint('❌ [POST $endpoint] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed request to $endpoint: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [POST $endpoint] Exception: $e');
+      }
+      throw Exception('Error calling $endpoint: $e');
+    }
+  }
+
+  // Generic GET for authenticated requests
+  Future<Map<String, dynamic>> get(
+    String endpoint, [
+    Map<String, String>? queryParams,
+  ]) async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl$endpoint',
+      ).replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: _headers());
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        if (kDebugMode) {
+          debugPrint('❌ [GET $endpoint] Status: ${response.statusCode}');
+          debugPrint('❌ [GET $endpoint] Body: ${response.body}');
+        }
+        throw Exception(
+          'Failed request to $endpoint: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [GET $endpoint] Exception: $e');
+      }
+      throw Exception('Error calling $endpoint: $e');
+    }
+  }
+
   Future<ChatResponse> sendMessage(
     String text,
     String sceneContext,

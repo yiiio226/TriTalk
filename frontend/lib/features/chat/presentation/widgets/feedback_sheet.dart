@@ -202,6 +202,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       onShadowing: () => _openShadowingSheet(
                         context,
                         feedback.nativeExpression,
+                        'native_expression',
                       ),
                       showShadowing: true,
                     ),
@@ -238,6 +239,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       onShadowing: () => _openShadowingSheet(
                         context,
                         feedback.exampleAnswer,
+                        'reference_answer',
                       ),
                       showShadowing: true,
                     ),
@@ -296,7 +298,11 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     }
   }
 
-  void _openShadowingSheet(BuildContext context, String targetText) {
+  void _openShadowingSheet(
+    BuildContext context,
+    String targetText,
+    String sourceType,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -304,6 +310,9 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
       builder: (context) => ShadowingSheet(
         targetText: targetText,
         messageId: widget.message.id,
+        sourceType: sourceType,
+        sourceId: widget.message.id,
+        sceneKey: widget.sceneId,
       ),
     );
   }

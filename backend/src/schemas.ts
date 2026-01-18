@@ -250,3 +250,58 @@ export const ErrorSchema = z.object({
   debug_error: z.string().optional(),
   details: z.string().optional(),
 });
+
+// --- Shadowing Practice Schemas ---
+
+export const ShadowingPracticeSaveSchema = z.object({
+  target_text: z.string(),
+  source_type: z.enum([
+    "ai_message",
+    "native_expression",
+    "reference_answer",
+    "custom",
+  ]),
+  source_id: z.string().optional(),
+  scene_key: z.string().optional(),
+  pronunciation_score: z.number(),
+  accuracy_score: z.number().optional(),
+  fluency_score: z.number().optional(),
+  completeness_score: z.number().optional(),
+  prosody_score: z.number().optional(),
+  word_feedback: z.array(WordFeedbackSchema).optional(),
+  feedback_text: z.string().optional(),
+  audio_path: z.string().optional(),
+});
+
+export const ShadowingPracticeResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    id: z.string(),
+    practiced_at: z.string(),
+  }),
+});
+
+export const ShadowingHistoryResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    practices: z.array(
+      z.object({
+        id: z.string(),
+        target_text: z.string(),
+        source_type: z.string(),
+        source_id: z.string().nullable(),
+        pronunciation_score: z.number(),
+        accuracy_score: z.number().nullable(),
+        fluency_score: z.number().nullable(),
+        completeness_score: z.number().nullable(),
+        prosody_score: z.number().nullable(),
+        word_feedback: z.array(WordFeedbackSchema).nullable(),
+        feedback_text: z.string().nullable(),
+        audio_path: z.string().nullable(),
+        practiced_at: z.string(),
+      })
+    ),
+    total: z.number(),
+  }),
+});
+
