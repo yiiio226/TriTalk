@@ -60,7 +60,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   // Drag state for recording button
   double _dragOffset = 0; // Horizontal offset during drag
   String? _dragAction; // 'cancel' or 'complete' based on drag direction
-  static const double _dragThreshold = 60; // Threshold to trigger action
+  static const double _dragThreshold = 90; // Threshold to trigger action
 
   // TTS state for "Listen" button
   bool _isTTSLoading = false;
@@ -884,7 +884,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
 
               // Spacer for Center Button (72 + padding)
-              const SizedBox(width: 96),
+              const SizedBox(width: 140),
 
               // 3. Right Button (Score or Complete)
               SizedBox(
@@ -1006,7 +1006,8 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                           if (!_isRecording) return;
 
                           setState(() {
-                            _dragOffset = details.localOffsetFromOrigin.dx;
+                            _dragOffset = details.localOffsetFromOrigin.dx
+                                .clamp(-110.0, 110.0);
 
                             // Determine action based on drag position
                             if (_dragOffset < -_dragThreshold) {
