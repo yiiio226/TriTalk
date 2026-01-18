@@ -9,7 +9,7 @@ export const ChatRequestSchema = z.object({
       z.object({
         role: z.string(),
         content: z.string(),
-      })
+      }),
     )
     .optional()
     .openapi({ example: [{ role: "user", content: "Hi" }] }),
@@ -46,7 +46,7 @@ export const HintRequestSchema = z.object({
       z.object({
         role: z.string(),
         content: z.string(),
-      })
+      }),
     )
     .optional(),
   scene_context: z.string().openapi({ example: "Ordering at a cafe" }),
@@ -99,7 +99,7 @@ export const AnalyzeResponseSchema = z.object({
         text: z.string(),
         explanation: z.string(),
         type: z.enum(["Idiom", "Slang", "Common Phrase"]),
-      })
+      }),
     )
     .optional(),
 });
@@ -231,6 +231,16 @@ export const WordFeedbackSchema = z.object({
   phonemes: z.array(PhonemeAssessmentSchema),
 });
 
+// Smart segment for targeted practice - represents a portion of text with natural break points
+export const SmartSegmentSchema = z.object({
+  text: z.string().openapi({ example: "The quick brown" }),
+  start_index: z.number().openapi({ example: 0 }),
+  end_index: z.number().openapi({ example: 2 }),
+  score: z.number().openapi({ example: 85.5 }),
+  has_error: z.boolean().openapi({ example: false }),
+  word_count: z.number().openapi({ example: 3 }),
+});
+
 export const PronunciationAssessmentResponseSchema = z.object({
   recognition_status: z.string().openapi({ example: "Success" }),
   display_text: z.string().openapi({ example: "The quick brown fox" }),
@@ -241,6 +251,9 @@ export const PronunciationAssessmentResponseSchema = z.object({
   prosody_score: z.number().optional().openapi({ example: 82.5 }),
   words: z.array(WordAssessmentSchema),
   word_feedback: z.array(WordFeedbackSchema).optional(),
+  segments: z.array(SmartSegmentSchema).openapi({
+    description: "Smart segments based on natural pauses for targeted practice",
+  }),
 });
 
 // --- Error Schema ---
@@ -299,9 +312,8 @@ export const ShadowingHistoryResponseSchema = z.object({
         feedback_text: z.string().nullable(),
         audio_path: z.string().nullable(),
         practiced_at: z.string(),
-      })
+      }),
     ),
     total: z.number(),
   }),
 });
-

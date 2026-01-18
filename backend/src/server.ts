@@ -1468,6 +1468,15 @@ app.post("/speech/assess", async (c) => {
           duration: phoneme.duration,
         })),
       })),
+      // Smart segments for targeted practice
+      segments: result.segments.map((seg) => ({
+        text: seg.text,
+        start_index: seg.startIndex,
+        end_index: seg.endIndex,
+        score: seg.score,
+        has_error: seg.hasError,
+        word_count: seg.wordCount,
+      })),
     };
 
     return c.json(response, 200);
