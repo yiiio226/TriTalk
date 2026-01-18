@@ -1880,13 +1880,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Score Header Skeleton
-          Row(
-            children: [
-              _buildSkeletonBox(height: 32, width: 100, radius: 8),
-              const SizedBox(width: 12),
-              _buildSkeletonBox(height: 24, width: 120, radius: 4),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     _buildSkeletonBox(height: 32, width: 100, radius: 8),
+          //     const SizedBox(width: 12),
+          //     _buildSkeletonBox(height: 24, width: 120, radius: 4),
+          //   ],
+          // ),
           const SizedBox(height: 24),
 
           // Stats Row Skeleton
