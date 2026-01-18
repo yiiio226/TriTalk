@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import '../../../study/data/vocab_service.dart';
+import '../../../study/data/shadowing_history_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import '../../../study/presentation/widgets/shadowing_sheet.dart';
@@ -303,6 +304,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     String targetText,
     String sourceType,
   ) {
+    // Open sheet immediately with loading state
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -313,6 +315,38 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         sourceType: sourceType,
         sourceId: widget.message.id,
         sceneKey: widget.sceneId,
+        isLoadingInitialData: true,
+        onLoadInitialData: () async {
+          // This callback will be called by ShadowingSheet to load cloud data
+          try {
+            final latestPractice = await ShadowingHistoryService()
+                .getLatestPractice(targetText);
+
+            if (latestPractice != null) {
+              // Convert ShadowingPractice to VoiceFeedback format
+              final cloudFeedback = VoiceFeedback(
+                pronunciationScore: latestPractice.pronunciationScore,
+                correctedText: latestPractice.targetText,
+                nativeExpression: '',
+                feedback: latestPractice.feedbackText ?? '',
+                azureAccuracyScore: latestPractice.accuracyScore,
+                azureFluencyScore: latestPractice.fluencyScore,
+                azureCompletenessScore: latestPractice.completenessScore,
+                azureProsodyScore: latestPractice.prosodyScore,
+                azureWordFeedback: latestPractice.wordFeedback,
+              );
+              
+              return (
+                feedback: cloudFeedback,
+                audioPath: latestPractice.audioPath,
+              );
+            }
+          } catch (e) {
+            debugPrint('⚠️ Failed to fetch cloud shadowing data: $e');
+          }
+          
+          return null;
+        },
       ),
     );
   }
