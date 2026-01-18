@@ -1,6 +1,6 @@
 import 'package:frontend/core/env/env.dart';
 
 class SupabaseConfig {
-  static const String url = Env.supabaseUrl;
-  static const String anonKey = Env.supabaseAnonKey;
+  static String get url => Env.supabaseUrl;
+  static String get anonKey => Env.supabaseAnonKey;
 }
