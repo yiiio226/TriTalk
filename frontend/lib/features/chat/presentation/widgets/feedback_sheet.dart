@@ -309,6 +309,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.white.withValues(alpha: 0.5),
       builder: (context) => ShadowingSheet(
         targetText: targetText,
         messageId: widget.message.id,
