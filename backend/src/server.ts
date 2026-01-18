@@ -19,18 +19,14 @@ import {
 import {
   authMiddleware,
   callAzureSpeechAssessment,
-  callMiniMaxTTS,
-  callMiniMaxTTSNonStreaming,
   callOpenRouter,
   callOpenRouterMultimodal,
   callOpenRouterStreaming,
   createSupabaseClient,
   extractToken,
-  getTTSConfig,
   isAzureSpeechConfigured,
-  isTTSConfigured,
   processWordsForUI,
-  // GCP TTS
+  // GCP TTS (primary TTS service)
   callGCPTTS,
   callGCPTTSStreaming,
   parseGCPTTSStreamChunk,
@@ -1073,100 +1069,8 @@ app.openapi(optimizeRoute, async (c) => {
   }
 });
 
-// POST /tts/generate - Streaming
-app.post("/tts/generate", async (c) => {
-  try {
-    const env = c.env as Env;
-    if (!isTTSConfigured(env)) {
-      return c.json({ error: "TTS service not configured." }, 503);
-    }
-    const body = (await c.req.json()) as any;
-    if (!body.text || body.text.trim().length === 0) {
-      return c.json({ error: "Text is required." }, 400);
-    }
-    const ttsConfig = getTTSConfig(env);
-    const ttsResponse = await callMiniMaxTTS(ttsConfig, {
-      text: body.text,
-      voiceId: body.voice_id,
-    });
-    if (!ttsResponse.ok) {
-      const errorText = await ttsResponse.text();
-      console.error("MiniMax TTS API Error:", errorText);
-      return c.json(
-        { error: `TTS generation failed: ${ttsResponse.status}` },
-        502,
-      );
-    }
-
-    c.header("Content-Type", "application/x-ndjson");
-    c.header("Content-Encoding", "Identity");
-
-    return stream(
-      c,
-      async (stream) => {
-        stream.onAbort(() => console.log("Stream aborted: /tts/generate"));
-        let chunkIndex = 0;
-        for await (const line of iterateStreamLines(ttsResponse)) {
-          console.log("MiniMax Raw Line:", line.substring(0, 200));
-          if (!line.startsWith("data:")) continue;
-          const jsonStr = line.slice(5).trim();
-          if (!jsonStr || jsonStr === "[DONE]") continue;
-          try {
-            const chunkData = JSON.parse(jsonStr);
-            if (chunkData.base_resp && chunkData.base_resp.status_code !== 0) {
-              await stream.writeln(
-                JSON.stringify({
-                  type: "error",
-                  error: chunkData.base_resp.status_msg,
-                }),
-              );
-              continue;
-            }
-            const audioHex = chunkData.data?.audio;
-            if (audioHex) {
-              const audioBase64 = hexToBase64(audioHex);
-              await stream.writeln(
-                JSON.stringify({
-                  type: "audio_chunk",
-                  chunk_index: chunkIndex++,
-                  audio_base64: audioBase64,
-                }),
-              );
-            }
-            if (chunkData.extra_info?.audio_length) {
-              await stream.writeln(
-                JSON.stringify({
-                  type: "info",
-                  duration_ms: chunkData.extra_info.audio_length,
-                }),
-              );
-            }
-          } catch (e) {
-            console.error("Error processing TTS chunk:", e);
-          }
-        }
-        await stream.writeln(JSON.stringify({ type: "done" }));
-      },
-      async (err, stream) => {
-        console.error("Stream error in /tts/generate:", err);
-        await stream.writeln(
-          JSON.stringify({ type: "error", error: String(err) }),
-        );
-      },
-    );
-  } catch (error) {
-    const user = c.get("user");
-    logError(error, {
-      route: "/tts/generate",
-      method: "POST",
-      userId: user?.id,
-    });
-    return c.json({ error: "TTS generation failed." }, 500);
-  }
-});
-
 // POST /tts/gcp/generate - Streaming TTS using GCP Vertex AI Gemini
-// NOTE: Audio format is WAV (PCM 24kHz 16-bit), different from MiniMax's MP3
+// NOTE: Audio format is WAV (PCM 24kHz 16-bit)
 app.post("/tts/gcp/generate", async (c) => {
   try {
     const env = c.env as Env;

@@ -4,7 +4,7 @@
 
 /**
  * Convert hex string to base64 string.
- * Used primarily for converting MiniMax TTS audio hex to base64.
+ * Used for converting audio hex data to base64 format.
  */
 export function hexToBase64(hexString: string): string {
   if (
@@ -38,7 +38,7 @@ export function arrayBufferToBase64(arrayBuffer: ArrayBuffer): string {
   for (let i = 0; i < uint8Array.length; i += CHUNK_SIZE) {
     const chunk = uint8Array.subarray(
       i,
-      Math.min(i + CHUNK_SIZE, uint8Array.length)
+      Math.min(i + CHUNK_SIZE, uint8Array.length),
     );
     binary += String.fromCharCode.apply(null, Array.from(chunk));
   }

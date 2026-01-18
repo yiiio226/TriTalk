@@ -108,10 +108,7 @@ export interface Env {
   // TRITALK_API_KEY: string;
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  // MiniMax TTS API credentials
-  MINIMAX_API_KEY?: string;
-  MINIMAX_GROUP_ID?: string;
-  MINIMAX_DEFAULT_VOICE_ID?: string;
+
   // Azure Speech API credentials for Pronunciation Assessment
   AZURE_SPEECH_KEY?: string;
   AZURE_SPEECH_REGION?: string;

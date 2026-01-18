@@ -9,16 +9,6 @@ export {
   type OpenRouterMessage,
 } from "./openrouter";
 
-export {
-  callMiniMaxTTS,
-  callMiniMaxTTSNonStreaming,
-  buildTTSRequestBody,
-  isTTSConfigured,
-  getTTSConfig,
-  type TTSRequestOptions,
-  type TTSConfig,
-} from "./minimax";
-
 export { createSupabaseClient, extractToken } from "./supabase";
 
 export { authenticateUser, authMiddleware } from "./auth";
