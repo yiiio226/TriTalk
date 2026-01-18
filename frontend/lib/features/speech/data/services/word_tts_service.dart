@@ -285,11 +285,8 @@ class WordTtsService {
 
   // ==================== Private Methods ====================
 
-  /// Get base URL for API
-  String get _baseUrl {
-    const useProd = bool.fromEnvironment('USE_PROD', defaultValue: false);
-    return useProd ? Env.prodBackendUrl : Env.localBackendUrl;
-  }
+  /// Get base URL for API (automatically selects dev/prod based on kDebugMode)
+  String get _baseUrl => Env.backendUrl;
 
   /// Get auth headers
   Map<String, String> _headers() {

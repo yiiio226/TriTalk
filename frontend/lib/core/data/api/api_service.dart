@@ -6,23 +6,10 @@ import 'package:frontend/features/chat/domain/models/message.dart';
 import '../local/preferences_service.dart';
 import 'package:frontend/core/env/env.dart';
 
-// 环境枚举
-enum Environment {
-  localDev, // 本地开发环境 (Wrangler dev server)
-  production, // 生产环境 (已部署的 Cloudflare Workers)
-}
-
 class ApiService {
-  // ==================== 环境配置 ====================
-  // 自动环境切换:
-  // - 开发时: flutter run (默认使用 localDev)
-  // - 生产时: flutter run --dart-define=USE_PROD=true
-  //          flutter build apk --dart-define=USE_PROD=true
-  static const Environment currentEnvironment =
-      bool.fromEnvironment('USE_PROD', defaultValue: false)
-      ? Environment.production
-      : Environment.localDev;
-  // =================================================
+  // Environment is now handled automatically by Env.backendUrl
+  // - Debug mode: Uses development backend URL
+  // - Release mode: Uses production backend URL
 
   // Helper to create headers with Auth Token
   static Map<String, String> _headers() {
@@ -42,31 +29,8 @@ class ApiService {
     };
   }
 
-  // 本地开发 URL (Cloudflare Workers 开发服务器)
-  static const String _localDevUrl = Env.localBackendUrl;
-
-  // 生产环境 URL (已部署的 Cloudflare Workers)
-  static const String _productionUrl = Env.prodBackendUrl;
-
-  // 根据当前环境自动选择 URL
-  static String get baseUrl {
-    switch (currentEnvironment) {
-      case Environment.localDev:
-        if (kDebugMode) {
-          debugPrint(
-            '🔧 API Environment: LOCAL DEV ($currentEnvironment) -> $_localDevUrl',
-          );
-        }
-        return _localDevUrl;
-      case Environment.production:
-        if (kDebugMode) {
-          debugPrint(
-            '🚀 API Environment: PRODUCTION ($currentEnvironment) -> $_productionUrl',
-          );
-        }
-        return _productionUrl;
-    }
-  }
+  // Base URL automatically determined by environment (kDebugMode)
+  static String get baseUrl => Env.backendUrl;
 
   // Generic POST for authenticated requests
   Future<Map<String, dynamic>> post(
