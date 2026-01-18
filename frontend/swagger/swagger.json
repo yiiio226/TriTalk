@@ -909,6 +909,437 @@
           }
         }
       }
+    },
+    "/shadowing/save": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "target_text": {
+                    "type": "string"
+                  },
+                  "source_type": {
+                    "type": "string",
+                    "enum": [
+                      "ai_message",
+                      "native_expression",
+                      "reference_answer",
+                      "custom"
+                    ]
+                  },
+                  "source_id": {
+                    "type": "string"
+                  },
+                  "scene_key": {
+                    "type": "string"
+                  },
+                  "pronunciation_score": {
+                    "type": "number"
+                  },
+                  "accuracy_score": {
+                    "type": "number"
+                  },
+                  "fluency_score": {
+                    "type": "number"
+                  },
+                  "completeness_score": {
+                    "type": "number"
+                  },
+                  "prosody_score": {
+                    "type": "number"
+                  },
+                  "word_feedback": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "example": "the"
+                        },
+                        "score": {
+                          "type": "number",
+                          "example": 92.3
+                        },
+                        "level": {
+                          "type": "string",
+                          "enum": [
+                            "perfect",
+                            "warning",
+                            "error",
+                            "missing"
+                          ],
+                          "example": "perfect"
+                        },
+                        "error_type": {
+                          "type": "string",
+                          "example": "None"
+                        },
+                        "phonemes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "phoneme": {
+                                "type": "string",
+                                "example": "ð"
+                              },
+                              "accuracy_score": {
+                                "type": "number",
+                                "example": 85.5
+                              },
+                              "offset": {
+                                "type": "number"
+                              },
+                              "duration": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "phoneme",
+                              "accuracy_score"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "score",
+                        "level",
+                        "error_type",
+                        "phonemes"
+                      ]
+                    }
+                  },
+                  "feedback_text": {
+                    "type": "string"
+                  },
+                  "audio_path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "target_text",
+                  "source_type",
+                  "pronunciation_score"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Practice saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "practiced_at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "practiced_at"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shadowing/history": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "source_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "target_text",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "scene_key",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Practice history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "practices": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "target_text": {
+                                "type": "string"
+                              },
+                              "source_type": {
+                                "type": "string"
+                              },
+                              "source_id": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "pronunciation_score": {
+                                "type": "number"
+                              },
+                              "accuracy_score": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "fluency_score": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "completeness_score": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "prosody_score": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "word_feedback": {
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "text": {
+                                      "type": "string",
+                                      "example": "the"
+                                    },
+                                    "score": {
+                                      "type": "number",
+                                      "example": 92.3
+                                    },
+                                    "level": {
+                                      "type": "string",
+                                      "enum": [
+                                        "perfect",
+                                        "warning",
+                                        "error",
+                                        "missing"
+                                      ],
+                                      "example": "perfect"
+                                    },
+                                    "error_type": {
+                                      "type": "string",
+                                      "example": "None"
+                                    },
+                                    "phonemes": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "phoneme": {
+                                            "type": "string",
+                                            "example": "ð"
+                                          },
+                                          "accuracy_score": {
+                                            "type": "number",
+                                            "example": 85.5
+                                          },
+                                          "offset": {
+                                            "type": "number"
+                                          },
+                                          "duration": {
+                                            "type": "number"
+                                          }
+                                        },
+                                        "required": [
+                                          "phoneme",
+                                          "accuracy_score"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "text",
+                                    "score",
+                                    "level",
+                                    "error_type",
+                                    "phonemes"
+                                  ]
+                                }
+                              },
+                              "feedback_text": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "audio_path": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "practiced_at": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "target_text",
+                              "source_type",
+                              "source_id",
+                              "pronunciation_score",
+                              "accuracy_score",
+                              "fluency_score",
+                              "completeness_score",
+                              "prosody_score",
+                              "word_feedback",
+                              "feedback_text",
+                              "audio_path",
+                              "practiced_at"
+                            ]
+                          }
+                        },
+                        "total": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "practices",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "webhooks": {}

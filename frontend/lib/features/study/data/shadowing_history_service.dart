@@ -24,6 +24,7 @@ class ShadowingHistoryService {
     List<AzureWordFeedback>? wordFeedback,
     String? feedbackText,
     String? audioPath,
+    List<SmartSegmentFeedback>? segments,
   }) async {
     final response = await _apiService.post('/shadowing/save', {
       'target_text': targetText,
@@ -38,6 +39,7 @@ class ShadowingHistoryService {
       'word_feedback': wordFeedback?.map((w) => w.toJson()).toList(),
       'feedback_text': feedbackText,
       'audio_path': audioPath,
+      'segments': segments?.map((s) => s.toJson()).toList(),
     });
 
     return response['data']['id'];

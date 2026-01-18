@@ -275,7 +275,7 @@ export const ShadowingPracticeSaveSchema = z.object({
     "custom",
   ]),
   source_id: z.string().optional(),
-  scene_key: z.string().optional(),
+  scene_key: z.string().nullable(),
   pronunciation_score: z.number(),
   accuracy_score: z.number().optional(),
   fluency_score: z.number().optional(),
@@ -284,6 +284,8 @@ export const ShadowingPracticeSaveSchema = z.object({
   word_feedback: z.array(WordFeedbackSchema).optional(),
   feedback_text: z.string().optional(),
   audio_path: z.string().optional(),
+  // Smart segments based on natural pauses (optional for backward compatibility)
+  segments: z.array(SmartSegmentSchema).optional(),
 });
 
 export const ShadowingPracticeResponseSchema = z.object({
@@ -311,6 +313,7 @@ export const ShadowingHistoryResponseSchema = z.object({
         word_feedback: z.array(WordFeedbackSchema).nullable(),
         feedback_text: z.string().nullable(),
         audio_path: z.string().nullable(),
+        segments: z.array(SmartSegmentSchema).nullable(), // Smart segments (null for historical data)
         practiced_at: z.string(),
       }),
     ),
