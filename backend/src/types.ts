@@ -115,6 +115,12 @@ export interface Env {
   // Azure Speech API credentials for Pronunciation Assessment
   AZURE_SPEECH_KEY?: string;
   AZURE_SPEECH_REGION?: string;
+  // GCP Vertex AI TTS credentials (Service Account)
+  GCP_PROJECT_ID?: string;
+  GCP_CLIENT_EMAIL?: string;
+  GCP_PRIVATE_KEY?: string;
+  GCP_REGION?: string;
+  GCP_TTS_DEFAULT_VOICE_NAME?: string;
 }
 
 export interface PolishRequest {

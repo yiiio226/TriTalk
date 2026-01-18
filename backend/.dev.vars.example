@@ -16,3 +16,13 @@ MINIMAX_GROUP_ID=your_minimax_group_id_here
 # Get your key from: https://portal.azure.com -> Cognitive Services -> Speech
 AZURE_SPEECH_KEY=your_azure_speech_subscription_key_here
 AZURE_SPEECH_REGION=westus2
+
+# GCP Vertex AI TTS (Optional - via Service Account)
+# Create a Service Account with "Vertex AI User" role
+# Download the JSON key and extract:
+GCP_PROJECT_ID=your_gcp_project_id
+GCP_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+GCP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+GCP_REGION=us-central1
+# Optional: Default voice (Aoede, Charon, Fenrir, Kore, Puck, Orbit)
+# GCP_TTS_DEFAULT_VOICE_NAME=Kore

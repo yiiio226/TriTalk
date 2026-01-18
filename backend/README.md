@@ -117,6 +117,7 @@ backend/
 │   │   ├── index.ts       # 服务导出
 │   │   ├── openrouter.ts  # OpenRouter API 客户端
 │   │   ├── minimax.ts     # MiniMax TTS API 客户端
+│   │   ├── gcp-tts.ts     # GCP Text-to-Speech API 客户端
 │   │   ├── azure-speech.ts # Azure Speech 发音评估 API 客户端
 │   │   ├── supabase.ts    # Supabase 客户端工具
 │   │   └── auth.ts        # 认证服务和中间件
