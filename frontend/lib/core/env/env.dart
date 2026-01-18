@@ -14,4 +14,10 @@ class Env {
       '23529939770-aimiq75b1piq14d9mtusdqvfs2mf1mj1.apps.googleusercontent.com';
   static const String googleOAuthWebClientId =
       '23529939770-sb285ba3t0s286si1ip3ln773d80911l.apps.googleusercontent.com';
+
+  // Debug flags
+  /// When true, Word TTS will skip local cache and local TTS engine,
+  /// always using cloud API (GCP Vertex AI) for testing purposes.
+  /// Set to false in production.
+  static const bool forceCloudTTS = false;
 }

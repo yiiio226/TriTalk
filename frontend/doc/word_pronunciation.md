@@ -411,9 +411,9 @@ const Map<String, LanguageConfig> languageConfigs = {
 
 | 方案              | 示例                                      | 优缺点                           |
 | ----------------- | ----------------------------------------- | -------------------------------- |
-| URL 编码          | `pineapple.mp3`, `%E4%BD%A0%E5%A5%BD.mp3` | ⚠️ 大小写问题，长度可能超限      |
-| **Hash (MD5)** ✅ | `a1b2c3d4e5f6.mp3`                        | ✅ 长度固定，无特殊字符          |
-| Base64            | `cGluZWFwcGxl.mp3`                        | ⚠️ 可能较长，含 `/` `+` 特殊字符 |
+| URL 编码          | `pineapple.wav`, `%E4%BD%A0%E5%A5%BD.wav` | ⚠️ 大小写问题，长度可能超限      |
+| **Hash (MD5)** ✅ | `a1b2c3d4e5f6.wav`                        | ✅ 长度固定，无特殊字符          |
+| Base64            | `cGluZWFwcGxl.wav`                        | ⚠️ 可能较长，含 `/` `+` 特殊字符 |
 
 > 📝 **建议**：使用 Hash（MD5）方案，配合元数据文件支持调试。
 
@@ -426,9 +426,9 @@ const Map<String, LanguageConfig> languageConfigs = {
 示例：
 | 原始单词 | 转小写 | MD5 Hash | 文件名 |
 |----------|--------|----------|--------|
-| `Hello` | `hello` | `5d41402abc4b2a76...` | `5d41402abc4b2a76.mp3` |
-| `hello` | `hello` | `5d41402abc4b2a76...` | `5d41402abc4b2a76.mp3` |
-| `你好` | `你好` | `7eca689f0d3389d9...` | `7eca689f0d3389d9.mp3` |
+| `Hello` | `hello` | `5d41402abc4b2a76...` | `5d41402abc4b2a76.wav` |
+| `hello` | `hello` | `5d41402abc4b2a76...` | `5d41402abc4b2a76.wav` |
+| `你好` | `你好` | `7eca689f0d3389d9...` | `7eca689f0d3389d9.wav` |
 
 > 💡 **大小写处理**：统一转小写后再 hash，确保 `Hello` 和 `hello` 命中同一缓存。
 
@@ -440,15 +440,15 @@ const Map<String, LanguageConfig> languageConfigs = {
 {
   "5d41402abc4b2a76": {
     "word": "hello",
-    "format": "mp3",
+    "format": "wav",
     "createdAt": "2026-01-16T10:30:00Z",
-    "source": "minimax"
+    "source": "gemini"
   },
   "7eca689f0d3389d9": {
     "word": "你好",
-    "format": "mp3",
+    "format": "wav",
     "createdAt": "2026-01-16T10:31:00Z",
-    "source": "minimax"
+    "source": "gemini"
   }
 }
 ```
@@ -459,11 +459,11 @@ const Map<String, LanguageConfig> languageConfigs = {
 📁 word_tts_cache/
 └── 📁 en-US/
     ├── _metadata.json
-    ├── 5d41402abc4b2a76.mp3
+    ├── 5d41402abc4b2a76.wav
     └── ...
 └── 📁 zh-CN/
     ├── _metadata.json
-    ├── 7eca689f0d3389d9.mp3
+    ├── 7eca689f0d3389d9.wav
     └── ...
 ```
 
