@@ -12,7 +12,7 @@ import '../../../study/presentation/widgets/shadowing_sheet.dart';
 import '../../../study/presentation/widgets/save_note_sheet.dart';
 import 'package:frontend/core/data/api/api_service.dart';
 import '../../../../core/data/local/preferences_service.dart';
-import '../../../../core/services/streaming_tts_service.dart';
+import '../../../../core/mixins/tts_playback_mixin.dart';
 import '../../../../features/study/data/shadowing_history_service.dart';
 import '../../../../core/widgets/top_toast.dart';
 
@@ -47,7 +47,7 @@ class ChatBubble extends StatefulWidget {
 }
 
 class _ChatBubbleState extends State<ChatBubble>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TtsPlaybackMixin {
   // Track which messages have STARTED their typewriter animation
   // This prevents the animation from restarting if the user scrolls away and back
   static final Set<String> _startedAnimations = {};
@@ -71,12 +71,10 @@ class _ChatBubbleState extends State<ChatBubble>
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
 
-  // TTS state
+  // TTS state (updated by TtsPlaybackMixin callbacks)
   bool _isTTSLoading = false;
   bool _isTTSPlaying = false;
   String? _ttsAudioPath; // Cached TTS audio file path
-  StreamSubscription<void>?
-  _ttsCompleteSubscription; // Single TTS completion listener
 
   // Shadow loading state
   bool _isShadowLoading = false;
@@ -155,14 +153,7 @@ class _ChatBubbleState extends State<ChatBubble>
       });
     }
 
-    // Setup TTS completion listener once (to avoid accumulation)
-    _ttsCompleteSubscription = _audioPlayer.onPlayerComplete.listen((event) {
-      if (mounted) {
-        setState(() {
-          _isTTSPlaying = false;
-        });
-      }
-    });
+    // TTS state is now managed by TtsPlaybackMixin callbacks
   }
 
   @override
@@ -326,8 +317,8 @@ class _ChatBubbleState extends State<ChatBubble>
   void dispose() {
     _typewriterTimer?.cancel();
     _loadingController.dispose();
-    _ttsCompleteSubscription?.cancel(); // Cancel TTS completion listener
     _audioPlayer.dispose();
+    disposeTtsPlayback(); // Clean up TTS mixin resources
     super.dispose();
   }
 
@@ -1231,147 +1222,40 @@ class _ChatBubbleState extends State<ChatBubble>
   }
 
   /// Play text-to-speech for the message content using true streaming
-  /// First play: streams audio with low latency, then caches for future use
-  /// Subsequent plays: uses cached audio file for instant playback
+  /// Delegates to TtsPlaybackMixin for streaming and caching logic
   Future<void> _playTextToSpeech() async {
-    final streamingTts = StreamingTtsService.instance;
-
-    // Debug log: cache hit/miss info
-    if (kDebugMode) {
-      final cacheKey = widget.message.id;
-      final cachedPath = _ttsAudioPath;
-      final fileExists = cachedPath != null
-          ? await File(cachedPath).exists()
-          : false;
-      final cacheStatus = (cachedPath != null && fileExists)
-          ? "✅ CACHE HIT"
-          : "❌ CACHE MISS";
-      debugPrint('🎧 [TTS Cache] Key: $cacheKey | $cacheStatus');
-    }
-
-    // If already playing, stop it
-    if (_isTTSPlaying || streamingTts.isPlaying) {
-      await streamingTts.stop();
-      setState(() {
-        _isTTSPlaying = false;
-        _isTTSLoading = false;
-      });
-      return;
-    }
-
-    // Check if we have a cached audio file
-    if (_ttsAudioPath != null && await File(_ttsAudioPath!).exists()) {
-      if (kDebugMode) {
-        debugPrint('🔊 [TTS] Using cached audio: $_ttsAudioPath');
-      }
-
-      // Setup state listener for cached playback
-      _setupStateListener(streamingTts);
-
-      try {
-        setState(() => _isTTSLoading = true);
-        await streamingTts.playCached(_ttsAudioPath!);
-      } catch (e) {
-        if (mounted) {
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to play audio: $e'),
-              backgroundColor: AppColors.lightError,
-            ),
-          );
-        }
-      }
-      return;
-    }
-
-    // Show loading state
-    setState(() {
-      _isTTSLoading = true;
-    });
-
-    // Setup state change listener
-    _setupStateListener(streamingTts);
-
-    // Setup cache callback
-    streamingTts.onCacheSaved = (cachePath) {
-      if (mounted) {
+    await playTts(
+      text: widget.message.content,
+      cacheKey: widget.message.id,
+      cachedPath: _ttsAudioPath,
+      isMounted: () => mounted,
+      onStateChange: (loading, playing) {
         setState(() {
-          _ttsAudioPath = cachePath;
+          _isTTSLoading = loading;
+          _isTTSPlaying = playing;
         });
+      },
+      onCacheSaved: (cachePath) {
+        setState(() => _ttsAudioPath = cachePath);
         // Persist to Message object so it survives page navigation
         widget.onMessageUpdate?.call(
           widget.message.copyWith(ttsAudioPath: cachePath),
         );
-        if (kDebugMode) {
-          debugPrint('🔊 [TTS] Cache saved: $cachePath');
-          debugPrint('🔊 [TTS] Persisted to Message object');
+      },
+      onError: (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error),
+              backgroundColor: AppColors.lightError,
+            ),
+          );
         }
-      }
-    };
-
-    try {
-      // Start streaming playback with caching
-      await streamingTts.playStreaming(
-        widget.message.content,
-        messageId: widget.message.id,
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isTTSLoading = false;
-          _isTTSPlaying = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate speech: $e'),
-            backgroundColor: AppColors.lightError,
-          ),
-        );
-      }
-    }
+      },
+    );
   }
 
-  /// Setup state change listener for StreamingTtsService
-  void _setupStateListener(StreamingTtsService streamingTts) {
-    streamingTts.onStateChanged = (state) {
-      if (!mounted) return;
-
-      switch (state) {
-        case StreamingTtsState.loading:
-        case StreamingTtsState.buffering:
-          setState(() {
-            _isTTSLoading = true;
-            _isTTSPlaying = false;
-          });
-          break;
-        case StreamingTtsState.playing:
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = true;
-          });
-          break;
-        case StreamingTtsState.completed:
-        case StreamingTtsState.stopped:
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = false;
-          });
-          break;
-        case StreamingTtsState.error:
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = false;
-          });
-          break;
-        case StreamingTtsState.idle:
-          break;
-      }
-    };
-  }
+  // _setupStateListener is now handled by TtsPlaybackMixin
 
   Widget _buildLoadingIndicator() {
     return SizedBox(

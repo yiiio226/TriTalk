@@ -13,6 +13,7 @@ import 'package:shimmer/shimmer.dart';
 
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/auth/auth_provider.dart';
+import 'package:frontend/core/mixins/tts_playback_mixin.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/features/study/data/shadowing_history_service.dart';
@@ -61,7 +62,7 @@ class ShadowingSheet extends ConsumerStatefulWidget {
 }
 
 class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, TtsPlaybackMixin {
   final AudioRecorder _audioRecorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -81,11 +82,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   String? _dragAction; // 'cancel' or 'complete' based on drag direction
   static const double _dragThreshold = 90; // Threshold to trigger action
 
-  // TTS state for "Listen" button
+  // TTS state for "Listen" button (updated by TtsPlaybackMixin callbacks)
   bool _isTTSLoading = false;
   bool _isTTSPlaying = false;
   String? _ttsAudioPath; // Cached TTS audio file path
-  final AudioPlayer _ttsPlayer = AudioPlayer(); // Separate player for TTS
 
   // Word TTS service for playing individual word pronunciations
   final WordTtsService _wordTtsService = WordTtsService();
@@ -98,7 +98,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     super.initState();
     // Initialize with previous feedback if available
     _feedback = widget.initialFeedback;
-    _ttsAudioPath = widget.initialTtsAudioPath; // Initialize cached TTS path
+    _ttsAudioPath = widget.initialTtsAudioPath;
     _isLoadingInitialData = widget.isLoadingInitialData;
 
     // Initialize waveform animation controller
@@ -116,14 +116,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       }
     });
 
-    // Listen to TTS audio player state
-    _ttsPlayer.onPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() {
-          _isTTSPlaying = state == PlayerState.playing;
-        });
-      }
-    });
+    // TTS state is now managed by TtsPlaybackMixin
 
     // Load initial data asynchronously if callback is provided
     if (widget.onLoadInitialData != null && _isLoadingInitialData) {
@@ -163,160 +156,45 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     _waveformController.dispose();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
-    _ttsPlayer.dispose(); // Dispose TTS player
+    disposeTtsPlayback(); // Clean up TTS mixin resources
     // Note: We do NOT delete the recording on dispose anymore since it's persisted
     super.dispose();
   }
 
   /// Play text-to-speech for the target text (correct pronunciation)
-  /// First play: streams audio with low latency, then caches for future use
-  /// Subsequent plays: uses cached audio file for instant playback
+  /// Delegates to TtsPlaybackMixin for streaming and caching logic
   Future<void> _playTextToSpeech() async {
-    final streamingTts = StreamingTtsService.instance;
-
-    // Debug log: cache hit/miss info
-    if (kDebugMode) {
-      final cacheKey = widget.messageId;
-      final cachedPath = _ttsAudioPath;
-      final fileExists = cachedPath != null
-          ? await File(cachedPath).exists()
-          : false;
-      final cacheStatus = (cachedPath != null && fileExists)
-          ? "✅ CACHE HIT"
-          : "❌ CACHE MISS";
-      debugPrint('🎧 [TTS Cache] Key: $cacheKey | $cacheStatus');
-    }
-
-    // If already playing TTS, stop it
-    if (_isTTSPlaying || streamingTts.isPlaying) {
-      await streamingTts.stop();
-      setState(() {
-        _isTTSPlaying = false;
-        _isTTSLoading = false;
-      });
-      return;
-    }
-
-    // Stop recording playback if playing
-    if (_isPlaying) {
-      await _audioPlayer.stop();
-    }
-
-    // Check if we have a cached audio file
-    if (_ttsAudioPath != null && await File(_ttsAudioPath!).exists()) {
-      if (kDebugMode) {
-        debugPrint('🔊 [TTS] Using cached audio: $_ttsAudioPath');
-      }
-
-      _setupTtsStateListener(streamingTts);
-
-      try {
-        setState(() => _isTTSLoading = true);
-        await streamingTts.playCached(_ttsAudioPath!);
-      } catch (e) {
-        if (mounted) {
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = false;
-          });
-          showTopToast(context, 'Failed to play audio: $e', isError: true);
-        }
-      }
-      return;
-    }
-
-    // Show loading state
-    setState(() {
-      _isTTSLoading = true;
-    });
-
-    // Setup state change listener
-    _setupTtsStateListener(streamingTts);
-
-    // Setup cache callback
-    streamingTts.onCacheSaved = (cachePath) {
-      if (mounted) {
+    await playTts(
+      text: widget.targetText,
+      cacheKey: widget.messageId,
+      cachedPath: _ttsAudioPath,
+      isMounted: () => mounted,
+      onStateChange: (loading, playing) {
         setState(() {
-          _ttsAudioPath = cachePath;
+          _isTTSLoading = loading;
+          _isTTSPlaying = playing;
         });
+      },
+      beforePlay: () async {
+        // Stop recording playback if playing
+        if (_isPlaying) {
+          await _audioPlayer.stop();
+        }
+      },
+      onCacheSaved: (cachePath) {
+        setState(() => _ttsAudioPath = cachePath);
         // Notify parent to persist the TTS audio path
         widget.onTtsUpdate?.call(cachePath);
-        if (kDebugMode) {
-          debugPrint('🔊 [TTS] Cache saved: $cachePath');
+      },
+      onError: (error) {
+        if (mounted) {
+          showTopToast(context, error, isError: true);
         }
-      }
-    };
-
-    try {
-      // Start streaming playback with caching
-      await streamingTts.playStreaming(
-        widget.targetText,
-        messageId: widget.messageId,
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isTTSLoading = false;
-          _isTTSPlaying = false;
-        });
-        showTopToast(context, 'Failed to generate speech: $e', isError: true);
-      }
-    }
+      },
+    );
   }
 
-  /// Setup state change listener for StreamingTtsService
-  void _setupTtsStateListener(StreamingTtsService streamingTts) {
-    streamingTts.onStateChanged = (state) {
-      if (!mounted) return;
-
-      switch (state) {
-        case StreamingTtsState.loading:
-        case StreamingTtsState.buffering:
-          setState(() {
-            _isTTSLoading = true;
-            _isTTSPlaying = false;
-          });
-          break;
-        case StreamingTtsState.playing:
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = true;
-          });
-          break;
-        case StreamingTtsState.completed:
-        case StreamingTtsState.stopped:
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = false;
-          });
-          break;
-        case StreamingTtsState.error:
-          setState(() {
-            _isTTSLoading = false;
-            _isTTSPlaying = false;
-          });
-          break;
-        case StreamingTtsState.idle:
-          break;
-      }
-    };
-  }
-
-  /// Legacy method for playing TTS audio (kept for word pronunciation)
-  Future<void> _playTTSAudio(String audioPath) async {
-    try {
-      await _ttsPlayer.play(UrlSource(Uri.file(audioPath).toString()));
-      if (mounted) {
-        setState(() {
-          _isTTSPlaying = true;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        showTopToast(context, 'Failed to play audio: $e', isError: true);
-      }
-    }
-  }
+  // _setupTtsStateListener is now handled by TtsPlaybackMixin
 
   /// Play pronunciation for a single word
   Future<void> _playWordPronunciation(String word) async {
@@ -1435,9 +1313,12 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       constraints.maxWidth - totalGapWidth;
 
                   int totalWords = 0;
-                  for (var seg in segments) totalWords += seg.wordCount;
-                  if (totalWords == 0)
+                  for (var seg in segments) {
+                    totalWords += seg.wordCount;
+                  }
+                  if (totalWords == 0) {
                     totalWords = count; // Avoid division by zero
+                  }
 
                   double currentX = 0;
                   for (int i = 0; i < count; i++) {
@@ -1718,8 +1599,6 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     if (score >= 60) return AppColors.ly500; // Warning/Orange-ish
     return AppColors.lightError; // Red
   }
-
-
 
   Widget _buildAzureWordFeedback(VoiceFeedback feedback) {
     final words = feedback.azureWordFeedback ?? [];
@@ -2068,7 +1947,9 @@ class IntonationPainter extends CustomPainter {
 
     // Calculate total weight (word count)
     int totalWords = 0;
-    for (var seg in segments!) totalWords += seg.wordCount;
+    for (var seg in segments!) {
+      totalWords += seg.wordCount;
+    }
     // If no word counts, assume equal weight
     if (totalWords == 0) totalWords = count * 10;
 
@@ -2190,10 +2071,11 @@ class IntonationPainter extends CustomPainter {
         }
       }
 
-      if (localX == 0)
+      if (localX == 0) {
         path.moveTo(rect.left + localX, y);
-      else
+      } else {
         path.lineTo(rect.left + localX, y);
+      }
     }
 
     // Ensure we draw to the very end
