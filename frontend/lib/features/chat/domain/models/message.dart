@@ -155,9 +155,10 @@ class ReviewFeedback {
   final bool isPerfect;
   final String correctedText;
   final String nativeExpression;
-  final String explanation; // Kept for backward compatibility, same as grammarExplanation
+  final String
+  explanation; // Kept for backward compatibility, same as grammarExplanation
   final String exampleAnswer;
-  
+
   // New specific explanation fields
   final String? grammarExplanation;
   final String? nativeExpressionReason;
@@ -191,12 +192,14 @@ class ReviewFeedback {
     // For backward compatibility: use grammar_explanation if available, otherwise fall back to explanation
     final grammarExp = json['grammar_explanation'] as String?;
     final oldExp = json['explanation'] as String? ?? '';
-    
+
     return ReviewFeedback(
       isPerfect: json['is_perfect'] ?? false,
       correctedText: json['corrected_text'] ?? '',
       nativeExpression: json['native_expression'] ?? '',
-      explanation: grammarExp ?? oldExp, // Use new field if available, otherwise old field
+      explanation:
+          grammarExp ??
+          oldExp, // Use new field if available, otherwise old field
       exampleAnswer: json['example_answer'] ?? '',
       grammarExplanation: grammarExp ?? oldExp,
       nativeExpressionReason: json['native_expression_reason'] as String?,
@@ -542,6 +545,9 @@ class VoiceFeedback {
   final List<AzureWordFeedback>?
   azureWordFeedback; // Traffic Light word feedback
 
+  // Smart segments based on natural pauses (from Azure Break data)
+  final List<SmartSegmentFeedback>? smartSegments;
+
   VoiceFeedback({
     required this.pronunciationScore,
     required this.correctedText,
@@ -555,6 +561,7 @@ class VoiceFeedback {
     this.azureCompletenessScore,
     this.azureProsodyScore,
     this.azureWordFeedback,
+    this.smartSegments,
   });
 
   /// Create a copy with updated Azure data
@@ -565,6 +572,7 @@ class VoiceFeedback {
     double? azureCompletenessScore,
     double? azureProsodyScore,
     List<AzureWordFeedback>? azureWordFeedback,
+    List<SmartSegmentFeedback>? smartSegments,
   }) {
     return VoiceFeedback(
       pronunciationScore: pronunciationScore ?? this.pronunciationScore,
@@ -579,12 +587,17 @@ class VoiceFeedback {
           azureCompletenessScore ?? this.azureCompletenessScore,
       azureProsodyScore: azureProsodyScore ?? this.azureProsodyScore,
       azureWordFeedback: azureWordFeedback ?? this.azureWordFeedback,
+      smartSegments: smartSegments ?? this.smartSegments,
     );
   }
 
   /// Whether Azure pronunciation data is available
   bool get hasAzureData =>
       azureWordFeedback != null && azureWordFeedback!.isNotEmpty;
+
+  /// Whether smart segments are available
+  bool get hasSmartSegments =>
+      smartSegments != null && smartSegments!.isNotEmpty;
 
   /// Get words with pronunciation issues (from Azure data)
   List<AzureWordFeedback> get problemWords =>
@@ -604,6 +617,7 @@ class VoiceFeedback {
       'azure_completeness_score': azureCompletenessScore,
       'azure_prosody_score': azureProsodyScore,
       'azure_word_feedback': azureWordFeedback?.map((w) => w.toJson()).toList(),
+      'smart_segments': smartSegments?.map((s) => s.toJson()).toList(),
     };
   }
 
@@ -628,6 +642,56 @@ class VoiceFeedback {
       azureWordFeedback: (json['azure_word_feedback'] as List?)
           ?.map((w) => AzureWordFeedback.fromJson(w))
           .toList(),
+      smartSegments: (json['smart_segments'] as List?)
+          ?.map((s) => SmartSegmentFeedback.fromJson(s))
+          .toList(),
     );
+  }
+}
+
+/// Smart segment feedback for targeted practice
+/// Represents a portion of text that should be practiced together based on natural pauses
+class SmartSegmentFeedback {
+  final String text; // The text content of this segment
+  final int startIndex; // Start word index (inclusive)
+  final int endIndex; // End word index (inclusive)
+  final double score; // Average pronunciation score for this segment (0-100)
+  final bool hasError; // If segment contains red/yellow words (score < 80)
+  final int wordCount; // Number of words in segment
+
+  SmartSegmentFeedback({
+    required this.text,
+    required this.startIndex,
+    required this.endIndex,
+    required this.score,
+    required this.hasError,
+    required this.wordCount,
+  });
+
+  factory SmartSegmentFeedback.fromJson(Map<String, dynamic> json) {
+    return SmartSegmentFeedback(
+      text: json['text'] ?? '',
+      startIndex: json['start_index'] ?? 0,
+      endIndex: json['end_index'] ?? 0,
+      score: (json['score'] as num?)?.toDouble() ?? 0.0,
+      hasError: json['has_error'] ?? false,
+      wordCount: json['word_count'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'start_index': startIndex,
+    'end_index': endIndex,
+    'score': score,
+    'has_error': hasError,
+    'word_count': wordCount,
+  };
+
+  /// Traffic light level based on score
+  String get level {
+    if (score > 80) return 'perfect';
+    if (score >= 60) return 'warning';
+    return 'error';
   }
 }

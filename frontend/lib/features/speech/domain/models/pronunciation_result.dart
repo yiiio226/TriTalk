@@ -27,6 +27,10 @@ class PronunciationResult {
   /// 单词级反馈列表
   final List<WordFeedback> wordFeedback;
 
+  /// 智能分段列表 (基于自然停顿)
+  /// Smart segments based on natural pauses for targeted practice
+  final List<SmartSegment> segments;
+
   PronunciationResult({
     required this.recognitionStatus,
     required this.displayText,
@@ -36,6 +40,7 @@ class PronunciationResult {
     required this.completenessScore,
     this.prosodyScore,
     required this.wordFeedback,
+    this.segments = const [],
   });
 
   factory PronunciationResult.fromJson(Map<String, dynamic> json) {
@@ -56,6 +61,11 @@ class PronunciationResult {
               ?.map((w) => WordFeedback.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
+      segments:
+          (json['segments'] as List<dynamic>?)
+              ?.map((s) => SmartSegment.fromJson(s as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -68,6 +78,7 @@ class PronunciationResult {
     'completeness_score': completenessScore,
     'prosody_score': prosodyScore,
     'word_feedback': wordFeedback.map((w) => w.toJson()).toList(),
+    'segments': segments.map((s) => s.toJson()).toList(),
   };
 
   /// 是否识别成功
@@ -75,6 +86,63 @@ class PronunciationResult {
 
   /// 获取整体评分等级
   FeedbackLevel get overallLevel => FeedbackLevel.fromScore(pronunciationScore);
+}
+
+/// 智能分段模型 - 用于分段练习
+/// Smart segment model for targeted practice
+class SmartSegment {
+  /// 分段文本内容
+  final String text;
+
+  /// 起始单词索引 (inclusive)
+  final int startIndex;
+
+  /// 结束单词索引 (inclusive)
+  final int endIndex;
+
+  /// 该分段的平均发音评分 (0-100)
+  final double score;
+
+  /// 分段是否包含错误 (有 score < 80 的单词)
+  final bool hasError;
+
+  /// 分段中的单词数量
+  final int wordCount;
+
+  SmartSegment({
+    required this.text,
+    required this.startIndex,
+    required this.endIndex,
+    required this.score,
+    required this.hasError,
+    required this.wordCount,
+  });
+
+  factory SmartSegment.fromJson(Map<String, dynamic> json) {
+    return SmartSegment(
+      text: json['text'] as String? ?? '',
+      startIndex: json['start_index'] as int? ?? 0,
+      endIndex: json['end_index'] as int? ?? 0,
+      score: (json['score'] as num?)?.toDouble() ?? 0.0,
+      hasError: json['has_error'] as bool? ?? false,
+      wordCount: json['word_count'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'start_index': startIndex,
+    'end_index': endIndex,
+    'score': score,
+    'has_error': hasError,
+    'word_count': wordCount,
+  };
+
+  /// 获取分段评分等级
+  FeedbackLevel get feedbackLevel => FeedbackLevel.fromScore(score);
+
+  /// 获取分段颜色 (Traffic Light)
+  Color get color => feedbackLevel.color;
 }
 
 /// 单词反馈模型 (Traffic Light 系统)

@@ -19,14 +19,13 @@ import 'package:frontend/features/study/data/shadowing_history_service.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 
-
 class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
   final String messageId; // Message ID for file naming
   final VoiceFeedback? initialFeedback; // Previous shadowing result to display
   final String? initialAudioPath; // Previous recording path
   final String? initialTtsAudioPath; // Previous TTS audio path (cached)
-  
+
   // Practice context for history tracking
   final String
   sourceType; // 'ai_message', 'native_expression', 'reference_answer'
@@ -36,7 +35,7 @@ class ShadowingSheet extends ConsumerStatefulWidget {
   final Function(VoiceFeedback, String?)?
   onFeedbackUpdate; // Callback with feedback and audio path
   final Function(String)? onTtsUpdate; // Callback when TTS audio is generated
-  
+
   // Async loading support
   final bool
   isLoadingInitialData; // Show skeleton loader while loading cloud data
@@ -75,7 +74,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   // _errorMessage removed
   String? _currentRecordingPath; // Track current recording for replay/cleanup
   DateTime? _recordingStartTime; // Track recording duration
-  
+
   // Loading state for initial data
   bool _isLoadingInitialData = false;
 
@@ -128,7 +127,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         });
       }
     });
-    
+
     // Load initial data asynchronously if callback is provided
     if (widget.onLoadInitialData != null && _isLoadingInitialData) {
       _loadInitialData();
@@ -328,32 +327,46 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
   /// Play audio for a specific segment of the target text using true streaming
   /// Uses StreamingTtsService for low-latency playback (audio starts as chunks arrive)
+  /// When smart segments are available (from Azure Break data), uses those for precise segmentation
   Future<void> _playSegmentAudio(int segmentIndex) async {
-    // Split target text into roughly 3 equal segments by word count
-    final words = widget.targetText.split(' ');
-    final segmentSize = (words.length / 3).ceil();
+    String segmentText;
 
-    int startIndex, endIndex;
-    switch (segmentIndex) {
-      case 0: // First segment
-        startIndex = 0;
-        endIndex = segmentSize;
-        break;
-      case 1: // Middle segment
-        startIndex = segmentSize;
-        endIndex = segmentSize * 2;
-        break;
-      case 2: // Last segment
-        startIndex = segmentSize * 2;
-        endIndex = words.length;
-        break;
-      default:
-        return;
+    // Use smart segments if available from pronunciation assessment
+    if (_feedback?.hasSmartSegments == true) {
+      final segments = _feedback!.smartSegments!;
+      if (segmentIndex >= segments.length) return;
+      segmentText = segments[segmentIndex].text;
+
+      if (kDebugMode) {
+        debugPrint('🔊 Playing smart segment $segmentIndex: "$segmentText"');
+      }
+    } else {
+      // Fallback: Split target text into roughly 3 equal segments by word count
+      final words = widget.targetText.split(' ');
+      final segmentSize = (words.length / 3).ceil();
+
+      int startIndex, endIndex;
+      switch (segmentIndex) {
+        case 0: // First segment
+          startIndex = 0;
+          endIndex = segmentSize;
+          break;
+        case 1: // Middle segment
+          startIndex = segmentSize;
+          endIndex = segmentSize * 2;
+          break;
+        case 2: // Last segment
+          startIndex = segmentSize * 2;
+          endIndex = words.length;
+          break;
+        default:
+          return;
+      }
+
+      segmentText = words
+          .sublist(startIndex, endIndex.clamp(0, words.length))
+          .join(' ');
     }
-
-    final segmentText = words
-        .sublist(startIndex, endIndex.clamp(0, words.length))
-        .join(' ');
 
     if (segmentText.isEmpty) return;
 
@@ -606,6 +619,30 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           )
           .toList();
 
+      // Convert smart segments from pronunciation result
+      final smartSegments = result.segments
+          .map(
+            (s) => SmartSegmentFeedback(
+              text: s.text,
+              startIndex: s.startIndex,
+              endIndex: s.endIndex,
+              score: s.score,
+              hasError: s.hasError,
+              wordCount: s.wordCount,
+            ),
+          )
+          .toList();
+
+      if (kDebugMode && smartSegments.isNotEmpty) {
+        debugPrint(
+          '📊 Smart Segments: ${smartSegments.length} segments detected',
+        );
+        for (int i = 0; i < smartSegments.length; i++) {
+          final seg = smartSegments[i];
+          debugPrint('   Segment $i: "${seg.text}" (score: ${seg.score})');
+        }
+      }
+
       final voiceFeedback = VoiceFeedback(
         pronunciationScore: result.pronunciationScore.round(),
         correctedText: widget.targetText,
@@ -616,6 +653,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         azureCompletenessScore: result.completenessScore,
         azureProsodyScore: result.prosodyScore,
         azureWordFeedback: azureWordFeedback,
+        smartSegments: smartSegments.isNotEmpty ? smartSegments : null,
       );
 
       setState(() {
