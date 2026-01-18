@@ -66,20 +66,29 @@ class ShadowingHistoryService {
 
     // Sync to cloud asynchronously (fire and forget, or with retry logic)
     try {
-      final response = await _apiService.put('/shadowing/upsert', {
+      // Build request body, filtering out null values
+      final body = <String, dynamic>{
         'target_text': targetText,
         'source_type': sourceType,
         'source_id': sourceId,
         'scene_key': sceneKey,
         'pronunciation_score': pronunciationScore,
-        'accuracy_score': accuracyScore,
-        'fluency_score': fluencyScore,
-        'completeness_score': completenessScore,
-        'prosody_score': prosodyScore,
-        'word_feedback': wordFeedback?.map((w) => w.toJson()).toList(),
-        'feedback_text': feedbackText,
-        'segments': segments?.map((s) => s.toJson()).toList(),
-      });
+      };
+      if (accuracyScore != null) body['accuracy_score'] = accuracyScore;
+      if (fluencyScore != null) body['fluency_score'] = fluencyScore;
+      if (completenessScore != null) {
+        body['completeness_score'] = completenessScore;
+      }
+      if (prosodyScore != null) body['prosody_score'] = prosodyScore;
+      if (wordFeedback != null) {
+        body['word_feedback'] = wordFeedback.map((w) => w.toJson()).toList();
+      }
+      if (feedbackText != null) body['feedback_text'] = feedbackText;
+      if (segments != null) {
+        body['segments'] = segments.map((s) => s.toJson()).toList();
+      }
+
+      final response = await _apiService.put('/shadowing/upsert', body);
 
       final cloudId = response['data']['id'];
 

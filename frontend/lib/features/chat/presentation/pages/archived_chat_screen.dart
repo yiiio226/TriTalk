@@ -75,21 +75,34 @@ class ArchivedChatScreen extends StatelessWidget {
               child: Container(
                 color: AppColors.lightBackground,
                 child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 36, 16, 16), // 20 + 16 spacing
+                  padding: const EdgeInsets.fromLTRB(
+                    16,
+                    36,
+                    16,
+                    16,
+                  ), // 20 + 16 spacing
                   itemCount: displayMessages.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final msg = displayMessages[index];
-                  return Align(
-                    alignment: msg.isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: ChatBubble(key: ValueKey(msg.id), message: msg),
-                  );
-                },
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final msg = displayMessages[index];
+                    return Align(
+                      alignment: msg.isUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: ChatBubble(
+                        key: ValueKey(msg.id),
+                        message: msg,
+                        sceneId:
+                            '', // Archived chat doesn't belong to active scene
+                        isMultiSelectMode: false,
+                        targetLanguage:
+                            'en-US', // Default, no shadowing in archive
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
           ],
         ),
       ),

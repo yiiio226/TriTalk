@@ -320,9 +320,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               itemCount: LanguageConstants.supportedLanguages.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final lang = LanguageConstants.supportedLanguages[index];
+                final option = LanguageConstants.supportedLanguages[index];
                 return _buildLanguageOption(
-                  lang,
+                  option,
                   _selectedNativeLang,
                   (val) => setState(() => _selectedNativeLang = val),
                 );
@@ -355,9 +355,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               itemCount: LanguageConstants.supportedLanguages.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final lang = LanguageConstants.supportedLanguages[index];
+                final option = LanguageConstants.supportedLanguages[index];
                 return _buildLanguageOption(
-                  lang,
+                  option,
                   _selectedTargetLang,
                   (val) => setState(() => _selectedTargetLang = val),
                 );
@@ -370,13 +370,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildLanguageOption(
-    String lang,
-    String currentSelection,
+    LanguageOption option,
+    String currentSelectionCode,
     Function(String) onSelect,
   ) {
-    final isSelected = lang == currentSelection;
+    final isSelected = option.code == currentSelectionCode;
     return GestureDetector(
-      onTap: () => onSelect(lang),
+      onTap: () => onSelect(option.code),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
@@ -389,9 +389,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         ),
         child: Row(
           children: [
+            if (option.flag.isNotEmpty) ...[
+              Text(option.flag, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: Text(
-                lang,
+                option.label,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

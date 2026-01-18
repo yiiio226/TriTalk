@@ -43,29 +43,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _email = user.email;
         _avatarUrl = user.avatarUrl ?? 'assets/images/user_avatar_male.png';
         _gender = user.gender;
-        _nativeLanguage = user.nativeLanguage;
-        _targetLanguage = user.targetLanguage;
+        // Ensure we handle both legacy names and new codes gracefully
+        _nativeLanguage = LanguageConstants.getIsoCode(user.nativeLanguage);
+        _targetLanguage = LanguageConstants.getIsoCode(user.targetLanguage);
       });
     } else {
-      // Fallback if accessed without auth (shouldn't happen in new flow)
+      // Fallback if accessed without auth
       setState(() {
         _name = 'Guest';
         _email = 'guest@example.com';
         _avatarUrl = 'assets/images/user_avatar_male.png';
         _gender = 'male';
-        _nativeLanguage = LanguageConstants.defaultNativeLanguage;
-        _targetLanguage = LanguageConstants.defaultTargetLanguage;
+        _nativeLanguage = LanguageConstants.defaultNativeLanguageCode;
+        _targetLanguage = LanguageConstants.defaultTargetLanguageCode;
       });
     }
   }
 
-  Future<void> _updateNativeLanguage(String language) async {
-    await _userService.updateUserProfile(nativeLanguage: language);
+  Future<void> _updateNativeLanguage(String languageCode) async {
+    await _userService.updateUserProfile(nativeLanguage: languageCode);
     _loadUserData(); // Reload to reflect changes
   }
 
-  Future<void> _updateTargetLanguage(String language) async {
-    await _userService.updateUserProfile(targetLanguage: language);
+  Future<void> _updateTargetLanguage(String languageCode) async {
+    await _userService.updateUserProfile(targetLanguage: languageCode);
     _loadUserData();
   }
 
@@ -81,7 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _showLanguageDialog(
     String title,
-    String currentLanguage,
+    String currentLanguageCode,
     Function(String) onSelect,
   ) {
     showModalBottomSheet(
@@ -115,11 +116,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                children: LanguageConstants.supportedLanguages.map((lang) {
-                  final isSelected = lang == currentLanguage;
+                children: LanguageConstants.supportedLanguages.map((option) {
+                  final isSelected = option.code == currentLanguageCode;
                   return InkWell(
                     onTap: () {
-                      onSelect(lang);
+                      onSelect(option.code);
                       Navigator.pop(context);
                     },
                     child: Container(
@@ -138,16 +139,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            lang,
-                            style: AppTypography.body1.copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.lightTextPrimary,
-                            ),
+                          Row(
+                            children: [
+                              if (option.flag.isNotEmpty) ...[
+                                Text(
+                                  option.flag,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                              ],
+                              Text(
+                                option.label,
+                                style: AppTypography.body1.copyWith(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.lightTextPrimary,
+                                ),
+                              ),
+                            ],
                           ),
                           if (isSelected)
                             const Icon(
@@ -287,7 +299,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildMenuCard(
                     context,
                     title: 'Native Language',
-                    subtitle: _nativeLanguage,
+                    subtitle: LanguageConstants.getLabel(_nativeLanguage),
                     icon: Icons.public,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
@@ -302,7 +314,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildMenuCard(
                     context,
                     title: 'Learning Language',
-                    subtitle: _targetLanguage,
+                    subtitle: LanguageConstants.getLabel(_targetLanguage),
                     icon: Icons.school,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
@@ -326,7 +338,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context,
                     title: 'Favorites', // Unified title
                     subtitle: 'Vocabulary, Sentences, Chat History',
-               
+
                     icon: Icons.bookmark,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {

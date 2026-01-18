@@ -28,18 +28,20 @@ class ChatBubble extends StatefulWidget {
   final VoidCallback? onSelectionToggle; // Callback to toggle selection
   final VoidCallback?
   onContentChanged; // Callback when content changes (for auto-scroll)
+  final String targetLanguage; // Language for assessment/TTS
 
   const ChatBubble({
     super.key,
     required this.message,
     this.onTap,
-    this.sceneId,
+    required this.sceneId,
     this.onMessageUpdate,
     this.onShowFeedback,
-    this.isMultiSelectMode = false,
+    required this.isMultiSelectMode,
     this.onLongPress,
     this.onSelectionToggle,
     this.onContentChanged,
+    this.targetLanguage = 'en-US', // Default for backward compatibility
   });
 
   @override
@@ -1150,6 +1152,7 @@ class _ChatBubbleState extends State<ChatBubble>
           sourceType: 'ai_message',
           sourceId: message.id,
           sceneKey: widget.sceneId,
+          targetLanguage: widget.targetLanguage, // Pass the language
           initialFeedback: cloudFeedback ?? message.shadowingFeedback,
           initialTtsAudioPath: message.ttsAudioPath ?? _ttsAudioPath,
           onFeedbackUpdate: (feedback, audioPath) {

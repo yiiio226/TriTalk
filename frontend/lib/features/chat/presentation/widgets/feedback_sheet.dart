@@ -10,11 +10,13 @@ import 'package:frontend/core/design/app_design_system.dart';
 class FeedbackSheet extends StatefulWidget {
   final Message message;
   final String sceneId;
+  final String targetLanguage; // Language for assessment
 
   const FeedbackSheet({
     super.key,
     required this.message,
     required this.sceneId,
+    this.targetLanguage = 'en-US', // Default for backward compatibility
   });
 
   @override
@@ -317,6 +319,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
         sourceType: sourceType,
         sourceId: widget.message.id,
         sceneKey: widget.sceneId,
+        targetLanguage: widget.targetLanguage, // Pass language
         isLoadingInitialData: true,
         onLoadInitialData: () async {
           // This callback will be called by ShadowingSheet to load cloud data

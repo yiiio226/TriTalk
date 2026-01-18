@@ -25,7 +25,7 @@ class PreferencesService {
     return _prefs?.getString(
           storageKey.getUserScopedKey(LanguageConstants.keyNativeLanguage),
         ) ??
-        LanguageConstants.defaultNativeLanguage;
+        LanguageConstants.defaultNativeLanguageCode;
   }
 
   Future<void> setNativeLanguage(String language) async {
@@ -43,7 +43,7 @@ class PreferencesService {
     return _prefs?.getString(
           storageKey.getUserScopedKey(LanguageConstants.keyTargetLanguage),
         ) ??
-        LanguageConstants.defaultTargetLanguage;
+        LanguageConstants.defaultTargetLanguageCode;
   }
 
   Future<void> setTargetLanguage(String language) async {
