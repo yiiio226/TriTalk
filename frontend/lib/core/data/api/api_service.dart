@@ -636,6 +636,8 @@ class ApiService {
   ///
   /// NOTE: GCP TTS returns raw PCM audio (24kHz, 16-bit, mono).
   /// The final 'done' chunk includes WAV header for proper playback.
+  /// Streaming TTS API with diagnostic logging.
+  /// Logs timing information to help diagnose streaming latency.
   Stream<TTSStreamChunk> generateTTSStream(
     String text, {
     String? messageId,
@@ -654,8 +656,37 @@ class ApiService {
     });
 
     final client = http.Client();
+
+    // 🔊 TTS Streaming Diagnostics
+    final requestStartTime = DateTime.now();
+    DateTime? firstByteTime;
+    DateTime? firstAudioChunkTime;
+    int totalAudioChunks = 0;
+    int totalBytesReceived = 0;
+
+    if (kDebugMode) {
+      debugPrint(
+        '🔊 [TTS Stream] REQUEST STARTED at ${requestStartTime.toIso8601String()}',
+      );
+      debugPrint(
+        '   Text length: ${text.length} chars, preview: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."',
+      );
+    }
+
     try {
       final streamedResponse = await client.send(request);
+
+      // Log when we first got response headers (connection established)
+      final connectionTime = DateTime.now();
+      if (kDebugMode) {
+        debugPrint(
+          '🔊 [TTS Stream] CONNECTION ESTABLISHED at ${connectionTime.toIso8601String()}',
+        );
+        debugPrint(
+          '   Latency to first response: ${connectionTime.difference(requestStartTime).inMilliseconds}ms',
+        );
+        debugPrint('   Status code: ${streamedResponse.statusCode}');
+      }
 
       if (streamedResponse.statusCode != 200) {
         throw Exception(
@@ -670,6 +701,19 @@ class ApiService {
       Map<String, dynamic>? audioFormat;
 
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
+        // Track first byte timing
+        if (firstByteTime == null) {
+          firstByteTime = DateTime.now();
+          if (kDebugMode) {
+            debugPrint(
+              '🔊 [TTS Stream] FIRST BYTE RECEIVED at ${firstByteTime.toIso8601String()}',
+            );
+            debugPrint(
+              '   Time since request: ${firstByteTime.difference(requestStartTime).inMilliseconds}ms',
+            );
+          }
+        }
+
         buffer += chunk;
 
         while (buffer.contains('\n')) {
@@ -692,6 +736,32 @@ class ApiService {
                     audioFormat = json['audio_format'] as Map<String, dynamic>;
                   }
                   if (audioBase64 != null) {
+                    // Track first audio chunk timing
+                    if (firstAudioChunkTime == null) {
+                      firstAudioChunkTime = DateTime.now();
+                      if (kDebugMode) {
+                        debugPrint(
+                          '🔊 [TTS Stream] FIRST AUDIO CHUNK at ${firstAudioChunkTime.toIso8601String()}',
+                        );
+                        debugPrint(
+                          '   Time since request: ${firstAudioChunkTime.difference(requestStartTime).inMilliseconds}ms',
+                        );
+                        debugPrint(
+                          '   ⚠️ NOTE: Audio playback should START NOW for true streaming!',
+                        );
+                      }
+                    }
+
+                    totalAudioChunks++;
+                    final chunkBytes = base64Decode(audioBase64).length;
+                    totalBytesReceived += chunkBytes;
+
+                    if (kDebugMode) {
+                      debugPrint(
+                        '🔊 [TTS Stream] Audio chunk #$totalAudioChunks received: $chunkBytes bytes (total: $totalBytesReceived bytes)',
+                      );
+                    }
+
                     audioChunksBase64.add(audioBase64);
                     yield TTSStreamChunk(
                       type: TTSChunkType.audioChunk,
@@ -711,6 +781,27 @@ class ApiService {
                   );
                   break;
                 case 'done':
+                  final doneTime = DateTime.now();
+
+                  if (kDebugMode) {
+                    debugPrint(
+                      '🔊 [TTS Stream] ALL DATA RECEIVED at ${doneTime.toIso8601String()}',
+                    );
+                    debugPrint(
+                      '   Total time: ${doneTime.difference(requestStartTime).inMilliseconds}ms',
+                    );
+                    debugPrint('   Total chunks: $totalAudioChunks');
+                    debugPrint('   Total audio bytes: $totalBytesReceived');
+                    if (firstAudioChunkTime != null) {
+                      debugPrint(
+                        '   ⏱️ Streaming window (first chunk to done): ${doneTime.difference(firstAudioChunkTime).inMilliseconds}ms',
+                      );
+                      debugPrint(
+                        '   ⚠️ If playback starts AFTER this point, streaming is NOT being utilized!',
+                      );
+                    }
+                  }
+
                   // Combine all PCM chunks and add WAV header
                   String? finalAudioBase64;
                   if (audioChunksBase64.isNotEmpty) {

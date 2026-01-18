@@ -9,7 +9,6 @@ import {
   ALLOWED_ORIGINS,
   arrayBufferToBase64,
   detectAudioFormat,
-  hexToBase64,
   iterateStreamLines,
   parseJSON,
   sanitizeText,
@@ -17,24 +16,23 @@ import {
 
 // Services
 import {
+  GCP_TTS_AUDIO_FORMAT,
   authMiddleware,
   callAzureSpeechAssessment,
+  // GCP TTS (primary TTS service)
+  callGCPTTS,
+  callGCPTTSStreaming,
   callOpenRouter,
   callOpenRouterMultimodal,
   callOpenRouterStreaming,
   createSupabaseClient,
   extractToken,
-  isAzureSpeechConfigured,
-  processWordsForUI,
-  // GCP TTS (primary TTS service)
-  callGCPTTS,
-  callGCPTTSStreaming,
-  parseGCPTTSStreamChunk,
-  createWavHeader,
-  isGCPTTSConfigured,
   getGCPTTSConfig,
   getGeminiVoiceFromLanguage,
-  GCP_TTS_AUDIO_FORMAT,
+  isAzureSpeechConfigured,
+  isGCPTTSConfigured,
+  parseGCPTTSStreamChunk,
+  processWordsForUI,
 } from "./services";
 
 // Prompts
@@ -45,7 +43,6 @@ import {
   buildOptimizePrompt,
   buildSceneGeneratePrompt,
   buildScenePolishPrompt,
-  buildStreamingVoiceChatSystemPrompt,
   buildTranscribePrompt,
   buildTranscriptionPrompt,
   buildTranslatePrompt,
@@ -274,7 +271,7 @@ Generate ONLY a JSON response with this format:
       return c.json(
         {
           message: replyText,
-          review_feedback: null, // No feedback for initial greeting
+          review_feedback: undefined, // No feedback for initial greeting
         },
         200,
       );

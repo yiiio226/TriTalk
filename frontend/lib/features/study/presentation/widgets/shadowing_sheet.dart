@@ -16,6 +16,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
 import 'package:frontend/core/auth/auth_provider.dart';
+import 'package:frontend/core/services/streaming_tts_service.dart';
 
 import 'package:frontend/core/widgets/top_toast.dart';
 
@@ -118,12 +119,17 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   }
 
   /// Play text-to-speech for the target text (correct pronunciation)
+  /// First play: streams audio with low latency, then caches for future use
+  /// Subsequent plays: uses cached audio file for instant playback
   Future<void> _playTextToSpeech() async {
+    final streamingTts = StreamingTtsService.instance;
+
     // If already playing TTS, stop it
-    if (_isTTSPlaying) {
-      await _ttsPlayer.stop();
+    if (_isTTSPlaying || streamingTts.isPlaying) {
+      await streamingTts.stop();
       setState(() {
         _isTTSPlaying = false;
+        _isTTSLoading = false;
       });
       return;
     }
@@ -133,9 +139,26 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       await _audioPlayer.stop();
     }
 
-    // If we have a cached audio file, play it directly
+    // Check if we have a cached audio file
     if (_ttsAudioPath != null && await File(_ttsAudioPath!).exists()) {
-      await _playTTSAudio(_ttsAudioPath!);
+      if (kDebugMode) {
+        debugPrint('🔊 [TTS] Using cached audio: $_ttsAudioPath');
+      }
+
+      _setupTtsStateListener(streamingTts);
+
+      try {
+        setState(() => _isTTSLoading = true);
+        await streamingTts.playCached(_ttsAudioPath!);
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = false;
+          });
+          showTopToast(context, 'Failed to play audio: $e', isError: true);
+        }
+      }
       return;
     }
 
@@ -144,84 +167,79 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       _isTTSLoading = true;
     });
 
-    try {
-      final apiService = ApiService();
+    // Setup state change listener
+    _setupTtsStateListener(streamingTts);
 
-      // Use streaming API to receive audio chunks
-      // GCP TTS returns PCM audio; the 'done' chunk has the complete WAV with header
-      String? finalWavBase64;
-      await for (final chunk in apiService.generateTTSStream(
-        widget.targetText,
-      )) {
-        if (!mounted) break;
-
-        switch (chunk.type) {
-          case TTSChunkType.audioChunk:
-            // PCM chunks are being collected internally
-            break;
-          case TTSChunkType.info:
-            // Duration info received
-            break;
-          case TTSChunkType.done:
-            // The 'done' chunk contains the complete WAV audio with header
-            finalWavBase64 = chunk.audioBase64;
-            break;
-          case TTSChunkType.error:
-            throw Exception(chunk.error ?? 'TTS generation failed');
-        }
-      }
-
-      if (!mounted) return;
-
-      if (finalWavBase64 == null) {
-        throw Exception('No audio received');
-      }
-
-      // Decode the WAV audio
-      final audioBytes = base64Decode(finalWavBase64);
-
-      // Save to cache with user-scoped path
-      final cacheDir = await getApplicationDocumentsDirectory();
-      final storageKey = StorageKeyService();
-      final ttsCacheDir = Directory(
-        storageKey.getUserScopedPath(cacheDir.path, 'tts_cache'),
-      );
-      if (!await ttsCacheDir.exists()) {
-        await ttsCacheDir.create(recursive: true);
-      }
-
-      // Use message ID as filename (sanitized)
-      // Note: GCP TTS returns WAV format audio
-      final safeFileName = widget.messageId.replaceAll(
-        RegExp(r'[^a-zA-Z0-9-_]'),
-        '_',
-      );
-      final audioFile = File('${ttsCacheDir.path}/$safeFileName.wav');
-      await audioFile.writeAsBytes(audioBytes);
-
+    // Setup cache callback
+    streamingTts.onCacheSaved = (cachePath) {
       if (mounted) {
         setState(() {
-          _ttsAudioPath = audioFile.path;
-          _isTTSLoading = false;
+          _ttsAudioPath = cachePath;
         });
-
         // Notify parent to persist the TTS audio path
-        widget.onTtsUpdate?.call(audioFile.path);
-
-        // Play the audio immediately
-        await _playTTSAudio(audioFile.path);
+        widget.onTtsUpdate?.call(cachePath);
+        if (kDebugMode) {
+          debugPrint('🔊 [TTS] Cache saved: $cachePath');
+        }
       }
+    };
+
+    try {
+      // Start streaming playback with caching
+      await streamingTts.playStreaming(
+        widget.targetText,
+        messageId: widget.messageId,
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
           _isTTSLoading = false;
+          _isTTSPlaying = false;
         });
         showTopToast(context, 'Failed to generate speech: $e', isError: true);
       }
     }
   }
 
-  /// Play TTS audio from the given file path
+  /// Setup state change listener for StreamingTtsService
+  void _setupTtsStateListener(StreamingTtsService streamingTts) {
+    streamingTts.onStateChanged = (state) {
+      if (!mounted) return;
+
+      switch (state) {
+        case StreamingTtsState.loading:
+        case StreamingTtsState.buffering:
+          setState(() {
+            _isTTSLoading = true;
+            _isTTSPlaying = false;
+          });
+          break;
+        case StreamingTtsState.playing:
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = true;
+          });
+          break;
+        case StreamingTtsState.completed:
+        case StreamingTtsState.stopped:
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = false;
+          });
+          break;
+        case StreamingTtsState.error:
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = false;
+          });
+          break;
+        case StreamingTtsState.idle:
+          break;
+      }
+    };
+  }
+
+  /// Legacy method for playing TTS audio (kept for word pronunciation)
   Future<void> _playTTSAudio(String audioPath) async {
     try {
       await _ttsPlayer.play(UrlSource(Uri.file(audioPath).toString()));
@@ -818,69 +836,69 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               SizedBox(
                 width: 80,
                 child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: _isRecording ? null : _playTextToSpeech,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: _isRecording
-                            ? (_dragAction == 'cancel'
-                                  ? AppColors.lr500
-                                  : AppColors.lr50)
-                            : AppColors.lightBackground,
-                        shape: BoxShape.circle,
-                        border: _isRecording
-                            ? Border.all(
-                                color: _dragAction == 'cancel'
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: _isRecording ? null : _playTextToSpeech,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: _isRecording
+                              ? (_dragAction == 'cancel'
                                     ? AppColors.lr500
-                                    : AppColors.lr200,
-                                width: 2,
+                                    : AppColors.lr50)
+                              : AppColors.lightBackground,
+                          shape: BoxShape.circle,
+                          border: _isRecording
+                              ? Border.all(
+                                  color: _dragAction == 'cancel'
+                                      ? AppColors.lr500
+                                      : AppColors.lr200,
+                                  width: 2,
+                                )
+                              : null,
+                        ),
+                        child: _isRecording
+                            ? Icon(
+                                Icons.close_rounded,
+                                size: 28,
+                                color: _dragAction == 'cancel'
+                                    ? Colors.white
+                                    : AppColors.lr500,
                               )
-                            : null,
+                            : (_isTTSLoading
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Icon(
+                                      _isTTSPlaying
+                                          ? Icons.stop_rounded
+                                          : Icons.play_arrow_rounded,
+                                      size: 28,
+                                      color: AppColors.lightTextPrimary,
+                                    )),
                       ),
-                      child: _isRecording
-                          ? Icon(
-                              Icons.close_rounded,
-                              size: 28,
-                              color: _dragAction == 'cancel'
-                                  ? Colors.white
-                                  : AppColors.lr500,
-                            )
-                          : (_isTTSLoading
-                                ? const Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Icon(
-                                    _isTTSPlaying
-                                        ? Icons.stop_rounded
-                                        : Icons.play_arrow_rounded,
-                                    size: 28,
-                                    color: AppColors.lightTextPrimary,
-                                  )),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isRecording ? 'Cancel' : 'Listen',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _isRecording && _dragAction == 'cancel'
-                          ? AppColors.lr500
-                          : AppColors.lightTextSecondary,
-                      fontWeight: _isRecording && _dragAction == 'cancel'
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                    const SizedBox(height: 8),
+                    Text(
+                      _isRecording ? 'Cancel' : 'Listen',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _isRecording && _dragAction == 'cancel'
+                            ? AppColors.lr500
+                            : AppColors.lightTextSecondary,
+                        fontWeight: _isRecording && _dragAction == 'cancel'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               ),
 
               // Spacer for Center Button (72 + padding)
@@ -890,89 +908,89 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               SizedBox(
                 width: 80,
                 child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _isRecording
-                      ? AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: _dragAction == 'complete'
-                                ? AppColors.lg500
-                                : AppColors.lg50,
-                            shape: BoxShape.circle,
-                            border: Border.all(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isRecording
+                        ? AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
                               color: _dragAction == 'complete'
                                   ? AppColors.lg500
-                                  : AppColors.lg200,
-                              width: 2,
+                                  : AppColors.lg50,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _dragAction == 'complete'
+                                    ? AppColors.lg500
+                                    : AppColors.lg200,
+                                width: 2,
+                              ),
                             ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.check_rounded,
-                            size: 28,
-                            color: _dragAction == 'complete'
-                                ? Colors.white
-                                : AppColors.lg500,
-                          ),
-                        )
-                      : (_feedback != null
-                            ? GestureDetector(
-                                onTap: _playRecording,
-                                child: Container(
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 28,
+                              color: _dragAction == 'complete'
+                                  ? Colors.white
+                                  : AppColors.lg500,
+                            ),
+                          )
+                        : (_feedback != null
+                              ? GestureDetector(
+                                  onTap: _playRecording,
+                                  child: Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.lg500,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '${_feedback!.pronunciationScore}',
+                                      style: const TextStyle(
+                                        color: AppColors.lightSurface,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Container(
                                   width: 56,
                                   height: 56,
                                   decoration: const BoxDecoration(
-                                    color: AppColors.lg500,
+                                    color: AppColors.lightBackground,
                                     shape: BoxShape.circle,
                                   ),
                                   alignment: Alignment.center,
-                                  child: Text(
-                                    '${_feedback!.pronunciationScore}',
-                                    style: const TextStyle(
-                                      color: AppColors.lightSurface,
+                                  child: const Text(
+                                    '0',
+                                    style: TextStyle(
+                                      fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18,
+                                      color: AppColors.lightTextSecondary,
                                     ),
                                   ),
-                                ),
-                              )
-                            : Container(
-                                width: 56,
-                                height: 56,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.lightBackground,
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  '0',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.lightTextSecondary,
-                                  ),
-                                ),
-                              )),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isRecording
-                        ? 'Complete'
-                        : (_feedback == null ? 'Not Rated' : 'My Score'),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _isRecording && _dragAction == 'complete'
-                          ? AppColors.lg500
-                          : AppColors.lightTextSecondary,
-                      fontWeight: _isRecording && _dragAction == 'complete'
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                                )),
+                    const SizedBox(height: 8),
+                    Text(
+                      _isRecording
+                          ? 'Complete'
+                          : (_feedback == null ? 'Not Rated' : 'My Score'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _isRecording && _dragAction == 'complete'
+                            ? AppColors.lg500
+                            : AppColors.lightTextSecondary,
+                        fontWeight: _isRecording && _dragAction == 'complete'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               ),
             ],
           ),

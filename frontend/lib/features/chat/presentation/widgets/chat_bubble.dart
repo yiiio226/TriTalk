@@ -1,7 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
@@ -12,7 +12,7 @@ import '../../../study/presentation/widgets/shadowing_sheet.dart';
 import '../../../study/presentation/widgets/save_note_sheet.dart';
 import 'package:frontend/core/data/api/api_service.dart';
 import '../../../../core/data/local/preferences_service.dart';
-import '../../../../core/data/local/storage_key_service.dart';
+import '../../../../core/services/streaming_tts_service.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -1145,20 +1145,48 @@ class _ChatBubbleState extends State<ChatBubble>
     }
   }
 
-  /// Play text-to-speech for the message content using streaming API
+  /// Play text-to-speech for the message content using true streaming
+  /// First play: streams audio with low latency, then caches for future use
+  /// Subsequent plays: uses cached audio file for instant playback
   Future<void> _playTextToSpeech() async {
-    // If already playing TTS, stop it
-    if (_isTTSPlaying) {
-      await _audioPlayer.stop();
+    final streamingTts = StreamingTtsService.instance;
+
+    // If already playing, stop it
+    if (_isTTSPlaying || streamingTts.isPlaying) {
+      await streamingTts.stop();
       setState(() {
         _isTTSPlaying = false;
+        _isTTSLoading = false;
       });
       return;
     }
 
-    // If we have a cached audio file, play it directly
+    // Check if we have a cached audio file
     if (_ttsAudioPath != null && await File(_ttsAudioPath!).exists()) {
-      await _playTTSAudio(_ttsAudioPath!);
+      if (kDebugMode) {
+        debugPrint('🔊 [TTS] Using cached audio: $_ttsAudioPath');
+      }
+
+      // Setup state listener for cached playback
+      _setupStateListener(streamingTts);
+
+      try {
+        setState(() => _isTTSLoading = true);
+        await streamingTts.playCached(_ttsAudioPath!);
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to play audio: $e'),
+              backgroundColor: AppColors.lightError,
+            ),
+          );
+        }
+      }
       return;
     }
 
@@ -1167,74 +1195,32 @@ class _ChatBubbleState extends State<ChatBubble>
       _isTTSLoading = true;
     });
 
-    try {
-      final apiService = ApiService();
+    // Setup state change listener
+    _setupStateListener(streamingTts);
 
-      // Use streaming API to receive audio chunks
-      // GCP TTS returns PCM audio; the 'done' chunk has the complete WAV with header
-      String? finalWavBase64;
-      await for (final chunk in apiService.generateTTSStream(
-        widget.message.content,
-      )) {
-        if (!mounted) break;
-
-        switch (chunk.type) {
-          case TTSChunkType.audioChunk:
-            // PCM chunks are being collected internally
-            break;
-          case TTSChunkType.info:
-            // Duration info received (could be used for UI in the future)
-            break;
-          case TTSChunkType.done:
-            // The 'done' chunk contains the complete WAV audio with header
-            finalWavBase64 = chunk.audioBase64;
-            break;
-          case TTSChunkType.error:
-            throw Exception(chunk.error ?? 'TTS generation failed');
-        }
-      }
-
-      if (!mounted) return;
-
-      if (finalWavBase64 == null) {
-        throw Exception('No audio received');
-      }
-
-      // Decode the WAV audio
-      final audioBytes = base64Decode(finalWavBase64);
-
-      // Save to cache with user-scoped path
-      final cacheDir = await getApplicationDocumentsDirectory();
-      final storageKey = StorageKeyService();
-      final ttsCacheDir = Directory(
-        storageKey.getUserScopedPath(cacheDir.path, 'tts_cache'),
-      );
-      if (!await ttsCacheDir.exists()) {
-        await ttsCacheDir.create(recursive: true);
-      }
-
-      // Use message ID as filename (sanitized)
-      // Note: GCP TTS returns WAV format audio
-      final safeFileName = widget.message.id.replaceAll(
-        RegExp(r'[^a-zA-Z0-9-_]'),
-        '_',
-      );
-      final audioFile = File('${ttsCacheDir.path}/$safeFileName.wav');
-      await audioFile.writeAsBytes(audioBytes);
-
+    // Setup cache callback
+    streamingTts.onCacheSaved = (cachePath) {
       if (mounted) {
         setState(() {
-          _ttsAudioPath = audioFile.path;
-          _isTTSLoading = false;
+          _ttsAudioPath = cachePath;
         });
-
-        // Play the audio immediately
-        await _playTTSAudio(audioFile.path);
+        if (kDebugMode) {
+          debugPrint('🔊 [TTS] Cache saved: $cachePath');
+        }
       }
+    };
+
+    try {
+      // Start streaming playback with caching
+      await streamingTts.playStreaming(
+        widget.message.content,
+        messageId: widget.message.id,
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
           _isTTSLoading = false;
+          _isTTSPlaying = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1246,25 +1232,42 @@ class _ChatBubbleState extends State<ChatBubble>
     }
   }
 
-  /// Play TTS audio from the given file path
-  Future<void> _playTTSAudio(String audioPath) async {
-    try {
-      await _audioPlayer.play(UrlSource(Uri.file(audioPath).toString()));
-      if (mounted) {
-        setState(() {
-          _isTTSPlaying = true;
-        });
+  /// Setup state change listener for StreamingTtsService
+  void _setupStateListener(StreamingTtsService streamingTts) {
+    streamingTts.onStateChanged = (state) {
+      if (!mounted) return;
+
+      switch (state) {
+        case StreamingTtsState.loading:
+        case StreamingTtsState.buffering:
+          setState(() {
+            _isTTSLoading = true;
+            _isTTSPlaying = false;
+          });
+          break;
+        case StreamingTtsState.playing:
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = true;
+          });
+          break;
+        case StreamingTtsState.completed:
+        case StreamingTtsState.stopped:
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = false;
+          });
+          break;
+        case StreamingTtsState.error:
+          setState(() {
+            _isTTSLoading = false;
+            _isTTSPlaying = false;
+          });
+          break;
+        case StreamingTtsState.idle:
+          break;
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to play audio: $e'),
-            backgroundColor: AppColors.lightError,
-          ),
-        );
-      }
-    }
+    };
   }
 
   Widget _buildLoadingIndicator() {
