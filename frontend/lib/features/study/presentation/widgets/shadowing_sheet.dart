@@ -1295,7 +1295,16 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 8),
+            const Text(
+              'Tap curve to play segment',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.lightTextSecondary,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 16),
           // Pitch Contour Visualization with Interactive Segments
           // Pitch Contour Visualization with Interactive Segments
           LayoutBuilder(
@@ -1632,27 +1641,36 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.lb500.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.lb500.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: const Text(
-                'Azure AI',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.lb500,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
+            // Container(
+            //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            //   decoration: BoxDecoration(
+            //     color: AppColors.lb500.withValues(alpha: 0.1),
+            //     borderRadius: BorderRadius.circular(12),
+            //     border: Border.all(
+            //       color: AppColors.lb500.withValues(alpha: 0.2),
+            //       width: 1,
+            //     ),
+            //   ),
+            //   child: const Text(
+            //     'Azure AI',
+            //     style: TextStyle(
+            //       fontSize: 11,
+            //       color: AppColors.lb500,
+            //       fontWeight: FontWeight.w600,
+            //       letterSpacing: 0.3,
+            //     ),
+            //   ),
+            // ),
           ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Tap words to play pronunciation',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.lightTextSecondary,
+            fontWeight: FontWeight.w400,
+          ),
         ),
         const SizedBox(height: 12),
         Wrap(
