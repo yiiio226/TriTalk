@@ -351,18 +351,16 @@ StorageKeyService().cleanupOldData();
 
 ## 七、相关文件索引
 
-| 文件                                                      | 描述                   |
-| --------------------------------------------------------- | ---------------------- |
-| `lib/core/data/local/storage_key_service.dart`            | 用户隔离 Key 生成服务  |
-| `lib/core/data/local/preferences_service.dart`            | SharedPreferences 封装 |
-| `lib/core/services/streaming_tts_service.dart`            | 流式 TTS 服务          |
-| `lib/features/study/data/shadowing_cache_service.dart`    | 跟读缓存服务           |
-| `lib/features/study/data/shadowing_history_service.dart`  | 跟读历史服务           |
-| `lib/features/speech/data/services/word_tts_service.dart` | 单词发音服务           |
-| `lib/features/chat/data/chat_history_service.dart`        | 聊天历史服务           |
-| `lib/features/scenes/data/scene_service.dart`             | 场景服务               |
-| `lib/features/study/data/vocab_service.dart`              | 词汇本服务             |
-| `lib/features/study/data/note_service.dart`               | 笔记服务               |
+| 文件                                                      | 描述                  | 纳入 CacheManager |
+| --------------------------------------------------------- | --------------------- | ----------------- |
+| `lib/core/data/local/storage_key_service.dart`            | 用户隔离 Key 生成服务 | -                 |
+| `lib/core/services/streaming_tts_service.dart`            | 流式 TTS 服务         | ✅ TtsCache       |
+| `lib/features/study/data/shadowing_cache_service.dart`    | 跟读缓存服务          | ✅ ShadowCache    |
+| `lib/features/speech/data/services/word_tts_service.dart` | 单词发音服务          | ✅ WordTts        |
+| `lib/features/chat/data/chat_history_service.dart`        | 聊天历史服务          | ✅ ChatHistory    |
+| `lib/features/scenes/data/scene_service.dart`             | 场景服务              | ❌ 用户数据       |
+| `lib/features/study/data/vocab_service.dart`              | 词汇本服务            | ❌ 用户数据       |
+| `lib/features/study/data/note_service.dart`               | 笔记服务              | ❌ 用户数据       |
 
 ---
 
@@ -382,11 +380,10 @@ StorageKeyService().cleanupOldData();
                               ↑
         ┌─────────────────────┼─────────────────────┐
         ↓                     ↓                     ↓
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│ ChatHistory   │    │ Shadowing     │    │ WordTts       │
-│ Service       │    │ CacheService  │    │ Service       │
-│ (JSON+Cloud)  │    │ (JSON)        │    │ (Audio Files) │
-└───────────────┘    └───────────────┘    └───────────────┘
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│ ChatHistory │  │ ShadowCache │  │  TtsCache   │  │   WordTts   │
+│  (JSON)     │  │   (JSON)    │  │   (Audio)   │  │   (Audio)   │
+└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
 ```
 
 **问题**：
@@ -422,26 +419,23 @@ StorageKeyService().cleanupOldData();
 ### 推荐的架构设计
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      CacheManager                           │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ - registerCache(CacheType, CacheProvider)           │   │
-│  │ - hasCache(CacheType, String id) -> bool            │   │
-│  │ - getCacheKey(CacheType, String id) -> String       │   │
-│  │ - clearAll() / clearType(CacheType)                 │   │
-│  │ - getCacheSize() -> Map<CacheType, int>             │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              ↑
-                    implements CacheProvider
-        ┌─────────────────────┼─────────────────────┐
-        ↓                     ↓                     ↓
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│ ChatHistory   │    │ Shadowing     │    │ TtsCache      │
-│ CacheProvider │    │ CacheProvider │    │ Provider      │
-│               │    │               │    │               │
-│ (保持原有逻辑) │    │ (保持原有逻辑) │    │ (保持原有逻辑) │
-└───────────────┘    └───────────────┘    └───────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                         CacheManager                              │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │ - registerCache(CacheType, CacheProvider)                   │ │
+│  │ - hasCache(CacheType, String id) -> bool                    │ │
+│  │ - getCacheKey(CacheType, String id) -> String               │ │
+│  │ - clearAll() / clearType(CacheType)                         │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────────────┘
+                                  ↑
+                        implements CacheProvider
+     ┌─────────────┬─────────────┼─────────────┬─────────────┐
+     ↓             ↓             ↓             ↓
+┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐
+│  Chat   │  │ Shadow  │  │   Tts   │  │  Word   │
+│ History │  │  Cache  │  │  Cache  │  │   Tts   │
+└─────────┘  └─────────┘  └─────────┘  └─────────┘
 ```
 
 ### 实现建议
@@ -451,12 +445,9 @@ StorageKeyService().cleanupOldData();
 
 enum CacheType {
   chatHistory,
-  shadowingPractice,
-  ttsAudio,
+  shadowCache,
+  ttsCache,
   wordTts,
-  scenes,
-  vocab,
-  hints,
 }
 
 abstract class CacheProvider {
