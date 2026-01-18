@@ -7,6 +7,7 @@ class Scene {
   final String userRole;
   final String initialMessage;
   final String category;
+  final String targetLanguage; // Language this scene was created with
 
   const Scene({
     required this.id,
@@ -21,6 +22,7 @@ class Scene {
     required this.goal,
     required this.iconPath,
     required this.color,
+    this.targetLanguage = 'English', // Default for backward compatibility
   });
 
   final String difficulty; // Easy, Medium, Hard
@@ -42,6 +44,7 @@ class Scene {
       'goal': goal,
       'iconPath': iconPath,
       'color': color,
+      'targetLanguage': targetLanguage,
     };
   }
 
@@ -59,6 +62,8 @@ class Scene {
       goal: map['goal'] ?? '',
       iconPath: map['iconPath'] ?? '',
       color: map['color'] ?? 0xFF000000,
+      targetLanguage: map['targetLanguage'] ?? 'English',
     );
   }
 }
+

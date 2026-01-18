@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:uuid/uuid.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
+import '../../../../core/data/local/preferences_service.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
@@ -43,6 +44,10 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         _selectedTone,
       );
 
+      // Get the current target language that was used to generate this scene
+      final prefs = PreferencesService();
+      final targetLang = await prefs.getTargetLanguage();
+
       final newScene = Scene(
         id: _uuid.v4(),
         title: generatedScene.title,
@@ -56,6 +61,8 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
         emoji: generatedScene.emoji,
         color: _generateRandomPastelColor(),
         iconPath: "",
+        targetLanguage:
+            targetLang, // Save the language used to create this scene
       );
 
       if (!mounted) return;

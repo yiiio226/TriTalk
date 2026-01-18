@@ -1,26 +1,32 @@
 /**
- * Scene-related prompts
- */
-
-/**
  * Build the scene generation prompt for scene/generate endpoint.
  */
 export function buildSceneGeneratePrompt(
   description: string,
-  tone: string | undefined
+  tone: string | undefined,
+  targetLanguage: string = "English"
 ): string {
   return `Act as a creative educational scenario designer.
     User Request: "${description}"
     Tone: ${tone || "Casual"}
+    Target Language: ${targetLanguage}
     
-    Create a roleplay scenario for learning English.
+    Create a roleplay scenario for learning ${targetLanguage}.
+    
+    IMPORTANT RULES:
+    1. The initial_message MUST be written entirely in ${targetLanguage}.
+    2. Do NOT mention the language in the title, ai_role, user_role, goal, or description.
+       - BAD examples: "Spanish-speaking waiter", "Practice Spanish ordering", "Learn Spanish at cafe"
+       - GOOD examples: "Friendly waiter", "Order your favorite coffee", "Local coffee shop"
+    3. The scenario should feel natural, as if set in a country where ${targetLanguage} is spoken natively.
+    
     Output JSON ONLY with these fields:
-    - title: Short, catchy title (e.g. "Coffee Shop Chat")
-    - ai_role: Who you (AI) will play (e.g. "Barista")
-    - user_role: Who the user will play (e.g. "Customer")
-    - goal: The user's objective (e.g. "Order a latte with oat milk")
-    - description: A brief context setting (e.g. "You are at a busy cafe in London...")
-    - initial_message: The first thing the AI says to start the conversation.
+    - title: Short, catchy title (in English, NO language references)
+    - ai_role: Who you (AI) will play (in English, NO language references like "Spanish-speaking")
+    - user_role: Who the user will play (in English, NO language references)
+    - goal: The user's objective (in English, NO language references)
+    - description: A brief context setting (in English, NO language references)
+    - initial_message: The first thing the AI says to start the conversation. MUST BE IN ${targetLanguage}.
     - emoji: A single relevant emoji char.`;
 }
 

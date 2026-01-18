@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:frontend/features/auth/data/services/auth_service.dart';
+import 'package:frontend/core/data/local/preferences_service.dart';
 
 class UserService {
   final AuthService _authService = AuthService();
+  final PreferencesService _preferencesService = PreferencesService();
   final _supabase = Supabase.instance.client;
 
   Future<void> updateUserProfile({
@@ -28,6 +30,14 @@ class UserService {
 
     try {
       await _supabase.from('profiles').upsert(updates);
+
+      // Update local preferences so API calls use the new language settings
+      if (nativeLanguage != null) {
+        await _preferencesService.setNativeLanguage(nativeLanguage);
+      }
+      if (targetLanguage != null) {
+        await _preferencesService.setTargetLanguage(targetLanguage);
+      }
 
       // Update local state by reloading
       await _authService.init();

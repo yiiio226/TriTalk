@@ -190,8 +190,6 @@ class _ScenarioConfigurationScreenState
     final effectiveColor = color ?? AppColors.lightTextSecondary;
     return Row(
       children: [
-        Icon(icon, color: effectiveColor),
-        const SizedBox(width: 8),
         Text(
           title,
           style: AppTypography.subtitle1.copyWith(
@@ -214,9 +212,9 @@ class _ScenarioConfigurationScreenState
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondary : Colors.white,
+          color: isSelected ? AppColors.secondary : AppColors.dn900,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.lightDivider,
+            color: isSelected ? AppColors.lightDivider : AppColors.lightDivider,
             width: isSelected ? 1 : 1,
           ),
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -251,9 +249,9 @@ class _ScenarioConfigurationScreenState
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondary : Colors.white,
+          color: isSelected ? AppColors.secondary : AppColors.dn900,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.lightDivider,
+            color: isSelected ? AppColors.lightDivider : AppColors.lightDivider,
             width: isSelected ? 1 : 1,
           ),
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -286,61 +284,71 @@ class _ScenarioConfigurationScreenState
   }
 
   Widget _buildRoleDisplaySection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.lightDivider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Role Assignment',
-                style: AppTypography.subtitle1.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.lightTextPrimary,
-                ),
-              ),
-              GestureDetector(
-                onTap: _swapRoles,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Section title with Switch button
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Role Assignment',
+                  style: AppTypography.subtitle1.copyWith(
+                    color: AppColors.lightTextSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.swap_horiz_rounded,
-                        size: 18,
+                ),
+              ],
+            ),
+            GestureDetector(
+              onTap: _swapRoles,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.swap_horiz_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Switch',
+                      style: AppTypography.caption.copyWith(
                         color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Switch',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildRoleCard('AI Role', _aiRole, Icons.smart_toy_outlined, AppColors.primary),
-          const SizedBox(height: 12),
-          _buildRoleCard('Your Role', _userRole, Icons.person_outline, AppColors.secondary),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildRoleCard(
+          'AI Role',
+          _aiRole,
+          Icons.smart_toy_outlined,
+          AppColors.primary,
+        ),
+        const SizedBox(height: 12),
+        _buildRoleCard(
+          'Your Role',
+          _userRole,
+          Icons.person_outline,
+          AppColors.secondary,
+        ),
+      ],
     );
   }
 
@@ -348,9 +356,9 @@ class _ScenarioConfigurationScreenState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.lightBackground,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.lightDivider.withOpacity(0.5)),
+        border: Border.all(color: AppColors.lightDivider),
       ),
       child: Row(
         children: [
@@ -359,7 +367,7 @@ class _ScenarioConfigurationScreenState
             height: 40,
             decoration: BoxDecoration(
               color: accentColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: accentColor, size: 20),
           ),

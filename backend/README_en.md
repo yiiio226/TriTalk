@@ -45,6 +45,45 @@ TriTalk backend service, deployed on Cloudflare Workers, providing global edge c
 | `/tts/gcp/generate` | POST   | Streaming TTS (GCP Gemini TTS) ✅              |
 | `/tts/word`         | POST   | Word pronunciation (GCP Gemini, non-stream) ✅ |
 
+### Speech Assessment Endpoints (Azure Speech)
+
+| Endpoint         | Method | Description                                    |
+| ---------------- | ------ | ---------------------------------------------- |
+| `/speech/assess` | POST   | Pronunciation assessment (phoneme-level + prosody) |
+
+> 📝 **Note**: `/speech/assess` endpoint requires Azure Speech API credentials (`AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`)
+
+### Shadowing Practice History Endpoints
+
+| Endpoint             | Method | Description                          |
+| -------------------- | ------ | ------------------------------------ |
+| `/shadowing/save`    | POST   | Save shadowing practice record       |
+| `/shadowing/history` | GET    | Query practice history (with filters)|
+
+> 📝 **Shadowing System Keys Explained**:
+> 
+> The shadowing practice system uses multiple keys and IDs to track and organize practice records:
+> 
+> - **`target_text`** (required): The target text for shadowing practice. Used to query all practice history for the same sentence.
+> - **`source_type`** (required): Practice source type, supports:
+>   - `'ai_message'`: AI response message
+>   - `'native_expression'`: Native expression (from grammar feedback)
+>   - `'reference_answer'`: Reference answer (from grammar feedback)
+>   - `'custom'`: Custom text
+> - **`source_id`** (optional): Unique identifier of the source object
+>   - For AI messages: uses `message.id`
+>   - For native expressions/reference answers: uses original `message.id`
+>   - Links practice records to specific messages or content
+> - **`scene_key`** (optional): Scene identifier (e.g., `'coffee_shop'`), used to filter practice records by scene
+> - **`message_id`** (frontend): Used to generate audio filenames, ensuring file uniqueness
+> 
+> **How it works**:
+> 1. Each practice attempt creates a new record (no overwriting)
+> 2. Query by `target_text` to get all practice history for the same sentence
+> 3. Use `source_id` + `source_type` to trace practice origin
+> 4. Use `scene_key` to track learning progress by scene
+> 5. Audio files are stored locally only; cloud stores scores and feedback data
+
 ### System Endpoints
 
 | Endpoint  | Method | Description       |

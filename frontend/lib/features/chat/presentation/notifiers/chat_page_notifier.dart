@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
+import '../../../../core/data/local/preferences_service.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../state/chat_page_state.dart';
@@ -44,9 +45,39 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   }
 
   /// Generate the initial AI greeting message for new conversations
+  /// Checks if user's current language differs from when scene was created,
+  /// and regenerates the message in the new language if needed.
   Future<void> _generateInitialAIMessage() async {
-    // Add loading placeholder for AI
-    final loadingId = 'loading_initial_${DateTime.now().millisecondsSinceEpoch}';
+    final prefs = PreferencesService();
+    final currentLang = await prefs.getTargetLanguage();
+    final sceneLang = _scene.targetLanguage;
+
+    // Check if language has changed since scene was created
+    if (currentLang != sceneLang) {
+      // Language changed - need to regenerate initial message via API
+      await _regenerateInitialMessage(currentLang);
+    } else {
+      // Same language - use the pre-generated initialMessage
+      final aiMessage = Message(
+        id: _uuid.v4(),
+        content: _scene.initialMessage,
+        isUser: false,
+        timestamp: DateTime.now(),
+        isAnimated: true,
+      );
+
+      final finalMessages = [aiMessage];
+      state = state.copyWith(messages: finalMessages);
+
+      _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
+    }
+  }
+
+  /// Regenerate initial AI message in the new target language
+  Future<void> _regenerateInitialMessage(String targetLang) async {
+    // Show loading state
+    final loadingId =
+        'loading_initial_${DateTime.now().millisecondsSinceEpoch}';
     final loadingMsg = Message(
       id: loadingId,
       content: '',
@@ -59,23 +90,21 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
 
     try {
       final sceneContext = _buildSceneContext();
-      
-      // Send a simple greeting to trigger AI's first response
-      // The AI will respond based on the scene context and its role
+
+      // Call API to get AI's greeting in the new language
       final response = await _repository.sendMessage(
-        text: 'Hi', // Simple greeting to start the conversation
+        text: 'Start the conversation.',
         sceneContext: sceneContext,
         history: [],
       );
 
-      // Replace loading message with actual AI response
+      // Replace loading message with AI response
       final aiMessage = Message(
         id: _uuid.v4(),
         content: response.message,
         isUser: false,
         timestamp: DateTime.now(),
         translation: response.translation,
-        feedback: response.feedback,
         isAnimated: true,
       );
 
@@ -84,10 +113,10 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
 
       _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
     } catch (e) {
-      // Remove loading message on error
+      // Fallback to original initialMessage on error
       state = state.copyWith(
         messages: [],
-        error: 'Failed to generate initial message: $e',
+        error: 'Failed to generate message in new language: $e',
       );
     }
   }

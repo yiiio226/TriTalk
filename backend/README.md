@@ -53,6 +53,37 @@ TriTalk 后端服务，部署在 Cloudflare Workers 上，提供全球边缘计�
 
 > 📝 **注意**: `/speech/assess` 端点需要配置 Azure Speech API 凭证 (`AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`)
 
+### 跟读练习历史端点 (Shadowing Practice History)
+
+| 端点                 | 方法 | 描述                       |
+| -------------------- | ---- | -------------------------- |
+| `/shadowing/save`    | POST | 保存跟读练习记录           |
+| `/shadowing/history` | GET  | 查询跟读练习历史（支持过滤）|
+
+> 📝 **跟读系统 Key 说明**:
+> 
+> 跟读练习系统使用多个 key 和 ID 来追踪和组织练习记录:
+> 
+> - **`target_text`** (必需): 跟读的目标文本内容。用于查询同一句子的所有练习历史。
+> - **`source_type`** (必需): 练习来源类型，支持以下值:
+>   - `'ai_message'`: AI 回复消息
+>   - `'native_expression'`: 地道表达（来自语法分析反馈）
+>   - `'reference_answer'`: 参考答案（来自语法分析反馈）
+>   - `'custom'`: 自定义文本
+> - **`source_id`** (可选): 来源对象的唯一标识符
+>   - 对于 AI 消息: 使用 `message.id`
+>   - 对于地道表达/参考答案: 使用原始消息的 `message.id`
+>   - 用于关联练习记录到具体的消息或内容
+> - **`scene_key`** (可选): 场景标识符（如 `'coffee_shop'`），用于按场景过滤练习记录
+> - **`message_id`** (前端): 用于生成音频文件名，确保文件唯一性
+> 
+> **工作原理**:
+> 1. 每次跟读都会创建一条新记录（不覆盖历史）
+> 2. 使用 `target_text` 查询可获取同一句子的所有练习历史
+> 3. 使用 `source_id` + `source_type` 可追溯练习来源
+> 4. 使用 `scene_key` 可按场景统计学习进度
+> 5. 音频文件仅保存在本地，云端只存储评分和反馈数据
+
 ### 系统端点
 
 | 端点      | 方法 | 描述              |
