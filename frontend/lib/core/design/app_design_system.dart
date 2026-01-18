@@ -105,7 +105,7 @@ class AppColors {
   // ===========================================================================
   // 基于截图中的 FAB (浮动按钮) 和 "TriTalk" 标题
   static const Color primary = Color(0xFF1D1D1F); // Apple 风格的深黑，非纯黑，更有质感
-  static const Color secondary = Color(0xFFFF7200); // 提取自头像的橙色，作为点缀
+  static const Color secondary = Color(0xFF2BC3C9); // 提取自头像的橙色，作为点缀
 
   // ===========================================================================
   // Light Theme Base Colors
