@@ -491,16 +491,19 @@ class _ChatBubbleState extends State<ChatBubble>
                                     setState(() {
                                       _isTranscriptLoading = true;
                                     });
-                                    
+
                                     // Poll for transcript updates (check every 100ms for up to 30 seconds)
                                     int attempts = 0;
                                     const maxAttempts = 300; // 30 seconds
-                                    while (attempts < maxAttempts && widget.message.content.isEmpty) {
-                                      await Future.delayed(const Duration(milliseconds: 100));
+                                    while (attempts < maxAttempts &&
+                                        widget.message.content.isEmpty) {
+                                      await Future.delayed(
+                                        const Duration(milliseconds: 100),
+                                      );
                                       attempts++;
                                       if (!mounted) return;
                                     }
-                                    
+
                                     if (mounted) {
                                       setState(() {
                                         _isTranscriptLoading = false;
@@ -540,8 +543,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                           strokeWidth: 1,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            AppColors.lightTextPrimary,
-                                          ),
+                                                AppColors.lightTextPrimary,
+                                              ),
                                         ),
                                       )
                                     else
@@ -661,16 +664,19 @@ class _ChatBubbleState extends State<ChatBubble>
                                     setState(() {
                                       _isTranscriptLoading = true;
                                     });
-                                    
+
                                     // Poll for transcript updates (check every 100ms for up to 30 seconds)
                                     int attempts = 0;
                                     const maxAttempts = 300; // 30 seconds
-                                    while (attempts < maxAttempts && widget.message.content.isEmpty) {
-                                      await Future.delayed(const Duration(milliseconds: 100));
+                                    while (attempts < maxAttempts &&
+                                        widget.message.content.isEmpty) {
+                                      await Future.delayed(
+                                        const Duration(milliseconds: 100),
+                                      );
                                       attempts++;
                                       if (!mounted) return;
                                     }
-                                    
+
                                     if (mounted) {
                                       setState(() {
                                         _isTranscriptLoading = false;
@@ -708,8 +714,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                           strokeWidth: 1,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            AppColors.lightTextPrimary,
-                                          ),
+                                                AppColors.lightTextPrimary,
+                                              ),
                                         ),
                                       )
                                     else
@@ -845,7 +851,9 @@ class _ChatBubbleState extends State<ChatBubble>
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              barrierColor: AppColors.lightSurface.withValues(alpha: 0.5),
+                              barrierColor: AppColors.lightSurface.withValues(
+                                alpha: 0.5,
+                              ),
                               builder: (context) => ShadowingSheet(
                                 targetText: message.content,
                                 messageId: message.id,
@@ -960,7 +968,9 @@ class _ChatBubbleState extends State<ChatBubble>
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              barrierColor: AppColors.lightSurface.withValues(alpha: 0.5),
+                              barrierColor: AppColors.lightSurface.withValues(
+                                alpha: 0.5,
+                              ),
                               builder: (context) => SaveNoteSheet(
                                 originalSentence: message.content,
                                 sceneId: widget.sceneId, // Pass sceneId
@@ -1044,7 +1054,11 @@ class _ChatBubbleState extends State<ChatBubble>
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.lightSurface, width: 2),
               ),
-              child: const Icon(Icons.check, size: 14, color: AppColors.lightSurface),
+              child: const Icon(
+                Icons.check,
+                size: 14,
+                color: AppColors.lightSurface,
+              ),
             ),
           ),
       ], // Close Stack children
@@ -1155,26 +1169,25 @@ class _ChatBubbleState extends State<ChatBubble>
 
     try {
       final apiService = ApiService();
-      final List<String> audioChunks = [];
 
       // Use streaming API to receive audio chunks
+      // GCP TTS returns PCM audio; the 'done' chunk has the complete WAV with header
+      String? finalWavBase64;
       await for (final chunk in apiService.generateTTSStream(
         widget.message.content,
-        messageId: widget.message.id,
       )) {
         if (!mounted) break;
 
         switch (chunk.type) {
           case TTSChunkType.audioChunk:
-            if (chunk.audioBase64 != null) {
-              audioChunks.add(chunk.audioBase64!);
-            }
+            // PCM chunks are being collected internally
             break;
           case TTSChunkType.info:
             // Duration info received (could be used for UI in the future)
             break;
           case TTSChunkType.done:
-            // All chunks received, now save and play
+            // The 'done' chunk contains the complete WAV audio with header
+            finalWavBase64 = chunk.audioBase64;
             break;
           case TTSChunkType.error:
             throw Exception(chunk.error ?? 'TTS generation failed');
@@ -1183,13 +1196,12 @@ class _ChatBubbleState extends State<ChatBubble>
 
       if (!mounted) return;
 
-      if (audioChunks.isEmpty) {
+      if (finalWavBase64 == null) {
         throw Exception('No audio received');
       }
 
-      // Combine all base64 chunks and decode
-      final combinedBase64 = audioChunks.join('');
-      final audioBytes = base64Decode(combinedBase64);
+      // Decode the WAV audio
+      final audioBytes = base64Decode(finalWavBase64);
 
       // Save to cache with user-scoped path
       final cacheDir = await getApplicationDocumentsDirectory();
@@ -1202,11 +1214,12 @@ class _ChatBubbleState extends State<ChatBubble>
       }
 
       // Use message ID as filename (sanitized)
+      // Note: GCP TTS returns WAV format audio
       final safeFileName = widget.message.id.replaceAll(
         RegExp(r'[^a-zA-Z0-9-_]'),
         '_',
       );
-      final audioFile = File('${ttsCacheDir.path}/$safeFileName.mp3');
+      final audioFile = File('${ttsCacheDir.path}/$safeFileName.wav');
       await audioFile.writeAsBytes(audioBytes);
 
       if (mounted) {

@@ -141,26 +141,25 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
     try {
       final apiService = ApiService();
-      final List<String> audioChunks = [];
 
       // Use streaming API to receive audio chunks
+      // GCP TTS returns PCM audio; the 'done' chunk has the complete WAV with header
+      String? finalWavBase64;
       await for (final chunk in apiService.generateTTSStream(
         widget.targetText,
-        messageId: widget.messageId,
       )) {
         if (!mounted) break;
 
         switch (chunk.type) {
           case TTSChunkType.audioChunk:
-            if (chunk.audioBase64 != null) {
-              audioChunks.add(chunk.audioBase64!);
-            }
+            // PCM chunks are being collected internally
             break;
           case TTSChunkType.info:
             // Duration info received
             break;
           case TTSChunkType.done:
-            // All chunks received
+            // The 'done' chunk contains the complete WAV audio with header
+            finalWavBase64 = chunk.audioBase64;
             break;
           case TTSChunkType.error:
             throw Exception(chunk.error ?? 'TTS generation failed');
@@ -169,13 +168,12 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
       if (!mounted) return;
 
-      if (audioChunks.isEmpty) {
+      if (finalWavBase64 == null) {
         throw Exception('No audio received');
       }
 
-      // Combine all base64 chunks and decode
-      final combinedBase64 = audioChunks.join('');
-      final audioBytes = base64Decode(combinedBase64);
+      // Decode the WAV audio
+      final audioBytes = base64Decode(finalWavBase64);
 
       // Save to cache with user-scoped path
       final cacheDir = await getApplicationDocumentsDirectory();
@@ -188,11 +186,12 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       }
 
       // Use message ID as filename (sanitized)
+      // Note: GCP TTS returns WAV format audio
       final safeFileName = widget.messageId.replaceAll(
         RegExp(r'[^a-zA-Z0-9-_]'),
         '_',
       );
-      final audioFile = File('${ttsCacheDir.path}/$safeFileName.mp3');
+      final audioFile = File('${ttsCacheDir.path}/$safeFileName.wav');
       await audioFile.writeAsBytes(audioBytes);
 
       if (mounted) {
@@ -237,9 +236,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   Future<void> _playWordPronunciation(String word) async {
     // Clean the word (keep hyphens and apostrophes for proper pronunciation)
     // Remove only sentence-ending punctuation like . , ! ? ; :
-    final cleanWord = word
-        .replaceAll(RegExp(r'[.,!?;:"]'), '')
-        .trim();
+    final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
     if (cleanWord.isEmpty) return;
 
     try {
@@ -256,7 +253,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     // Split target text into roughly 3 equal segments by word count
     final words = widget.targetText.split(' ');
     final segmentSize = (words.length / 3).ceil();
-    
+
     int startIndex, endIndex;
     switch (segmentIndex) {
       case 0: // First segment
@@ -274,30 +271,30 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       default:
         return;
     }
-    
-    final segmentText = words.sublist(startIndex, endIndex.clamp(0, words.length)).join(' ');
-    
+
+    final segmentText = words
+        .sublist(startIndex, endIndex.clamp(0, words.length))
+        .join(' ');
+
     if (segmentText.isEmpty) return;
-    
+
     try {
-      // Use Azure TTS for better intonation quality
+      // Use GCP TTS streaming API
       final apiService = ApiService();
-      final List<String> audioChunks = [];
 
       // Use streaming API to receive audio chunks
-      await for (final chunk in apiService.generateTTSStream(
-        segmentText,
-        messageId: '${widget.messageId}_segment_$segmentIndex',
-      )) {
+      // GCP TTS returns PCM audio; the 'done' chunk has the complete WAV with header
+      String? finalWavBase64;
+      await for (final chunk in apiService.generateTTSStream(segmentText)) {
         if (!mounted) break;
 
         switch (chunk.type) {
           case TTSChunkType.audioChunk:
-            if (chunk.audioBase64 != null) {
-              audioChunks.add(chunk.audioBase64!);
-            }
+            // PCM chunks are being collected internally
             break;
           case TTSChunkType.done:
+            // The 'done' chunk contains the complete WAV audio with header
+            finalWavBase64 = chunk.audioBase64;
             break;
           case TTSChunkType.error:
             throw Exception(chunk.error ?? 'Segment TTS generation failed');
@@ -306,15 +303,14 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         }
       }
 
-      if (!mounted || audioChunks.isEmpty) return;
+      if (!mounted || finalWavBase64 == null) return;
 
-      // Combine and decode audio
-      final combinedBase64 = audioChunks.join('');
-      final audioBytes = base64Decode(combinedBase64);
+      // Decode the WAV audio
+      final audioBytes = base64Decode(finalWavBase64);
 
-      // Save to temporary file and play
+      // Save to temporary file and play (WAV format)
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/segment_$segmentIndex.mp3');
+      final tempFile = File('${tempDir.path}/segment_$segmentIndex.wav');
       await tempFile.writeAsBytes(audioBytes);
 
       // Play the segment audio
@@ -388,7 +384,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   Future<void> _stopRecording() async {
     try {
       final path = await _audioRecorder.stop();
-      
+
       // Check recording duration
       if (_recordingStartTime != null) {
         final duration = DateTime.now().difference(_recordingStartTime!);
@@ -398,7 +394,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             _isRecording = false;
             _currentRecordingPath = null;
           });
-          
+
           // Delete the short file
           if (path != null) {
             final file = File(path);
@@ -406,9 +402,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               await file.delete();
             }
           }
-          
+
           if (mounted) {
-            showTopToast(context, 'Recording too short, please try again', isError: true);
+            showTopToast(
+              context,
+              'Recording too short, please try again',
+              isError: true,
+            );
           }
           return;
         }
@@ -566,7 +566,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         String msg = next.error!;
         // Handle specific error cases for friendlier messages
         if (msg.contains('InitialSilenceTimeout') || msg.contains('500')) {
-           msg = 'No voice detected, please try again';
+          msg = 'No voice detected, please try again';
         }
         showTopToast(context, msg, isError: true);
       }
@@ -575,7 +575,6 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     final assessmentState = ref.watch(pronunciationAssessmentProvider);
     final isAnalyzing = assessmentState.isLoading;
     // providerError handled via toaster, not displayed persistently
-
 
     final screenHeight = MediaQuery.of(context).size.height;
     final maxSheetHeight = screenHeight * 0.9;
@@ -593,9 +592,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         ],
       ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: maxSheetHeight,
-        ),
+        constraints: BoxConstraints(maxHeight: maxSheetHeight),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -627,7 +624,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         ),
                         child: _feedback != null
                             ? Text(
-                                _feedback!.pronunciationScore >= 80 ? '🎉' : '😔',
+                                _feedback!.pronunciationScore >= 80
+                                    ? '🎉'
+                                    : '😔',
                                 style: const TextStyle(fontSize: 20, height: 1),
                               )
                             : Icon(
@@ -639,7 +638,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       const SizedBox(width: 12),
                       if (_feedback != null) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.lg500,
                             borderRadius: BorderRadius.circular(6),
@@ -655,7 +657,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _feedback!.pronunciationScore >= 80 ? 'Great Job!' : 'Keep Practicing!',
+                          _feedback!.pronunciationScore >= 80
+                              ? 'Great Job!'
+                              : 'Keep Practicing!',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -685,8 +689,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                   ),
                   const SizedBox(height: 24),
                   // Target Text - Show only when idle or recording
-                  if (!isAnalyzing && _feedback == null)
-                    _buildTargetTextView(),
+                  if (!isAnalyzing && _feedback == null) _buildTargetTextView(),
                   if (!isAnalyzing && _feedback == null)
                     const SizedBox(height: 16),
                 ],
@@ -747,7 +750,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       child: Text(
         widget.targetText,
         style: const TextStyle(
-          fontSize: 16, 
+          fontSize: 16,
           height: 1.5,
           color: AppColors.lightTextPrimary,
         ),
@@ -779,7 +782,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Icon(
-                        _isTTSPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                        _isTTSPlaying
+                            ? Icons.stop_rounded
+                            : Icons.play_arrow_rounded,
                         size: 28,
                         color: AppColors.lightTextPrimary,
                       ),
@@ -788,7 +793,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             const SizedBox(height: 8),
             Text(
               'Listen',
-              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.lightTextSecondary,
+              ),
             ),
           ],
         ),
@@ -804,13 +812,18 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: _isRecording ? AppColors.lightError : AppColors.primary,
+                  color: _isRecording
+                      ? AppColors.lightError
+                      : AppColors.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isRecording ? AppColors.lightError : AppColors.primary)
-                          .withValues(alpha: 0.3),
-                      blurRadius: 12, 
+                      color:
+                          (_isRecording
+                                  ? AppColors.lightError
+                                  : AppColors.primary)
+                              .withValues(alpha: 0.3),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
@@ -825,7 +838,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             const SizedBox(height: 8),
             Text(
               _feedback == null ? 'Hold to Record' : 'Record Again',
-              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.lightTextSecondary,
+              ),
             ),
           ],
         ),
@@ -875,7 +891,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             const SizedBox(height: 8),
             Text(
               _feedback == null ? 'Not Rated' : 'My Score',
-              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.lightTextSecondary,
+              ),
             ),
           ],
         ),
@@ -890,8 +909,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         _buildStatsRow(feedback),
         const SizedBox(height: 32),
         _buildAzureWordFeedback(feedback),
-        if (feedback.azureProsodyScore != null)
-          _buildProsodySection(feedback),
+        if (feedback.azureProsodyScore != null) _buildProsodySection(feedback),
       ],
     );
   }
@@ -943,7 +961,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           _buildStatItem('Fluency', feedback.azureFluencyScore),
           _buildStatItem('Complete', feedback.azureCompletenessScore),
           if (feedback.azureProsodyScore != null)
-             _buildStatItem('Prosody', feedback.azureProsodyScore),
+            _buildStatItem('Prosody', feedback.azureProsodyScore),
         ],
       ),
     );
@@ -953,15 +971,15 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     if (feedback.azureProsodyScore == null) return const SizedBox.shrink();
 
     final score = feedback.azureProsodyScore!;
-    
+
     // Analyze target text for specific patterns
     final isQuestion = widget.targetText.trim().endsWith('?');
     final hasExclamation = widget.targetText.contains('!');
-    
+
     // Get user's native language
     final authState = ref.watch(authProvider);
     final nativeLanguage = authState.user?.nativeLanguage ?? 'English';
-    
+
     // Generate detailed feedback based on score and text pattern
     final (statusText, detailedTip) = _getLocalizedProsodyFeedback(
       score: score,
@@ -1013,9 +1031,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             onTapDown: (details) {
               // Determine which segment was tapped
               final tapX = details.localPosition.dx;
-              final width = MediaQuery.of(context).size.width - 80; // Account for padding
+              final width =
+                  MediaQuery.of(context).size.width - 80; // Account for padding
               final segmentIndex = (tapX / width * 3).floor().clamp(0, 2);
-              
+
               // Split target text into 3 segments and play the tapped segment
               _playSegmentAudio(segmentIndex);
             },
@@ -1037,13 +1056,16 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem('Native Speaker', AppColors.primary.withValues(alpha: 0.3)),
+              _buildLegendItem(
+                'Native Speaker',
+                AppColors.primary.withValues(alpha: 0.3),
+              ),
               const SizedBox(width: 24),
               _buildLegendItem('You', _getScoreColor(score)),
             ],
           ),
-           const SizedBox(height: 12),
-           Container(
+          const SizedBox(height: 12),
+          Container(
             padding: const EdgeInsets.all(12),
             width: double.infinity,
             decoration: BoxDecoration(
@@ -1251,10 +1273,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Text(
@@ -1356,13 +1375,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   /// Build word widgets with punctuation marks inserted
   List<Widget> _buildWordsWithPunctuation(List<AzureWordFeedback> words) {
     final List<Widget> widgets = [];
-    
+
     // Parse target text to extract punctuation
     final targetWords = widget.targetText.split(RegExp(r'\s+'));
-    
+
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
-      
+
       // Determine color based on level
       Color color;
       switch (word.level) {
@@ -1428,8 +1447,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       // Extract punctuation from target text if available
       if (i < targetWords.length) {
         final targetWord = targetWords[i];
-        final punctuation = targetWord.replaceAll(RegExp(r"[a-zA-Z0-9'\-]"), '');
-        
+        final punctuation = targetWord.replaceAll(
+          RegExp(r"[a-zA-Z0-9'\-]"),
+          '',
+        );
+
         if (punctuation.isNotEmpty) {
           widgets.add(
             Padding(
@@ -1447,7 +1469,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         }
       }
     }
-    
+
     return widgets;
   }
 
@@ -1493,6 +1515,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       ],
     );
   }
+
   Widget _buildSkeletonLoader() {
     return Shimmer.fromColors(
       baseColor: AppColors.lightSkeletonBase,
@@ -1509,7 +1532,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Stats Row Skeleton
           Container(
             padding: const EdgeInsets.all(16),
@@ -1527,7 +1550,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Simplified Words Skeleton
           Wrap(
             spacing: 8,
@@ -1552,7 +1575,11 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     );
   }
 
-  Widget _buildSkeletonBox({required double height, required double width, double radius = 4}) {
+  Widget _buildSkeletonBox({
+    required double height,
+    required double width,
+    double radius = 4,
+  }) {
     return Container(
       height: height,
       width: width,
@@ -1621,13 +1648,14 @@ class IntonationPainter extends CustomPainter {
     // AI Curve (Standard) - draw first so user curve is on top
     final aiPath = Path();
     paint.color = primaryColor.withValues(alpha: 0.3);
-    
+
     for (double x = 0; x <= size.width; x += 2) {
       final normalizedX = x / size.width;
-      final y = size.height * 0.5 + 
-               (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
-               (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
-               
+      final y =
+          size.height * 0.5 +
+          (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
+          (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
+
       if (x == 0) {
         aiPath.moveTo(x, y);
       } else {
@@ -1639,25 +1667,28 @@ class IntonationPainter extends CustomPainter {
     // User Curve
     final userPath = Path();
     paint.color = userColor;
-    
+
     for (double x = 0; x <= size.width; x += 2) {
       final normalizedX = x / size.width;
-      
-      final aiY = size.height * 0.5 + 
-                 (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
-                 (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
-      
+
+      final aiY =
+          size.height * 0.5 +
+          (math.sin(normalizedX * math.pi * 2) * size.height * 0.2) +
+          (math.sin(normalizedX * math.pi * 6) * size.height * 0.1);
+
       double userY;
       if (score >= 90) {
-        userY = aiY + (math.sin(x * 0.1) * 2); 
+        userY = aiY + (math.sin(x * 0.1) * 2);
       } else if (score >= 60) {
-        userY = size.height * 0.5 + 
-               (aiY - size.height * 0.5) * 0.7 +
-               (math.sin(x * 0.05) * 5);
+        userY =
+            size.height * 0.5 +
+            (aiY - size.height * 0.5) * 0.7 +
+            (math.sin(x * 0.05) * 5);
       } else {
-        userY = size.height * 0.5 + 
-               (aiY - size.height * 0.5) * 0.2 +
-               (math.sin(x * 0.1) * 3);
+        userY =
+            size.height * 0.5 +
+            (aiY - size.height * 0.5) * 0.2 +
+            (math.sin(x * 0.1) * 3);
       }
 
       if (x == 0) {
@@ -1684,10 +1715,10 @@ class IntonationPainter extends CustomPainter {
     if (isQuestion) {
       final x = size.width * 0.9; // Near the end
       final y = size.height * 0.3; // Upper part (rising pitch)
-      
+
       // Draw upward arrow
       canvas.drawCircle(Offset(x, y), 4, markerPaint);
-      
+
       // Draw small arrow pointing up
       final arrowPath = Path()
         ..moveTo(x, y - 8)
@@ -1701,16 +1732,16 @@ class IntonationPainter extends CustomPainter {
     if (hasExclamation) {
       final x = size.width * 0.5; // Middle (emphasis point)
       final y = size.height * 0.25; // High point
-      
+
       // Draw emphasis marker
       canvas.drawCircle(Offset(x, y), 4, markerPaint);
-      
+
       // Draw small star-like shape for emphasis
       final starPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
         ..color = AppColors.lb500;
-      
+
       for (int i = 0; i < 4; i++) {
         final angle = (i * math.pi / 2);
         final x1 = x + math.cos(angle) * 6;
@@ -1723,8 +1754,8 @@ class IntonationPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant IntonationPainter oldDelegate) {
     return oldDelegate.score != score ||
-           oldDelegate.primaryColor != primaryColor ||
-           oldDelegate.userColor != userColor ||
-           oldDelegate.targetText != targetText;
+        oldDelegate.primaryColor != primaryColor ||
+        oldDelegate.userColor != userColor ||
+        oldDelegate.targetText != targetText;
   }
 }
