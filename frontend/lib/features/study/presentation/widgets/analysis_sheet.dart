@@ -303,8 +303,65 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (displayAnalysis == null && isStillLoading) ...[
-          // Nothing loaded yet, show full skeleton
-          _buildSkeletonLoader(),
+          // First entry: Show Summary skeleton and other section titles with loading indicators
+          // Summary with skeleton loading (expanded by default)
+          _buildCollapsibleSection(
+            title: 'SUMMARY',
+            isExpanded: true,
+            isLoading: true,
+            onToggle: () {},
+            content: Shimmer.fromColors(
+              baseColor: AppColors.lightSkeletonBase,
+              highlightColor: AppColors.lightSkeletonHighlight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSkeletonBox(height: 16, width: double.infinity),
+                  const SizedBox(height: 8),
+                  _buildSkeletonBox(height: 16, width: double.infinity),
+                  const SizedBox(height: 8),
+                  _buildSkeletonBox(height: 16, width: 200),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Other sections: Show title only with loading indicator
+          _buildCollapsibleSection(
+            title: 'SENTENCE STRUCTURE',
+            isExpanded: false,
+            isLoading: true,
+            onToggle: () {},
+            content: const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 12),
+
+          _buildCollapsibleSection(
+            title: 'GRAMMAR POINTS',
+            isExpanded: false,
+            isLoading: true,
+            onToggle: () {},
+            content: const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 12),
+
+          _buildCollapsibleSection(
+            title: 'VOCABULARY',
+            isExpanded: false,
+            isLoading: true,
+            onToggle: () {},
+            content: const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 12),
+
+          _buildCollapsibleSection(
+            title: 'IDIOMS & SLANG',
+            isExpanded: false,
+            isLoading: true,
+            onToggle: () {},
+            content: const SizedBox.shrink(),
+          ),
         ] else if (displayAnalysis != null) ...[
           // Summary (Collapsible)
           if (displayAnalysis.overallSummary.isNotEmpty &&
@@ -312,6 +369,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'SUMMARY',
               isExpanded: _isSummaryExpanded,
+              isLoading: false,
               onToggle: () =>
                   setState(() => _isSummaryExpanded = !_isSummaryExpanded),
               content: Text(
@@ -332,6 +390,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'SENTENCE STRUCTURE',
               isExpanded: _isSentenceStructureExpanded,
+              isLoading: false,
               onToggle: () => setState(
                 () => _isSentenceStructureExpanded =
                     !_isSentenceStructureExpanded,
@@ -393,6 +452,15 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             const SizedBox(height: 12),
+          ] else if (_isStreaming) ...[
+            _buildCollapsibleSection(
+              title: 'SENTENCE STRUCTURE',
+              isExpanded: false,
+              isLoading: true,
+              onToggle: () {},
+              content: const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 12),
           ],
 
           // Grammar Points (Collapsible)
@@ -400,6 +468,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'GRAMMAR POINTS',
               isExpanded: _isGrammarPointsExpanded,
+              isLoading: false,
               onToggle: () => setState(
                 () => _isGrammarPointsExpanded = !_isGrammarPointsExpanded,
               ),
@@ -414,18 +483,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'GRAMMAR POINTS',
               isExpanded: false,
+              isLoading: true,
               onToggle: () {},
-              content: Shimmer.fromColors(
-                baseColor: AppColors.lightSkeletonBase,
-                highlightColor: AppColors.lightSkeletonHighlight,
-                child: Column(
-                  children: [
-                    _buildSkeletonCard(),
-                    const SizedBox(height: 12),
-                    _buildSkeletonCard(),
-                  ],
-                ),
-              ),
+              content: const SizedBox.shrink(),
             ),
             const SizedBox(height: 12),
           ],
@@ -435,6 +495,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'VOCABULARY',
               isExpanded: _isVocabularyExpanded,
+              isLoading: false,
               onToggle: () => setState(
                 () => _isVocabularyExpanded = !_isVocabularyExpanded,
               ),
@@ -449,18 +510,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'VOCABULARY',
               isExpanded: false,
+              isLoading: true,
               onToggle: () {},
-              content: Shimmer.fromColors(
-                baseColor: AppColors.lightSkeletonBase,
-                highlightColor: AppColors.lightSkeletonHighlight,
-                child: Column(
-                  children: [
-                    _buildSkeletonCard(),
-                    const SizedBox(height: 12),
-                    _buildSkeletonCard(),
-                  ],
-                ),
-              ),
+              content: const SizedBox.shrink(),
             ),
             const SizedBox(height: 12),
           ],
@@ -470,6 +522,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             _buildCollapsibleSection(
               title: 'IDIOMS & SLANG',
               isExpanded: _isIdiomsExpanded,
+              isLoading: false,
               onToggle: () =>
                   setState(() => _isIdiomsExpanded = !_isIdiomsExpanded),
               titleColor: AppColors.lightTextPrimary,
@@ -480,31 +533,16 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
               ),
             ),
             const SizedBox(height: 12),
-          ],
-
-          if (_isStreaming) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      "Loading...",
-                      style: TextStyle(color: AppColors.lightTextSecondary, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
+          ] else if (_isStreaming) ...[
+            _buildCollapsibleSection(
+              title: 'IDIOMS & SLANG',
+              isExpanded: false,
+              isLoading: true,
+              onToggle: () {},
+              content: const SizedBox.shrink(),
             ),
+            const SizedBox(height: 12),
           ],
-
 
         ] else ...[
           const Center(
@@ -515,63 +553,6 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           ),
         ],
       ],
-    );
-  }
-
-  Widget _buildSkeletonLoader() {
-    return Shimmer.fromColors(
-      baseColor: AppColors.lightSkeletonBase,
-      highlightColor: AppColors.lightSkeletonHighlight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Original sentence skeleton
-          _buildSkeletonBox(height: 12, width: 120),
-          const SizedBox(height: 8),
-          _buildSkeletonBox(height: 20, width: double.infinity),
-          const SizedBox(height: 20),
-
-          // Summary skeleton
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                _buildSkeletonBox(height: 16, width: double.infinity),
-                const SizedBox(height: 8),
-                _buildSkeletonBox(height: 16, width: double.infinity),
-                const SizedBox(height: 8),
-                _buildSkeletonBox(height: 16, width: 200),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Structure skeleton
-          _buildSkeletonBox(height: 12, width: 150),
-          const SizedBox(height: 8),
-          _buildSkeletonBox(height: 18, width: double.infinity),
-          const SizedBox(height: 20),
-
-          // Grammar points skeleton
-          _buildSkeletonBox(height: 12, width: 130),
-          const SizedBox(height: 12),
-          _buildSkeletonCard(),
-          const SizedBox(height: 12),
-          _buildSkeletonCard(),
-          const SizedBox(height: 20),
-
-          // Vocabulary skeleton
-          _buildSkeletonBox(height: 12, width: 100),
-          const SizedBox(height: 12),
-          _buildSkeletonCard(),
-          const SizedBox(height: 12),
-          _buildSkeletonCard(),
-        ],
-      ),
     );
   }
 
@@ -586,23 +567,60 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     );
   }
 
-  Widget _buildSkeletonCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.lightSurface, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSkeletonBox(height: 16, width: 150),
-          const SizedBox(height: 8),
-          _buildSkeletonBox(height: 14, width: double.infinity),
-          const SizedBox(height: 6),
-          _buildSkeletonBox(height: 14, width: 250),
-        ],
+  /// Three dots loading indicator with sequential fade animation
+  Widget _buildThreeDotsLoader() {
+    // Define three different colors for the dots
+    final dotColors = [
+      AppColors.ln400, // First dot - lighter gray
+      AppColors.ln500, // Second dot - medium gray
+      AppColors.ln700, // Third dot - darker gray
+    ];
+
+    return SizedBox(
+      width: 24,
+      height: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(3, (index) {
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.easeInOut,
+            builder: (context, value, child) {
+              // Sequential animation - each dot fades in one after another
+              final dotDelay = index * 0.33; // Each dot starts 33% later
+              final adjustedValue = (value - dotDelay).clamp(0.0, 1.0);
+
+              // Create fade in/out effect
+              double opacity;
+              if (adjustedValue < 0.5) {
+                // Fade in
+                opacity = adjustedValue * 2;
+              } else {
+                // Fade out
+                opacity = (1.0 - adjustedValue) * 2;
+              }
+
+              return Opacity(
+                opacity: opacity.clamp(0.2, 1.0),
+                child: Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: dotColors[index],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            },
+            onEnd: () {
+              if (mounted) {
+                setState(() {});
+              }
+            },
+          );
+        }),
       ),
     );
   }
@@ -613,10 +631,11 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     required bool isExpanded,
     required VoidCallback onToggle,
     required Widget content,
+    bool isLoading = false,
     Color? titleColor,
   }) {
     return GestureDetector(
-      onTap: onToggle,
+      onTap: isLoading ? null : onToggle,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -635,16 +654,20 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: titleColor ?? AppColors.lightTextPrimary,
+                    color: titleColor ?? AppColors.lightTextSecondary,
                   ),
                 ),
-                Icon(
-                  isExpanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: titleColor ?? AppColors.lightTextPrimary,
-                  size: 24,
-                ),
+                // Show loading indicator when loading, otherwise show expand icon
+                if (isLoading)
+                  _buildThreeDotsLoader()
+                else
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: titleColor ?? AppColors.lightTextPrimary,
+                    size: 24,
+                  ),
               ],
             ),
             if (isExpanded) ...[const SizedBox(height: 12), content],
