@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/design/app_design_system.dart';
 
 /// Fallback error screen displayed when app initialization fails
 class ErrorScreen extends StatelessWidget {
@@ -23,7 +24,7 @@ class ErrorScreen extends StatelessWidget {
                   Icon(
                     Icons.error_outline,
                     size: 64,
-                    color: Colors.red.shade700,
+                    color: AppColors.lr500,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -31,29 +32,29 @@ class ErrorScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red.shade900,
+                      color: AppColors.lr800,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'The app failed to initialize properly.',
-                    style: TextStyle(fontSize: 16, color: Colors.red.shade800),
+                    style: TextStyle(fontSize: 16, color: AppColors.lr800),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.dn900,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
+                      border: Border.all(color: AppColors.lr200),
                     ),
                     child: SelectableText(
                       error.toString(),
                       style: TextStyle(
                         fontSize: 14,
                         fontFamily: 'monospace',
-                        color: Colors.red.shade900,
+                        color: AppColors.lr800,
                       ),
                     ),
                   ),
