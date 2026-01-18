@@ -1918,8 +1918,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 ],
               ),
               const SizedBox(height: 24),
+              
               // Pitch Visualization Area
-              _buildSkeletonBox(height: 80, width: double.infinity, radius: 8),
+              _buildSkeletonBox(height: 80, width: double.infinity, radius: 16),
               const SizedBox(height: 16),
               // Legend
               Row(
