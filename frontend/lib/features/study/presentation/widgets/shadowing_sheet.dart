@@ -1307,7 +1307,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           // Pitch Contour Visualization with Interactive Segments
           // Pitch Contour Visualization with Interactive Segments
           LayoutBuilder(
@@ -1657,7 +1657,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 24),
         Wrap(
           spacing: 4,
           runSpacing: 8,
