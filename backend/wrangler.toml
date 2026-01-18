@@ -11,9 +11,10 @@ OPENROUTER_CHAT_MODEL = "google/gemini-3-flash-preview"
 OPENROUTER_TRANSCRIBE_MODEL = "google/gemini-2.0-flash-lite-001"
 MINIMAX_DEFAULT_VOICE_ID = "English_Trustworthy_Man"
 AZURE_SPEECH_REGION = "westus2"
-GCP_TTS_PROJECT_ID = "zinc-epigram-476407-u9"
-GCP_TTS_CLIENT_EMAIL = "openrouter-bot@zinc-epigram-476407-u9.iam.gserviceaccount.com"
-GCP_TTS_REGION = "us-central1"
+
+GCP_PROJECT_ID = "zinc-epigram-476407-u9"
+GCP_CLIENT_EMAIL = "openrouter-bot@zinc-epigram-476407-u9.iam.gserviceaccount.com"
+GCP_REGION = "us-central1"
 
 [observability]
 enabled = true
