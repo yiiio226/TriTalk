@@ -127,6 +127,7 @@ class SceneService extends ChangeNotifier {
           goal: e['goal'] ?? '',
           iconPath: e['icon_path'] ?? '',
           color: e['color'] ?? 0xFF000000,
+          targetLanguage: e['target_language'] ?? 'English',
         );
       }).toList();
 
@@ -287,6 +288,7 @@ class SceneService extends ChangeNotifier {
             'goal': scene.goal,
             'color': scene.color,
             'icon_path': scene.iconPath,
+            'target_language': scene.targetLanguage,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .timeout(const Duration(seconds: 5));

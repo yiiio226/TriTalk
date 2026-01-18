@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
+import '../../../../core/data/local/preferences_service.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../state/chat_page_state.dart';
@@ -44,23 +45,80 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   }
 
   /// Generate the initial AI greeting message for new conversations
-  /// Uses the pre-generated initialMessage from scene creation which is already
-  /// in the user's target language
+  /// Checks if user's current language differs from when scene was created,
+  /// and regenerates the message in the new language if needed.
   Future<void> _generateInitialAIMessage() async {
-    // Use the initial message from scene generation directly
-    // This message is already in the user's target learning language
-    final aiMessage = Message(
-      id: _uuid.v4(),
-      content: _scene.initialMessage,
+    final prefs = PreferencesService();
+    final currentLang = await prefs.getTargetLanguage();
+    final sceneLang = _scene.targetLanguage;
+
+    // Check if language has changed since scene was created
+    if (currentLang != sceneLang) {
+      // Language changed - need to regenerate initial message via API
+      await _regenerateInitialMessage(currentLang);
+    } else {
+      // Same language - use the pre-generated initialMessage
+      final aiMessage = Message(
+        id: _uuid.v4(),
+        content: _scene.initialMessage,
+        isUser: false,
+        timestamp: DateTime.now(),
+        isAnimated: true,
+      );
+
+      final finalMessages = [aiMessage];
+      state = state.copyWith(messages: finalMessages);
+
+      _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
+    }
+  }
+
+  /// Regenerate initial AI message in the new target language
+  Future<void> _regenerateInitialMessage(String targetLang) async {
+    // Show loading state
+    final loadingId =
+        'loading_initial_${DateTime.now().millisecondsSinceEpoch}';
+    final loadingMsg = Message(
+      id: loadingId,
+      content: '',
       isUser: false,
       timestamp: DateTime.now(),
-      isAnimated: true,
+      isLoading: true,
     );
 
-    final finalMessages = [aiMessage];
-    state = state.copyWith(messages: finalMessages);
+    state = state.copyWith(messages: [loadingMsg]);
 
-    _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
+    try {
+      final sceneContext = _buildSceneContext();
+
+      // Call API to get AI's greeting in the new language
+      final response = await _repository.sendMessage(
+        text: 'Start the conversation.',
+        sceneContext: sceneContext,
+        history: [],
+      );
+
+      // Replace loading message with AI response
+      final aiMessage = Message(
+        id: _uuid.v4(),
+        content: response.message,
+        isUser: false,
+        timestamp: DateTime.now(),
+        translation: response.translation,
+        isAnimated: true,
+      );
+
+      final finalMessages = [aiMessage];
+      state = state.copyWith(messages: finalMessages);
+
+      _repository.syncMessages(sceneKey: _sceneId, messages: finalMessages);
+    } catch (e) {
+      // Fallback to original initialMessage on error
+      state = state.copyWith(
+        messages: [],
+        error: 'Failed to generate message in new language: $e',
+      );
+    }
   }
 
   /// Send a text message
