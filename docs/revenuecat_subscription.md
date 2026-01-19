@@ -1,0 +1,491 @@
+# RevenueCat 订阅实现方案
+
+---
+
+## ⚠️ 上线前配置清单 (TODO)
+
+> **重要**: 以下配置项需要在各平台手动完成后才能正常工作。
+
+### 1. Supabase 配置
+
+| 配置项                      | 获取位置                                                      | 配置位置                                                                | 状态 |
+| --------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------- | ---- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API → `service_role` (secret) | Cloudflare Dashboard → Workers → tritalk-backend → Settings → Variables | ⬜   |
+| 数据库迁移                  | -                                                             | 运行 `cd backend && npx supabase db push --linked`                      | ⬜   |
+
+### 2. RevenueCat 配置
+
+| 配置项                      | 获取位置                                                       | 配置位置                                                                                | 状态 |
+| --------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---- |
+| `REVENUECAT_WEBHOOK_SECRET` | 自定义一个安全的随机字符串                                     | 1. Cloudflare Dashboard (环境变量) <br> 2. RevenueCat Dashboard (Webhook Authorization) | ⬜   |
+| Webhook URL                 | 你的后端 URL                                                   | RevenueCat Dashboard → Project Settings → Integrations → Webhooks                       | ⬜   |
+| RevenueCat Apple API Key    | RevenueCat Dashboard → Project → API Keys → Public iOS key     | `frontend/lib/config/env_prod.dart`                                                     | ⬜   |
+| RevenueCat Google API Key   | RevenueCat Dashboard → Project → API Keys → Public Android key | `frontend/lib/config/env_prod.dart`                                                     | ⬜   |
+
+### 3. RevenueCat Webhook 配置步骤
+
+1. 进入 [RevenueCat Dashboard](https://app.revenuecat.com) → Project Settings → Integrations → Webhooks
+2. 点击 **"+ New"** 添加 Webhook
+3. 配置如下:
+   - **Webhook URL**: `https://tritalk-backend.<你的账号>.workers.dev/webhook/revenuecat`
+   - **Authorization header**: `Bearer <你的 REVENUECAT_WEBHOOK_SECRET>`
+4. 选择以下事件:
+   - ✅ INITIAL_PURCHASE
+   - ✅ RENEWAL
+   - ✅ CANCELLATION
+   - ✅ UNCANCELLATION
+   - ✅ EXPIRATION
+   - ✅ BILLING_ISSUE
+   - ✅ PRODUCT_CHANGE
+   - ✅ TRANSFER
+   - ✅ REFUND
+   - ✅ SUBSCRIBER_ALIAS
+
+### 4. App Store / Google Play 配置
+
+| 配置项                                  | 位置                                                         | 状态 |
+| --------------------------------------- | ------------------------------------------------------------ | ---- |
+| 创建订阅产品 (tritalkplusmonthly, etc.) | App Store Connect / Google Play Console                      | ⬜   |
+| 连接 RevenueCat 到 App Store            | RevenueCat Dashboard → Apps → iOS → App Store Connect API    | ⬜   |
+| 连接 RevenueCat 到 Google Play          | RevenueCat Dashboard → Apps → Android → Service Account JSON | ⬜   |
+| 创建 Entitlements (plus, pro)           | RevenueCat Dashboard → Entitlements                          | ⬜   |
+| 创建 Offerings                          | RevenueCat Dashboard → Offerings                             | ⬜   |
+
+### 5. Cloudflare 部署
+
+```bash
+cd backend
+npx wrangler deploy
+```
+
+### 6. 前端代码集成 (TODO)
+
+以下代码更改需要手动完成以启用 RevenueCat：
+
+| 配置项                        | 文件位置                                    | 描述                                                          | 状态 |
+| ----------------------------- | ------------------------------------------- | ------------------------------------------------------------- | ---- |
+| App 初始化时调用 RevenueCat   | `lib/core/initializer/app_initializer.dart` | 在 Auth 初始化后添加 `RevenueCatService().initialize(userId)` | ⬜   |
+| 用户登录后同步 RevenueCat     | `lib/core/auth/auth_provider.dart`          | 在 login 成功后调用 `RevenueCatService().login(userId)`       | ⬜   |
+| 用户登出时清理 RevenueCat     | `lib/core/auth/auth_provider.dart`          | 在 logout 时调用 `RevenueCatService().logout()`               | ⬜   |
+| 添加 premium_illustration.png | `assets/images/`                            | Paywall 页面使用的插图图片                                    | ⬜   |
+
+**示例代码 (app_initializer.dart):**
+
+```dart
+// 在 Auth 初始化后添加:
+final user = ref.read(authProvider).user;
+if (user != null) {
+  await RevenueCatService().initialize(user.id);
+  debugPrint('AppInitializer: RevenueCat initialized');
+}
+```
+
+**示例代码 (auth_provider.dart - loginWithGoogle/loginWithApple):**
+
+```dart
+// 在 login 成功后添加:
+await RevenueCatService().login(user.id);
+
+// 在 logout 时添加:
+await RevenueCatService().logout();
+```
+
+---
+
+## 1. 概述
+
+本文档详细描述 TriTalk 应用的订阅制实现方案，使用 RevenueCat 作为统一的 IAP（应用内购买）管理平台，仅支持 Apple App Store 和 Google Play Store 的原生 IAP。
+
+### 1.1 订阅产品结构
+
+| 等级 | 名称 | 中文名 | 月付价格 | 年付价格 | 年付节省 |
+| ---- | ---- | ------ | -------- | -------- | -------- |
+| Free | Free | 免费版 | $0/月    | -        | -        |
+| Plus | Plus | 进阶版 | $6.8/月  | $49/年   | 省 $32.6 |
+| Pro  | Pro  | 专业版 | $13.8/月 | $99/年   | 省 $66.6 |
+
+### 1.2 技术架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Flutter App                              │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │             RevenueCat SDK (purchases_flutter)               │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+         ┌──────────────────┼──────────────────┐
+         ▼                  ▼                  ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  Apple Store    │ │  Google Play    │ │  RevenueCat     │
+│  Connect        │ │  Console        │ │  Dashboard      │
+└────────┬────────┘ └────────┬────────┘ └────────┬────────┘
+         │                   │                   │
+         └───────────────────┴───────────────────┘
+                             │
+                             ▼
+                   ┌─────────────────────┐
+                   │  RevenueCat Server  │
+                   │     (Webhooks)      │
+                   └──────────┬──────────┘
+                              │
+                              ▼
+                   ┌─────────────────────┐
+                   │  TriTalk Backend    │
+                   │  (Cloudflare Worker)│
+                   └──────────┬──────────┘
+                              │
+                              ▼
+                   ┌─────────────────────┐
+                   │     Supabase        │
+                   │   (User Profiles)   │
+                   └─────────────────────┘
+```
+
+### 1.3 订阅状态流转图
+
+```
+                                    ┌─────────────────────────────────────┐
+                                    │                                     │
+                                    ▼                                     │
+┌─────────┐  INITIAL_PURCHASE  ┌─────────┐  RENEWAL    ┌─────────┐      │
+│  FREE   │──────────────────▶│ ACTIVE  │────────────▶│ ACTIVE  │──────┘
+└─────────┘                    └─────────┘             └─────────┘
+     ▲                              │
+     │                              │ CANCELLATION
+     │                              ▼
+     │                         ┌───────────┐
+     │                         │ CANCELLED │ (仍在有效期内，到期后不续订)
+     │                         └───────────┘
+     │                              │
+     │                              │ EXPIRATION
+     │                              ▼
+     │  EXPIRATION            ┌─────────┐
+     └────────────────────────│ EXPIRED │
+     ▲                        └─────────┘
+     │
+     │
+     │  REFUND (退款)
+     └──────────────────────────────────────────────────────────────────┐
+                                                                        │
+                            任何付费状态 ───────REFUND──────────────────┘
+
+特殊流程：
+─────────────────────────────────────────────────────────────────────────
+UNCANCELLATION: CANCELLED ──▶ ACTIVE (用户取消后又恢复订阅)
+PRODUCT_CHANGE: ACTIVE(Plus) ──▶ ACTIVE(Pro) (升级/降级，保持 ACTIVE)
+TRANSFER: 用户 A 的订阅 ──▶ 用户 B (订阅转移到新用户)
+```
+
+**状态说明：**
+
+| 状态           | 含义                       | 用户权益 |
+| -------------- | -------------------------- | -------- |
+| `free`         | 免费用户或订阅过期         | 基础功能 |
+| `active`       | 订阅有效                   | 完整功能 |
+| `cancelled`    | 已取消但在当前周期内仍有效 | 完整功能 |
+| `grace_period` | 账单问题，宽限期内         | 完整功能 |
+| `paused`       | 订阅暂停 (Google Play)     | 基础功能 |
+| `expired`      | 订阅已过期                 | 基础功能 |
+
+---
+
+## 2. RevenueCat 配置
+
+### 2.1 RevenueCat 项目设置
+
+#### 2.1.1 创建 RevenueCat 项目
+
+1. 登录 [RevenueCat Dashboard](https://app.revenuecat.com)
+2. 创建新项目 "TriTalk"
+3. 添加 Apps:
+   - Apple App Store (iOS)
+   - Google Play Store (Android)
+
+#### 2.1.2 配置 Store 连接
+
+**Apple App Store:**
+
+- App Store Connect API Key (推荐)
+- 或者使用 Shared Secret
+
+**Google Play Store:**
+
+- 服务账号 JSON 密钥
+- 启用 Google Play Developer API
+
+### 2.2 Products 配置
+
+在 RevenueCat 中创建以下产品：
+
+| Product ID           | 类型         | 描述           |
+| -------------------- | ------------ | -------------- |
+| `tritalkplusmonthly` | Subscription | Plus 月付 $6.8 |
+| `tritalkplusyearly`  | Subscription | Plus 年付 $49  |
+| `tritalkpromonthly`  | Subscription | Pro 月付 $13.8 |
+| `tritalkproyearly`   | Subscription | Pro 年付 $99   |
+
+> **⚠️ Product ID 命名规范**
+>
+> Product ID 采用**纯小写字母**格式，这是为了同时满足 Apple 和 Google Play 的命名规则：
+>
+> | 平台              | 允许的字符                          |
+> | ----------------- | ----------------------------------- |
+> | Apple App Store   | 字母数字、句点(.)、下划线(\_)       |
+> | Google Play Store | 小写字母(a-z)、数字(0-9)、连字符(-) |
+>
+> **交集只有**：小写字母 + 数字，因此我们使用 `tritalkplusmonthly` 而非 `tritalk_plus_monthly`。
+
+#### 2.2.1 Google Play Base Plan 格式说明
+
+Google Play 的订阅模型与 Apple 有本质区别：
+
+| 特性           | Apple App Store            | Google Play Store                         |
+| -------------- | -------------------------- | ----------------------------------------- |
+| 产品结构       | 每个 Product ID 是独立订阅 | 一个 Subscription 下可有多个 Base Plan    |
+| 标识符格式     | `tritalkplusmonthly`       | `tritalkplusmonthly:monthly-autorenewing` |
+| 用户购买的对象 | Product                    | Base Plan（不是 Subscription 本身）       |
+| 价格/周期配置  | 直接在 Product 上          | 在 Base Plan 上配置                       |
+
+**Google Play Console 配置示例：**
+
+```
+Subscription: tritalkplusmonthly
+├── Base Plan: monthly-autorenewing (月付, 自动续订)
+│   └── Price: $6.8/月
+│
+Subscription: tritalkplusyearly
+├── Base Plan: annual-autorenewing (年付, 自动续订)
+│   └── Price: $49/年
+```
+
+**RevenueCat 如何处理差异：**
+
+RevenueCat 将 Google Play 的 Base Plan 映射为其 Product，因此：
+
+- 在 RevenueCat Dashboard 为 **Android 应用**配置产品时，使用完整的 `subscriptionId:basePlanId` 格式
+- RevenueCat SDK 返回的 `storeProduct.identifier` 在不同平台格式不同
+
+| RevenueCat Product 配置 | iOS 应用             | Android 应用                              |
+| ----------------------- | -------------------- | ----------------------------------------- |
+| Plus 月付               | `tritalkplusmonthly` | `tritalkplusmonthly:monthly-autorenewing` |
+| Plus 年付               | `tritalkplusyearly`  | `tritalkplusyearly:annual-autorenewing`   |
+| Pro 月付                | `tritalkpromonthly`  | `tritalkpromonthly:monthly-autorenewing`  |
+| Pro 年付                | `tritalkproyearly`   | `tritalkproyearly:annual-autorenewing`    |
+
+> **💡 开发提示**
+>
+> 由于 RevenueCat 抽象了这个差异，我们在代码中需要做的处理是：
+>
+> 1. **后端 Webhook**：从 `product_id` 提取基础 ID（通过 `split(':')[0]`）
+> 2. **前端匹配产品**：使用 `startsWith()` 匹配而非精确匹配
+
+### 2.3 Entitlements 配置
+
+创建以下 Entitlements：
+
+| Entitlement ID | 关联产品                                  | 描述          |
+| -------------- | ----------------------------------------- | ------------- |
+| `plus`         | `tritalkplusmonthly`, `tritalkplusyearly` | Plus 会员权益 |
+| `pro`          | `tritalkpromonthly`, `tritalkproyearly`   | Pro 会员权益  |
+
+> **注意**: Pro 用户同时拥有 `pro` 和 `plus` entitlements（或者仅使用 `pro` 并在应用层面处理权限包含关系）
+
+### 2.4 Offerings 配置
+
+创建以下 Offerings：
+
+| Offering ID | 描述             | 包含 Packages |
+| ----------- | ---------------- | ------------- |
+| `default`   | 默认展示方案     | 所有产品      |
+| `promotion` | 促销方案（可选） | 特价产品      |
+
+**Packages 配置示例（default offering）:**
+
+| Package ID     | 产品                 | 描述      |
+| -------------- | -------------------- | --------- |
+| `plus_monthly` | `tritalkplusmonthly` | Plus 月付 |
+| `plus_annual`  | `tritalkplusyearly`  | Plus 年付 |
+| `pro_monthly`  | `tritalkpromonthly`  | Pro 月付  |
+| `pro_annual`   | `tritalkproyearly`   | Pro 年付  |
+
+> **💡 Package ID 命名说明**
+>
+> - RevenueCat 有预定义的 Package ID（如 `$rc_monthly`, `$rc_annual`），但这只是快捷方式
+> - **推荐使用自定义 Package ID**（如 `plus_monthly`），更清晰且避免与其他产品冲突
+> - 在代码中通过 `identifier` 或 `packageType` 匹配产品
+
+### 2.5 升级/降级策略（Prorate）
+
+订阅升级/降级支持立即生效并按比例计算：
+
+**Apple App Store:**
+
+1. 在 App Store Connect → Subscriptions → 订阅组
+2. 设置 "Subscription Upgrade/Downgrade" 策略为 "Immediately"
+3. 苹果自动处理 prorate 退款（升级时退还剩余金额）
+
+**Google Play Store:**
+
+1. 在 Google Play Console → Monetization → Subscriptions
+2. 配置 Base Plan 的替换模式：
+   - 升级：选择 `CHARGE_PRORATED_PRICE`（立即收取差价）
+   - 降级：选择 `DEFERRED`（当前周期结束后生效）或 `CHARGE_PRORATED_PRICE`
+
+**RevenueCat 处理：**
+
+当用户升级/降级时，RevenueCat 会发送 `PRODUCT_CHANGE` webhook，包含：
+
+- `product_id`: 新的产品 ID
+- `expiration_at_ms`: 新的到期时间（可能因 prorate 调整）
+
+---
+
+## 3. 详细实施文档
+
+有关具体的代码实现，请参阅以下文档：
+
+### [👉 前端实现文档 (Flutter)](../frontend/doc/revenuecat_subscription.md)
+
+包含：
+
+- Flutter 依赖与 SDK 配置
+- RevenueCat 服务重构代码
+- Paywall 页面实现
+- 前端测试指南
+
+### [👉 后端实现文档 (Cloudflare Worker + Supabase)](../backend/docs/revenuecat_subscription.md)
+
+包含：
+
+- 数据库 Schema 设计
+- Webhook 处理逻辑
+- 自动清理任务 (Cron Triggers)
+- 后端测试指南
+- 安全性配置
+
+---
+
+## 4. App Store / Google Play 配置
+
+### 4.1 App Store Connect
+
+1. **创建 App 内购买项目**
+   - 类型: 自动续订订阅
+   - 产品 ID: 对应上述 Product IDs
+   - 订阅组: TriTalk Subscriptions
+
+2. **配置订阅时长和价格**
+   - Plus Monthly: $6.8/月
+   - Plus Yearly: $49/年
+   - Pro Monthly: $13.8/月
+   - Pro Yearly: $99/年
+
+3. **App Store Connect API Key**
+   - 用于 RevenueCat 验证购买
+
+### 4.2 Google Play Console
+
+1. **创建订阅产品**
+   - 路径: Monetization → Subscriptions
+   - 创建订阅: tritalkplus, tritalkpro
+   - 创建基础方案: monthly, yearly
+
+2. **配置 Service Account**
+   - 用于 RevenueCat 验证购买
+   - 授予 "View financial data" 权限
+
+---
+
+## 5. 测试策略
+
+### 5.1 沙盒测试
+
+- [ ] iOS Sandbox 账号购买测试
+- [ ] Android 测试轨道购买测试
+- [ ] 购买 → 取消 → 过期流程
+- [ ] 恢复购买功能
+- [ ] 升级/降级测试
+- [ ] 宽限期测试 (暂未启用)
+
+_更多特定平台的测试项，请参考[前端](../frontend/doc/revenuecat_subscription.md#3-前端测试)和[后端](../backend/docs/revenuecat_subscription.md#3-webhook-测试)文档。_
+
+---
+
+## 6. 监控与告警
+
+### 6.1 RevenueCat Dashboard
+
+- 订阅收入追踪
+- 流失率分析
+- 试用转化率
+
+### 6.2 日志监控
+
+- Webhook 处理错误
+- 购买失败
+- 订阅状态异常
+
+### 6.3 关键指标
+
+- MRR (月度经常性收入)
+- Churn Rate (流失率)
+- Trial-to-Paid Conversion
+
+---
+
+## 7. 实施步骤
+
+详情请参考各自分项文档，总体流程如下：
+
+### Phase 1: 基础设施 (1-2 天) ✅ 后端已完成
+
+- [ ] 创建 RevenueCat 项目并配置
+- [ ] 配置 App Store Connect 和 Google Play Console
+- [x] 创建数据库表 ([Backend Doc](../backend/docs/revenuecat_subscription.md)) ✅
+- [x] 添加后端 Webhook 处理 ([Backend Doc](../backend/docs/revenuecat_subscription.md)) ✅
+- [x] 添加订阅状态 API ✅
+- [x] 添加过期清理 Cron 任务 ✅
+
+### Phase 2: 前端实现 (2-3 天) ✅ 前端已完成
+
+- [x] 集成 RevenueCat SDK (purchases_flutter ^9.10.6) ✅
+- [x] 重构 RevenueCatService ([Frontend Doc](../frontend/doc/revenuecat_subscription.md)) ✅
+- [x] 重构 PaywallScreen ([Frontend Doc](../frontend/doc/revenuecat_subscription.md)) ✅
+- [x] 添加订阅等级模型 (SubscriptionTier enum) ✅
+- [x] 添加环境变量配置 (revenueCatAppleApiKey, revenueCatGoogleApiKey) ✅
+- [x] 添加完整的 i18n 国际化支持 ✅
+- [ ] 对接后端订阅状态 API (可选，RevenueCat SDK 已处理状态同步)
+
+### Phase 3: 测试与优化 (2-3 天)
+
+- [ ] Sandbox 购买测试
+- [ ] Webhook 集成测试
+- [ ] 错误处理完善
+- [ ] 性能优化
+
+### Phase 4: 上线 (1 天)
+
+- [ ] 提交 App 审核
+- [ ] 配置生产环境
+- [ ] 监控设置
+
+---
+
+## 附录: 常见问题
+
+### Q: 为什么选择 RevenueCat 而不是直接使用 StoreKit/Billing？
+
+A: RevenueCat 提供统一的 API，简化跨平台开发，自动处理收据验证，提供强大的分析功能。
+
+### Q: 如何处理用户切换设备？
+
+A: RevenueCat 通过 app_user_id（映射到 Supabase user ID）自动同步订阅状态。
+
+### Q: Webhook 失败会怎样？
+
+A: RevenueCat 会自动重试失败的 webhook。同时，客户端定期刷新状态可以作为备份。
+
+### Q: 如何处理退款？
+
+A: RevenueCat 会发送 REFUND 事件（如果配置），后端收到后更新订阅状态为 free。

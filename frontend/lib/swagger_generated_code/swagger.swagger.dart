@@ -10,6 +10,7 @@ import 'client_mapping.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:chopper/chopper.dart' as chopper;
+import 'swagger.enums.swagger.dart' as enums;
 import 'swagger.metadata.swagger.dart';
 export 'swagger.enums.swagger.dart';
 export 'swagger.models.swagger.dart';
@@ -365,21 +366,21 @@ abstract class Swagger extends ChopperService {
   });
 
   ///
-  Future<chopper.Response<ShadowingSavePost$Response>> shadowingSavePost({
-    required ShadowingSavePost$RequestBody? body,
+  Future<chopper.Response<ShadowingUpsertPut$Response>> shadowingUpsertPut({
+    required ShadowingUpsertPut$RequestBody? body,
   }) {
     generatedMapping.putIfAbsent(
-      ShadowingSavePost$Response,
-      () => ShadowingSavePost$Response.fromJsonFactory,
+      ShadowingUpsertPut$Response,
+      () => ShadowingUpsertPut$Response.fromJsonFactory,
     );
 
-    return _shadowingSavePost(body: body);
+    return _shadowingUpsertPut(body: body);
   }
 
   ///
-  @POST(path: '/shadowing/save', optionalBody: true)
-  Future<chopper.Response<ShadowingSavePost$Response>> _shadowingSavePost({
-    @Body() required ShadowingSavePost$RequestBody? body,
+  @PUT(path: '/shadowing/upsert', optionalBody: true)
+  Future<chopper.Response<ShadowingUpsertPut$Response>> _shadowingUpsertPut({
+    @Body() required ShadowingUpsertPut$RequestBody? body,
     @chopper.Tag()
     SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
       description: '',
@@ -394,45 +395,30 @@ abstract class Swagger extends ChopperService {
   });
 
   ///
+  ///@param source_type
   ///@param source_id
-  ///@param target_text
-  ///@param scene_key
-  ///@param limit
-  ///@param offset
-  Future<chopper.Response<ShadowingHistoryGet$Response>> shadowingHistoryGet({
-    String? sourceId,
-    String? targetText,
-    String? sceneKey,
-    String? limit,
-    String? offset,
+  Future<chopper.Response<ShadowingGetGet$Response>> shadowingGetGet({
+    required enums.ShadowingGetGetSourceType? sourceType,
+    required String? sourceId,
   }) {
     generatedMapping.putIfAbsent(
-      ShadowingHistoryGet$Response,
-      () => ShadowingHistoryGet$Response.fromJsonFactory,
+      ShadowingGetGet$Response,
+      () => ShadowingGetGet$Response.fromJsonFactory,
     );
 
-    return _shadowingHistoryGet(
+    return _shadowingGetGet(
+      sourceType: sourceType?.value?.toString(),
       sourceId: sourceId,
-      targetText: targetText,
-      sceneKey: sceneKey,
-      limit: limit,
-      offset: offset,
     );
   }
 
   ///
+  ///@param source_type
   ///@param source_id
-  ///@param target_text
-  ///@param scene_key
-  ///@param limit
-  ///@param offset
-  @GET(path: '/shadowing/history')
-  Future<chopper.Response<ShadowingHistoryGet$Response>> _shadowingHistoryGet({
-    @Query('source_id') String? sourceId,
-    @Query('target_text') String? targetText,
-    @Query('scene_key') String? sceneKey,
-    @Query('limit') String? limit,
-    @Query('offset') String? offset,
+  @GET(path: '/shadowing/get')
+  Future<chopper.Response<ShadowingGetGet$Response>> _shadowingGetGet({
+    @Query('source_type') required String? sourceType,
+    @Query('source_id') required String? sourceId,
     @chopper.Tag()
     SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
       description: '',

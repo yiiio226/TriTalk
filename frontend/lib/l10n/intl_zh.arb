@@ -137,5 +137,77 @@
 				"example": "English (US)"
 			}
 		}
+	},
+	"subscription_upgrade": "升级",
+	"@subscription_upgrade": {
+		"description": "Title for the upgrade/paywall screen"
+	},
+	"subscription_choosePlan": "选择订阅方案",
+	"@subscription_choosePlan": {
+		"description": "Title for subscription plan selection"
+	},
+	"subscription_restore": "恢复购买",
+	"@subscription_restore": {
+		"description": "Button text to restore previous purchases"
+	},
+	"subscription_unlockPotential": "解锁全部潜能",
+	"@subscription_unlockPotential": {
+		"description": "Headline on paywall screen"
+	},
+	"subscription_description": "获取无限对话、高级语法分析，以及所有高级场景的访问权限。",
+	"@subscription_description": {
+		"description": "Description text on paywall explaining premium benefits"
+	},
+	"subscription_recommended": "热门",
+	"@subscription_recommended": {
+		"description": "Badge text for recommended subscription tier"
+	},
+	"subscription_monthlyPlan": "月付",
+	"@subscription_monthlyPlan": {
+		"description": "Label for monthly subscription plan"
+	},
+	"subscription_yearlyPlan": "年付",
+	"@subscription_yearlyPlan": {
+		"description": "Label for yearly subscription plan"
+	},
+	"subscription_purchaseSuccess": "订阅已激活！欢迎！",
+	"@subscription_purchaseSuccess": {
+		"description": "Success message after completing a purchase"
+	},
+	"subscription_purchaseFailed": "购买失败，请重试。",
+	"@subscription_purchaseFailed": {
+		"description": "Error message when purchase fails"
+	},
+	"subscription_noPurchasesToRestore": "未找到之前的购买记录。",
+	"@subscription_noPurchasesToRestore": {
+		"description": "Message when restore finds no previous purchases"
+	},
+	"subscription_restoreFailed": "恢复购买失败，请重试。",
+	"@subscription_restoreFailed": {
+		"description": "Error message when restore fails"
+	},
+	"subscription_noProductsAvailable": "暂无可用产品。",
+	"@subscription_noProductsAvailable": {
+		"description": "Message when no subscription products are available"
+	},
+	"subscription_featureUnlimitedMessages": "无限消息",
+	"@subscription_featureUnlimitedMessages": {
+		"description": "Feature description for unlimited messaging"
+	},
+	"subscription_featureAdvancedFeedback": "高级语法反馈",
+	"@subscription_featureAdvancedFeedback": {
+		"description": "Feature description for advanced feedback"
+	},
+	"subscription_featureAllPlusFeatures": "包含所有 Plus 功能",
+	"@subscription_featureAllPlusFeatures": {
+		"description": "Feature description indicating all Plus features"
+	},
+	"subscription_featurePremiumScenarios": "高级场景",
+	"@subscription_featurePremiumScenarios": {
+		"description": "Feature description for premium scenarios"
+	},
+	"subscription_featurePrioritySupport": "优先客服支持",
+	"@subscription_featurePrioritySupport": {
+		"description": "Feature description for priority support"
 	}
 }
