@@ -9,16 +9,21 @@ import 'package:frontend/features/speech/speech.dart';
 
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;
+  final String targetLanguage; // Language code for TTS
   final WordTtsService _wordTtsService = WordTtsService();
 
-  FavoritesSheet({super.key, required this.scenarioId});
+  FavoritesSheet({
+    super.key,
+    required this.scenarioId,
+    this.targetLanguage = 'en-US', // Default for backward compatibility
+  });
 
   Future<void> _playWordPronunciation(String word) async {
     final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
     if (cleanWord.isEmpty) return;
 
     try {
-      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+      await _wordTtsService.speakWord(cleanWord, language: targetLanguage);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Word TTS error: $e');

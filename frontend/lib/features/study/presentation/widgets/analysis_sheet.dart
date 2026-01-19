@@ -17,6 +17,7 @@ class AnalysisSheet extends StatefulWidget {
   final String? sceneId;
   final Stream<MessageAnalysis>? analysisStream;
   final Function(MessageAnalysis)? onAnalysisComplete;
+  final String targetLanguage; // Language code for TTS
 
   const AnalysisSheet({
     super.key,
@@ -26,6 +27,7 @@ class AnalysisSheet extends StatefulWidget {
     this.sceneId,
     this.analysisStream,
     this.onAnalysisComplete,
+    this.targetLanguage = 'en-US', // Default for backward compatibility
   });
 
   @override
@@ -139,7 +141,10 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
     if (cleanWord.isEmpty) return;
 
     try {
-      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+      await _wordTtsService.speakWord(
+        cleanWord,
+        language: widget.targetLanguage,
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Word TTS error: $e');

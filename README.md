@@ -93,11 +93,11 @@ TriTalk/
 
 数据库模式通过 **Supabase Migration** 管理。详见 [backend/docs/database_migration.md](backend/docs/database_migration.md) 获取详细说明。
 
-### 2. Backend 设置
+### 2. Backend
 
-详见 [backend/docs/development_guide.md](backend/docs/development_guide.md) 获取设置和部署说明。
+详见 [backend/README.md](backend/README.md) 获取设置和部署说明。
 
-### 3. Frontend 设置
+### 3. Frontend
 
 详见 [frontend/README.md](frontend/README.md) 获取设置说明。
 
