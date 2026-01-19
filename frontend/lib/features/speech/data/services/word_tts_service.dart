@@ -38,8 +38,21 @@ class WordTtsService {
     _initLocalTts();
   }
 
-  // Audio player for cached/cloud audio
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  // Audio player for cached/cloud audio (recreatable)
+  AudioPlayer? _audioPlayer;
+  bool _isPlayerDisposed = false;
+
+  /// Get or create audio player instance
+  AudioPlayer _getPlayer() {
+    if (_audioPlayer == null || _isPlayerDisposed) {
+      _audioPlayer = AudioPlayer();
+      _isPlayerDisposed = false;
+      if (kDebugMode) {
+        debugPrint('🔊 WordTTS: AudioPlayer created/recreated');
+      }
+    }
+    return _audioPlayer!;
+  }
 
   // Local TTS engine
   final FlutterTts _flutterTts = FlutterTts();
@@ -241,7 +254,7 @@ class WordTtsService {
   /// Stop current playback
   Future<void> stop() async {
     try {
-      await _audioPlayer.stop();
+      await _audioPlayer?.stop();
     } catch (e) {
       // Ignore errors - player may not be initialized
     }
@@ -256,7 +269,8 @@ class WordTtsService {
 
   /// Dispose resources
   void dispose() {
-    _audioPlayer.dispose();
+    _audioPlayer?.dispose();
+    _isPlayerDisposed = true;
     _flutterTts.stop();
   }
 
@@ -406,12 +420,14 @@ class WordTtsService {
   Future<void> _playAudioFile(String filePath) async {
     _isLoading = false;
 
+    final player = _getPlayer();
+
     // Setup completion listener
-    _audioPlayer.onPlayerComplete.listen((_) {
+    player.onPlayerComplete.listen((_) {
       _currentlyPlayingWord = null;
     });
 
-    await _audioPlayer.play(UrlSource(Uri.file(filePath).toString()));
+    await player.play(UrlSource(Uri.file(filePath).toString()));
   }
 
   /// Play audio from base64 string (saves to temp file for iOS compatibility)
@@ -432,13 +448,15 @@ class WordTtsService {
         debugPrint('🔊 WordTTS: Playing from temp file: ${tempFile.path}');
       }
 
+      final player = _getPlayer();
+
       // Setup completion listener
-      _audioPlayer.onPlayerComplete.listen((_) {
+      player.onPlayerComplete.listen((_) {
         _currentlyPlayingWord = null;
       });
 
       // Play from file
-      await _audioPlayer.play(UrlSource(Uri.file(tempFile.path).toString()));
+      await player.play(UrlSource(Uri.file(tempFile.path).toString()));
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ WordTTS: Failed to play from base64: $e');

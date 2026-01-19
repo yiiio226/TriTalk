@@ -6,7 +6,9 @@ class EnvLocal {
   // For local development, connect to localhost
   // Change to your machine's IP address for real device testing
   // static const String backendUrl = 'http://192.168.1.3:8787';
-  static const String backendUrl = 'http://localhost:8787';
+
+  static const String backendUrl =
+      'https://tritalk-backend.tristart226.workers.dev';
 
   // Supabase configuration (same as dev for now)
   static const String supabaseUrl = 'https://adrbhdqyrnwoxlszzzsd.supabase.co';
