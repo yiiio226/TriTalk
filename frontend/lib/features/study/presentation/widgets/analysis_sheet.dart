@@ -56,6 +56,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
   @override
   void dispose() {
     _subscription?.cancel();
+    // Stop any word TTS playback when sheet is closed
+    _wordTtsService.stop();
     super.dispose();
   }
 
@@ -562,7 +564,6 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             ),
             const SizedBox(height: 12),
           ],
-
         ] else ...[
           const Center(
             child: Padding(
@@ -858,7 +859,10 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 4),
           Text(
             vocab.definition,
-            style: const TextStyle(fontSize: 13, color: AppColors.lightTextPrimary),
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.lightTextPrimary,
+            ),
           ),
           if (vocab.example.isNotEmpty) ...[
             const SizedBox(height: 6),
