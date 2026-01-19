@@ -58,6 +58,38 @@ cd backend
 npx wrangler deploy
 ```
 
+### 6. 前端代码集成 (TODO)
+
+以下代码更改需要手动完成以启用 RevenueCat：
+
+| 配置项                        | 文件位置                                    | 描述                                                          | 状态 |
+| ----------------------------- | ------------------------------------------- | ------------------------------------------------------------- | ---- |
+| App 初始化时调用 RevenueCat   | `lib/core/initializer/app_initializer.dart` | 在 Auth 初始化后添加 `RevenueCatService().initialize(userId)` | ⬜   |
+| 用户登录后同步 RevenueCat     | `lib/core/auth/auth_provider.dart`          | 在 login 成功后调用 `RevenueCatService().login(userId)`       | ⬜   |
+| 用户登出时清理 RevenueCat     | `lib/core/auth/auth_provider.dart`          | 在 logout 时调用 `RevenueCatService().logout()`               | ⬜   |
+| 添加 premium_illustration.png | `assets/images/`                            | Paywall 页面使用的插图图片                                    | ⬜   |
+
+**示例代码 (app_initializer.dart):**
+
+```dart
+// 在 Auth 初始化后添加:
+final user = ref.read(authProvider).user;
+if (user != null) {
+  await RevenueCatService().initialize(user.id);
+  debugPrint('AppInitializer: RevenueCat initialized');
+}
+```
+
+**示例代码 (auth_provider.dart - loginWithGoogle/loginWithApple):**
+
+```dart
+// 在 login 成功后添加:
+await RevenueCatService().login(user.id);
+
+// 在 logout 时添加:
+await RevenueCatService().logout();
+```
+
 ---
 
 ## 1. 概述
