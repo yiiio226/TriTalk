@@ -43,7 +43,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       setState(() {
         _name = user.name;
         _email = user.email;
-        _avatarUrl = user.avatarUrl ?? 'assets/images/user_avatar_male.png';
+        _avatarUrl =
+            user.avatarUrl ?? 'assets/images/avatars/user_avatar_male.png';
         _gender = user.gender;
         // Ensure we handle both legacy names and new codes gracefully
         _nativeLanguage = LanguageConstants.getIsoCode(user.nativeLanguage);
@@ -54,7 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       setState(() {
         _name = 'Guest';
         _email = 'guest@example.com';
-        _avatarUrl = 'assets/images/user_avatar_male.png';
+        _avatarUrl = 'assets/images/avatars/user_avatar_male.png';
         _gender = 'male';
         _nativeLanguage = LanguageConstants.defaultNativeLanguageCode;
         _targetLanguage = LanguageConstants.defaultTargetLanguageCode;
@@ -143,7 +144,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         children: [
                           Row(
                             children: [
-                              if (option.flag.isNotEmpty) ...[
+                              // Use Icon for "System Default", emoji for others
+                              if (option.code == 'system') ...[
+                                Container(
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.language,
+                                    color: AppColors.ln700,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                              ] else if (option.flag.isNotEmpty) ...[
                                 Text(
                                   option.flag,
                                   style: const TextStyle(fontSize: 24),
@@ -347,8 +359,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               errorBuilder: (context, error, stackTrace) {
                                 // Fallback to gender-based avatar
                                 final fallbackPath = _gender == 'female'
-                                    ? 'assets/images/user_avatar_female.png'
-                                    : 'assets/images/user_avatar_male.png';
+                                    ? 'assets/images/avatars/user_avatar_female.png'
+                                    : 'assets/images/avatars/user_avatar_male.png';
                                 return Image.asset(
                                   fallbackPath,
                                   fit: BoxFit.cover,

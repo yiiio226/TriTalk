@@ -167,7 +167,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage(
-                          'assets/images/premium_illustration.png',
+                          'assets/images/illustrations/premium_illustration.png',
                         ),
                         fit: BoxFit.contain,
                       ),
@@ -229,6 +229,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
+
       ),
     );
   }
