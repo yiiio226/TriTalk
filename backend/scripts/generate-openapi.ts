@@ -1,5 +1,5 @@
 import { writeFileSync, readFileSync } from "fs";
-import app from "../src/server";
+import { app } from "../src/server";
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf-8"));
 
