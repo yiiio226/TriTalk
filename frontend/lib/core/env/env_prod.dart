@@ -1,5 +1,6 @@
 /// Production environment configuration
 /// Used when running in release mode (kReleaseMode)
+/// TODO(cyb): configure the correct supabase url and key
 class EnvProd {
   static const String supabaseUrl = 'https://adrbhdqyrnwoxlszzzsd.supabase.co';
   // AnnonKey is legacy, now it is recommend to use PublishableKey based on supabase doc.

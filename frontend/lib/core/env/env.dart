@@ -1,31 +1,94 @@
-import 'package:flutter/foundation.dart';
-
+import 'env_config.dart';
 import 'env_dev.dart';
+import 'env_local.dart';
 import 'env_prod.dart';
 
-/// Environment configuration that automatically selects dev or prod
-/// based on the current build mode.
+/// Environment configuration that selects local/dev/prod based on
+/// the --dart-define=ENV compile-time parameter.
 ///
-/// - kDebugMode: Uses [EnvDev] configuration
-/// - kReleaseMode/kProfileMode: Uses [EnvProd] configuration
+/// Build commands:
+/// ```bash
+/// # Local development (connects to localhost backend)
+/// flutter run --dart-define=ENV=local
+///
+/// # Dev build (connects to dev backend)
+/// flutter run --dart-define=ENV=dev
+/// flutter build ios --dart-define=ENV=dev
+///
+/// # Production build
+/// flutter build ios --dart-define=ENV=prod --release
+/// flutter build apk --dart-define=ENV=prod --release
+/// ```
 class Env {
-  static String get supabaseUrl =>
-      kDebugMode ? EnvDev.supabaseUrl : EnvProd.supabaseUrl;
+  /// Current environment type
+  static Environment get current => EnvConfig.current;
 
-  static String get supabaseAnonKey =>
-      kDebugMode ? EnvDev.supabaseAnonKey : EnvProd.supabaseAnonKey;
+  /// Environment name for logging
+  static String get name => EnvConfig.name;
 
-  static String get backendUrl =>
-      kDebugMode ? EnvDev.backendUrl : EnvProd.backendUrl;
+  static String get supabaseUrl {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.supabaseUrl;
+      case Environment.dev:
+        return EnvDev.supabaseUrl;
+      case Environment.prod:
+        return EnvProd.supabaseUrl;
+    }
+  }
 
-  static String get googleOAuthIosClientId => kDebugMode
-      ? EnvDev.googleOAuthIosClientId
-      : EnvProd.googleOAuthIosClientId;
+  static String get supabaseAnonKey {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.supabaseAnonKey;
+      case Environment.dev:
+        return EnvDev.supabaseAnonKey;
+      case Environment.prod:
+        return EnvProd.supabaseAnonKey;
+    }
+  }
 
-  static String get googleOAuthWebClientId => kDebugMode
-      ? EnvDev.googleOAuthWebClientId
-      : EnvProd.googleOAuthWebClientId;
+  static String get backendUrl {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.backendUrl;
+      case Environment.dev:
+        return EnvDev.backendUrl;
+      case Environment.prod:
+        return EnvProd.backendUrl;
+    }
+  }
 
-  static bool get forceCloudTTS =>
-      kDebugMode ? EnvDev.forceCloudTTS : EnvProd.forceCloudTTS;
+  static String get googleOAuthIosClientId {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.googleOAuthIosClientId;
+      case Environment.dev:
+        return EnvDev.googleOAuthIosClientId;
+      case Environment.prod:
+        return EnvProd.googleOAuthIosClientId;
+    }
+  }
+
+  static String get googleOAuthWebClientId {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.googleOAuthWebClientId;
+      case Environment.dev:
+        return EnvDev.googleOAuthWebClientId;
+      case Environment.prod:
+        return EnvProd.googleOAuthWebClientId;
+    }
+  }
+
+  static bool get forceCloudTTS {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.forceCloudTTS;
+      case Environment.dev:
+        return EnvDev.forceCloudTTS;
+      case Environment.prod:
+        return EnvProd.forceCloudTTS;
+    }
+  }
 }

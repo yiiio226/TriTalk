@@ -1,0 +1,6 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+#include "Generated.xcconfig"
+
+// DART_DEFINES base64 encoded "ENV=dev"
+// This configuration is for Dev builds with remote dev backend
+DART_DEFINES = RU5WPWRldg==

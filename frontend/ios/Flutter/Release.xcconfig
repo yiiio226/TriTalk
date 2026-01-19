@@ -1,5 +1,6 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
 
-// DART_DEFINES base64 encoded "USE_PROD=true"
-DART_DEFINES = VVNFX1BST0Q9dHJ1ZQ==
+// DART_DEFINES base64 encoded "ENV=prod"
+// This ensures Xcode Archive builds use production environment
+DART_DEFINES = RU5WPXByb2Q=
