@@ -13,6 +13,7 @@ class VoiceFeedbackSheet extends ConsumerStatefulWidget {
   final String? transcript; // Reference text for assessment
   final Function(VoiceFeedback)?
   onFeedbackUpdate; // Callback when Azure data arrives
+  final String targetLanguage; // Language code for TTS and assessment
 
   const VoiceFeedbackSheet({
     super.key,
@@ -21,6 +22,7 @@ class VoiceFeedbackSheet extends ConsumerStatefulWidget {
     this.audioPath,
     this.transcript,
     this.onFeedbackUpdate,
+    this.targetLanguage = 'en-US', // Default for backward compatibility
   });
 
   @override
@@ -77,7 +79,7 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
           .assessFromPath(
             audioPath: widget.audioPath!,
             referenceText: widget.transcript!,
-            language: 'en-US',
+            language: widget.targetLanguage,
             enableProsody: true,
           )
           .then((result) {
@@ -154,7 +156,10 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
     if (cleanWord.isEmpty) return;
 
     try {
-      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+      await _wordTtsService.speakWord(
+        cleanWord,
+        language: widget.targetLanguage,
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Word TTS error: $e');

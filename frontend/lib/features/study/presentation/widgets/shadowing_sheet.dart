@@ -15,6 +15,7 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/auth/auth_provider.dart';
 import 'package:frontend/core/mixins/tts_playback_mixin.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
+import 'package:frontend/core/utils/language_utils.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/features/study/data/shadowing_history_service.dart';
 import 'package:frontend/features/speech/speech.dart';
@@ -282,7 +283,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
     if (cleanWord.isEmpty) return;
 
     try {
-      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+      await _wordTtsService.speakWord(
+        cleanWord,
+        language: widget.targetLanguage,
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Word TTS error: $e');
@@ -1362,29 +1366,29 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Row(
-            children: [
-              Container(
+            Row(
+              children: [
+                Container(
                   padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.ln100,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.graphic_eq_rounded,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.graphic_eq_rounded,
                     size: 16,
                     color: AppColors.lightTextSecondary,
+                  ),
                 ),
-              ),
                 const SizedBox(width: 10),
-              const Text(
-                'Pitch Contour',
-                style: TextStyle(
+                const Text(
+                  'Pitch Contour',
+                  style: TextStyle(
                     fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.lightTextPrimary,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.lightTextPrimary,
+                  ),
                 ),
-              ),
                 const SizedBox(width: 12),
                 Container(width: 1, height: 12, color: AppColors.lightDivider),
                 const SizedBox(width: 12),
@@ -1400,113 +1404,113 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ],
             ),
             const SizedBox(height: 24),
-          // Pitch Contour Visualization with Interactive Segments
-          // Pitch Contour Visualization with Interactive Segments
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return GestureDetector(
-                onTapDown: (details) {
-                  final segments = _getDisplaySegments();
-                  if (segments.isEmpty) return;
+            // Pitch Contour Visualization with Interactive Segments
+            // Pitch Contour Visualization with Interactive Segments
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return GestureDetector(
+                  onTapDown: (details) {
+                    final segments = _getDisplaySegments();
+                    if (segments.isEmpty) return;
 
-                  // Calculate geometry to find tapped segment
-                  // Must match IntonationPainter's layout logic!
-                  const double gap = 12.0;
-                  final int count = segments.length;
-                  final double totalGapWidth = gap * (count - 1);
-                  final double availableWidth =
-                      constraints.maxWidth - totalGapWidth;
+                    // Calculate geometry to find tapped segment
+                    // Must match IntonationPainter's layout logic!
+                    const double gap = 12.0;
+                    final int count = segments.length;
+                    final double totalGapWidth = gap * (count - 1);
+                    final double availableWidth =
+                        constraints.maxWidth - totalGapWidth;
 
-                  int totalWords = 0;
-                  for (var seg in segments) {
-                    totalWords += seg.wordCount;
-                  }
-                  if (totalWords == 0) {
-                    totalWords = count; // Avoid division by zero
-                  }
-
-                  double currentX = 0;
-                  for (int i = 0; i < count; i++) {
-                    final seg = segments[i];
-                    final double weight = seg.wordCount > 0
-                        ? seg.wordCount.toDouble()
-                        : 1.0;
-                    final double fraction = totalWords > 0
-                        ? weight / totalWords
-                        : 1.0 / count;
-                    final double segWidth = availableWidth * fraction;
-
-                    // Allow tapping slightly into the gap for easier touch
-                    if (details.localPosition.dx >= currentX &&
-                        details.localPosition.dx <=
-                            currentX + segWidth + (gap / 2)) {
-                      _playSegmentAudio(i);
-                      break;
+                    int totalWords = 0;
+                    for (var seg in segments) {
+                      totalWords += seg.wordCount;
                     }
-                    currentX += segWidth + gap;
-                  }
-                },
-                child: SizedBox(
-                  height: 80,
-                  width: double.infinity,
-                  child: CustomPaint(
-                    painter: IntonationPainter(
-                      overallScore: score,
-                      primaryColor: AppColors.primary,
-                      userColor: _getScoreColor(score),
-                      targetText: widget.targetText,
-                      segments: _getDisplaySegments(),
+                    if (totalWords == 0) {
+                      totalWords = count; // Avoid division by zero
+                    }
+
+                    double currentX = 0;
+                    for (int i = 0; i < count; i++) {
+                      final seg = segments[i];
+                      final double weight = seg.wordCount > 0
+                          ? seg.wordCount.toDouble()
+                          : 1.0;
+                      final double fraction = totalWords > 0
+                          ? weight / totalWords
+                          : 1.0 / count;
+                      final double segWidth = availableWidth * fraction;
+
+                      // Allow tapping slightly into the gap for easier touch
+                      if (details.localPosition.dx >= currentX &&
+                          details.localPosition.dx <=
+                              currentX + segWidth + (gap / 2)) {
+                        _playSegmentAudio(i);
+                        break;
+                      }
+                      currentX += segWidth + gap;
+                    }
+                  },
+                  child: SizedBox(
+                    height: 80,
+                    width: double.infinity,
+                    child: CustomPaint(
+                      painter: IntonationPainter(
+                        overallScore: score,
+                        primaryColor: AppColors.primary,
+                        userColor: _getScoreColor(score),
+                        targetText: widget.targetText,
+                        segments: _getDisplaySegments(),
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          // Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem(
-                'Native Speaker',
-                AppColors.primary.withValues(alpha: 0.3),
-              ),
-              const SizedBox(width: 24),
-              _buildLegendItem('You', _getScoreColor(score)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: _getScoreColor(score).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+                );
+              },
             ),
-            child: Column(
+            const SizedBox(height: 16),
+            // Legend
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  statusText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _getScoreColor(score),
-                  ),
+                _buildLegendItem(
+                  'Native Speaker',
+                  AppColors.primary.withValues(alpha: 0.3),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  detailedTip,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.lightTextSecondary,
-                  ),
-                ),
+                const SizedBox(width: 24),
+                _buildLegendItem('You', _getScoreColor(score)),
               ],
             ),
-          ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: _getScoreColor(score).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    statusText,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _getScoreColor(score),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    detailedTip,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ],
@@ -1834,10 +1838,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
       // Extract punctuation from target text if available
       if (i < targetWords.length) {
-        final targetWord = targetWords[i];
-        final punctuation = targetWord.replaceAll(
-          RegExp(r"[a-zA-Z0-9'\-]"),
-          '',
+        final punctuation = LanguageUtils.extractPunctuation(
+          targetWords[i],
+          widget.targetLanguage,
         );
 
         if (punctuation.isNotEmpty) {
@@ -1990,7 +1993,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
             ],
           ),
-          
+
           // Pitch Contour Section Skeleton
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2010,7 +2013,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 ],
               ),
               const SizedBox(height: 24),
-              
+
               // Pitch Visualization Area
               _buildSkeletonBox(height: 80, width: double.infinity, radius: 16),
               const SizedBox(height: 16),

@@ -10,9 +10,14 @@ import 'favorites_skeleton_loader.dart';
 
 class VocabListWidget extends StatelessWidget {
   final String? sceneId;
+  final String targetLanguage; // Language code for TTS
   final WordTtsService _wordTtsService = WordTtsService();
 
-  VocabListWidget({super.key, this.sceneId});
+  VocabListWidget({
+    super.key,
+    this.sceneId,
+    this.targetLanguage = 'en-US', // Default for backward compatibility
+  });
 
   Future<void> _playWordPronunciation(String word) async {
     // Clean the word (keep hyphens and apostrophes for proper pronunciation)
@@ -21,7 +26,7 @@ class VocabListWidget extends StatelessWidget {
     if (cleanWord.isEmpty) return;
 
     try {
-      await _wordTtsService.speakWord(cleanWord, language: 'en-US');
+      await _wordTtsService.speakWord(cleanWord, language: targetLanguage);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Word TTS error: $e');
@@ -127,7 +132,8 @@ class VocabListWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (item.translation.isNotEmpty) ...[ const SizedBox(height: 8),
+                    if (item.translation.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       Text(
                         item.translation,
                         style: TextStyle(

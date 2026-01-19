@@ -1071,7 +1071,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         .toList();
 
     final currentMessageCount = _messages.length;
-    
+
     // Check both memory cache and persisted hints in last message
     List<String>? hintsToUse;
 
@@ -1371,6 +1371,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           message: message,
           analysis: message.analysis,
           sceneId: widget.scene.id,
+          targetLanguage: widget.scene.targetLanguage,
         ),
       );
       return;
@@ -1390,6 +1391,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         message: message,
         isLoading: true,
         sceneId: widget.scene.id,
+        targetLanguage: widget.scene.targetLanguage,
         analysisStream: stream,
         onAnalysisComplete: (finalAnalysis) {
           _updateMessageAnalysis(message.id, finalAnalysis);
