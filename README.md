@@ -122,3 +122,9 @@ TriTalk 使用 OpenAPI 规范实现前后端类型安全的 API 契约。
 
 - **数据库**: 前端 **直接** 与 Supabase 通信。安全性通过迁移文件中定义的 **RLS 策略** 处理。
 - **AI 密钥**: LLM API 密钥存储在 Cloudflare `secrets` 中，绝不会暴露给前端应用程序。
+
+---
+
+## 💰 成本分析
+
+项目各服务（Cloudflare Worker、Supabase、GCP TTS、Azure Speech 等）的详细成本估算，请参阅：[成本分析文档](docs/cost_analysis.md)

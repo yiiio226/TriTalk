@@ -122,3 +122,9 @@ Detailed documentation: [backend/docs/database_migration.md](backend/docs/databa
 
 - **Database**: The frontend talks **directly** to Supabase. Security is handled via **RLS Policies** defined in migration files.
 - **AI Keys**: LLM API keys are stored in Cloudflare `secrets` and are never exposed to the frontend application.
+
+---
+
+## 💰 Cost Analysis
+
+Detailed documentation: [docs/cost_analysis_en.md](docs/cost_analysis_en.md)
