@@ -1,5 +1,65 @@
 # RevenueCat 订阅实现方案
 
+---
+
+## ⚠️ 上线前配置清单 (TODO)
+
+> **重要**: 以下配置项需要在各平台手动完成后才能正常工作。
+
+### 1. Supabase 配置
+
+| 配置项                      | 获取位置                                                      | 配置位置                                                                | 状态 |
+| --------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------- | ---- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API → `service_role` (secret) | Cloudflare Dashboard → Workers → tritalk-backend → Settings → Variables | ⬜   |
+| 数据库迁移                  | -                                                             | 运行 `cd backend && npx supabase db push --linked`                      | ⬜   |
+
+### 2. RevenueCat 配置
+
+| 配置项                      | 获取位置                                                       | 配置位置                                                                                | 状态 |
+| --------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---- |
+| `REVENUECAT_WEBHOOK_SECRET` | 自定义一个安全的随机字符串                                     | 1. Cloudflare Dashboard (环境变量) <br> 2. RevenueCat Dashboard (Webhook Authorization) | ⬜   |
+| Webhook URL                 | 你的后端 URL                                                   | RevenueCat Dashboard → Project Settings → Integrations → Webhooks                       | ⬜   |
+| RevenueCat Apple API Key    | RevenueCat Dashboard → Project → API Keys → Public iOS key     | `frontend/lib/config/env_prod.dart`                                                     | ⬜   |
+| RevenueCat Google API Key   | RevenueCat Dashboard → Project → API Keys → Public Android key | `frontend/lib/config/env_prod.dart`                                                     | ⬜   |
+
+### 3. RevenueCat Webhook 配置步骤
+
+1. 进入 [RevenueCat Dashboard](https://app.revenuecat.com) → Project Settings → Integrations → Webhooks
+2. 点击 **"+ New"** 添加 Webhook
+3. 配置如下:
+   - **Webhook URL**: `https://tritalk-backend.<你的账号>.workers.dev/webhook/revenuecat`
+   - **Authorization header**: `Bearer <你的 REVENUECAT_WEBHOOK_SECRET>`
+4. 选择以下事件:
+   - ✅ INITIAL_PURCHASE
+   - ✅ RENEWAL
+   - ✅ CANCELLATION
+   - ✅ UNCANCELLATION
+   - ✅ EXPIRATION
+   - ✅ BILLING_ISSUE
+   - ✅ PRODUCT_CHANGE
+   - ✅ TRANSFER
+   - ✅ REFUND
+   - ✅ SUBSCRIBER_ALIAS
+
+### 4. App Store / Google Play 配置
+
+| 配置项                                  | 位置                                                         | 状态 |
+| --------------------------------------- | ------------------------------------------------------------ | ---- |
+| 创建订阅产品 (tritalkplusmonthly, etc.) | App Store Connect / Google Play Console                      | ⬜   |
+| 连接 RevenueCat 到 App Store            | RevenueCat Dashboard → Apps → iOS → App Store Connect API    | ⬜   |
+| 连接 RevenueCat 到 Google Play          | RevenueCat Dashboard → Apps → Android → Service Account JSON | ⬜   |
+| 创建 Entitlements (plus, pro)           | RevenueCat Dashboard → Entitlements                          | ⬜   |
+| 创建 Offerings                          | RevenueCat Dashboard → Offerings                             | ⬜   |
+
+### 5. Cloudflare 部署
+
+```bash
+cd backend
+npx wrangler deploy
+```
+
+---
+
 ## 1. 概述
 
 本文档详细描述 TriTalk 应用的订阅制实现方案，使用 RevenueCat 作为统一的 IAP（应用内购买）管理平台，仅支持 Apple App Store 和 Google Play Store 的原生 IAP。
@@ -92,7 +152,8 @@ TRANSFER: 用户 A 的订阅 ──▶ 用户 B (订阅转移到新用户)
 | `free`         | 免费用户或订阅过期         | 基础功能 |
 | `active`       | 订阅有效                   | 完整功能 |
 | `cancelled`    | 已取消但在当前周期内仍有效 | 完整功能 |
-| `grace_period` | (暂未启用)                 | -        |
+| `grace_period` | 账单问题，宽限期内         | 完整功能 |
+| `paused`       | 订阅暂停 (Google Play)     | 基础功能 |
 | `expired`      | 订阅已过期                 | 基础功能 |
 
 ---
@@ -345,32 +406,37 @@ _更多特定平台的测试项，请参考[前端](../frontend/doc/revenuecat_s
 
 详情请参考各自分项文档，总体流程如下：
 
-### Phase 1: 基础设施 (1-2 天)
+### Phase 1: 基础设施 (1-2 天) ✅ 后端已完成
 
-- 创建 RevenueCat 项目并配置
-- 配置 App Store Connect 和 Google Play Console
-- 创建数据库表 ([Backend Doc](../backend/docs/revenuecat_subscription.md))
-- 添加后端 Webhook 处理 ([Backend Doc](../backend/docs/revenuecat_subscription.md))
+- [ ] 创建 RevenueCat 项目并配置
+- [ ] 配置 App Store Connect 和 Google Play Console
+- [x] 创建数据库表 ([Backend Doc](../backend/docs/revenuecat_subscription.md)) ✅
+- [x] 添加后端 Webhook 处理 ([Backend Doc](../backend/docs/revenuecat_subscription.md)) ✅
+- [x] 添加订阅状态 API ✅
+- [x] 添加过期清理 Cron 任务 ✅
 
-### Phase 2: 前端实现 (2-3 天)
+### Phase 2: 前端实现 (2-3 天) ✅ 前端已完成
 
-- 集成 RevenueCat SDK ([Frontend Doc](../frontend/doc/revenuecat_subscription.md))
-- 重构 RevenueCatService ([Frontend Doc](../frontend/doc/revenuecat_subscription.md))
-- 重构 PaywallScreen ([Frontend Doc](../frontend/doc/revenuecat_subscription.md))
-- 添加订阅状态 UI
+- [x] 集成 RevenueCat SDK (purchases_flutter ^9.10.6) ✅
+- [x] 重构 RevenueCatService ([Frontend Doc](../frontend/doc/revenuecat_subscription.md)) ✅
+- [x] 重构 PaywallScreen ([Frontend Doc](../frontend/doc/revenuecat_subscription.md)) ✅
+- [x] 添加订阅等级模型 (SubscriptionTier enum) ✅
+- [x] 添加环境变量配置 (revenueCatAppleApiKey, revenueCatGoogleApiKey) ✅
+- [x] 添加完整的 i18n 国际化支持 ✅
+- [ ] 对接后端订阅状态 API (可选，RevenueCat SDK 已处理状态同步)
 
 ### Phase 3: 测试与优化 (2-3 天)
 
-- Sandbox 购买测试
-- Webhook 集成测试
-- 错误处理完善
-- 性能优化
+- [ ] Sandbox 购买测试
+- [ ] Webhook 集成测试
+- [ ] 错误处理完善
+- [ ] 性能优化
 
 ### Phase 4: 上线 (1 天)
 
-- 提交 App 审核
-- 配置生产环境
-- 监控设置
+- [ ] 提交 App 审核
+- [ ] 配置生产环境
+- [ ] 监控设置
 
 ---
 

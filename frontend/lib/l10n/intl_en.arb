@@ -137,5 +137,77 @@
 				"example": "English (US)"
 			}
 		}
+	},
+	"subscription_upgrade": "Upgrade",
+	"@subscription_upgrade": {
+		"description": "Title for the upgrade/paywall screen"
+	},
+	"subscription_choosePlan": "Choose a Plan",
+	"@subscription_choosePlan": {
+		"description": "Title for subscription plan selection"
+	},
+	"subscription_restore": "Restore",
+	"@subscription_restore": {
+		"description": "Button text to restore previous purchases"
+	},
+	"subscription_unlockPotential": "Unlock Full Potential",
+	"@subscription_unlockPotential": {
+		"description": "Headline on paywall screen"
+	},
+	"subscription_description": "Get unlimited conversations, advanced grammar analysis, and access to all premium scenarios.",
+	"@subscription_description": {
+		"description": "Description text on paywall explaining premium benefits"
+	},
+	"subscription_recommended": "POPULAR",
+	"@subscription_recommended": {
+		"description": "Badge text for recommended subscription tier"
+	},
+	"subscription_monthlyPlan": "Monthly",
+	"@subscription_monthlyPlan": {
+		"description": "Label for monthly subscription plan"
+	},
+	"subscription_yearlyPlan": "Yearly",
+	"@subscription_yearlyPlan": {
+		"description": "Label for yearly subscription plan"
+	},
+	"subscription_purchaseSuccess": "Subscription activated! Welcome!",
+	"@subscription_purchaseSuccess": {
+		"description": "Success message after completing a purchase"
+	},
+	"subscription_purchaseFailed": "Purchase failed. Please try again.",
+	"@subscription_purchaseFailed": {
+		"description": "Error message when purchase fails"
+	},
+	"subscription_noPurchasesToRestore": "No previous purchases found.",
+	"@subscription_noPurchasesToRestore": {
+		"description": "Message when restore finds no previous purchases"
+	},
+	"subscription_restoreFailed": "Failed to restore purchases. Please try again.",
+	"@subscription_restoreFailed": {
+		"description": "Error message when restore fails"
+	},
+	"subscription_noProductsAvailable": "No products available.",
+	"@subscription_noProductsAvailable": {
+		"description": "Message when no subscription products are available"
+	},
+	"subscription_featureUnlimitedMessages": "Unlimited messages",
+	"@subscription_featureUnlimitedMessages": {
+		"description": "Feature description for unlimited messaging"
+	},
+	"subscription_featureAdvancedFeedback": "Advanced grammar feedback",
+	"@subscription_featureAdvancedFeedback": {
+		"description": "Feature description for advanced feedback"
+	},
+	"subscription_featureAllPlusFeatures": "All Plus features included",
+	"@subscription_featureAllPlusFeatures": {
+		"description": "Feature description indicating all Plus features"
+	},
+	"subscription_featurePremiumScenarios": "Premium scenarios",
+	"@subscription_featurePremiumScenarios": {
+		"description": "Feature description for premium scenarios"
+	},
+	"subscription_featurePrioritySupport": "Priority support",
+	"@subscription_featurePrioritySupport": {
+		"description": "Feature description for priority support"
 	}
 }

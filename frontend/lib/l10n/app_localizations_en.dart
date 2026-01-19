@@ -111,4 +111,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String home_chooseScenario(String language) {
     return 'Choose a scenario to practice your $language';
   }
+
+  @override
+  String get subscription_upgrade => 'Upgrade';
+
+  @override
+  String get subscription_choosePlan => 'Choose a Plan';
+
+  @override
+  String get subscription_restore => 'Restore';
+
+  @override
+  String get subscription_unlockPotential => 'Unlock Full Potential';
+
+  @override
+  String get subscription_description =>
+      'Get unlimited conversations, advanced grammar analysis, and access to all premium scenarios.';
+
+  @override
+  String get subscription_recommended => 'POPULAR';
+
+  @override
+  String get subscription_monthlyPlan => 'Monthly';
+
+  @override
+  String get subscription_yearlyPlan => 'Yearly';
+
+  @override
+  String get subscription_purchaseSuccess => 'Subscription activated! Welcome!';
+
+  @override
+  String get subscription_purchaseFailed =>
+      'Purchase failed. Please try again.';
+
+  @override
+  String get subscription_noPurchasesToRestore =>
+      'No previous purchases found.';
+
+  @override
+  String get subscription_restoreFailed =>
+      'Failed to restore purchases. Please try again.';
+
+  @override
+  String get subscription_noProductsAvailable => 'No products available.';
+
+  @override
+  String get subscription_featureUnlimitedMessages => 'Unlimited messages';
+
+  @override
+  String get subscription_featureAdvancedFeedback =>
+      'Advanced grammar feedback';
+
+  @override
+  String get subscription_featureAllPlusFeatures =>
+      'All Plus features included';
+
+  @override
+  String get subscription_featurePremiumScenarios => 'Premium scenarios';
+
+  @override
+  String get subscription_featurePrioritySupport => 'Priority support';
 }

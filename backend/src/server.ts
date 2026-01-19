@@ -33,7 +33,12 @@ import {
   isGCPTTSConfigured,
   parseGCPTTSStreamChunk,
   processWordsForUI,
+  // Subscription services
+  handleRevenueCatWebhook,
+  getUserSubscription,
 } from "./services";
+
+import { createClient } from "@supabase/supabase-js";
 
 // Prompts
 import {
@@ -175,6 +180,7 @@ app.use("/common/*", authMiddleware);
 app.use("/tts/*", authMiddleware);
 app.use("/speech/*", authMiddleware);
 app.use("/shadowing/*", authMiddleware);
+app.use("/subscription/*", authMiddleware);
 
 // ============================================
 // Routes
@@ -1670,6 +1676,104 @@ app.openapi(shadowingGetRoute, async (c) => {
   }
 });
 
+// ============================================
+// Subscription Routes
+// ============================================
+
+// POST /webhook/revenuecat - RevenueCat Webhook Endpoint (NO AUTH - uses webhook secret)
+app.post("/webhook/revenuecat", async (c) => {
+  const env = c.env as Env;
+
+  // 验证 webhook 签名
+  const authHeader = c.req.header("Authorization");
+  const expectedToken = env.REVENUECAT_WEBHOOK_SECRET;
+
+  // 如果未配置 webhook secret，拒绝所有请求
+  if (!expectedToken) {
+    console.error("REVENUECAT_WEBHOOK_SECRET is not configured");
+    return c.json({ error: "Webhook not configured" }, 500);
+  }
+
+  if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
+    console.warn(
+      "Webhook unauthorized: invalid or missing Authorization header",
+    );
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const payload = await c.req.json();
+
+    console.log("[Webhook] Received RevenueCat event:", {
+      type: payload?.event?.type,
+      appUserId: payload?.event?.app_user_id,
+      productId: payload?.event?.product_id,
+    });
+
+    // 使用 service role key 创建 Supabase 客户端（绕过 RLS）
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+      return c.json({ error: "Service not configured" }, 500);
+    }
+
+    const supabase = createClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY,
+    );
+
+    const result = await handleRevenueCatWebhook(supabase, payload);
+
+    if (result.success) {
+      return c.json({ success: true });
+    } else {
+      console.error("[Webhook] Processing failed:", result.error);
+      return c.json({ success: false, error: result.error }, 500);
+    }
+  } catch (error) {
+    console.error("[Webhook] Unexpected error:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// GET /subscription/status - Get current user's subscription status (AUTH REQUIRED)
+app.get("/subscription/status", async (c) => {
+  try {
+    const user = c.get("user");
+    const env = c.env as Env;
+    const authHeader = c.req.header("Authorization");
+    const token = extractToken(authHeader);
+
+    if (!token) {
+      return c.json({ error: "Missing authorization token" }, 401);
+    }
+
+    const supabase = createSupabaseClient(env, token);
+
+    const subscription = await getUserSubscription(supabase, user.id);
+
+    return c.json(subscription, 200);
+  } catch (error) {
+    const user = c.get("user");
+    logError(error, {
+      route: "/subscription/status",
+      method: "GET",
+      userId: user?.id,
+    });
+    // 返回默认免费状态而不是错误，确保前端能正常工作
+    return c.json(
+      {
+        tier: "free",
+        status: "active",
+        expires_at: null,
+        product_id: null,
+        active_entitlements: [],
+        is_premium: false,
+      },
+      200,
+    );
+  }
+});
+
 // API Docs
 app.doc("/doc", {
   openapi: "3.0.0",
@@ -1681,4 +1785,57 @@ app.doc("/doc", {
 
 app.get("/ui", swaggerUI({ url: "/doc" }));
 
-export default app;
+// ============================================
+// Scheduled Tasks (Cron Triggers)
+// ============================================
+import { cleanupExpiredSubscriptions } from "./services";
+
+/**
+ * Cloudflare Workers Scheduled Event Handler
+ *
+ * Triggered by cron triggers defined in wrangler.toml.
+ * Currently runs hourly to clean up expired subscriptions.
+ */
+export default {
+  // HTTP fetch handler
+  fetch: app.fetch,
+
+  // Scheduled (cron) handler
+  async scheduled(
+    event: ScheduledEvent,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    console.log(
+      `Cron triggered: ${event.cron} at ${new Date(event.scheduledTime).toISOString()}`,
+    );
+
+    // 验证必要的环境变量
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error(
+        "SUPABASE_SERVICE_ROLE_KEY is not configured for scheduled tasks",
+      );
+      return;
+    }
+
+    // 使用 service role key 创建 Supabase 客户端（绕过 RLS）
+    const supabase = createClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY,
+    );
+
+    // 执行订阅清理
+    ctx.waitUntil(
+      (async () => {
+        try {
+          const result = await cleanupExpiredSubscriptions(supabase);
+          console.log(
+            `Subscription cleanup completed: ${result.cleaned} cleaned, ${result.errors} errors`,
+          );
+        } catch (error) {
+          console.error("Subscription cleanup failed:", error);
+        }
+      })(),
+    );
+  },
+};

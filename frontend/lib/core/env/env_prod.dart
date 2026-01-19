@@ -16,6 +16,11 @@ class EnvProd {
   static const String googleOAuthWebClientId =
       '23529939770-sb285ba3t0s286si1ip3ln773d80911l.apps.googleusercontent.com';
 
+  // RevenueCat API Keys
+  // TODO: Add your actual RevenueCat production API keys from dashboard
+  static const String revenueCatAppleApiKey = 'appl_production_xxx';
+  static const String revenueCatGoogleApiKey = 'goog_production_xxx';
+
   // Debug flags - always false in production
   /// Force cloud TTS should always be false in production
   static const bool forceCloudTTS = false;

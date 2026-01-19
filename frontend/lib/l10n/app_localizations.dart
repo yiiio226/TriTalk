@@ -295,6 +295,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a scenario to practice your {language}'**
   String home_chooseScenario(String language);
+
+  /// Title for the upgrade/paywall screen
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade'**
+  String get subscription_upgrade;
+
+  /// Title for subscription plan selection
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a Plan'**
+  String get subscription_choosePlan;
+
+  /// Button text to restore previous purchases
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get subscription_restore;
+
+  /// Headline on paywall screen
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Full Potential'**
+  String get subscription_unlockPotential;
+
+  /// Description text on paywall explaining premium benefits
+  ///
+  /// In en, this message translates to:
+  /// **'Get unlimited conversations, advanced grammar analysis, and access to all premium scenarios.'**
+  String get subscription_description;
+
+  /// Badge text for recommended subscription tier
+  ///
+  /// In en, this message translates to:
+  /// **'POPULAR'**
+  String get subscription_recommended;
+
+  /// Label for monthly subscription plan
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get subscription_monthlyPlan;
+
+  /// Label for yearly subscription plan
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get subscription_yearlyPlan;
+
+  /// Success message after completing a purchase
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription activated! Welcome!'**
+  String get subscription_purchaseSuccess;
+
+  /// Error message when purchase fails
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase failed. Please try again.'**
+  String get subscription_purchaseFailed;
+
+  /// Message when restore finds no previous purchases
+  ///
+  /// In en, this message translates to:
+  /// **'No previous purchases found.'**
+  String get subscription_noPurchasesToRestore;
+
+  /// Error message when restore fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore purchases. Please try again.'**
+  String get subscription_restoreFailed;
+
+  /// Message when no subscription products are available
+  ///
+  /// In en, this message translates to:
+  /// **'No products available.'**
+  String get subscription_noProductsAvailable;
+
+  /// Feature description for unlimited messaging
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited messages'**
+  String get subscription_featureUnlimitedMessages;
+
+  /// Feature description for advanced feedback
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced grammar feedback'**
+  String get subscription_featureAdvancedFeedback;
+
+  /// Feature description indicating all Plus features
+  ///
+  /// In en, this message translates to:
+  /// **'All Plus features included'**
+  String get subscription_featureAllPlusFeatures;
+
+  /// Feature description for premium scenarios
+  ///
+  /// In en, this message translates to:
+  /// **'Premium scenarios'**
+  String get subscription_featurePremiumScenarios;
+
+  /// Feature description for priority support
+  ///
+  /// In en, this message translates to:
+  /// **'Priority support'**
+  String get subscription_featurePrioritySupport;
 }
 
 class _AppLocalizationsDelegate
