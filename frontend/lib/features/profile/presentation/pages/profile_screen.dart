@@ -143,7 +143,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         children: [
                           Row(
                             children: [
-                              if (option.flag.isNotEmpty) ...[
+                              // Use Icon for "System Default", emoji for others
+                              if (option.code == 'system') ...[
+                                Container(
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.language,
+                                    color: AppColors.ln700,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                              ] else if (option.flag.isNotEmpty) ...[
                                 Text(
                                   option.flag,
                                   style: const TextStyle(fontSize: 24),
