@@ -3,6 +3,7 @@ import '../../data/chat_history_service.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 import '../pages/archived_chat_screen.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class ChatHistoryListWidget extends StatelessWidget {
   final String? sceneId;
@@ -93,7 +94,7 @@ class ChatHistoryListWidget extends StatelessWidget {
   void _deleteBookmark(BuildContext context, String id) {
     ChatHistoryService().removeBookmark(id);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Conversation deleted")),
+      SnackBar(content: Text(context.l10n.chat_conversationDeleted)),
     );
   }
 

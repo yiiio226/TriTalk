@@ -3,6 +3,7 @@ import '../../../../core/data/api/api_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class HintsSheet extends StatefulWidget {
   final String sceneDescription;
@@ -134,7 +135,7 @@ class _HintsSheetState extends State<HintsSheet> {
                 });
                 _loadHints();
               },
-              child: const Text('Retry'),
+              child: Text(context.l10n.chat_retry),
             ),
           ],
         ),

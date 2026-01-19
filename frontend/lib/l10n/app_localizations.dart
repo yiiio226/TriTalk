@@ -98,11 +98,203 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
-  /// The title of the application
+  /// Source: core/widgets/error_screen.dart:13 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'TriTalk - Error'**
+  String get common_tritalkError;
+
+  /// Source: features/home/presentation/pages/home_screen.dart:541 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get home_cancel;
+
+  /// Source: features/scenes/presentation/widgets/scene_options_drawer.dart:28 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get scenes_favorites;
+
+  /// Source: features/scenes/presentation/widgets/scene_options_drawer.dart:37 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Conversation'**
+  String get scenes_clearConversation;
+
+  /// Source: features/scenes/presentation/widgets/scene_options_drawer.dart:46 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark Conversation'**
+  String get scenes_bookmarkConversation;
+
+  /// Source: features/study/presentation/widgets/save_note_sheet.dart:62 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Notebook!'**
+  String get study_savedToNotebook;
+
+  /// Source: features/study/presentation/widgets/analysis_sheet.dart:335 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'SUMMARY'**
+  String get study_summary;
+
+  /// Source: features/study/presentation/widgets/analysis_sheet.dart:358 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'SENTENCE STRUCTURE'**
+  String get study_sentenceStructure;
+
+  /// Source: features/study/presentation/widgets/analysis_sheet.dart:367 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'GRAMMAR POINTS'**
+  String get study_grammarPoints;
+
+  /// Source: features/study/presentation/widgets/analysis_sheet.dart:376 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'VOCABULARY'**
+  String get study_vocabulary;
+
+  /// Source: features/study/presentation/widgets/analysis_sheet.dart:385 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'IDIOMS & SLANG'**
+  String get study_idiomsSlang;
+
+  /// Source: features/study/presentation/widgets/analysis_sheet.dart:576 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis not available'**
+  String get study_analysisNotAvailable;
+
+  /// Source: features/chat/presentation/pages/chat_screen.dart:807 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get chat_delete;
+
+  /// Source: features/chat/presentation/pages/chat_screen.dart:977 (hintText)
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get chat_typeAMessage;
+
+  /// Source: features/chat/presentation/pages/chat_screen.dart:1012 (tooltip)
+  ///
+  /// In en, this message translates to:
+  /// **'Optimize with AI'**
+  String get chat_optimizeWithAi;
+
+  /// Source: features/chat/presentation/widgets/chat_history_list_widget.dart:96 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation deleted'**
+  String get chat_conversationDeleted;
+
+  /// Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:241 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing pronunciation...'**
+  String get chat_analyzingPronunciation;
+
+  /// Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:477 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get chat_retry;
+
+  /// Source: features/subscription/presentation/pages/paywall_screen.dart:87 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Pro!'**
+  String get subscription_welcomeToPro;
+
+  /// Source: features/subscription/presentation/pages/paywall_screen.dart:115 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases Restored'**
+  String get subscription_purchasesRestored;
+
+  /// Source: features/profile/presentation/pages/profile_screen.dart:301 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'Native Language'**
+  String get profile_nativeLanguage;
+
+  /// Source: features/profile/presentation/pages/profile_screen.dart:316 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'Learning Language'**
+  String get profile_learningLanguage;
+
+  /// Source: features/profile/presentation/pages/profile_screen.dart:340 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary, Sentences, Chat History'**
+  String get profile_vocabularySentencesChatHistory;
+
+  /// Source: features/profile/presentation/pages/profile_screen.dart:356 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Pro'**
+  String get profile_upgradeToPro;
+
+  /// Source: features/profile/presentation/pages/profile_screen.dart:357 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'Get unlimited chats and advanced feedback'**
+  String get profile_getUnlimitedChatsAnd;
+
+  /// Source: features/profile/presentation/pages/profile_screen.dart:373 (title)
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get profile_logOut;
+
+  /// Source: features/onboarding/presentation/pages/onboarding_screen.dart:57 (Text)
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired. Please log in again.'**
+  String get onboarding_sessionExpiredPleaseLog;
+
+  /// Source: main.dart:78 (title)
   ///
   /// In en, this message translates to:
   /// **'TriTalk'**
-  String get appTitle;
+  String get tritalk;
+
+  /// Label for app display language setting in profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'App Language'**
+  String get profile_appLanguage;
+
+  /// Title for app language selection dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Select App Language'**
+  String get profile_selectAppLanguage;
+
+  /// Section title for language settings in profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'Language Settings'**
+  String get profile_languageSettings;
+
+  /// Option label for following system language setting
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get common_systemDefault;
+
+  /// Subtitle on home screen prompting user to select a practice scenario
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a scenario to practice your {language}'**
+  String home_chooseScenario(String language);
 }
 
 class _AppLocalizationsDelegate

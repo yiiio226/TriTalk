@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/vocab_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class SaveNoteSheet extends StatefulWidget {
   final String originalSentence;
@@ -57,9 +58,9 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Saved to Notebook!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.study_savedToNotebook)),
+        );
       }
     } catch (e) {
       // Handle error

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
@@ -84,7 +85,11 @@ class PaywallScreen extends StatelessWidget {
                         RevenueCatService().mockPurchase();
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Welcome to Pro!')),
+                          SnackBar(
+                            content: Text(
+                              context.l10n.subscription_welcomeToPro,
+                            ),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -112,7 +117,11 @@ class PaywallScreen extends StatelessWidget {
                       RevenueCatService().mockRestore();
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Purchases Restored')),
+                        SnackBar(
+                          content: Text(
+                            context.l10n.subscription_purchasesRestored,
+                          ),
+                        ),
                       );
                     },
                     child: Text(

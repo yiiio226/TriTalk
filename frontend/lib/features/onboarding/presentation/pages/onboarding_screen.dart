@@ -7,6 +7,7 @@ import 'package:frontend/features/auth/data/services/auth_service.dart';
 import 'package:frontend/core/data/language_constants.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import '../../../home/presentation/pages/home_screen.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -53,8 +54,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Session expired. Please log in again.'),
+            SnackBar(
+              content: Text(context.l10n.onboarding_sessionExpiredPleaseLog),
               backgroundColor: Colors.red,
             ),
           );
