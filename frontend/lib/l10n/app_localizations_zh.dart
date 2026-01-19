@@ -108,4 +108,58 @@ class AppLocalizationsZh extends AppLocalizations {
   String home_chooseScenario(String language) {
     return '选择场景来练习您的$language';
   }
+
+  @override
+  String get subscription_upgrade => '升级';
+
+  @override
+  String get subscription_choosePlan => '选择订阅方案';
+
+  @override
+  String get subscription_restore => '恢复购买';
+
+  @override
+  String get subscription_unlockPotential => '解锁全部潜能';
+
+  @override
+  String get subscription_description => '获取无限对话、高级语法分析，以及所有高级场景的访问权限。';
+
+  @override
+  String get subscription_recommended => '热门';
+
+  @override
+  String get subscription_monthlyPlan => '月付';
+
+  @override
+  String get subscription_yearlyPlan => '年付';
+
+  @override
+  String get subscription_purchaseSuccess => '订阅已激活！欢迎！';
+
+  @override
+  String get subscription_purchaseFailed => '购买失败，请重试。';
+
+  @override
+  String get subscription_noPurchasesToRestore => '未找到之前的购买记录。';
+
+  @override
+  String get subscription_restoreFailed => '恢复购买失败，请重试。';
+
+  @override
+  String get subscription_noProductsAvailable => '暂无可用产品。';
+
+  @override
+  String get subscription_featureUnlimitedMessages => '无限消息';
+
+  @override
+  String get subscription_featureAdvancedFeedback => '高级语法反馈';
+
+  @override
+  String get subscription_featureAllPlusFeatures => '包含所有 Plus 功能';
+
+  @override
+  String get subscription_featurePremiumScenarios => '高级场景';
+
+  @override
+  String get subscription_featurePrioritySupport => '优先客服支持';
 }

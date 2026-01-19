@@ -1,6 +1,22 @@
-# RevenueCat Backend Implementation
+# RevenueCat Backend Implementation ✅
+
+> **状态**: 已实现  
+> **实现日期**: 2026-01-19  
+> **代码位置**: `backend/src/services/subscription.ts`
 
 [Return to Main Documentation](../../docs/revenuecat_subscription.md)
+
+## 实现概述
+
+已实现的功能：
+
+- ✅ 数据库表设计 (user_subscriptions, subscription_webhook_logs)
+- ✅ RevenueCat Webhook 处理（支持所有事件类型）
+- ✅ Entitlement 支持 (plus, pro)
+- ✅ 订阅状态 API (`GET /subscription/status`)
+- ✅ 自动清理过期订阅 (Cloudflare Cron Trigger)
+- ✅ Google Play 订阅暂停 (paused) 状态支持
+- ✅ 环境区分 (SANDBOX / PRODUCTION)
 
 ## 1. 后端实现
 
@@ -564,26 +580,99 @@ REVENUECAT_WEBHOOK_SECRET = "your_webhook_secret"
 SUPABASE_SERVICE_ROLE_KEY = "your_service_role_key"
 ```
 
-## 3. Webhook 测试
+## 3. API 端点
+
+### 3.1 Webhook 端点
+
+```
+POST /webhook/revenuecat
+```
+
+- **认证**: Bearer Token (REVENUECAT_WEBHOOK_SECRET)
+- **用途**: 接收 RevenueCat 事件通知
+
+### 3.2 订阅状态 API
+
+```
+GET /subscription/status
+```
+
+- **认证**: Supabase Auth Token
+- **响应示例**:
+
+```json
+{
+  "tier": "pro",
+  "status": "active",
+  "expires_at": "2026-02-19T00:00:00Z",
+  "product_id": "tritalkpromonthly",
+  "active_entitlements": ["plus", "pro"],
+  "is_premium": true
+}
+```
+
+## 4. Webhook 测试清单
+
+### 基础事件
 
 - [ ] INITIAL_PURCHASE 事件处理
 - [ ] RENEWAL 事件处理
 - [ ] CANCELLATION 事件处理
 - [ ] EXPIRATION 事件处理
-- [ ] BILLING_ISSUE 事件处理
-- [ ] PRODUCT_CHANGE 事件处理
+- [ ] REFUND 事件处理
+- [ ] TEST 事件处理
 
-## 4. 后端测试
+### 高级事件
 
-- [ ] Webhook 认证验证
+- [ ] BILLING_ISSUE 事件处理 (grace_period)
+- [ ] PRODUCT_CHANGE 事件处理 (升级/降级)
+- [ ] TRANSFER 事件处理 (用户转移)
+- [ ] SUBSCRIBER_ALIAS 事件处理 (匿名用户关联)
+- [ ] SUBSCRIPTION_PAUSED 事件处理 (Google Play)
+- [ ] SUBSCRIPTION_EXTENDED 事件处理
+
+## 5. 后端测试
+
+- [ ] Webhook 认证验证 (Bearer Token)
 - [ ] 数据库更新正确性
-- [ ] 过期清理 Cron 任务
-- [ ] API 响应正确性
+- [ ] 过期清理 Cron 任务 (每小时)
+- [ ] API 响应正确性 (/subscription/status)
+- [ ] Entitlement 计算逻辑
 
-## 5. 安全考虑
+## 6. 安全考虑
 
-1. **Webhook 验证**: 必须验证 RevenueCat webhook 签名
+1. **Webhook 验证**: 必须验证 RevenueCat webhook Bearer Token
 2. **服务器端验证**: 关键权限检查在后端进行，不仅依赖客户端
 3. **敏感数据**: API Keys 不要硬编码，使用环境变量
 4. **RLS 策略**: 确保用户只能访问自己的订阅数据
 5. **日志脱敏**: 不记录敏感的交易详情
+6. **Service Role Key**: 仅在后端使用，绕过 RLS 进行订阅管理
+
+## 7. 部署步骤
+
+### 7.1 数据库迁移
+
+```bash
+cd backend
+npx supabase db push --linked
+```
+
+### 7.2 配置环境变量
+
+在 Cloudflare Dashboard 设置：
+
+- `REVENUECAT_WEBHOOK_SECRET`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### 7.3 配置 RevenueCat Webhook
+
+1. 进入 RevenueCat Dashboard → Project Settings → Integrations → Webhooks
+2. 添加 Webhook URL: `https://your-backend.workers.dev/webhook/revenuecat`
+3. 配置 Authorization Header: `Bearer YOUR_WEBHOOK_SECRET`
+4. 选择所有需要的事件类型
+
+### 7.4 部署
+
+```bash
+npx wrangler deploy
+```

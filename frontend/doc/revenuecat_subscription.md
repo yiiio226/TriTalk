@@ -16,8 +16,8 @@
 >
 > ```dart
 > // ✅ 正确：使用 i18n
-> Text(context.l10n.subscriptionSuccess)
-> Text(context.l10n.purchaseFailed)
+> Text(context.l10n.subscription_purchaseSuccess)
+> Text(context.l10n.subscription_purchaseFailed)
 >
 > // ❌ 错误：硬编码字符串
 > Text('订阅成功！')
@@ -31,36 +31,30 @@
 ```yaml
 # pubspec.yaml
 dependencies:
-  purchases_flutter: ^8.0.0 # 或最新稳定版
+  purchases_flutter: ^9.10.6 # 最新稳定版 (2026年1月)
 ```
 
-### 1.2 RevenueCat 服务重构
+### 1.2 RevenueCat 服务实现
 
 #### 1.2.1 文件结构
 
 ```
 frontend/lib/features/subscription/
 ├── data/
-│   ├── models/
-│   │   ├── subscription_tier.dart      # 订阅等级枚举
-│   │   └── entitlement_info.dart       # Entitlement 信息
 │   └── services/
-│       └── revenue_cat_service.dart    # RevenueCat 服务（重构）
+│       └── revenue_cat_service.dart    # RevenueCat 服务
 ├── domain/
-│   └── repositories/
-│       └── subscription_repository.dart
+│   └── models/
+│       └── subscription_tier.dart      # 订阅等级枚举
 └── presentation/
-    ├── pages/
-    │   └── paywall_screen.dart         # Paywall 页面（重构）
-    └── widgets/
-        ├── product_card.dart           # 产品卡片
-        └── subscription_badge.dart     # 订阅标识
+    └── pages/
+        └── paywall_screen.dart         # Paywall 页面
 ```
 
 #### 1.2.2 订阅等级模型
 
 ```dart
-// subscription_tier.dart
+// domain/models/subscription_tier.dart
 enum SubscriptionTier {
   free,
   plus,
@@ -79,40 +73,42 @@ extension SubscriptionTierExtension on SubscriptionTier {
     }
   }
 
-  String get displayNameCn {
-    switch (this) {
-      case SubscriptionTier.free:
-        return '免费版';
-      case SubscriptionTier.plus:
-        return '进阶版';
-      case SubscriptionTier.pro:
-        return '专业版';
-    }
-  }
-
   /// 检查是否有某个 tier 的权限（Pro 包含 Plus 的权限）
   bool hasAccess(SubscriptionTier requiredTier) {
     return index >= requiredTier.index;
   }
+
+  /// 从字符串转换为枚举
+  static SubscriptionTier fromString(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'pro':
+        return SubscriptionTier.pro;
+      case 'plus':
+        return SubscriptionTier.plus;
+      default:
+        return SubscriptionTier.free;
+    }
+  }
 }
 ```
 
-#### 1.2.3 RevenueCat 服务（重构）
+#### 1.2.3 RevenueCat 服务
 
 ```dart
-// revenue_cat_service.dart
-import 'dart:async';
-import 'package:flutter/foundation.dart';
+// data/services/revenue_cat_service.dart
 import 'package:purchases_flutter/purchases_flutter.dart';
+
+/// 购买结果枚举（内部使用，避免与 SDK 的 PurchaseResult 冲突）
+enum SubscriptionPurchaseResult {
+  success,
+  cancelled,
+  error,
+}
 
 class RevenueCatService extends ChangeNotifier {
   static final RevenueCatService _instance = RevenueCatService._internal();
   factory RevenueCatService() => _instance;
   RevenueCatService._internal();
-
-  // RevenueCat API Keys
-  static const String _appleApiKey = 'appl_xxx'; // TODO: 从环境变量获取
-  static const String _googleApiKey = 'goog_xxx'; // TODO: 从环境变量获取
 
   bool _isInitialized = false;
   CustomerInfo? _customerInfo;
@@ -146,24 +142,19 @@ class RevenueCatService extends ChangeNotifier {
   Future<void> initialize(String userId) async {
     if (_isInitialized) return;
 
-    await Purchases.setLogLevel(LogLevel.debug); // 生产环境改为 LogLevel.info
+    await Purchases.setLogLevel(
+      EnvConfig.isProd ? LogLevel.info : LogLevel.debug,
+    );
 
-    PurchasesConfiguration configuration;
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      configuration = PurchasesConfiguration(_appleApiKey);
-    } else {
-      configuration = PurchasesConfiguration(_googleApiKey);
-    }
+    final apiKey = defaultTargetPlatform == TargetPlatform.iOS
+        ? Env.revenueCatAppleApiKey
+        : Env.revenueCatGoogleApiKey;
 
-    // 登录用户（使用 Supabase user ID）
-    configuration.appUserID = userId;
-
+    final configuration = PurchasesConfiguration(apiKey)..appUserID = userId;
     await Purchases.configure(configuration);
 
-    // 监听用户信息变化
     Purchases.addCustomerInfoUpdateListener(_onCustomerInfoUpdated);
 
-    // 获取初始数据
     await _fetchCustomerInfo();
     await _fetchOfferings();
 
@@ -171,71 +162,23 @@ class RevenueCatService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 用户登录时调用
-  Future<void> login(String userId) async {
+  /// 购买产品 (使用新的 purchase API)
+  Future<SubscriptionPurchaseResult> purchasePackage(Package package) async {
     try {
-      final result = await Purchases.logIn(userId);
+      // 使用 PurchaseParams.package() 命名构造函数 (SDK 9.x+)
+      final purchaseParams = PurchaseParams.package(package);
+      final result = await Purchases.purchase(purchaseParams);
       _customerInfo = result.customerInfo;
       notifyListeners();
-    } catch (e) {
-      debugPrint('RevenueCat login error: $e');
-    }
-  }
-
-  /// 用户登出时调用
-  Future<void> logout() async {
-    try {
-      _customerInfo = await Purchases.logOut();
-      notifyListeners();
-    } catch (e) {
-      debugPrint('RevenueCat logout error: $e');
-    }
-  }
-
-  /// 获取 Customer Info
-  Future<void> _fetchCustomerInfo() async {
-    try {
-      _customerInfo = await Purchases.getCustomerInfo();
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Failed to fetch customer info: $e');
-    }
-  }
-
-  /// 获取 Offerings（内部使用）
-  Future<void> _fetchOfferings() async {
-    try {
-      _offerings = await Purchases.getOfferings();
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Failed to fetch offerings: $e');
-    }
-  }
-
-  /// 监听用户信息更新
-  void _onCustomerInfoUpdated(CustomerInfo info) {
-    _customerInfo = info;
-    notifyListeners();
-  }
-
-  /// 购买产品
-  Future<PurchaseResult> purchasePackage(Package package) async {
-    try {
-      final result = await Purchases.purchasePackage(package);
-      _customerInfo = result.customerInfo;
-      notifyListeners();
-      return PurchaseResult.success;
+      return SubscriptionPurchaseResult.success;
     } on PlatformException catch (e) {
-      // RevenueCat 错误通过 PlatformException 抛出
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
-        return PurchaseResult.cancelled;
+        return SubscriptionPurchaseResult.cancelled;
       }
-      debugPrint('Purchase error: $e');
-      return PurchaseResult.error;
+      return SubscriptionPurchaseResult.error;
     } catch (e) {
-      debugPrint('Purchase error: $e');
-      return PurchaseResult.error;
+      return SubscriptionPurchaseResult.error;
     }
   }
 
@@ -246,38 +189,16 @@ class RevenueCatService extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('Restore error: $e');
       return false;
     }
   }
-
-  /// 刷新客户信息
-  Future<void> refreshCustomerInfo() async {
-    await _fetchCustomerInfo();
-  }
-
-  /// 刷新 Offerings（供外部调用）
-  Future<void> refreshOfferings() async {
-    await _fetchOfferings();
-  }
-}
-
-enum PurchaseResult {
-  success,
-  cancelled,
-  error,
 }
 ```
 
-### 1.3 Paywall 页面重构
+### 1.3 Paywall 页面
 
 ```dart
-// paywall_screen.dart
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // 用于 PlatformException
-import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:collection/collection.dart'; // 提供 firstWhereOrNull 扩展
-
+// presentation/pages/paywall_screen.dart
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
 
@@ -287,6 +208,7 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _isLoading = true;
+  bool _isPurchasing = false;
   String? _error;
 
   @override
@@ -304,7 +226,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     try {
       final service = RevenueCatService();
       if (service.offerings == null) {
-        await service.refreshOfferings(); // 使用公开方法
+        await service.refreshOfferings();
       }
     } catch (e) {
       setState(() => _error = e.toString());
@@ -317,162 +239,23 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget build(BuildContext context) {
     final offerings = RevenueCatService().offerings;
     final currentOffering = offerings?.current;
+    final packages = currentOffering?.availablePackages ?? [];
 
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_error != null || currentOffering == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Upgrade')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(_error ?? 'No products available'),
-              ElevatedButton(
-                onPressed: _loadOfferings,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // 从 Offering 获取产品包
-    final packages = currentOffering.availablePackages;
-
-    // 按等级和周期分组
-    // 使用辅助方法匹配产品，兼容 Apple 和 Google Play 格式
+    // 匹配产品（跨平台兼容）
     final plusMonthly = packages.firstWhereOrNull(
       (p) => _matchesProduct(p, 'tritalkplusmonthly'),
     );
-    final plusYearly = packages.firstWhereOrNull(
-      (p) => _matchesProduct(p, 'tritalkplusyearly'),
-    );
-    final proMonthly = packages.firstWhereOrNull(
-      (p) => _matchesProduct(p, 'tritalkpromonthly'),
-    );
-    final proYearly = packages.firstWhereOrNull(
-      (p) => _matchesProduct(p, 'tritalkproyearly'),
-    );
+    // ... 其他产品匹配
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('选择订阅方案'),
-        actions: [
-          TextButton(
-            onPressed: _restorePurchases,
-            child: const Text('恢复购买'),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Plus 套餐
-          _buildTierSection(
-            tier: SubscriptionTier.plus,
-            monthlyPackage: plusMonthly,
-            yearlyPackage: plusYearly,
-          ),
-          const SizedBox(height: 24),
-
-          // Pro 套餐
-          _buildTierSection(
-            tier: SubscriptionTier.pro,
-            monthlyPackage: proMonthly,
-            yearlyPackage: proYearly,
-          ),
-        ],
-      ),
+      // ... UI 实现
     );
-  }
-
-  Widget _buildTierSection({
-    required SubscriptionTier tier,
-    Package? monthlyPackage,
-    Package? yearlyPackage,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '${tier.displayName} ${tier.displayNameCn}',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-        if (monthlyPackage != null)
-          _buildPackageCard(monthlyPackage, isYearly: false),
-        if (yearlyPackage != null)
-          _buildPackageCard(yearlyPackage, isYearly: true),
-      ],
-    );
-  }
-
-  Widget _buildPackageCard(Package package, {required bool isYearly}) {
-    final product = package.storeProduct;
-
-    return Card(
-      child: ListTile(
-        title: Text(isYearly ? '年付方案' : '月付方案'),
-        subtitle: Text(product.priceString),
-        trailing: ElevatedButton(
-          onPressed: () => _purchasePackage(package),
-          child: const Text('订阅'),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _purchasePackage(Package package) async {
-    final result = await RevenueCatService().purchasePackage(package);
-
-    if (!mounted) return;
-
-    switch (result) {
-      case PurchaseResult.success:
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('订阅成功！')),
-        );
-        break;
-      case PurchaseResult.cancelled:
-        // 用户取消，不做处理
-        break;
-      case PurchaseResult.error:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('购买失败，请重试')),
-        );
-        break;
-    }
-  }
-
-  Future<void> _restorePurchases() async {
-    final success = await RevenueCatService().restorePurchases();
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(success ? '购买已恢复' : '恢复失败，请重试'),
-      ),
-    );
-
-    if (success) {
-      Navigator.pop(context);
-    }
   }
 
   /// 匹配产品 ID，兼容 Apple 和 Google Play 格式
   ///
   /// Apple: identifier == 'tritalkplusmonthly'
   /// Google Play: identifier == 'tritalkplusmonthly:monthly-autorenewing'
-  ///
-  /// 使用 startsWith 匹配，确保跨平台兼容
   bool _matchesProduct(Package package, String productId) {
     final identifier = package.storeProduct.identifier;
     return identifier == productId || identifier.startsWith('$productId:');
@@ -480,7 +263,43 @@ class _PaywallScreenState extends State<PaywallScreen> {
 }
 ```
 
-### 1.4 App 初始化
+### 1.4 环境变量配置
+
+```dart
+// lib/core/env/env_dev.dart (env_local.dart, env_prod.dart 类似)
+class EnvDev {
+  // RevenueCat API Keys
+  static const String revenueCatAppleApiKey = 'appl_xxx';
+  static const String revenueCatGoogleApiKey = 'goog_xxx';
+}
+
+// lib/core/env/env.dart
+class Env {
+  static String get revenueCatAppleApiKey {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.revenueCatAppleApiKey;
+      case Environment.dev:
+        return EnvDev.revenueCatAppleApiKey;
+      case Environment.prod:
+        return EnvProd.revenueCatAppleApiKey;
+    }
+  }
+
+  static String get revenueCatGoogleApiKey {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.revenueCatGoogleApiKey;
+      case Environment.dev:
+        return EnvDev.revenueCatGoogleApiKey;
+      case Environment.prod:
+        return EnvProd.revenueCatGoogleApiKey;
+    }
+  }
+}
+```
+
+### 1.5 App 初始化
 
 ```dart
 // main.dart 或 app_startup.dart
@@ -504,95 +323,40 @@ Future<void> onUserLogout() async {
 }
 ```
 
-## 2. 环境变量配置 (Flutter)
+## 2. i18n 字符串
 
-```dart
-// lib/core/config/env.dart
-/// 环境配置抽象接口
-abstract class Env {
-  String get revenueCatAppleApiKey;
-  String get revenueCatGoogleApiKey;
-  // ... 其他环境变量
-}
+以下 i18n 键已添加到 `intl_en.arb` 和 `intl_zh.arb`：
 
-// lib/core/config/env_dev.dart
-class EnvDev implements Env {
-  @override
-  String get revenueCatAppleApiKey => 'appl_xxx'; // 测试环境
+| Key                                     | English                            | 中文                   |
+| --------------------------------------- | ---------------------------------- | ---------------------- |
+| `subscription_upgrade`                  | Upgrade                            | 升级                   |
+| `subscription_choosePlan`               | Choose a Plan                      | 选择订阅方案           |
+| `subscription_restore`                  | Restore                            | 恢复购买               |
+| `subscription_unlockPotential`          | Unlock Full Potential              | 解锁全部潜能           |
+| `subscription_description`              | Get unlimited conversations...     | 获取无限对话...        |
+| `subscription_recommended`              | POPULAR                            | 热门                   |
+| `subscription_monthlyPlan`              | Monthly                            | 月付                   |
+| `subscription_yearlyPlan`               | Yearly                             | 年付                   |
+| `subscription_purchaseSuccess`          | Subscription activated! Welcome!   | 订阅已激活！欢迎！     |
+| `subscription_purchaseFailed`           | Purchase failed. Please try again. | 购买失败，请重试。     |
+| `subscription_purchasesRestored`        | Purchases Restored                 | 购买已恢复             |
+| `subscription_noPurchasesToRestore`     | No previous purchases found.       | 未找到之前的购买记录。 |
+| `subscription_restoreFailed`            | Failed to restore purchases.       | 恢复购买失败。         |
+| `subscription_noProductsAvailable`      | No products available.             | 暂无可用产品。         |
+| `subscription_featureUnlimitedMessages` | Unlimited messages                 | 无限消息               |
+| `subscription_featureAdvancedFeedback`  | Advanced grammar feedback          | 高级语法反馈           |
+| `subscription_featureAllPlusFeatures`   | All Plus features included         | 包含所有 Plus 功能     |
+| `subscription_featurePremiumScenarios`  | Premium scenarios                  | 高级场景               |
+| `subscription_featurePrioritySupport`   | Priority support                   | 优先客服支持           |
 
-  @override
-  String get revenueCatGoogleApiKey => 'goog_xxx';
-}
-
-// lib/core/config/env_prod.dart
-class EnvProd implements Env {
-  @override
-  String get revenueCatAppleApiKey => 'appl_yyy'; // 生产环境
-
-  @override
-  String get revenueCatGoogleApiKey => 'goog_yyy';
-}
-
-// lib/core/config/env_config.dart
-/// 全局环境配置单例
-class EnvConfig {
-  static late Env _env;
-
-  static void init(Env env) {
-    _env = env;
-  }
-
-  static Env get current => _env;
-}
-
-// main.dart 中使用
-void main() {
-  // 通过编译时参数选择环境
-  // flutter run --dart-define=ENV=dev
-  // flutter run --dart-define=ENV=prod
-  const envName = String.fromEnvironment('ENV', defaultValue: 'dev');
-
-  final env = switch (envName) {
-    'prod' => EnvProd(),
-    _ => EnvDev(),
-  };
-
-  EnvConfig.init(env);
-  runApp(const MyApp());
-}
-
-// RevenueCatService 中使用
-class RevenueCatService extends ChangeNotifier {
-  // ...
-
-  /// 初始化 RevenueCat
-  Future<void> initialize(String userId) async {
-    if (_isInitialized) return;
-
-    await Purchases.setLogLevel(
-      EnvConfig.current is EnvProd ? LogLevel.info : LogLevel.debug,
-    );
-
-    final apiKey = defaultTargetPlatform == TargetPlatform.iOS
-        ? EnvConfig.current.revenueCatAppleApiKey
-        : EnvConfig.current.revenueCatGoogleApiKey;
-
-    final configuration = PurchasesConfiguration(apiKey)
-      ..appUserID = userId;
-
-    await Purchases.configure(configuration);
-    // ...
-  }
-}
-```
-
-## 3. 前端测试
+## 3. 前端测试清单
 
 - [ ] Paywall 正确显示产品和价格
 - [ ] 购买流程完整性
 - [ ] 订阅状态 UI 更新
 - [ ] 离线状态处理
 - [ ] 错误处理和重试
+- [ ] 恢复购买功能
 
 ## 附录: RevenueCat SDK 安装
 
@@ -608,3 +372,16 @@ buildscript {
     ext.kotlin_version = '1.7.10' // 确保 Kotlin 版本兼容
 }
 ```
+
+## 附录: SDK 版本说明
+
+**purchases_flutter 9.x 重要变更：**
+
+1. **购买 API 变更**：使用 `Purchases.purchase(PurchaseParams.package(package))` 替代废弃的 `Purchases.purchasePackage(package)`
+
+2. **PurchaseParams 命名构造函数**：
+   - `PurchaseParams.package(package)` - 购买 Package
+   - `PurchaseParams.storeProduct(product)` - 购买 StoreProduct
+   - `PurchaseParams.subscriptionOption(option)` - 购买 SubscriptionOption (Google Play)
+
+3. **PurchaseResult 命名冲突**：SDK 内置 `PurchaseResult` 类，项目内部使用 `SubscriptionPurchaseResult` 避免冲突

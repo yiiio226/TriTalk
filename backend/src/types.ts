@@ -108,6 +108,8 @@ export interface Env {
   // TRITALK_API_KEY: string;
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
+  // Service role key for backend operations (bypasses RLS)
+  SUPABASE_SERVICE_ROLE_KEY?: string;
 
   // Azure Speech API credentials for Pronunciation Assessment
   AZURE_SPEECH_KEY?: string;
@@ -118,6 +120,9 @@ export interface Env {
   GCP_PRIVATE_KEY?: string;
   GCP_REGION?: string;
   GCP_TTS_DEFAULT_VOICE_NAME?: string;
+
+  // RevenueCat Webhook
+  REVENUECAT_WEBHOOK_SECRET?: string;
 }
 
 export interface PolishRequest {

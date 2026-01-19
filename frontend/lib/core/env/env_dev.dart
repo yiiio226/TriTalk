@@ -18,6 +18,11 @@ class EnvDev {
   static const String googleOAuthWebClientId =
       '23529939770-sb285ba3t0s286si1ip3ln773d80911l.apps.googleusercontent.com';
 
+  // RevenueCat API Keys
+  // TODO: Add your actual RevenueCat API keys from dashboard
+  static const String revenueCatAppleApiKey = 'appl_xxx';
+  static const String revenueCatGoogleApiKey = 'goog_xxx';
+
   // Debug flags
   /// When true, Word TTS will skip local cache and local TTS engine,
   /// always using cloud API (GCP Vertex AI) for testing purposes.

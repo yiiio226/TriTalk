@@ -40,3 +40,22 @@ export {
   type GCPVertexAIConfig,
   type GeminiTTSVoice,
 } from "./gcp-tts";
+
+export {
+  handleRevenueCatWebhook,
+  getUserSubscription,
+  cleanupExpiredSubscriptions,
+  extractBaseProductId,
+  getTierFromProductId,
+  getPlatformFromStore,
+  PRODUCT_TO_TIER,
+  type RevenueCatEventType,
+  type RevenueCatWebhookEvent,
+  type SubscriptionTier,
+  type SubscriptionStatus,
+  type SubscriptionData,
+  type UserSubscription,
+  type Platform,
+  type EntitlementId,
+  type Environment,
+} from "./subscription";

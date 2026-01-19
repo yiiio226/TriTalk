@@ -91,4 +91,26 @@ class Env {
         return EnvProd.forceCloudTTS;
     }
   }
+
+  static String get revenueCatAppleApiKey {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.revenueCatAppleApiKey;
+      case Environment.dev:
+        return EnvDev.revenueCatAppleApiKey;
+      case Environment.prod:
+        return EnvProd.revenueCatAppleApiKey;
+    }
+  }
+
+  static String get revenueCatGoogleApiKey {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.revenueCatGoogleApiKey;
+      case Environment.dev:
+        return EnvDev.revenueCatGoogleApiKey;
+      case Environment.prod:
+        return EnvProd.revenueCatGoogleApiKey;
+    }
+  }
 }
