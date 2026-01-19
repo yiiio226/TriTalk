@@ -665,8 +665,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildLocalAvatar(String? gender) {
     final assetPath = gender == 'female'
-        ? 'assets/images/user_avatar_female.png'
-        : 'assets/images/user_avatar_male.png';
+        ? 'assets/images/avatars/user_avatar_female.png'
+        : 'assets/images/avatars/user_avatar_male.png';
 
     return Image.asset(assetPath, fit: BoxFit.cover);
   }

@@ -39,8 +39,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     // Determine avatar based on gender if none exists
     // (In a real app, we might check if user already has a custom avatar)
     String avatarPath = _selectedGender == 'female'
-        ? 'assets/images/user_avatar_female.png'
-        : 'assets/images/user_avatar_male.png';
+        ? 'assets/images/avatars/user_avatar_female.png'
+        : 'assets/images/avatars/user_avatar_male.png';
     // Assuming we have a male avatar logic or asset.
     // For now, I'll just use the logic to determine default.
 
@@ -227,13 +227,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             children: [
               _buildGenderOption(
                 'male',
-                'assets/images/user_avatar_male.png',
+                'assets/images/avatars/user_avatar_male.png',
                 'Male',
               ),
               const SizedBox(width: 20),
               _buildGenderOption(
                 'female',
-                'assets/images/user_avatar_female.png',
+                'assets/images/avatars/user_avatar_female.png',
                 'Female',
               ),
             ],

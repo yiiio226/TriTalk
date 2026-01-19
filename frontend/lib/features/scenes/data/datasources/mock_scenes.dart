@@ -12,7 +12,7 @@ const List<Scene> mockScenes = [
     category: 'Daily Life',
     difficulty: 'Easy',
     goal: 'Order a coffee',
-    iconPath: 'assets/images/coffee_3d.png',
+    iconPath: 'assets/images/scenes/coffee_3d.png',
     color: 0xFFE0F2F1,
   ),
   Scene(
@@ -26,7 +26,7 @@ const List<Scene> mockScenes = [
     category: 'Travel',
     difficulty: 'Medium',
     goal: 'Answer questions and get through immigration',
-    iconPath: 'assets/images/plane_3d.png',
+    iconPath: 'assets/images/scenes/plane_3d.png',
     color: 0xFFFFF8E1,
   ),
   Scene(
@@ -40,7 +40,7 @@ const List<Scene> mockScenes = [
     category: 'Emergency',
     difficulty: 'Hard',
     goal: 'Ask for help finding your wallet',
-    iconPath: 'assets/images/wallet_3d.png',
+    iconPath: 'assets/images/scenes/wallet_3d.png',
     color: 0xFFFFEBEE,
   ),
   Scene(
@@ -54,7 +54,7 @@ const List<Scene> mockScenes = [
     category: 'Daily Life',
     difficulty: 'Easy',
     goal: 'Reach your destination',
-    iconPath: 'assets/images/taxi_3d.png',
+    iconPath: 'assets/images/scenes/taxi_3d.png',
     color: 0xFFFFF3E0,
   ),
   Scene(
@@ -68,7 +68,7 @@ const List<Scene> mockScenes = [
     category: 'Daily Life',
     difficulty: 'Easy',
     goal: 'Find all items on your list',
-    iconPath: 'assets/images/supermarket_3d.png',
+    iconPath: 'assets/images/scenes/supermarket_3d.png',
     color: 0xFFE8F5E9,
   ),
   Scene(
@@ -82,7 +82,7 @@ const List<Scene> mockScenes = [
     category: 'Travel',
     difficulty: 'Medium',
     goal: 'Find the way to your destination',
-    iconPath: 'assets/images/map_3d.png',
+    iconPath: 'assets/images/scenes/map_3d.png',
     color: 0xFFE3F2FD,
   ),
   Scene(
@@ -96,7 +96,7 @@ const List<Scene> mockScenes = [
     category: 'Social',
     difficulty: 'Easy',
     goal: 'Get to know each other',
-    iconPath: 'assets/images/handshake_3d.png',
+    iconPath: 'assets/images/scenes/handshake_3d.png',
     color: 0xFFF3E5F5,
   ),
   Scene(
@@ -110,7 +110,7 @@ const List<Scene> mockScenes = [
     category: 'Travel',
     difficulty: 'Medium',
     goal: 'Successfully check in',
-    iconPath: 'assets/images/hotel_3d.png',
+    iconPath: 'assets/images/scenes/hotel_3d.png',
     color: 0xFFE0F7FA,
   ),
   Scene(
@@ -124,7 +124,7 @@ const List<Scene> mockScenes = [
     category: 'Daily Life',
     difficulty: 'Medium',
     goal: 'Order your meal',
-    iconPath: 'assets/images/food_3d.png',
+    iconPath: 'assets/images/scenes/food_3d.png',
     color: 0xFFFBE9E7,
   ),
   Scene(
@@ -139,7 +139,7 @@ const List<Scene> mockScenes = [
     category: 'Business',
     difficulty: 'Hard',
     goal: 'Impress the interviewer',
-    iconPath: 'assets/images/interview_3d.png',
+    iconPath: 'assets/images/scenes/interview_3d.png',
     color: 0xFFECEFF1,
   ),
   Scene(
@@ -153,7 +153,7 @@ const List<Scene> mockScenes = [
     category: 'Business',
     difficulty: 'Hard',
     goal: 'Coordinate the project next steps',
-    iconPath: 'assets/images/meeting_3d.png',
+    iconPath: 'assets/images/scenes/meeting_3d.png',
     color: 0xFFE8EAF6,
   ),
   Scene(
@@ -168,7 +168,7 @@ const List<Scene> mockScenes = [
     category: 'Social',
     difficulty: 'Medium',
     goal: 'Share opinions about the movie',
-    iconPath: 'assets/images/movie_3d.png',
+    iconPath: 'assets/images/scenes/movie_3d.png',
     color: 0xFFFCE4EC,
   ),
   Scene(
@@ -182,7 +182,7 @@ const List<Scene> mockScenes = [
     category: 'Daily Life',
     difficulty: 'Hard',
     goal: 'Explain your symptoms and get advice',
-    iconPath: 'assets/images/doctor_3d.png',
+    iconPath: 'assets/images/scenes/doctor_3d.png',
     color: 0xFFE0F2F1,
   ),
 ];

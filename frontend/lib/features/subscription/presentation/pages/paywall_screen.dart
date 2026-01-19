@@ -37,7 +37,7 @@ class PaywallScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage(
-                            'assets/images/premium_illustration.png',
+                            'assets/images/illustrations/premium_illustration.png',
                           ),
                           fit: BoxFit.contain,
                         ),
