@@ -95,11 +95,11 @@ The database schema is managed via **Supabase Migration**. See [backend/docs/dat
 
 ### 2. Backend Setup
 
-See [backend/docs/development_guide.md](backend/docs/development_guide.md) for setup and deployment instructions.
+See [backend/README.md](backend/README.md)
 
 ### 3. Frontend Setup
 
-See [frontend/README.md](frontend/README.md) for setup instructions.
+See [backend/README.md](backend/README.md)
 
 ---
 

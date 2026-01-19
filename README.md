@@ -95,11 +95,11 @@ TriTalk/
 
 ### 2. Backend
 
-详见 [backend/README.md](backend/README.md) 获取设置和部署说明。
+详见 [backend/README.md](backend/README.md)
 
 ### 3. Frontend
 
-详见 [frontend/README.md](frontend/README.md) 获取设置说明。
+详见 [frontend/README.md](frontend/README.md)
 
 ---
 
