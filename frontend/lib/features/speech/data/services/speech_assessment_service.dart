@@ -41,14 +41,14 @@ class SpeechAssessmentService {
   ///
   /// [audioFile] - 录音文件 (推荐 WAV 格式, 16kHz, Mono)
   /// [referenceText] - 用户应该朗读的参考文本
-  /// [language] - 语言代码 (默认: en-US)
+  /// [language] - 语言代码 (BCP-47 格式，应从 currentUserTargetLanguageProvider 获取)
   /// [enableProsody] - 是否启用语调评估
   ///
   /// Returns [PronunciationResult] with detailed phoneme-level feedback
   Future<PronunciationResult> assessPronunciation({
     required File audioFile,
     required String referenceText,
-    String language = 'en-US',
+    required String language,
     bool enableProsody = true,
   }) async {
     try {
@@ -76,6 +76,7 @@ class SpeechAssessmentService {
       );
 
       if (kDebugMode) {
+        debugPrint('🔤 SpeechAssessment: langCode: $language');
         debugPrint(
           '\n\n\n🎤🎤🎤🎤🎤 SpeechAssessment: Sending request to $uri',
         );
@@ -136,12 +137,12 @@ class SpeechAssessmentService {
   ///
   /// [audioBytes] - 音频字节数据 (推荐 PCM 16kHz Mono)
   /// [referenceText] - 用户应该朗读的参考文本
-  /// [language] - 语言代码 (默认: en-US)
+  /// [language] - 语言代码 (BCP-47 格式，应从 currentUserTargetLanguageProvider 获取)
   /// [enableProsody] - 是否启用语调评估
   Future<PronunciationResult> assessPronunciationFromBytes({
     required List<int> audioBytes,
     required String referenceText,
-    String language = 'en-US',
+    required String language,
     bool enableProsody = true,
   }) async {
     try {
@@ -168,12 +169,14 @@ class SpeechAssessmentService {
       );
 
       if (kDebugMode) {
+        debugPrint('🔤 SpeechAssessment (bytes): langCode: $language');
         debugPrint(
           '\n\n\n\n 🎤🎤🎤 SpeechAssessment: Sending ${audioBytes.length} bytes',
         );
         debugPrint(
           '   Reference text: "${referenceText.substring(0, referenceText.length.clamp(0, 50))}..."',
         );
+        debugPrint('   Language: $language');
       }
 
       final streamedResponse = await request.send();
@@ -202,10 +205,12 @@ class SpeechAssessmentService {
   /// 评估用户发音 (从音频路径字符串)
   ///
   /// 便捷方法，接受路径字符串而非 File 对象
+  ///
+  /// [language] - 语言代码 (BCP-47 格式，应从 currentUserTargetLanguageProvider 获取)
   Future<PronunciationResult> assessPronunciationFromPath({
     required String audioPath,
     required String referenceText,
-    String language = 'en-US',
+    required String language,
     bool enableProsody = true,
   }) async {
     return assessPronunciation(

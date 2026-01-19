@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:frontend/features/auth/domain/models/user.dart';
 import 'package:frontend/features/auth/data/services/auth_service.dart';
+import 'package:frontend/core/data/language_constants.dart';
 import '../data/local/storage_key_service.dart';
 import 'auth_state.dart';
 
@@ -87,14 +88,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         return true;
       } else {
-        state = state.copyWith(loadingType: AuthLoadingType.none, error: 'Google login failed');
+        state = state.copyWith(
+          loadingType: AuthLoadingType.none,
+          error: 'Google login failed',
+        );
         return false;
       }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('AuthNotifier: Google login error - $e');
       }
-      state = state.copyWith(loadingType: AuthLoadingType.none, error: e.toString());
+      state = state.copyWith(
+        loadingType: AuthLoadingType.none,
+        error: e.toString(),
+      );
       return false;
     }
   }
@@ -122,14 +129,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         return true;
       } else {
-        state = state.copyWith(loadingType: AuthLoadingType.none, error: 'Apple login failed');
+        state = state.copyWith(
+          loadingType: AuthLoadingType.none,
+          error: 'Apple login failed',
+        );
         return false;
       }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('AuthNotifier: Apple login error - $e');
       }
-      state = state.copyWith(loadingType: AuthLoadingType.none, error: e.toString());
+      state = state.copyWith(
+        loadingType: AuthLoadingType.none,
+        error: e.toString(),
+      );
       return false;
     }
   }
@@ -193,3 +206,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Check if authenticated (convenience getter)
   bool get isAuthenticated => state.status == AuthStatus.authenticated;
 }
+
+/// Provider for accessing current user's target language
+///
+/// This is the single source of truth for getting the user's target language.
+/// All services (TTS, Speech Assessment, etc.) should use this provider
+/// instead of querying the database directly.
+///
+/// Returns:
+/// - User's target language (BCP-47 format like 'en-US', 'ja-JP')
+/// - Falls back to default if user is not authenticated
+final currentUserTargetLanguageProvider = Provider<String>((ref) {
+  final user = ref.watch(authProvider).user;
+  if (user == null) {
+    return LanguageConstants.defaultTargetLanguageCode;
+  }
+  // Normalize to ensure BCP-47 format (handles legacy data)
+  return LanguageConstants.getIsoCode(user.targetLanguage);
+});

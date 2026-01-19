@@ -130,7 +130,16 @@ class WordTtsService {
 
   /// Play pronunciation for a word using hybrid strategy.
   /// Returns true if playback started successfully.
-  Future<bool> speakWord(String word, {String language = 'en-US'}) async {
+  ///
+  /// The [language] parameter should be obtained from `currentUserTargetLanguageProvider`
+  /// by the caller to ensure consistency with the user's profile settings.
+  Future<bool> speakWord(String word, {required String language}) async {
+    // Debug: always print langCode for troubleshooting
+    if (kDebugMode) {
+      debugPrint(
+        '🔤 WordTTS: speakWord called - langCode: $language, word: "$word"',
+      );
+    }
     // Debounce rapid taps
     final now = DateTime.now();
     if (_lastPlayTime != null &&
@@ -235,6 +244,12 @@ class WordTtsService {
   /// Play word using local TTS engine
   Future<void> _playWithLocalTts(String word, String language) async {
     _isLoading = false;
+
+    if (kDebugMode) {
+      debugPrint(
+        '🔤 WordTTS: _playWithLocalTts langCode: $language, word: "$word"',
+      );
+    }
 
     // Set language
     await _flutterTts.setLanguage(language);
@@ -364,6 +379,11 @@ class WordTtsService {
 
   /// Fetch word audio from cloud API
   Future<String?> _fetchWordAudio(String word, String language) async {
+    if (kDebugMode) {
+      debugPrint(
+        '🔤 WordTTS: _fetchWordAudio langCode: $language, word: "$word"',
+      );
+    }
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/tts/word'),

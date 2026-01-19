@@ -85,12 +85,36 @@ interface VertexAIStreamChunk {
  * Reference: https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/audio-understanding
  */
 export const GEMINI_TTS_VOICES = [
+  "Achernar",
+  "Achird",
+  "Algenib",
+  "Algieba",
+  "Alnilam",
   "Aoede",
+  "Autonoe",
+  "Callirrhoe",
   "Charon",
+  "Despina",
+  "Enceladus",
+  "Erinome",
   "Fenrir",
+  "Gacrux",
+  "Iapetus",
   "Kore",
+  "Laomedeia",
+  "Leda",
+  "Orus",
+  "Pulcherrima",
   "Puck",
-  "Orbit",
+  "Rasalgethi",
+  "Sadachbia",
+  "Sadaltager",
+  "Schedar",
+  "Sulafat",
+  "Umbriel",
+  "Vindemiatrix",
+  "Zephyr",
+  "Zubenelgenubi",
 ] as const;
 
 export type GeminiTTSVoice = (typeof GEMINI_TTS_VOICES)[number];
@@ -99,23 +123,40 @@ export type GeminiTTSVoice = (typeof GEMINI_TTS_VOICES)[number];
  * Default voice mapping from language codes to Gemini TTS voices
  */
 const LANGUAGE_TO_VOICE: Record<string, GeminiTTSVoice> = {
-  en: "Kore",
-  "en-US": "Kore",
-  "en-GB": "Kore",
-  zh: "Charon",
-  "zh-CN": "Charon",
-  ja: "Puck",
-  ko: "Fenrir",
-  es: "Aoede",
-  fr: "Aoede",
-  de: "Orbit",
+  "ar-EG": "Achernar", // Arabic (Egypt)
+  "bn-BD": "Gacrux", // Bangla (Bangladesh)
+  "nl-NL": "Algenib", // Dutch (Netherlands)
+  "en-IN": "Kore", // English (India)
+  "en-US": "Kore", // English (United States)
+  "fr-FR": "Aoede", // French (France)
+  "de-DE": "Orus", // German (Germany)
+  "hi-IN": "Vindemiatrix", // Hindi (India)
+  "id-ID": "Zephyr", // Indonesian (Indonesia)
+  "it-IT": "Callirrhoe", // Italian (Italy)
+  "ja-JP": "Puck", // Japanese (Japan)
+  "ko-KR": "Fenrir", // Korean (South Korea)
+  "mr-IN": "Leda", // Marathi (India)
+  "pl-PL": "Sadachbia", // Polish (Poland)
+  "pt-BR": "Despina", // Portuguese (Brazil)
+  "ro-RO": "Erinome", // Romanian (Romania)
+  "ru-RU": "Charon", // Russian (Russia)
+  "es-ES": "Aoede", // Spanish (Spain)
+  "ta-IN": "Laomedeia", // Tamil (India)
+  "te-IN": "Sulafat", // Telugu (India)
+  "th-TH": "Autonoe", // Thai (Thailand)
+  "tr-TR": "Schedar", // Turkish (Turkey)
+  "uk-UA": "Algieba", // Ukrainian (Ukraine)
+  "vi-VN": "Sadaltager", // Vietnamese (Vietnam)
+  "zh-CN": "Charon", // Chinese (Simplified)
+  "zh-TW": "Charon", // Chinese (Traditional)
+  "en-GB": "Kore", // English (UK)
+  "es-MX": "Aoede", // Spanish (Mexico)
 };
-
 /**
  * Get Gemini TTS voice from language code
  */
 export function getGeminiVoiceFromLanguage(language: string): GeminiTTSVoice {
-  return LANGUAGE_TO_VOICE[language] || LANGUAGE_TO_VOICE["en"];
+  return LANGUAGE_TO_VOICE[language] || LANGUAGE_TO_VOICE["en-US"];
 }
 
 /**
@@ -523,21 +564,3 @@ export function getGCPTTSConfig(env: Env): GCPVertexAIConfig {
     defaultVoiceName: env.GCP_TTS_DEFAULT_VOICE_NAME,
   };
 }
-
-/**
- * Gemini 2.5 Flash TTS Voice Reference
- *
- * Available voices (as of 2024):
- *   - Aoede: Warm, expressive female voice
- *   - Charon: Deep, authoritative male voice
- *   - Fenrir: Energetic, dynamic male voice
- *   - Kore: Clear, natural female voice (default)
- *   - Puck: Friendly, conversational voice
- *   - Orbit: Neutral, professional voice
- *
- * Pricing (Vertex AI Gemini):
- *   - Gemini 2.5 Flash: Check latest pricing at cloud.google.com/vertex-ai/pricing
- *
- * With $25,000 credits:
- *   - Significant usage capacity for TTS operations
- */
