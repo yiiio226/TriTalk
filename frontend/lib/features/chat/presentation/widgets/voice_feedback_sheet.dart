@@ -45,6 +45,13 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
     });
   }
 
+  @override
+  void dispose() {
+    // Stop any word TTS playback when sheet is closed
+    _wordTtsService.stop();
+    super.dispose();
+  }
+
   void _triggerAssessmentIfNeeded() {
     // If we don't have Azure data yet and have audio/transcript, fetch it
     if (!_hasTriggeredAssessment &&

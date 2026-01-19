@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/initializer/app_initializer.dart';
+import 'core/services/app_lifecycle_audio_manager.dart';
 import 'features/onboarding/presentation/pages/splash_screen.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/error_screen.dart';
@@ -47,8 +48,28 @@ void main() async {
 }
 
 /// Root application widget
-class TriTalkApp extends StatelessWidget {
+class TriTalkApp extends StatefulWidget {
   const TriTalkApp({super.key});
+
+  @override
+  State<TriTalkApp> createState() => _TriTalkAppState();
+}
+
+class _TriTalkAppState extends State<TriTalkApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the app lifecycle audio manager to handle
+    // stopping audio when app goes to background or is terminated
+    AppLifecycleAudioManager.instance.initialize();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the lifecycle manager
+    AppLifecycleAudioManager.instance.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +78,8 @@ class TriTalkApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // Force light mode until dark mode is fully developed
+      themeMode: ThemeMode
+          .light, // Force light mode until dark mode is fully developed
       home: const SplashScreen(),
     );
   }
