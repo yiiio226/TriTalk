@@ -24,6 +24,7 @@ import '../../../scenes/presentation/widgets/scene_options_drawer.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 
 import '../../chat.dart'; // Import feature barrel file
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Scene scene;
@@ -438,7 +439,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                    child: Text(
+                      context.l10n.home_cancel,
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   TextButton(
@@ -804,7 +808,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ElevatedButton.icon(
               onPressed: _deleteSelectedMessages,
               icon: const Icon(Icons.delete_outline, size: 20),
-              label: const Text('Delete'),
+              label: Text(context.l10n.chat_delete),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
@@ -830,7 +834,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.home_cancel),
             ),
           ],
         ),
@@ -974,7 +978,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   child: TextField(
                     controller: _textController,
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: context.l10n.chat_typeAMessage,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       isDense: true,
@@ -1009,7 +1013,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             Icons.auto_fix_high,
                             color: AppColors.lg500,
                           ),
-                    tooltip: 'Optimize with AI',
+                    tooltip: context.l10n.chat_optimizeWithAi,
                     onPressed: _isOptimizing ? null : _optimizeMessage,
                   ),
               ],
@@ -1198,7 +1202,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    context.l10n.home_cancel,
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 TextButton(
@@ -1255,7 +1262,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    context.l10n.home_cancel,
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 TextButton(

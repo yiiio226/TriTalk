@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/auth_provider.dart';
+import '../../../../core/providers/locale_provider.dart';
 import 'package:frontend/features/auth/data/services/auth_service.dart';
 import 'package:frontend/features/profile/data/services/user_service.dart';
 import 'package:frontend/core/data/language_constants.dart';
@@ -9,6 +10,7 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'favorites_screen.dart'; // Import UnifiedFavoritesScreen
 import '../../../subscription/presentation/pages/paywall_screen.dart';
 import '../../../onboarding/presentation/pages/splash_screen.dart'; // For logout navigation
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -78,6 +80,107 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         (Route<dynamic> route) => false,
       );
     }
+  }
+
+  /// 显示 App 语言选择对话框
+  void _showAppLanguageDialog() {
+    final currentLocaleState = ref.read(localeProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.lightSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: AppSpacing.md),
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.lightDivider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Select App Language', // TODO: Use l10n when fully migrated
+              style: AppTypography.headline4.copyWith(
+                color: AppColors.lightTextPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: AppLanguages.supportedLanguages.map((option) {
+                  final isSelected =
+                      option.code == currentLocaleState.selectedCode;
+                  return InkWell(
+                    onTap: () {
+                      ref.read(localeProvider.notifier).setLocale(option.code);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.lightDivider,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              if (option.flag.isNotEmpty) ...[
+                                Text(
+                                  option.flag,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                              ],
+                              Text(
+                                option.label,
+                                style: AppTypography.body1.copyWith(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.lightTextPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isSelected)
+                            const Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showLanguageDialog(
@@ -289,16 +392,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 children: [
                   Text(
-                    'Language Settings',
+                    context.l10n.profile_languageSettings,
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
+                  // App Language Setting
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final localeState = ref.watch(localeProvider);
+                      return _buildMenuCard(
+                        context,
+                        title: context.l10n.profile_appLanguage,
+                        subtitle: localeState.displayLabel,
+                        icon: Icons.language,
+                        iconColor: AppColors.lightTextSecondary,
+                        onTap: _showAppLanguageDialog,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
-                    title: 'Native Language',
+                    title: context.l10n.profile_nativeLanguage,
                     subtitle: LanguageConstants.getLabel(_nativeLanguage),
                     icon: Icons.public,
                     iconColor: AppColors.lightTextSecondary,
@@ -313,7 +431,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
-                    title: 'Learning Language',
+                    title: context.l10n.profile_learningLanguage,
                     subtitle: LanguageConstants.getLabel(_targetLanguage),
                     icon: Icons.school,
                     iconColor: AppColors.lightTextSecondary,
@@ -336,8 +454,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
-                    title: 'Favorites', // Unified title
-                    subtitle: 'Vocabulary, Sentences, Chat History',
+                    title: context.l10n.scenes_favorites, // Unified title
+                    subtitle:
+                        context.l10n.profile_vocabularySentencesChatHistory,
 
                     icon: Icons.bookmark,
                     iconColor: AppColors.lightTextSecondary,
@@ -353,8 +472,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: AppSpacing.md),
                   _buildMenuCard(
                     context,
-                    title: 'Upgrade to Pro',
-                    subtitle: 'Get unlimited chats and advanced feedback',
+                    title: context.l10n.profile_upgradeToPro,
+                    subtitle: context.l10n.profile_getUnlimitedChatsAnd,
                     icon: Icons.star,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
@@ -370,7 +489,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Logout Button
                   _buildMenuCard(
                     context,
-                    title: 'Log Out',
+                    title: context.l10n.profile_logOut,
                     icon: Icons.arrow_circle_right,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: _handleLogout,

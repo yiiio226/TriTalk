@@ -13,6 +13,8 @@ import 'package:frontend/core/design/app_design_system.dart';
 import '../../../chat/presentation/pages/chat_screen.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../scenes/presentation/pages/scenario_configuration_screen.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
+import 'package:frontend/core/data/language_constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -159,11 +161,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Choose a scenario to practice your ${AuthService().currentUser?.targetLanguage ?? "English"}',
-                        style: TextStyle(fontSize: 16, color: AppColors.lightTextSecondary),
+                        context.l10n.home_chooseScenario(
+                          LanguageConstants.getLabel(
+                            LanguageConstants.getIsoCode(
+                              AuthService().currentUser?.targetLanguage,
+                            ),
+                          ),
+                        ),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.lightTextSecondary,
+                        ),
                       ),
                     ],
-
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -538,7 +548,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    context.l10n.home_cancel,
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 TextButton(
@@ -595,7 +608,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    context.l10n.home_cancel,
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 TextButton(

@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class VoiceFeedbackSheet extends ConsumerStatefulWidget {
   final VoiceFeedback feedback;
@@ -229,16 +230,16 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
         color: Colors.blue[50],
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 20,
             height: 20,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
-          SizedBox(width: 12),
-          Text('Analyzing pronunciation...'),
+          const SizedBox(width: 12),
+          Text(context.l10n.chat_analyzingPronunciation),
         ],
       ),
     );
@@ -474,7 +475,7 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
             // In a real app, this might trigger a recording mode or callback
           },
           icon: const Icon(Icons.mic, size: 16),
-          label: const Text('Retry'),
+          label: Text(context.l10n.chat_retry),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black,
             foregroundColor: Colors.white,

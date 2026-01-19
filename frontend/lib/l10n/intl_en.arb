@@ -1,7 +1,141 @@
 {
 	"@@locale": "en",
-	"appTitle": "TriTalk",
-	"@appTitle": {
-		"description": "The title of the application"
+	"common_tritalkError": "TriTalk - Error",
+	"@common_tritalkError": {
+		"description": "Source: core/widgets/error_screen.dart:13 (title)"
+	},
+	"home_cancel": "Cancel",
+	"@home_cancel": {
+		"description": "Source: features/home/presentation/pages/home_screen.dart:541 (Text)"
+	},
+	"scenes_favorites": "Favorites",
+	"@scenes_favorites": {
+		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:28 (Text)"
+	},
+	"scenes_clearConversation": "Clear Conversation",
+	"@scenes_clearConversation": {
+		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:37 (Text)"
+	},
+	"scenes_bookmarkConversation": "Bookmark Conversation",
+	"@scenes_bookmarkConversation": {
+		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:46 (Text)"
+	},
+	"study_savedToNotebook": "Saved to Notebook!",
+	"@study_savedToNotebook": {
+		"description": "Source: features/study/presentation/widgets/save_note_sheet.dart:62 (Text)"
+	},
+	"study_summary": "SUMMARY",
+	"@study_summary": {
+		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:335 (title)"
+	},
+	"study_sentenceStructure": "SENTENCE STRUCTURE",
+	"@study_sentenceStructure": {
+		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:358 (title)"
+	},
+	"study_grammarPoints": "GRAMMAR POINTS",
+	"@study_grammarPoints": {
+		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:367 (title)"
+	},
+	"study_vocabulary": "VOCABULARY",
+	"@study_vocabulary": {
+		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:376 (title)"
+	},
+	"study_idiomsSlang": "IDIOMS & SLANG",
+	"@study_idiomsSlang": {
+		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:385 (title)"
+	},
+	"study_analysisNotAvailable": "Analysis not available",
+	"@study_analysisNotAvailable": {
+		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:576 (Text)"
+	},
+	"chat_delete": "Delete",
+	"@chat_delete": {
+		"description": "Source: features/chat/presentation/pages/chat_screen.dart:807 (Text)"
+	},
+	"chat_typeAMessage": "Type a message...",
+	"@chat_typeAMessage": {
+		"description": "Source: features/chat/presentation/pages/chat_screen.dart:977 (hintText)"
+	},
+	"chat_optimizeWithAi": "Optimize with AI",
+	"@chat_optimizeWithAi": {
+		"description": "Source: features/chat/presentation/pages/chat_screen.dart:1012 (tooltip)"
+	},
+	"chat_conversationDeleted": "Conversation deleted",
+	"@chat_conversationDeleted": {
+		"description": "Source: features/chat/presentation/widgets/chat_history_list_widget.dart:96 (Text)"
+	},
+	"chat_analyzingPronunciation": "Analyzing pronunciation...",
+	"@chat_analyzingPronunciation": {
+		"description": "Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:241 (Text)"
+	},
+	"chat_retry": "Retry",
+	"@chat_retry": {
+		"description": "Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:477 (Text)"
+	},
+	"subscription_welcomeToPro": "Welcome to Pro!",
+	"@subscription_welcomeToPro": {
+		"description": "Source: features/subscription/presentation/pages/paywall_screen.dart:87 (Text)"
+	},
+	"subscription_purchasesRestored": "Purchases Restored",
+	"@subscription_purchasesRestored": {
+		"description": "Source: features/subscription/presentation/pages/paywall_screen.dart:115 (Text)"
+	},
+	"profile_nativeLanguage": "Native Language",
+	"@profile_nativeLanguage": {
+		"description": "Source: features/profile/presentation/pages/profile_screen.dart:301 (title)"
+	},
+	"profile_learningLanguage": "Learning Language",
+	"@profile_learningLanguage": {
+		"description": "Source: features/profile/presentation/pages/profile_screen.dart:316 (title)"
+	},
+	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Chat History",
+	"@profile_vocabularySentencesChatHistory": {
+		"description": "Source: features/profile/presentation/pages/profile_screen.dart:340 (title)"
+	},
+	"profile_upgradeToPro": "Upgrade to Pro",
+	"@profile_upgradeToPro": {
+		"description": "Source: features/profile/presentation/pages/profile_screen.dart:356 (title)"
+	},
+	"profile_getUnlimitedChatsAnd": "Get unlimited chats and advanced feedback",
+	"@profile_getUnlimitedChatsAnd": {
+		"description": "Source: features/profile/presentation/pages/profile_screen.dart:357 (title)"
+	},
+	"profile_logOut": "Log Out",
+	"@profile_logOut": {
+		"description": "Source: features/profile/presentation/pages/profile_screen.dart:373 (title)"
+	},
+	"onboarding_sessionExpiredPleaseLog": "Session expired. Please log in again.",
+	"@onboarding_sessionExpiredPleaseLog": {
+		"description": "Source: features/onboarding/presentation/pages/onboarding_screen.dart:57 (Text)"
+	},
+	"tritalk": "TriTalk",
+	"@tritalk": {
+		"description": "Source: main.dart:78 (title)"
+	},
+	"profile_appLanguage": "App Language",
+	"@profile_appLanguage": {
+		"description": "Label for app display language setting in profile screen"
+	},
+	"profile_selectAppLanguage": "Select App Language",
+	"@profile_selectAppLanguage": {
+		"description": "Title for app language selection dialog"
+	},
+	"profile_languageSettings": "Language Settings",
+	"@profile_languageSettings": {
+		"description": "Section title for language settings in profile screen"
+	},
+	"common_systemDefault": "System Default",
+	"@common_systemDefault": {
+		"description": "Option label for following system language setting"
+	},
+	"home_chooseScenario": "Choose a scenario to practice your {language}",
+	"@home_chooseScenario": {
+		"description": "Subtitle on home screen prompting user to select a practice scenario",
+		"placeholders": {
+			"language": {
+				"type": "String",
+				"example": "English (US)"
+			}
+		}
 	}
 }

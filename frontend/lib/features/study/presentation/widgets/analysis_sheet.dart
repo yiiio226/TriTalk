@@ -9,6 +9,7 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class AnalysisSheet extends StatefulWidget {
   final Message message;
@@ -332,7 +333,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           // First entry: Show Summary skeleton and other section titles with loading indicators
           // Summary with skeleton loading (expanded by default)
           _buildCollapsibleSection(
-            title: 'SUMMARY',
+            title: context.l10n.study_summary,
             isExpanded: true,
             isLoading: true,
             onToggle: () {},
@@ -355,7 +356,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
 
           // Other sections: Show title only with loading indicator
           _buildCollapsibleSection(
-            title: 'SENTENCE STRUCTURE',
+            title: context.l10n.study_sentenceStructure,
             isExpanded: false,
             isLoading: true,
             onToggle: () {},
@@ -364,7 +365,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 12),
 
           _buildCollapsibleSection(
-            title: 'GRAMMAR POINTS',
+            title: context.l10n.study_grammarPoints,
             isExpanded: false,
             isLoading: true,
             onToggle: () {},
@@ -373,7 +374,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 12),
 
           _buildCollapsibleSection(
-            title: 'VOCABULARY',
+            title: context.l10n.study_vocabulary,
             isExpanded: false,
             isLoading: true,
             onToggle: () {},
@@ -382,7 +383,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           const SizedBox(height: 12),
 
           _buildCollapsibleSection(
-            title: 'IDIOMS & SLANG',
+            title: context.l10n.study_idiomsSlang,
             isExpanded: false,
             isLoading: true,
             onToggle: () {},
@@ -393,7 +394,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           if (displayAnalysis.overallSummary.isNotEmpty &&
               displayAnalysis.overallSummary != 'No summary available.') ...[
             _buildCollapsibleSection(
-              title: 'SUMMARY',
+              title: context.l10n.study_summary,
               isExpanded: _isSummaryExpanded,
               isLoading: false,
               onToggle: () =>
@@ -414,7 +415,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           if (displayAnalysis.sentenceStructure.isNotEmpty &&
               displayAnalysis.sentenceBreakdown.isNotEmpty) ...[
             _buildCollapsibleSection(
-              title: 'SENTENCE STRUCTURE',
+              title: context.l10n.study_sentenceStructure,
               isExpanded: _isSentenceStructureExpanded,
               isLoading: false,
               onToggle: () => setState(
@@ -480,7 +481,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             const SizedBox(height: 12),
           ] else if (_isStreaming) ...[
             _buildCollapsibleSection(
-              title: 'SENTENCE STRUCTURE',
+              title: context.l10n.study_sentenceStructure,
               isExpanded: false,
               isLoading: true,
               onToggle: () {},
@@ -492,7 +493,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           // Grammar Points (Collapsible)
           if (displayAnalysis.grammarPoints.isNotEmpty) ...[
             _buildCollapsibleSection(
-              title: 'GRAMMAR POINTS',
+              title: context.l10n.study_grammarPoints,
               isExpanded: _isGrammarPointsExpanded,
               isLoading: false,
               onToggle: () => setState(
@@ -507,7 +508,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             const SizedBox(height: 12),
           ] else if (_isStreaming) ...[
             _buildCollapsibleSection(
-              title: 'GRAMMAR POINTS',
+              title: context.l10n.study_grammarPoints,
               isExpanded: false,
               isLoading: true,
               onToggle: () {},
@@ -519,7 +520,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           // Vocabulary (Collapsible)
           if (displayAnalysis.vocabulary.isNotEmpty) ...[
             _buildCollapsibleSection(
-              title: 'VOCABULARY',
+              title: context.l10n.study_vocabulary,
               isExpanded: _isVocabularyExpanded,
               isLoading: false,
               onToggle: () => setState(
@@ -534,7 +535,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             const SizedBox(height: 12),
           ] else if (_isStreaming) ...[
             _buildCollapsibleSection(
-              title: 'VOCABULARY',
+              title: context.l10n.study_vocabulary,
               isExpanded: false,
               isLoading: true,
               onToggle: () {},
@@ -546,7 +547,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           // Idioms (Collapsible)
           if (displayAnalysis.idioms.isNotEmpty) ...[
             _buildCollapsibleSection(
-              title: 'IDIOMS & SLANG',
+              title: context.l10n.study_idiomsSlang,
               isExpanded: _isIdiomsExpanded,
               isLoading: false,
               onToggle: () =>
@@ -561,7 +562,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             const SizedBox(height: 12),
           ] else if (_isStreaming) ...[
             _buildCollapsibleSection(
-              title: 'IDIOMS & SLANG',
+              title: context.l10n.study_idiomsSlang,
               isExpanded: false,
               isLoading: true,
               onToggle: () {},
@@ -570,10 +571,10 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
             const SizedBox(height: 12),
           ],
         ] else ...[
-          const Center(
+          Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
-              child: Text('Analysis not available'),
+              child: Text(context.l10n.study_analysisNotAvailable),
             ),
           ),
         ],

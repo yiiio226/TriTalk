@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
 
 import 'core/initializer/app_initializer.dart';
+import 'core/providers/locale_provider.dart';
 import 'core/services/app_lifecycle_audio_manager.dart';
 import 'features/onboarding/presentation/pages/splash_screen.dart';
 import 'package:frontend/core/design/app_design_system.dart';
@@ -48,15 +49,15 @@ void main() async {
   );
 }
 
-/// Root application widget
-class TriTalkApp extends StatefulWidget {
+/// Root application widget with locale support
+class TriTalkApp extends ConsumerStatefulWidget {
   const TriTalkApp({super.key});
 
   @override
-  State<TriTalkApp> createState() => _TriTalkAppState();
+  ConsumerState<TriTalkApp> createState() => _TriTalkAppState();
 }
 
-class _TriTalkAppState extends State<TriTalkApp> {
+class _TriTalkAppState extends ConsumerState<TriTalkApp> {
   @override
   void initState() {
     super.initState();
@@ -74,10 +75,14 @@ class _TriTalkAppState extends State<TriTalkApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch locale state for changes
+    final localeState = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'TriTalk',
       debugShowCheckedModeBanner: false,
-      // i18n 配置
+      // i18n 配置 - 使用用户选择的语言或跟随系统
+      locale: localeState.locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.lightTheme,

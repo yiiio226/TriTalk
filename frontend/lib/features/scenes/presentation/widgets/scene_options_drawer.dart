@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
+
 class SceneOptionsDrawer extends StatelessWidget {
   final VoidCallback? onClear;
   final VoidCallback? onDelete;
@@ -25,7 +27,7 @@ class SceneOptionsDrawer extends StatelessWidget {
           if (onShowFavorites != null)
             ListTile(
               leading: const Icon(Icons.star_outline, color: AppColors.primary),
-              title: const Text('Favorites'),
+              title: Text(context.l10n.scenes_favorites),
               onTap: () {
                 Navigator.pop(context);
                 onShowFavorites!();
@@ -34,7 +36,7 @@ class SceneOptionsDrawer extends StatelessWidget {
           if (onClear != null)
             ListTile(
               leading: const Icon(Icons.refresh, color: AppColors.primary),
-              title: const Text('Clear Conversation'),
+              title: Text(context.l10n.scenes_clearConversation),
               onTap: () {
                 Navigator.pop(context);
                 onClear!();
@@ -42,8 +44,11 @@ class SceneOptionsDrawer extends StatelessWidget {
             ),
           if (onBookmark != null)
             ListTile(
-              leading: const Icon(Icons.bookmark_border, color: AppColors.primary),
-              title: const Text('Bookmark Conversation'),
+              leading: const Icon(
+                Icons.bookmark_border,
+                color: AppColors.primary,
+              ),
+              title: Text(context.l10n.scenes_bookmarkConversation),
               onTap: () {
                 Navigator.pop(context);
                 onBookmark!();
@@ -53,7 +58,10 @@ class SceneOptionsDrawer extends StatelessWidget {
             const Divider(),
           if (onDelete != null)
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppColors.lightError),
+              leading: const Icon(
+                Icons.delete_outline,
+                color: AppColors.lightError,
+              ),
               title: const Text(
                 'Delete Conversation',
                 style: TextStyle(color: AppColors.lightError),
