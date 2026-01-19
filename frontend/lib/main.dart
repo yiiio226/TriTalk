@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'l10n/app_localizations.dart';
 
 import 'core/initializer/app_initializer.dart';
 import 'core/services/app_lifecycle_audio_manager.dart';
@@ -76,6 +77,9 @@ class _TriTalkAppState extends State<TriTalkApp> {
     return MaterialApp(
       title: 'TriTalk',
       debugShowCheckedModeBanner: false,
+      // i18n 配置
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode

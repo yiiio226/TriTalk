@@ -1,0 +1,8 @@
+# Flutter i18n 代码生成配置
+# 参考: https://docs.flutter.dev/accessibility-and-internationalization/internationalization
+
+arb-dir: lib/l10n
+template-arb-file: intl_en.arb # 以英文作为开发基准
+output-localization-file: app_localizations.dart
+untranslated-messages-file: lib/l10n/untranslated.txt
+nullable-getter: false # 避免调用时频繁使用 !
