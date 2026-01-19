@@ -253,7 +253,11 @@ extension $ChatHintPost$RequestBodyExtension on ChatHintPost$RequestBody {
 
 @JsonSerializable(explicitToJson: true)
 class SceneGeneratePost$RequestBody {
-  const SceneGeneratePost$RequestBody({required this.description, this.tone});
+  const SceneGeneratePost$RequestBody({
+    required this.description,
+    this.tone,
+    this.targetLanguage,
+  });
 
   factory SceneGeneratePost$RequestBody.fromJson(Map<String, dynamic> json) =>
       _$SceneGeneratePost$RequestBodyFromJson(json);
@@ -265,6 +269,8 @@ class SceneGeneratePost$RequestBody {
   final String description;
   @JsonKey(name: 'tone')
   final String? tone;
+  @JsonKey(name: 'target_language')
+  final String? targetLanguage;
   static const fromJsonFactory = _$SceneGeneratePost$RequestBodyFromJson;
 
   @override
@@ -277,32 +283,47 @@ class SceneGeneratePost$RequestBody {
                   description,
                 )) &&
             (identical(other.tone, tone) ||
-                const DeepCollectionEquality().equals(other.tone, tone)));
+                const DeepCollectionEquality().equals(other.tone, tone)) &&
+            (identical(other.targetLanguage, targetLanguage) ||
+                const DeepCollectionEquality().equals(
+                  other.targetLanguage,
+                  targetLanguage,
+                )));
   }
 
   @override
   int get hashCode =>
       const DeepCollectionEquality().hash(description) ^
       const DeepCollectionEquality().hash(tone) ^
+      const DeepCollectionEquality().hash(targetLanguage) ^
       runtimeType.hashCode;
 }
 
 extension $SceneGeneratePost$RequestBodyExtension
     on SceneGeneratePost$RequestBody {
-  SceneGeneratePost$RequestBody copyWith({String? description, String? tone}) {
+  SceneGeneratePost$RequestBody copyWith({
+    String? description,
+    String? tone,
+    String? targetLanguage,
+  }) {
     return SceneGeneratePost$RequestBody(
       description: description ?? this.description,
       tone: tone ?? this.tone,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
     );
   }
 
   SceneGeneratePost$RequestBody copyWithWrapped({
     Wrapped<String>? description,
     Wrapped<String?>? tone,
+    Wrapped<String?>? targetLanguage,
   }) {
     return SceneGeneratePost$RequestBody(
       description: (description != null ? description.value : this.description),
       tone: (tone != null ? tone.value : this.tone),
+      targetLanguage: (targetLanguage != null
+          ? targetLanguage.value
+          : this.targetLanguage),
     );
   }
 }
@@ -695,11 +716,11 @@ extension $UserSyncPost$RequestBodyExtension on UserSyncPost$RequestBody {
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingSavePost$RequestBody {
-  const ShadowingSavePost$RequestBody({
+class ShadowingUpsertPut$RequestBody {
+  const ShadowingUpsertPut$RequestBody({
     required this.targetText,
     required this.sourceType,
-    this.sourceId,
+    required this.sourceId,
     this.sceneKey,
     required this.pronunciationScore,
     this.accuracyScore,
@@ -708,25 +729,25 @@ class ShadowingSavePost$RequestBody {
     this.prosodyScore,
     this.wordFeedback,
     this.feedbackText,
-    this.audioPath,
+    this.segments,
   });
 
-  factory ShadowingSavePost$RequestBody.fromJson(Map<String, dynamic> json) =>
-      _$ShadowingSavePost$RequestBodyFromJson(json);
+  factory ShadowingUpsertPut$RequestBody.fromJson(Map<String, dynamic> json) =>
+      _$ShadowingUpsertPut$RequestBodyFromJson(json);
 
-  static const toJsonFactory = _$ShadowingSavePost$RequestBodyToJson;
-  Map<String, dynamic> toJson() => _$ShadowingSavePost$RequestBodyToJson(this);
+  static const toJsonFactory = _$ShadowingUpsertPut$RequestBodyToJson;
+  Map<String, dynamic> toJson() => _$ShadowingUpsertPut$RequestBodyToJson(this);
 
   @JsonKey(name: 'target_text')
   final String targetText;
   @JsonKey(
     name: 'source_type',
-    toJson: shadowingSavePost$RequestBodySourceTypeToJson,
-    fromJson: shadowingSavePost$RequestBodySourceTypeFromJson,
+    toJson: shadowingUpsertPut$RequestBodySourceTypeToJson,
+    fromJson: shadowingUpsertPut$RequestBodySourceTypeFromJson,
   )
-  final enums.ShadowingSavePost$RequestBodySourceType sourceType;
+  final enums.ShadowingUpsertPut$RequestBodySourceType sourceType;
   @JsonKey(name: 'source_id')
-  final String? sourceId;
+  final String sourceId;
   @JsonKey(name: 'scene_key')
   final String? sceneKey;
   @JsonKey(name: 'pronunciation_score')
@@ -740,17 +761,17 @@ class ShadowingSavePost$RequestBody {
   @JsonKey(name: 'prosody_score')
   final double? prosodyScore;
   @JsonKey(name: 'word_feedback')
-  final List<ShadowingSavePost$RequestBody$WordFeedback$Item>? wordFeedback;
+  final List<ShadowingUpsertPut$RequestBody$WordFeedback$Item>? wordFeedback;
   @JsonKey(name: 'feedback_text')
   final String? feedbackText;
-  @JsonKey(name: 'audio_path')
-  final String? audioPath;
-  static const fromJsonFactory = _$ShadowingSavePost$RequestBodyFromJson;
+  @JsonKey(name: 'segments')
+  final List<ShadowingUpsertPut$RequestBody$Segments$Item>? segments;
+  static const fromJsonFactory = _$ShadowingUpsertPut$RequestBodyFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other is ShadowingSavePost$RequestBody &&
+        (other is ShadowingUpsertPut$RequestBody &&
             (identical(other.targetText, targetText) ||
                 const DeepCollectionEquality().equals(
                   other.targetText,
@@ -806,10 +827,10 @@ class ShadowingSavePost$RequestBody {
                   other.feedbackText,
                   feedbackText,
                 )) &&
-            (identical(other.audioPath, audioPath) ||
+            (identical(other.segments, segments) ||
                 const DeepCollectionEquality().equals(
-                  other.audioPath,
-                  audioPath,
+                  other.segments,
+                  segments,
                 )));
   }
 
@@ -826,15 +847,15 @@ class ShadowingSavePost$RequestBody {
       const DeepCollectionEquality().hash(prosodyScore) ^
       const DeepCollectionEquality().hash(wordFeedback) ^
       const DeepCollectionEquality().hash(feedbackText) ^
-      const DeepCollectionEquality().hash(audioPath) ^
+      const DeepCollectionEquality().hash(segments) ^
       runtimeType.hashCode;
 }
 
-extension $ShadowingSavePost$RequestBodyExtension
-    on ShadowingSavePost$RequestBody {
-  ShadowingSavePost$RequestBody copyWith({
+extension $ShadowingUpsertPut$RequestBodyExtension
+    on ShadowingUpsertPut$RequestBody {
+  ShadowingUpsertPut$RequestBody copyWith({
     String? targetText,
-    enums.ShadowingSavePost$RequestBodySourceType? sourceType,
+    enums.ShadowingUpsertPut$RequestBodySourceType? sourceType,
     String? sourceId,
     String? sceneKey,
     double? pronunciationScore,
@@ -842,11 +863,11 @@ extension $ShadowingSavePost$RequestBodyExtension
     double? fluencyScore,
     double? completenessScore,
     double? prosodyScore,
-    List<ShadowingSavePost$RequestBody$WordFeedback$Item>? wordFeedback,
+    List<ShadowingUpsertPut$RequestBody$WordFeedback$Item>? wordFeedback,
     String? feedbackText,
-    String? audioPath,
+    List<ShadowingUpsertPut$RequestBody$Segments$Item>? segments,
   }) {
-    return ShadowingSavePost$RequestBody(
+    return ShadowingUpsertPut$RequestBody(
       targetText: targetText ?? this.targetText,
       sourceType: sourceType ?? this.sourceType,
       sourceId: sourceId ?? this.sourceId,
@@ -858,26 +879,26 @@ extension $ShadowingSavePost$RequestBodyExtension
       prosodyScore: prosodyScore ?? this.prosodyScore,
       wordFeedback: wordFeedback ?? this.wordFeedback,
       feedbackText: feedbackText ?? this.feedbackText,
-      audioPath: audioPath ?? this.audioPath,
+      segments: segments ?? this.segments,
     );
   }
 
-  ShadowingSavePost$RequestBody copyWithWrapped({
+  ShadowingUpsertPut$RequestBody copyWithWrapped({
     Wrapped<String>? targetText,
-    Wrapped<enums.ShadowingSavePost$RequestBodySourceType>? sourceType,
-    Wrapped<String?>? sourceId,
+    Wrapped<enums.ShadowingUpsertPut$RequestBodySourceType>? sourceType,
+    Wrapped<String>? sourceId,
     Wrapped<String?>? sceneKey,
     Wrapped<double>? pronunciationScore,
     Wrapped<double?>? accuracyScore,
     Wrapped<double?>? fluencyScore,
     Wrapped<double?>? completenessScore,
     Wrapped<double?>? prosodyScore,
-    Wrapped<List<ShadowingSavePost$RequestBody$WordFeedback$Item>?>?
+    Wrapped<List<ShadowingUpsertPut$RequestBody$WordFeedback$Item>?>?
     wordFeedback,
     Wrapped<String?>? feedbackText,
-    Wrapped<String?>? audioPath,
+    Wrapped<List<ShadowingUpsertPut$RequestBody$Segments$Item>?>? segments,
   }) {
-    return ShadowingSavePost$RequestBody(
+    return ShadowingUpsertPut$RequestBody(
       targetText: (targetText != null ? targetText.value : this.targetText),
       sourceType: (sourceType != null ? sourceType.value : this.sourceType),
       sourceId: (sourceId != null ? sourceId.value : this.sourceId),
@@ -903,7 +924,7 @@ extension $ShadowingSavePost$RequestBodyExtension
       feedbackText: (feedbackText != null
           ? feedbackText.value
           : this.feedbackText),
-      audioPath: (audioPath != null ? audioPath.value : this.audioPath),
+      segments: (segments != null ? segments.value : this.segments),
     );
   }
 }
@@ -1547,25 +1568,28 @@ extension $UserSyncPost$ResponseExtension on UserSyncPost$Response {
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingSavePost$Response {
-  const ShadowingSavePost$Response({required this.success, required this.data});
+class ShadowingUpsertPut$Response {
+  const ShadowingUpsertPut$Response({
+    required this.success,
+    required this.data,
+  });
 
-  factory ShadowingSavePost$Response.fromJson(Map<String, dynamic> json) =>
-      _$ShadowingSavePost$ResponseFromJson(json);
+  factory ShadowingUpsertPut$Response.fromJson(Map<String, dynamic> json) =>
+      _$ShadowingUpsertPut$ResponseFromJson(json);
 
-  static const toJsonFactory = _$ShadowingSavePost$ResponseToJson;
-  Map<String, dynamic> toJson() => _$ShadowingSavePost$ResponseToJson(this);
+  static const toJsonFactory = _$ShadowingUpsertPut$ResponseToJson;
+  Map<String, dynamic> toJson() => _$ShadowingUpsertPut$ResponseToJson(this);
 
   @JsonKey(name: 'success')
   final bool success;
   @JsonKey(name: 'data')
-  final ShadowingSavePost$Response$Data data;
-  static const fromJsonFactory = _$ShadowingSavePost$ResponseFromJson;
+  final ShadowingUpsertPut$Response$Data data;
+  static const fromJsonFactory = _$ShadowingUpsertPut$ResponseFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other is ShadowingSavePost$Response &&
+        (other is ShadowingUpsertPut$Response &&
             (identical(other.success, success) ||
                 const DeepCollectionEquality().equals(
                   other.success,
@@ -1582,22 +1606,22 @@ class ShadowingSavePost$Response {
       runtimeType.hashCode;
 }
 
-extension $ShadowingSavePost$ResponseExtension on ShadowingSavePost$Response {
-  ShadowingSavePost$Response copyWith({
+extension $ShadowingUpsertPut$ResponseExtension on ShadowingUpsertPut$Response {
+  ShadowingUpsertPut$Response copyWith({
     bool? success,
-    ShadowingSavePost$Response$Data? data,
+    ShadowingUpsertPut$Response$Data? data,
   }) {
-    return ShadowingSavePost$Response(
+    return ShadowingUpsertPut$Response(
       success: success ?? this.success,
       data: data ?? this.data,
     );
   }
 
-  ShadowingSavePost$Response copyWithWrapped({
+  ShadowingUpsertPut$Response copyWithWrapped({
     Wrapped<bool>? success,
-    Wrapped<ShadowingSavePost$Response$Data>? data,
+    Wrapped<ShadowingUpsertPut$Response$Data>? data,
   }) {
-    return ShadowingSavePost$Response(
+    return ShadowingUpsertPut$Response(
       success: (success != null ? success.value : this.success),
       data: (data != null ? data.value : this.data),
     );
@@ -1605,28 +1629,25 @@ extension $ShadowingSavePost$ResponseExtension on ShadowingSavePost$Response {
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingHistoryGet$Response {
-  const ShadowingHistoryGet$Response({
-    required this.success,
-    required this.data,
-  });
+class ShadowingGetGet$Response {
+  const ShadowingGetGet$Response({required this.success, this.data});
 
-  factory ShadowingHistoryGet$Response.fromJson(Map<String, dynamic> json) =>
-      _$ShadowingHistoryGet$ResponseFromJson(json);
+  factory ShadowingGetGet$Response.fromJson(Map<String, dynamic> json) =>
+      _$ShadowingGetGet$ResponseFromJson(json);
 
-  static const toJsonFactory = _$ShadowingHistoryGet$ResponseToJson;
-  Map<String, dynamic> toJson() => _$ShadowingHistoryGet$ResponseToJson(this);
+  static const toJsonFactory = _$ShadowingGetGet$ResponseToJson;
+  Map<String, dynamic> toJson() => _$ShadowingGetGet$ResponseToJson(this);
 
   @JsonKey(name: 'success')
   final bool success;
   @JsonKey(name: 'data')
-  final ShadowingHistoryGet$Response$Data data;
-  static const fromJsonFactory = _$ShadowingHistoryGet$ResponseFromJson;
+  final ShadowingGetGet$Response$Data? data;
+  static const fromJsonFactory = _$ShadowingGetGet$ResponseFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other is ShadowingHistoryGet$Response &&
+        (other is ShadowingGetGet$Response &&
             (identical(other.success, success) ||
                 const DeepCollectionEquality().equals(
                   other.success,
@@ -1643,23 +1664,22 @@ class ShadowingHistoryGet$Response {
       runtimeType.hashCode;
 }
 
-extension $ShadowingHistoryGet$ResponseExtension
-    on ShadowingHistoryGet$Response {
-  ShadowingHistoryGet$Response copyWith({
+extension $ShadowingGetGet$ResponseExtension on ShadowingGetGet$Response {
+  ShadowingGetGet$Response copyWith({
     bool? success,
-    ShadowingHistoryGet$Response$Data? data,
+    ShadowingGetGet$Response$Data? data,
   }) {
-    return ShadowingHistoryGet$Response(
+    return ShadowingGetGet$Response(
       success: success ?? this.success,
       data: data ?? this.data,
     );
   }
 
-  ShadowingHistoryGet$Response copyWithWrapped({
+  ShadowingGetGet$Response copyWithWrapped({
     Wrapped<bool>? success,
-    Wrapped<ShadowingHistoryGet$Response$Data>? data,
+    Wrapped<ShadowingGetGet$Response$Data?>? data,
   }) {
-    return ShadowingHistoryGet$Response(
+    return ShadowingGetGet$Response(
       success: (success != null ? success.value : this.success),
       data: (data != null ? data.value : this.data),
     );
@@ -1854,8 +1874,8 @@ extension $ChatOptimizePost$RequestBody$History$ItemExtension
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingSavePost$RequestBody$WordFeedback$Item {
-  const ShadowingSavePost$RequestBody$WordFeedback$Item({
+class ShadowingUpsertPut$RequestBody$WordFeedback$Item {
+  const ShadowingUpsertPut$RequestBody$WordFeedback$Item({
     required this.text,
     required this.score,
     required this.level,
@@ -1863,14 +1883,14 @@ class ShadowingSavePost$RequestBody$WordFeedback$Item {
     required this.phonemes,
   });
 
-  factory ShadowingSavePost$RequestBody$WordFeedback$Item.fromJson(
+  factory ShadowingUpsertPut$RequestBody$WordFeedback$Item.fromJson(
     Map<String, dynamic> json,
-  ) => _$ShadowingSavePost$RequestBody$WordFeedback$ItemFromJson(json);
+  ) => _$ShadowingUpsertPut$RequestBody$WordFeedback$ItemFromJson(json);
 
   static const toJsonFactory =
-      _$ShadowingSavePost$RequestBody$WordFeedback$ItemToJson;
+      _$ShadowingUpsertPut$RequestBody$WordFeedback$ItemToJson;
   Map<String, dynamic> toJson() =>
-      _$ShadowingSavePost$RequestBody$WordFeedback$ItemToJson(this);
+      _$ShadowingUpsertPut$RequestBody$WordFeedback$ItemToJson(this);
 
   @JsonKey(name: 'text')
   final String text;
@@ -1878,22 +1898,22 @@ class ShadowingSavePost$RequestBody$WordFeedback$Item {
   final double score;
   @JsonKey(
     name: 'level',
-    toJson: shadowingSavePost$RequestBody$WordFeedback$ItemLevelToJson,
-    fromJson: shadowingSavePost$RequestBody$WordFeedback$ItemLevelFromJson,
+    toJson: shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelToJson,
+    fromJson: shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelFromJson,
   )
-  final enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel level;
+  final enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel level;
   @JsonKey(name: 'error_type')
   final String errorType;
   @JsonKey(name: 'phonemes')
-  final List<ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item>
+  final List<ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item>
   phonemes;
   static const fromJsonFactory =
-      _$ShadowingSavePost$RequestBody$WordFeedback$ItemFromJson;
+      _$ShadowingUpsertPut$RequestBody$WordFeedback$ItemFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other is ShadowingSavePost$RequestBody$WordFeedback$Item &&
+        (other is ShadowingUpsertPut$RequestBody$WordFeedback$Item &&
             (identical(other.text, text) ||
                 const DeepCollectionEquality().equals(other.text, text)) &&
             (identical(other.score, score) ||
@@ -1922,17 +1942,17 @@ class ShadowingSavePost$RequestBody$WordFeedback$Item {
       runtimeType.hashCode;
 }
 
-extension $ShadowingSavePost$RequestBody$WordFeedback$ItemExtension
-    on ShadowingSavePost$RequestBody$WordFeedback$Item {
-  ShadowingSavePost$RequestBody$WordFeedback$Item copyWith({
+extension $ShadowingUpsertPut$RequestBody$WordFeedback$ItemExtension
+    on ShadowingUpsertPut$RequestBody$WordFeedback$Item {
+  ShadowingUpsertPut$RequestBody$WordFeedback$Item copyWith({
     String? text,
     double? score,
-    enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel? level,
+    enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel? level,
     String? errorType,
-    List<ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item>?
+    List<ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item>?
     phonemes,
   }) {
-    return ShadowingSavePost$RequestBody$WordFeedback$Item(
+    return ShadowingUpsertPut$RequestBody$WordFeedback$Item(
       text: text ?? this.text,
       score: score ?? this.score,
       level: level ?? this.level,
@@ -1941,22 +1961,137 @@ extension $ShadowingSavePost$RequestBody$WordFeedback$ItemExtension
     );
   }
 
-  ShadowingSavePost$RequestBody$WordFeedback$Item copyWithWrapped({
+  ShadowingUpsertPut$RequestBody$WordFeedback$Item copyWithWrapped({
     Wrapped<String>? text,
     Wrapped<double>? score,
-    Wrapped<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>? level,
+    Wrapped<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>? level,
     Wrapped<String>? errorType,
     Wrapped<
-      List<ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item>
+      List<ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item>
     >?
     phonemes,
   }) {
-    return ShadowingSavePost$RequestBody$WordFeedback$Item(
+    return ShadowingUpsertPut$RequestBody$WordFeedback$Item(
       text: (text != null ? text.value : this.text),
       score: (score != null ? score.value : this.score),
       level: (level != null ? level.value : this.level),
       errorType: (errorType != null ? errorType.value : this.errorType),
       phonemes: (phonemes != null ? phonemes.value : this.phonemes),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class ShadowingUpsertPut$RequestBody$Segments$Item {
+  const ShadowingUpsertPut$RequestBody$Segments$Item({
+    required this.text,
+    required this.startIndex,
+    required this.endIndex,
+    required this.score,
+    required this.hasError,
+    required this.wordCount,
+  });
+
+  factory ShadowingUpsertPut$RequestBody$Segments$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$ShadowingUpsertPut$RequestBody$Segments$ItemFromJson(json);
+
+  static const toJsonFactory =
+      _$ShadowingUpsertPut$RequestBody$Segments$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$ShadowingUpsertPut$RequestBody$Segments$ItemToJson(this);
+
+  @JsonKey(name: 'text')
+  final String text;
+  @JsonKey(name: 'start_index')
+  final double startIndex;
+  @JsonKey(name: 'end_index')
+  final double endIndex;
+  @JsonKey(name: 'score')
+  final double score;
+  @JsonKey(name: 'has_error')
+  final bool hasError;
+  @JsonKey(name: 'word_count')
+  final double wordCount;
+  static const fromJsonFactory =
+      _$ShadowingUpsertPut$RequestBody$Segments$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is ShadowingUpsertPut$RequestBody$Segments$Item &&
+            (identical(other.text, text) ||
+                const DeepCollectionEquality().equals(other.text, text)) &&
+            (identical(other.startIndex, startIndex) ||
+                const DeepCollectionEquality().equals(
+                  other.startIndex,
+                  startIndex,
+                )) &&
+            (identical(other.endIndex, endIndex) ||
+                const DeepCollectionEquality().equals(
+                  other.endIndex,
+                  endIndex,
+                )) &&
+            (identical(other.score, score) ||
+                const DeepCollectionEquality().equals(other.score, score)) &&
+            (identical(other.hasError, hasError) ||
+                const DeepCollectionEquality().equals(
+                  other.hasError,
+                  hasError,
+                )) &&
+            (identical(other.wordCount, wordCount) ||
+                const DeepCollectionEquality().equals(
+                  other.wordCount,
+                  wordCount,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(text) ^
+      const DeepCollectionEquality().hash(startIndex) ^
+      const DeepCollectionEquality().hash(endIndex) ^
+      const DeepCollectionEquality().hash(score) ^
+      const DeepCollectionEquality().hash(hasError) ^
+      const DeepCollectionEquality().hash(wordCount) ^
+      runtimeType.hashCode;
+}
+
+extension $ShadowingUpsertPut$RequestBody$Segments$ItemExtension
+    on ShadowingUpsertPut$RequestBody$Segments$Item {
+  ShadowingUpsertPut$RequestBody$Segments$Item copyWith({
+    String? text,
+    double? startIndex,
+    double? endIndex,
+    double? score,
+    bool? hasError,
+    double? wordCount,
+  }) {
+    return ShadowingUpsertPut$RequestBody$Segments$Item(
+      text: text ?? this.text,
+      startIndex: startIndex ?? this.startIndex,
+      endIndex: endIndex ?? this.endIndex,
+      score: score ?? this.score,
+      hasError: hasError ?? this.hasError,
+      wordCount: wordCount ?? this.wordCount,
+    );
+  }
+
+  ShadowingUpsertPut$RequestBody$Segments$Item copyWithWrapped({
+    Wrapped<String>? text,
+    Wrapped<double>? startIndex,
+    Wrapped<double>? endIndex,
+    Wrapped<double>? score,
+    Wrapped<bool>? hasError,
+    Wrapped<double>? wordCount,
+  }) {
+    return ShadowingUpsertPut$RequestBody$Segments$Item(
+      text: (text != null ? text.value : this.text),
+      startIndex: (startIndex != null ? startIndex.value : this.startIndex),
+      endIndex: (endIndex != null ? endIndex.value : this.endIndex),
+      score: (score != null ? score.value : this.score),
+      hasError: (hasError != null ? hasError.value : this.hasError),
+      wordCount: (wordCount != null ? wordCount.value : this.wordCount),
     );
   }
 }
@@ -2157,29 +2292,30 @@ extension $ChatShadowPost$Response$DetailsExtension
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingSavePost$Response$Data {
-  const ShadowingSavePost$Response$Data({
+class ShadowingUpsertPut$Response$Data {
+  const ShadowingUpsertPut$Response$Data({
     required this.id,
     required this.practicedAt,
   });
 
-  factory ShadowingSavePost$Response$Data.fromJson(Map<String, dynamic> json) =>
-      _$ShadowingSavePost$Response$DataFromJson(json);
+  factory ShadowingUpsertPut$Response$Data.fromJson(
+    Map<String, dynamic> json,
+  ) => _$ShadowingUpsertPut$Response$DataFromJson(json);
 
-  static const toJsonFactory = _$ShadowingSavePost$Response$DataToJson;
+  static const toJsonFactory = _$ShadowingUpsertPut$Response$DataToJson;
   Map<String, dynamic> toJson() =>
-      _$ShadowingSavePost$Response$DataToJson(this);
+      _$ShadowingUpsertPut$Response$DataToJson(this);
 
   @JsonKey(name: 'id')
   final String id;
   @JsonKey(name: 'practiced_at')
   final String practicedAt;
-  static const fromJsonFactory = _$ShadowingSavePost$Response$DataFromJson;
+  static const fromJsonFactory = _$ShadowingUpsertPut$Response$DataFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other is ShadowingSavePost$Response$Data &&
+        (other is ShadowingUpsertPut$Response$Data &&
             (identical(other.id, id) ||
                 const DeepCollectionEquality().equals(other.id, id)) &&
             (identical(other.practicedAt, practicedAt) ||
@@ -2196,20 +2332,20 @@ class ShadowingSavePost$Response$Data {
       runtimeType.hashCode;
 }
 
-extension $ShadowingSavePost$Response$DataExtension
-    on ShadowingSavePost$Response$Data {
-  ShadowingSavePost$Response$Data copyWith({String? id, String? practicedAt}) {
-    return ShadowingSavePost$Response$Data(
+extension $ShadowingUpsertPut$Response$DataExtension
+    on ShadowingUpsertPut$Response$Data {
+  ShadowingUpsertPut$Response$Data copyWith({String? id, String? practicedAt}) {
+    return ShadowingUpsertPut$Response$Data(
       id: id ?? this.id,
       practicedAt: practicedAt ?? this.practicedAt,
     );
   }
 
-  ShadowingSavePost$Response$Data copyWithWrapped({
+  ShadowingUpsertPut$Response$Data copyWithWrapped({
     Wrapped<String>? id,
     Wrapped<String>? practicedAt,
   }) {
-    return ShadowingSavePost$Response$Data(
+    return ShadowingUpsertPut$Response$Data(
       id: (id != null ? id.value : this.id),
       practicedAt: (practicedAt != null ? practicedAt.value : this.practicedAt),
     );
@@ -2217,176 +2353,13 @@ extension $ShadowingSavePost$Response$DataExtension
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingHistoryGet$Response$Data {
-  const ShadowingHistoryGet$Response$Data({
-    required this.practices,
-    required this.total,
-  });
-
-  factory ShadowingHistoryGet$Response$Data.fromJson(
-    Map<String, dynamic> json,
-  ) => _$ShadowingHistoryGet$Response$DataFromJson(json);
-
-  static const toJsonFactory = _$ShadowingHistoryGet$Response$DataToJson;
-  Map<String, dynamic> toJson() =>
-      _$ShadowingHistoryGet$Response$DataToJson(this);
-
-  @JsonKey(name: 'practices')
-  final List<ShadowingHistoryGet$Response$Data$Practices$Item> practices;
-  @JsonKey(name: 'total')
-  final double total;
-  static const fromJsonFactory = _$ShadowingHistoryGet$Response$DataFromJson;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other is ShadowingHistoryGet$Response$Data &&
-            (identical(other.practices, practices) ||
-                const DeepCollectionEquality().equals(
-                  other.practices,
-                  practices,
-                )) &&
-            (identical(other.total, total) ||
-                const DeepCollectionEquality().equals(other.total, total)));
-  }
-
-  @override
-  int get hashCode =>
-      const DeepCollectionEquality().hash(practices) ^
-      const DeepCollectionEquality().hash(total) ^
-      runtimeType.hashCode;
-}
-
-extension $ShadowingHistoryGet$Response$DataExtension
-    on ShadowingHistoryGet$Response$Data {
-  ShadowingHistoryGet$Response$Data copyWith({
-    List<ShadowingHistoryGet$Response$Data$Practices$Item>? practices,
-    double? total,
-  }) {
-    return ShadowingHistoryGet$Response$Data(
-      practices: practices ?? this.practices,
-      total: total ?? this.total,
-    );
-  }
-
-  ShadowingHistoryGet$Response$Data copyWithWrapped({
-    Wrapped<List<ShadowingHistoryGet$Response$Data$Practices$Item>>? practices,
-    Wrapped<double>? total,
-  }) {
-    return ShadowingHistoryGet$Response$Data(
-      practices: (practices != null ? practices.value : this.practices),
-      total: (total != null ? total.value : this.total),
-    );
-  }
-}
-
-@JsonSerializable(explicitToJson: true)
-class ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item {
-  const ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item({
-    required this.phoneme,
-    required this.accuracyScore,
-    this.offset,
-    this.duration,
-  });
-
-  factory ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item.fromJson(
-    Map<String, dynamic> json,
-  ) => _$ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson(
-    json,
-  );
-
-  static const toJsonFactory =
-      _$ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemToJson;
-  Map<String, dynamic> toJson() =>
-      _$ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemToJson(
-        this,
-      );
-
-  @JsonKey(name: 'phoneme')
-  final String phoneme;
-  @JsonKey(name: 'accuracy_score')
-  final double accuracyScore;
-  @JsonKey(name: 'offset')
-  final double? offset;
-  @JsonKey(name: 'duration')
-  final double? duration;
-  static const fromJsonFactory =
-      _$ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other
-                is ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item &&
-            (identical(other.phoneme, phoneme) ||
-                const DeepCollectionEquality().equals(
-                  other.phoneme,
-                  phoneme,
-                )) &&
-            (identical(other.accuracyScore, accuracyScore) ||
-                const DeepCollectionEquality().equals(
-                  other.accuracyScore,
-                  accuracyScore,
-                )) &&
-            (identical(other.offset, offset) ||
-                const DeepCollectionEquality().equals(other.offset, offset)) &&
-            (identical(other.duration, duration) ||
-                const DeepCollectionEquality().equals(
-                  other.duration,
-                  duration,
-                )));
-  }
-
-  @override
-  int get hashCode =>
-      const DeepCollectionEquality().hash(phoneme) ^
-      const DeepCollectionEquality().hash(accuracyScore) ^
-      const DeepCollectionEquality().hash(offset) ^
-      const DeepCollectionEquality().hash(duration) ^
-      runtimeType.hashCode;
-}
-
-extension $ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemExtension
-    on ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item {
-  ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item copyWith({
-    String? phoneme,
-    double? accuracyScore,
-    double? offset,
-    double? duration,
-  }) {
-    return ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item(
-      phoneme: phoneme ?? this.phoneme,
-      accuracyScore: accuracyScore ?? this.accuracyScore,
-      offset: offset ?? this.offset,
-      duration: duration ?? this.duration,
-    );
-  }
-
-  ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item
-  copyWithWrapped({
-    Wrapped<String>? phoneme,
-    Wrapped<double>? accuracyScore,
-    Wrapped<double?>? offset,
-    Wrapped<double?>? duration,
-  }) {
-    return ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item(
-      phoneme: (phoneme != null ? phoneme.value : this.phoneme),
-      accuracyScore: (accuracyScore != null
-          ? accuracyScore.value
-          : this.accuracyScore),
-      offset: (offset != null ? offset.value : this.offset),
-      duration: (duration != null ? duration.value : this.duration),
-    );
-  }
-}
-
-@JsonSerializable(explicitToJson: true)
-class ShadowingHistoryGet$Response$Data$Practices$Item {
-  const ShadowingHistoryGet$Response$Data$Practices$Item({
+class ShadowingGetGet$Response$Data {
+  const ShadowingGetGet$Response$Data({
     required this.id,
-    required this.targetText,
     required this.sourceType,
-    this.sourceId,
+    required this.sourceId,
+    required this.targetText,
+    this.sceneKey,
     required this.pronunciationScore,
     this.accuracyScore,
     this.fluencyScore,
@@ -2394,27 +2367,26 @@ class ShadowingHistoryGet$Response$Data$Practices$Item {
     this.prosodyScore,
     required this.wordFeedback,
     this.feedbackText,
-    this.audioPath,
+    required this.segments,
     required this.practicedAt,
   });
 
-  factory ShadowingHistoryGet$Response$Data$Practices$Item.fromJson(
-    Map<String, dynamic> json,
-  ) => _$ShadowingHistoryGet$Response$Data$Practices$ItemFromJson(json);
+  factory ShadowingGetGet$Response$Data.fromJson(Map<String, dynamic> json) =>
+      _$ShadowingGetGet$Response$DataFromJson(json);
 
-  static const toJsonFactory =
-      _$ShadowingHistoryGet$Response$Data$Practices$ItemToJson;
-  Map<String, dynamic> toJson() =>
-      _$ShadowingHistoryGet$Response$Data$Practices$ItemToJson(this);
+  static const toJsonFactory = _$ShadowingGetGet$Response$DataToJson;
+  Map<String, dynamic> toJson() => _$ShadowingGetGet$Response$DataToJson(this);
 
   @JsonKey(name: 'id')
   final String id;
-  @JsonKey(name: 'target_text')
-  final String targetText;
   @JsonKey(name: 'source_type')
   final String sourceType;
   @JsonKey(name: 'source_id')
-  final String? sourceId;
+  final String sourceId;
+  @JsonKey(name: 'target_text')
+  final String targetText;
+  @JsonKey(name: 'scene_key')
+  final String? sceneKey;
   @JsonKey(name: 'pronunciation_score')
   final double pronunciationScore;
   @JsonKey(name: 'accuracy_score')
@@ -2426,28 +2398,21 @@ class ShadowingHistoryGet$Response$Data$Practices$Item {
   @JsonKey(name: 'prosody_score')
   final double? prosodyScore;
   @JsonKey(name: 'word_feedback')
-  final List<ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item>
-  wordFeedback;
+  final List<ShadowingGetGet$Response$Data$WordFeedback$Item> wordFeedback;
   @JsonKey(name: 'feedback_text')
   final String? feedbackText;
-  @JsonKey(name: 'audio_path')
-  final String? audioPath;
+  @JsonKey(name: 'segments')
+  final List<ShadowingGetGet$Response$Data$Segments$Item> segments;
   @JsonKey(name: 'practiced_at')
   final String practicedAt;
-  static const fromJsonFactory =
-      _$ShadowingHistoryGet$Response$Data$Practices$ItemFromJson;
+  static const fromJsonFactory = _$ShadowingGetGet$Response$DataFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other is ShadowingHistoryGet$Response$Data$Practices$Item &&
+        (other is ShadowingGetGet$Response$Data &&
             (identical(other.id, id) ||
                 const DeepCollectionEquality().equals(other.id, id)) &&
-            (identical(other.targetText, targetText) ||
-                const DeepCollectionEquality().equals(
-                  other.targetText,
-                  targetText,
-                )) &&
             (identical(other.sourceType, sourceType) ||
                 const DeepCollectionEquality().equals(
                   other.sourceType,
@@ -2457,6 +2422,16 @@ class ShadowingHistoryGet$Response$Data$Practices$Item {
                 const DeepCollectionEquality().equals(
                   other.sourceId,
                   sourceId,
+                )) &&
+            (identical(other.targetText, targetText) ||
+                const DeepCollectionEquality().equals(
+                  other.targetText,
+                  targetText,
+                )) &&
+            (identical(other.sceneKey, sceneKey) ||
+                const DeepCollectionEquality().equals(
+                  other.sceneKey,
+                  sceneKey,
                 )) &&
             (identical(other.pronunciationScore, pronunciationScore) ||
                 const DeepCollectionEquality().equals(
@@ -2493,10 +2468,10 @@ class ShadowingHistoryGet$Response$Data$Practices$Item {
                   other.feedbackText,
                   feedbackText,
                 )) &&
-            (identical(other.audioPath, audioPath) ||
+            (identical(other.segments, segments) ||
                 const DeepCollectionEquality().equals(
-                  other.audioPath,
-                  audioPath,
+                  other.segments,
+                  segments,
                 )) &&
             (identical(other.practicedAt, practicedAt) ||
                 const DeepCollectionEquality().equals(
@@ -2508,9 +2483,10 @@ class ShadowingHistoryGet$Response$Data$Practices$Item {
   @override
   int get hashCode =>
       const DeepCollectionEquality().hash(id) ^
-      const DeepCollectionEquality().hash(targetText) ^
       const DeepCollectionEquality().hash(sourceType) ^
       const DeepCollectionEquality().hash(sourceId) ^
+      const DeepCollectionEquality().hash(targetText) ^
+      const DeepCollectionEquality().hash(sceneKey) ^
       const DeepCollectionEquality().hash(pronunciationScore) ^
       const DeepCollectionEquality().hash(accuracyScore) ^
       const DeepCollectionEquality().hash(fluencyScore) ^
@@ -2518,34 +2494,35 @@ class ShadowingHistoryGet$Response$Data$Practices$Item {
       const DeepCollectionEquality().hash(prosodyScore) ^
       const DeepCollectionEquality().hash(wordFeedback) ^
       const DeepCollectionEquality().hash(feedbackText) ^
-      const DeepCollectionEquality().hash(audioPath) ^
+      const DeepCollectionEquality().hash(segments) ^
       const DeepCollectionEquality().hash(practicedAt) ^
       runtimeType.hashCode;
 }
 
-extension $ShadowingHistoryGet$Response$Data$Practices$ItemExtension
-    on ShadowingHistoryGet$Response$Data$Practices$Item {
-  ShadowingHistoryGet$Response$Data$Practices$Item copyWith({
+extension $ShadowingGetGet$Response$DataExtension
+    on ShadowingGetGet$Response$Data {
+  ShadowingGetGet$Response$Data copyWith({
     String? id,
-    String? targetText,
     String? sourceType,
     String? sourceId,
+    String? targetText,
+    String? sceneKey,
     double? pronunciationScore,
     double? accuracyScore,
     double? fluencyScore,
     double? completenessScore,
     double? prosodyScore,
-    List<ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item>?
-    wordFeedback,
+    List<ShadowingGetGet$Response$Data$WordFeedback$Item>? wordFeedback,
     String? feedbackText,
-    String? audioPath,
+    List<ShadowingGetGet$Response$Data$Segments$Item>? segments,
     String? practicedAt,
   }) {
-    return ShadowingHistoryGet$Response$Data$Practices$Item(
+    return ShadowingGetGet$Response$Data(
       id: id ?? this.id,
-      targetText: targetText ?? this.targetText,
       sourceType: sourceType ?? this.sourceType,
       sourceId: sourceId ?? this.sourceId,
+      targetText: targetText ?? this.targetText,
+      sceneKey: sceneKey ?? this.sceneKey,
       pronunciationScore: pronunciationScore ?? this.pronunciationScore,
       accuracyScore: accuracyScore ?? this.accuracyScore,
       fluencyScore: fluencyScore ?? this.fluencyScore,
@@ -2553,34 +2530,34 @@ extension $ShadowingHistoryGet$Response$Data$Practices$ItemExtension
       prosodyScore: prosodyScore ?? this.prosodyScore,
       wordFeedback: wordFeedback ?? this.wordFeedback,
       feedbackText: feedbackText ?? this.feedbackText,
-      audioPath: audioPath ?? this.audioPath,
+      segments: segments ?? this.segments,
       practicedAt: practicedAt ?? this.practicedAt,
     );
   }
 
-  ShadowingHistoryGet$Response$Data$Practices$Item copyWithWrapped({
+  ShadowingGetGet$Response$Data copyWithWrapped({
     Wrapped<String>? id,
-    Wrapped<String>? targetText,
     Wrapped<String>? sourceType,
-    Wrapped<String?>? sourceId,
+    Wrapped<String>? sourceId,
+    Wrapped<String>? targetText,
+    Wrapped<String?>? sceneKey,
     Wrapped<double>? pronunciationScore,
     Wrapped<double?>? accuracyScore,
     Wrapped<double?>? fluencyScore,
     Wrapped<double?>? completenessScore,
     Wrapped<double?>? prosodyScore,
-    Wrapped<
-      List<ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item>
-    >?
+    Wrapped<List<ShadowingGetGet$Response$Data$WordFeedback$Item>>?
     wordFeedback,
     Wrapped<String?>? feedbackText,
-    Wrapped<String?>? audioPath,
+    Wrapped<List<ShadowingGetGet$Response$Data$Segments$Item>>? segments,
     Wrapped<String>? practicedAt,
   }) {
-    return ShadowingHistoryGet$Response$Data$Practices$Item(
+    return ShadowingGetGet$Response$Data(
       id: (id != null ? id.value : this.id),
-      targetText: (targetText != null ? targetText.value : this.targetText),
       sourceType: (sourceType != null ? sourceType.value : this.sourceType),
       sourceId: (sourceId != null ? sourceId.value : this.sourceId),
+      targetText: (targetText != null ? targetText.value : this.targetText),
+      sceneKey: (sceneKey != null ? sceneKey.value : this.sceneKey),
       pronunciationScore: (pronunciationScore != null
           ? pronunciationScore.value
           : this.pronunciationScore),
@@ -2602,160 +2579,31 @@ extension $ShadowingHistoryGet$Response$Data$Practices$ItemExtension
       feedbackText: (feedbackText != null
           ? feedbackText.value
           : this.feedbackText),
-      audioPath: (audioPath != null ? audioPath.value : this.audioPath),
+      segments: (segments != null ? segments.value : this.segments),
       practicedAt: (practicedAt != null ? practicedAt.value : this.practicedAt),
     );
   }
 }
 
 @JsonSerializable(explicitToJson: true)
-class ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item {
-  const ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item({
-    required this.text,
-    required this.score,
-    required this.level,
-    required this.errorType,
-    required this.phonemes,
-  });
-
-  factory ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item.fromJson(
-    Map<String, dynamic> json,
-  ) =>
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemFromJson(
-        json,
-      );
-
-  static const toJsonFactory =
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemToJson;
-  Map<String, dynamic> toJson() =>
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemToJson(
-        this,
-      );
-
-  @JsonKey(name: 'text')
-  final String text;
-  @JsonKey(name: 'score')
-  final double score;
-  @JsonKey(
-    name: 'level',
-    toJson:
-        shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelToJson,
-    fromJson:
-        shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelFromJson,
-  )
-  final enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-  level;
-  @JsonKey(name: 'error_type')
-  final String errorType;
-  @JsonKey(name: 'phonemes')
-  final List<
-    ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
-  >
-  phonemes;
-  static const fromJsonFactory =
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemFromJson;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other
-                is ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item &&
-            (identical(other.text, text) ||
-                const DeepCollectionEquality().equals(other.text, text)) &&
-            (identical(other.score, score) ||
-                const DeepCollectionEquality().equals(other.score, score)) &&
-            (identical(other.level, level) ||
-                const DeepCollectionEquality().equals(other.level, level)) &&
-            (identical(other.errorType, errorType) ||
-                const DeepCollectionEquality().equals(
-                  other.errorType,
-                  errorType,
-                )) &&
-            (identical(other.phonemes, phonemes) ||
-                const DeepCollectionEquality().equals(
-                  other.phonemes,
-                  phonemes,
-                )));
-  }
-
-  @override
-  int get hashCode =>
-      const DeepCollectionEquality().hash(text) ^
-      const DeepCollectionEquality().hash(score) ^
-      const DeepCollectionEquality().hash(level) ^
-      const DeepCollectionEquality().hash(errorType) ^
-      const DeepCollectionEquality().hash(phonemes) ^
-      runtimeType.hashCode;
-}
-
-extension $ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemExtension
-    on ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item {
-  ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item copyWith({
-    String? text,
-    double? score,
-    enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel?
-    level,
-    String? errorType,
-    List<
-      ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
-    >?
-    phonemes,
-  }) {
-    return ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item(
-      text: text ?? this.text,
-      score: score ?? this.score,
-      level: level ?? this.level,
-      errorType: errorType ?? this.errorType,
-      phonemes: phonemes ?? this.phonemes,
-    );
-  }
-
-  ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item
-  copyWithWrapped({
-    Wrapped<String>? text,
-    Wrapped<double>? score,
-    Wrapped<
-      enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-    >?
-    level,
-    Wrapped<String>? errorType,
-    Wrapped<
-      List<
-        ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
-      >
-    >?
-    phonemes,
-  }) {
-    return ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item(
-      text: (text != null ? text.value : this.text),
-      score: (score != null ? score.value : this.score),
-      level: (level != null ? level.value : this.level),
-      errorType: (errorType != null ? errorType.value : this.errorType),
-      phonemes: (phonemes != null ? phonemes.value : this.phonemes),
-    );
-  }
-}
-
-@JsonSerializable(explicitToJson: true)
-class ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item {
-  const ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item({
+class ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item {
+  const ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item({
     required this.phoneme,
     required this.accuracyScore,
     this.offset,
     this.duration,
   });
 
-  factory ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item.fromJson(
+  factory ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item.fromJson(
     Map<String, dynamic> json,
-  ) =>
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemFromJson(
-        json,
-      );
+  ) => _$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson(
+    json,
+  );
 
   static const toJsonFactory =
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemToJson;
+      _$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemToJson;
   Map<String, dynamic> toJson() =>
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemToJson(
+      _$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemToJson(
         this,
       );
 
@@ -2768,13 +2616,13 @@ class ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phoneme
   @JsonKey(name: 'duration')
   final double? duration;
   static const fromJsonFactory =
-      _$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemFromJson;
+      _$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other
-                is ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item &&
+                is ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item &&
             (identical(other.phoneme, phoneme) ||
                 const DeepCollectionEquality().equals(
                   other.phoneme,
@@ -2803,17 +2651,15 @@ class ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phoneme
       runtimeType.hashCode;
 }
 
-extension $ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemExtension
-    on
-        ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item {
-  ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
-  copyWith({
+extension $ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemExtension
+    on ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item {
+  ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item copyWith({
     String? phoneme,
     double? accuracyScore,
     double? offset,
     double? duration,
   }) {
-    return ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item(
+    return ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item(
       phoneme: phoneme ?? this.phoneme,
       accuracyScore: accuracyScore ?? this.accuracyScore,
       offset: offset ?? this.offset,
@@ -2821,14 +2667,14 @@ extension $ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Ph
     );
   }
 
-  ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
+  ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item
   copyWithWrapped({
     Wrapped<String>? phoneme,
     Wrapped<double>? accuracyScore,
     Wrapped<double?>? offset,
     Wrapped<double?>? duration,
   }) {
-    return ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item(
+    return ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item(
       phoneme: (phoneme != null ? phoneme.value : this.phoneme),
       accuracyScore: (accuracyScore != null
           ? accuracyScore.value
@@ -2839,339 +2685,711 @@ extension $ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Ph
   }
 }
 
-String?
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelNullableToJson(
-  enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel,
-) {
-  return shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-      ?.value;
+@JsonSerializable(explicitToJson: true)
+class ShadowingGetGet$Response$Data$WordFeedback$Item {
+  const ShadowingGetGet$Response$Data$WordFeedback$Item({
+    required this.text,
+    required this.score,
+    required this.level,
+    required this.errorType,
+    required this.phonemes,
+  });
+
+  factory ShadowingGetGet$Response$Data$WordFeedback$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$ShadowingGetGet$Response$Data$WordFeedback$ItemFromJson(json);
+
+  static const toJsonFactory =
+      _$ShadowingGetGet$Response$Data$WordFeedback$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$ShadowingGetGet$Response$Data$WordFeedback$ItemToJson(this);
+
+  @JsonKey(name: 'text')
+  final String text;
+  @JsonKey(name: 'score')
+  final double score;
+  @JsonKey(
+    name: 'level',
+    toJson: shadowingGetGet$Response$Data$WordFeedback$ItemLevelToJson,
+    fromJson: shadowingGetGet$Response$Data$WordFeedback$ItemLevelFromJson,
+  )
+  final enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel level;
+  @JsonKey(name: 'error_type')
+  final String errorType;
+  @JsonKey(name: 'phonemes')
+  final List<ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item>
+  phonemes;
+  static const fromJsonFactory =
+      _$ShadowingGetGet$Response$Data$WordFeedback$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is ShadowingGetGet$Response$Data$WordFeedback$Item &&
+            (identical(other.text, text) ||
+                const DeepCollectionEquality().equals(other.text, text)) &&
+            (identical(other.score, score) ||
+                const DeepCollectionEquality().equals(other.score, score)) &&
+            (identical(other.level, level) ||
+                const DeepCollectionEquality().equals(other.level, level)) &&
+            (identical(other.errorType, errorType) ||
+                const DeepCollectionEquality().equals(
+                  other.errorType,
+                  errorType,
+                )) &&
+            (identical(other.phonemes, phonemes) ||
+                const DeepCollectionEquality().equals(
+                  other.phonemes,
+                  phonemes,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(text) ^
+      const DeepCollectionEquality().hash(score) ^
+      const DeepCollectionEquality().hash(level) ^
+      const DeepCollectionEquality().hash(errorType) ^
+      const DeepCollectionEquality().hash(phonemes) ^
+      runtimeType.hashCode;
 }
 
-String?
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelToJson(
-  enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel,
-) {
-  return shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-      .value;
+extension $ShadowingGetGet$Response$Data$WordFeedback$ItemExtension
+    on ShadowingGetGet$Response$Data$WordFeedback$Item {
+  ShadowingGetGet$Response$Data$WordFeedback$Item copyWith({
+    String? text,
+    double? score,
+    enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel? level,
+    String? errorType,
+    List<ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item>?
+    phonemes,
+  }) {
+    return ShadowingGetGet$Response$Data$WordFeedback$Item(
+      text: text ?? this.text,
+      score: score ?? this.score,
+      level: level ?? this.level,
+      errorType: errorType ?? this.errorType,
+      phonemes: phonemes ?? this.phonemes,
+    );
+  }
+
+  ShadowingGetGet$Response$Data$WordFeedback$Item copyWithWrapped({
+    Wrapped<String>? text,
+    Wrapped<double>? score,
+    Wrapped<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>? level,
+    Wrapped<String>? errorType,
+    Wrapped<
+      List<ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item>
+    >?
+    phonemes,
+  }) {
+    return ShadowingGetGet$Response$Data$WordFeedback$Item(
+      text: (text != null ? text.value : this.text),
+      score: (score != null ? score.value : this.score),
+      level: (level != null ? level.value : this.level),
+      errorType: (errorType != null ? errorType.value : this.errorType),
+      phonemes: (phonemes != null ? phonemes.value : this.phonemes),
+    );
+  }
 }
 
-enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelFromJson(
-  Object?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel, [
-  enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel?
-  defaultValue,
+@JsonSerializable(explicitToJson: true)
+class ShadowingGetGet$Response$Data$Segments$Item {
+  const ShadowingGetGet$Response$Data$Segments$Item({
+    required this.text,
+    required this.startIndex,
+    required this.endIndex,
+    required this.score,
+    required this.hasError,
+    required this.wordCount,
+  });
+
+  factory ShadowingGetGet$Response$Data$Segments$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$ShadowingGetGet$Response$Data$Segments$ItemFromJson(json);
+
+  static const toJsonFactory =
+      _$ShadowingGetGet$Response$Data$Segments$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$ShadowingGetGet$Response$Data$Segments$ItemToJson(this);
+
+  @JsonKey(name: 'text')
+  final String text;
+  @JsonKey(name: 'start_index')
+  final double startIndex;
+  @JsonKey(name: 'end_index')
+  final double endIndex;
+  @JsonKey(name: 'score')
+  final double score;
+  @JsonKey(name: 'has_error')
+  final bool hasError;
+  @JsonKey(name: 'word_count')
+  final double wordCount;
+  static const fromJsonFactory =
+      _$ShadowingGetGet$Response$Data$Segments$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is ShadowingGetGet$Response$Data$Segments$Item &&
+            (identical(other.text, text) ||
+                const DeepCollectionEquality().equals(other.text, text)) &&
+            (identical(other.startIndex, startIndex) ||
+                const DeepCollectionEquality().equals(
+                  other.startIndex,
+                  startIndex,
+                )) &&
+            (identical(other.endIndex, endIndex) ||
+                const DeepCollectionEquality().equals(
+                  other.endIndex,
+                  endIndex,
+                )) &&
+            (identical(other.score, score) ||
+                const DeepCollectionEquality().equals(other.score, score)) &&
+            (identical(other.hasError, hasError) ||
+                const DeepCollectionEquality().equals(
+                  other.hasError,
+                  hasError,
+                )) &&
+            (identical(other.wordCount, wordCount) ||
+                const DeepCollectionEquality().equals(
+                  other.wordCount,
+                  wordCount,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(text) ^
+      const DeepCollectionEquality().hash(startIndex) ^
+      const DeepCollectionEquality().hash(endIndex) ^
+      const DeepCollectionEquality().hash(score) ^
+      const DeepCollectionEquality().hash(hasError) ^
+      const DeepCollectionEquality().hash(wordCount) ^
+      runtimeType.hashCode;
+}
+
+extension $ShadowingGetGet$Response$Data$Segments$ItemExtension
+    on ShadowingGetGet$Response$Data$Segments$Item {
+  ShadowingGetGet$Response$Data$Segments$Item copyWith({
+    String? text,
+    double? startIndex,
+    double? endIndex,
+    double? score,
+    bool? hasError,
+    double? wordCount,
+  }) {
+    return ShadowingGetGet$Response$Data$Segments$Item(
+      text: text ?? this.text,
+      startIndex: startIndex ?? this.startIndex,
+      endIndex: endIndex ?? this.endIndex,
+      score: score ?? this.score,
+      hasError: hasError ?? this.hasError,
+      wordCount: wordCount ?? this.wordCount,
+    );
+  }
+
+  ShadowingGetGet$Response$Data$Segments$Item copyWithWrapped({
+    Wrapped<String>? text,
+    Wrapped<double>? startIndex,
+    Wrapped<double>? endIndex,
+    Wrapped<double>? score,
+    Wrapped<bool>? hasError,
+    Wrapped<double>? wordCount,
+  }) {
+    return ShadowingGetGet$Response$Data$Segments$Item(
+      text: (text != null ? text.value : this.text),
+      startIndex: (startIndex != null ? startIndex.value : this.startIndex),
+      endIndex: (endIndex != null ? endIndex.value : this.endIndex),
+      score: (score != null ? score.value : this.score),
+      hasError: (hasError != null ? hasError.value : this.hasError),
+      wordCount: (wordCount != null ? wordCount.value : this.wordCount),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item {
+  const ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item({
+    required this.phoneme,
+    required this.accuracyScore,
+    this.offset,
+    this.duration,
+  });
+
+  factory ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemFromJson(
+    json,
+  );
+
+  static const toJsonFactory =
+      _$ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemToJson(
+        this,
+      );
+
+  @JsonKey(name: 'phoneme')
+  final String phoneme;
+  @JsonKey(name: 'accuracy_score')
+  final double accuracyScore;
+  @JsonKey(name: 'offset')
+  final double? offset;
+  @JsonKey(name: 'duration')
+  final double? duration;
+  static const fromJsonFactory =
+      _$ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other
+                is ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item &&
+            (identical(other.phoneme, phoneme) ||
+                const DeepCollectionEquality().equals(
+                  other.phoneme,
+                  phoneme,
+                )) &&
+            (identical(other.accuracyScore, accuracyScore) ||
+                const DeepCollectionEquality().equals(
+                  other.accuracyScore,
+                  accuracyScore,
+                )) &&
+            (identical(other.offset, offset) ||
+                const DeepCollectionEquality().equals(other.offset, offset)) &&
+            (identical(other.duration, duration) ||
+                const DeepCollectionEquality().equals(
+                  other.duration,
+                  duration,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(phoneme) ^
+      const DeepCollectionEquality().hash(accuracyScore) ^
+      const DeepCollectionEquality().hash(offset) ^
+      const DeepCollectionEquality().hash(duration) ^
+      runtimeType.hashCode;
+}
+
+extension $ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemExtension
+    on ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item {
+  ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item copyWith({
+    String? phoneme,
+    double? accuracyScore,
+    double? offset,
+    double? duration,
+  }) {
+    return ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item(
+      phoneme: phoneme ?? this.phoneme,
+      accuracyScore: accuracyScore ?? this.accuracyScore,
+      offset: offset ?? this.offset,
+      duration: duration ?? this.duration,
+    );
+  }
+
+  ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item
+  copyWithWrapped({
+    Wrapped<String>? phoneme,
+    Wrapped<double>? accuracyScore,
+    Wrapped<double?>? offset,
+    Wrapped<double?>? duration,
+  }) {
+    return ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item(
+      phoneme: (phoneme != null ? phoneme.value : this.phoneme),
+      accuracyScore: (accuracyScore != null
+          ? accuracyScore.value
+          : this.accuracyScore),
+      offset: (offset != null ? offset.value : this.offset),
+      duration: (duration != null ? duration.value : this.duration),
+    );
+  }
+}
+
+String? shadowingGetGet$Response$Data$WordFeedback$ItemLevelNullableToJson(
+  enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel?
+  shadowingGetGet$Response$Data$WordFeedback$ItemLevel,
+) {
+  return shadowingGetGet$Response$Data$WordFeedback$ItemLevel?.value;
+}
+
+String? shadowingGetGet$Response$Data$WordFeedback$ItemLevelToJson(
+  enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel
+  shadowingGetGet$Response$Data$WordFeedback$ItemLevel,
+) {
+  return shadowingGetGet$Response$Data$WordFeedback$ItemLevel.value;
+}
+
+enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel
+shadowingGetGet$Response$Data$WordFeedback$ItemLevelFromJson(
+  Object? shadowingGetGet$Response$Data$WordFeedback$ItemLevel, [
+  enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel? defaultValue,
 ]) {
-  return enums
-          .ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-          .values
+  return enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel.values
           .firstWhereOrNull(
             (e) =>
-                e.value ==
-                shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel,
+                e.value == shadowingGetGet$Response$Data$WordFeedback$ItemLevel,
           ) ??
       defaultValue ??
       enums
-          .ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
+          .ShadowingGetGet$Response$Data$WordFeedback$ItemLevel
           .swaggerGeneratedUnknown;
 }
 
-enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel?
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelNullableFromJson(
-  Object?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel, [
-  enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel?
-  defaultValue,
+enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel?
+shadowingGetGet$Response$Data$WordFeedback$ItemLevelNullableFromJson(
+  Object? shadowingGetGet$Response$Data$WordFeedback$ItemLevel, [
+  enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel? defaultValue,
 ]) {
-  if (shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel ==
-      null) {
+  if (shadowingGetGet$Response$Data$WordFeedback$ItemLevel == null) {
     return null;
   }
-  return enums
-          .ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-          .values
+  return enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel.values
           .firstWhereOrNull(
             (e) =>
-                e.value ==
-                shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel,
+                e.value == shadowingGetGet$Response$Data$WordFeedback$ItemLevel,
           ) ??
       defaultValue;
 }
 
-String
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelExplodedListToJson(
-  List<
-    enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-  >?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel,
+String shadowingGetGet$Response$Data$WordFeedback$ItemLevelExplodedListToJson(
+  List<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>?
+  shadowingGetGet$Response$Data$WordFeedback$ItemLevel,
 ) {
-  return shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
+  return shadowingGetGet$Response$Data$WordFeedback$ItemLevel
           ?.map((e) => e.value!)
           .join(',') ??
       '';
 }
 
-List<String>
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelListToJson(
-  List<
-    enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-  >?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel,
+List<String> shadowingGetGet$Response$Data$WordFeedback$ItemLevelListToJson(
+  List<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>?
+  shadowingGetGet$Response$Data$WordFeedback$ItemLevel,
 ) {
-  if (shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel ==
-      null) {
+  if (shadowingGetGet$Response$Data$WordFeedback$ItemLevel == null) {
     return [];
   }
 
-  return shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
+  return shadowingGetGet$Response$Data$WordFeedback$ItemLevel
       .map((e) => e.value!)
       .toList();
 }
 
-List<
-  enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
->
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelListFromJson(
-  List?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel, [
-  List<
-    enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-  >?
+List<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>
+shadowingGetGet$Response$Data$WordFeedback$ItemLevelListFromJson(
+  List? shadowingGetGet$Response$Data$WordFeedback$ItemLevel, [
+  List<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>?
   defaultValue,
 ]) {
-  if (shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel ==
-      null) {
+  if (shadowingGetGet$Response$Data$WordFeedback$ItemLevel == null) {
     return defaultValue ?? [];
   }
 
-  return shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
+  return shadowingGetGet$Response$Data$WordFeedback$ItemLevel
       .map(
-        (e) =>
-            shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelFromJson(
-              e.toString(),
-            ),
-      )
-      .toList();
-}
-
-List<
-  enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
->?
-shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelNullableListFromJson(
-  List?
-  shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel, [
-  List<
-    enums.ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-  >?
-  defaultValue,
-]) {
-  if (shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel ==
-      null) {
-    return defaultValue;
-  }
-
-  return shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel
-      .map(
-        (e) =>
-            shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelFromJson(
-              e.toString(),
-            ),
-      )
-      .toList();
-}
-
-String? shadowingSavePost$RequestBodySourceTypeNullableToJson(
-  enums.ShadowingSavePost$RequestBodySourceType?
-  shadowingSavePost$RequestBodySourceType,
-) {
-  return shadowingSavePost$RequestBodySourceType?.value;
-}
-
-String? shadowingSavePost$RequestBodySourceTypeToJson(
-  enums.ShadowingSavePost$RequestBodySourceType
-  shadowingSavePost$RequestBodySourceType,
-) {
-  return shadowingSavePost$RequestBodySourceType.value;
-}
-
-enums.ShadowingSavePost$RequestBodySourceType
-shadowingSavePost$RequestBodySourceTypeFromJson(
-  Object? shadowingSavePost$RequestBodySourceType, [
-  enums.ShadowingSavePost$RequestBodySourceType? defaultValue,
-]) {
-  return enums.ShadowingSavePost$RequestBodySourceType.values.firstWhereOrNull(
-        (e) => e.value == shadowingSavePost$RequestBodySourceType,
-      ) ??
-      defaultValue ??
-      enums.ShadowingSavePost$RequestBodySourceType.swaggerGeneratedUnknown;
-}
-
-enums.ShadowingSavePost$RequestBodySourceType?
-shadowingSavePost$RequestBodySourceTypeNullableFromJson(
-  Object? shadowingSavePost$RequestBodySourceType, [
-  enums.ShadowingSavePost$RequestBodySourceType? defaultValue,
-]) {
-  if (shadowingSavePost$RequestBodySourceType == null) {
-    return null;
-  }
-  return enums.ShadowingSavePost$RequestBodySourceType.values.firstWhereOrNull(
-        (e) => e.value == shadowingSavePost$RequestBodySourceType,
-      ) ??
-      defaultValue;
-}
-
-String shadowingSavePost$RequestBodySourceTypeExplodedListToJson(
-  List<enums.ShadowingSavePost$RequestBodySourceType>?
-  shadowingSavePost$RequestBodySourceType,
-) {
-  return shadowingSavePost$RequestBodySourceType
-          ?.map((e) => e.value!)
-          .join(',') ??
-      '';
-}
-
-List<String> shadowingSavePost$RequestBodySourceTypeListToJson(
-  List<enums.ShadowingSavePost$RequestBodySourceType>?
-  shadowingSavePost$RequestBodySourceType,
-) {
-  if (shadowingSavePost$RequestBodySourceType == null) {
-    return [];
-  }
-
-  return shadowingSavePost$RequestBodySourceType.map((e) => e.value!).toList();
-}
-
-List<enums.ShadowingSavePost$RequestBodySourceType>
-shadowingSavePost$RequestBodySourceTypeListFromJson(
-  List? shadowingSavePost$RequestBodySourceType, [
-  List<enums.ShadowingSavePost$RequestBodySourceType>? defaultValue,
-]) {
-  if (shadowingSavePost$RequestBodySourceType == null) {
-    return defaultValue ?? [];
-  }
-
-  return shadowingSavePost$RequestBodySourceType
-      .map((e) => shadowingSavePost$RequestBodySourceTypeFromJson(e.toString()))
-      .toList();
-}
-
-List<enums.ShadowingSavePost$RequestBodySourceType>?
-shadowingSavePost$RequestBodySourceTypeNullableListFromJson(
-  List? shadowingSavePost$RequestBodySourceType, [
-  List<enums.ShadowingSavePost$RequestBodySourceType>? defaultValue,
-]) {
-  if (shadowingSavePost$RequestBodySourceType == null) {
-    return defaultValue;
-  }
-
-  return shadowingSavePost$RequestBodySourceType
-      .map((e) => shadowingSavePost$RequestBodySourceTypeFromJson(e.toString()))
-      .toList();
-}
-
-String? shadowingSavePost$RequestBody$WordFeedback$ItemLevelNullableToJson(
-  enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel?
-  shadowingSavePost$RequestBody$WordFeedback$ItemLevel,
-) {
-  return shadowingSavePost$RequestBody$WordFeedback$ItemLevel?.value;
-}
-
-String? shadowingSavePost$RequestBody$WordFeedback$ItemLevelToJson(
-  enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel
-  shadowingSavePost$RequestBody$WordFeedback$ItemLevel,
-) {
-  return shadowingSavePost$RequestBody$WordFeedback$ItemLevel.value;
-}
-
-enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel
-shadowingSavePost$RequestBody$WordFeedback$ItemLevelFromJson(
-  Object? shadowingSavePost$RequestBody$WordFeedback$ItemLevel, [
-  enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel? defaultValue,
-]) {
-  return enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel.values
-          .firstWhereOrNull(
-            (e) =>
-                e.value == shadowingSavePost$RequestBody$WordFeedback$ItemLevel,
-          ) ??
-      defaultValue ??
-      enums
-          .ShadowingSavePost$RequestBody$WordFeedback$ItemLevel
-          .swaggerGeneratedUnknown;
-}
-
-enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel?
-shadowingSavePost$RequestBody$WordFeedback$ItemLevelNullableFromJson(
-  Object? shadowingSavePost$RequestBody$WordFeedback$ItemLevel, [
-  enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel? defaultValue,
-]) {
-  if (shadowingSavePost$RequestBody$WordFeedback$ItemLevel == null) {
-    return null;
-  }
-  return enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel.values
-          .firstWhereOrNull(
-            (e) =>
-                e.value == shadowingSavePost$RequestBody$WordFeedback$ItemLevel,
-          ) ??
-      defaultValue;
-}
-
-String shadowingSavePost$RequestBody$WordFeedback$ItemLevelExplodedListToJson(
-  List<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>?
-  shadowingSavePost$RequestBody$WordFeedback$ItemLevel,
-) {
-  return shadowingSavePost$RequestBody$WordFeedback$ItemLevel
-          ?.map((e) => e.value!)
-          .join(',') ??
-      '';
-}
-
-List<String> shadowingSavePost$RequestBody$WordFeedback$ItemLevelListToJson(
-  List<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>?
-  shadowingSavePost$RequestBody$WordFeedback$ItemLevel,
-) {
-  if (shadowingSavePost$RequestBody$WordFeedback$ItemLevel == null) {
-    return [];
-  }
-
-  return shadowingSavePost$RequestBody$WordFeedback$ItemLevel
-      .map((e) => e.value!)
-      .toList();
-}
-
-List<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>
-shadowingSavePost$RequestBody$WordFeedback$ItemLevelListFromJson(
-  List? shadowingSavePost$RequestBody$WordFeedback$ItemLevel, [
-  List<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>?
-  defaultValue,
-]) {
-  if (shadowingSavePost$RequestBody$WordFeedback$ItemLevel == null) {
-    return defaultValue ?? [];
-  }
-
-  return shadowingSavePost$RequestBody$WordFeedback$ItemLevel
-      .map(
-        (e) => shadowingSavePost$RequestBody$WordFeedback$ItemLevelFromJson(
+        (e) => shadowingGetGet$Response$Data$WordFeedback$ItemLevelFromJson(
           e.toString(),
         ),
       )
       .toList();
 }
 
-List<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>?
-shadowingSavePost$RequestBody$WordFeedback$ItemLevelNullableListFromJson(
-  List? shadowingSavePost$RequestBody$WordFeedback$ItemLevel, [
-  List<enums.ShadowingSavePost$RequestBody$WordFeedback$ItemLevel>?
+List<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>?
+shadowingGetGet$Response$Data$WordFeedback$ItemLevelNullableListFromJson(
+  List? shadowingGetGet$Response$Data$WordFeedback$ItemLevel, [
+  List<enums.ShadowingGetGet$Response$Data$WordFeedback$ItemLevel>?
   defaultValue,
 ]) {
-  if (shadowingSavePost$RequestBody$WordFeedback$ItemLevel == null) {
+  if (shadowingGetGet$Response$Data$WordFeedback$ItemLevel == null) {
     return defaultValue;
   }
 
-  return shadowingSavePost$RequestBody$WordFeedback$ItemLevel
+  return shadowingGetGet$Response$Data$WordFeedback$ItemLevel
       .map(
-        (e) => shadowingSavePost$RequestBody$WordFeedback$ItemLevelFromJson(
+        (e) => shadowingGetGet$Response$Data$WordFeedback$ItemLevelFromJson(
+          e.toString(),
+        ),
+      )
+      .toList();
+}
+
+String? shadowingGetGetSourceTypeNullableToJson(
+  enums.ShadowingGetGetSourceType? shadowingGetGetSourceType,
+) {
+  return shadowingGetGetSourceType?.value;
+}
+
+String? shadowingGetGetSourceTypeToJson(
+  enums.ShadowingGetGetSourceType shadowingGetGetSourceType,
+) {
+  return shadowingGetGetSourceType.value;
+}
+
+enums.ShadowingGetGetSourceType shadowingGetGetSourceTypeFromJson(
+  Object? shadowingGetGetSourceType, [
+  enums.ShadowingGetGetSourceType? defaultValue,
+]) {
+  return enums.ShadowingGetGetSourceType.values.firstWhereOrNull(
+        (e) => e.value == shadowingGetGetSourceType,
+      ) ??
+      defaultValue ??
+      enums.ShadowingGetGetSourceType.swaggerGeneratedUnknown;
+}
+
+enums.ShadowingGetGetSourceType? shadowingGetGetSourceTypeNullableFromJson(
+  Object? shadowingGetGetSourceType, [
+  enums.ShadowingGetGetSourceType? defaultValue,
+]) {
+  if (shadowingGetGetSourceType == null) {
+    return null;
+  }
+  return enums.ShadowingGetGetSourceType.values.firstWhereOrNull(
+        (e) => e.value == shadowingGetGetSourceType,
+      ) ??
+      defaultValue;
+}
+
+String shadowingGetGetSourceTypeExplodedListToJson(
+  List<enums.ShadowingGetGetSourceType>? shadowingGetGetSourceType,
+) {
+  return shadowingGetGetSourceType?.map((e) => e.value!).join(',') ?? '';
+}
+
+List<String> shadowingGetGetSourceTypeListToJson(
+  List<enums.ShadowingGetGetSourceType>? shadowingGetGetSourceType,
+) {
+  if (shadowingGetGetSourceType == null) {
+    return [];
+  }
+
+  return shadowingGetGetSourceType.map((e) => e.value!).toList();
+}
+
+List<enums.ShadowingGetGetSourceType> shadowingGetGetSourceTypeListFromJson(
+  List? shadowingGetGetSourceType, [
+  List<enums.ShadowingGetGetSourceType>? defaultValue,
+]) {
+  if (shadowingGetGetSourceType == null) {
+    return defaultValue ?? [];
+  }
+
+  return shadowingGetGetSourceType
+      .map((e) => shadowingGetGetSourceTypeFromJson(e.toString()))
+      .toList();
+}
+
+List<enums.ShadowingGetGetSourceType>?
+shadowingGetGetSourceTypeNullableListFromJson(
+  List? shadowingGetGetSourceType, [
+  List<enums.ShadowingGetGetSourceType>? defaultValue,
+]) {
+  if (shadowingGetGetSourceType == null) {
+    return defaultValue;
+  }
+
+  return shadowingGetGetSourceType
+      .map((e) => shadowingGetGetSourceTypeFromJson(e.toString()))
+      .toList();
+}
+
+String? shadowingUpsertPut$RequestBodySourceTypeNullableToJson(
+  enums.ShadowingUpsertPut$RequestBodySourceType?
+  shadowingUpsertPut$RequestBodySourceType,
+) {
+  return shadowingUpsertPut$RequestBodySourceType?.value;
+}
+
+String? shadowingUpsertPut$RequestBodySourceTypeToJson(
+  enums.ShadowingUpsertPut$RequestBodySourceType
+  shadowingUpsertPut$RequestBodySourceType,
+) {
+  return shadowingUpsertPut$RequestBodySourceType.value;
+}
+
+enums.ShadowingUpsertPut$RequestBodySourceType
+shadowingUpsertPut$RequestBodySourceTypeFromJson(
+  Object? shadowingUpsertPut$RequestBodySourceType, [
+  enums.ShadowingUpsertPut$RequestBodySourceType? defaultValue,
+]) {
+  return enums.ShadowingUpsertPut$RequestBodySourceType.values.firstWhereOrNull(
+        (e) => e.value == shadowingUpsertPut$RequestBodySourceType,
+      ) ??
+      defaultValue ??
+      enums.ShadowingUpsertPut$RequestBodySourceType.swaggerGeneratedUnknown;
+}
+
+enums.ShadowingUpsertPut$RequestBodySourceType?
+shadowingUpsertPut$RequestBodySourceTypeNullableFromJson(
+  Object? shadowingUpsertPut$RequestBodySourceType, [
+  enums.ShadowingUpsertPut$RequestBodySourceType? defaultValue,
+]) {
+  if (shadowingUpsertPut$RequestBodySourceType == null) {
+    return null;
+  }
+  return enums.ShadowingUpsertPut$RequestBodySourceType.values.firstWhereOrNull(
+        (e) => e.value == shadowingUpsertPut$RequestBodySourceType,
+      ) ??
+      defaultValue;
+}
+
+String shadowingUpsertPut$RequestBodySourceTypeExplodedListToJson(
+  List<enums.ShadowingUpsertPut$RequestBodySourceType>?
+  shadowingUpsertPut$RequestBodySourceType,
+) {
+  return shadowingUpsertPut$RequestBodySourceType
+          ?.map((e) => e.value!)
+          .join(',') ??
+      '';
+}
+
+List<String> shadowingUpsertPut$RequestBodySourceTypeListToJson(
+  List<enums.ShadowingUpsertPut$RequestBodySourceType>?
+  shadowingUpsertPut$RequestBodySourceType,
+) {
+  if (shadowingUpsertPut$RequestBodySourceType == null) {
+    return [];
+  }
+
+  return shadowingUpsertPut$RequestBodySourceType.map((e) => e.value!).toList();
+}
+
+List<enums.ShadowingUpsertPut$RequestBodySourceType>
+shadowingUpsertPut$RequestBodySourceTypeListFromJson(
+  List? shadowingUpsertPut$RequestBodySourceType, [
+  List<enums.ShadowingUpsertPut$RequestBodySourceType>? defaultValue,
+]) {
+  if (shadowingUpsertPut$RequestBodySourceType == null) {
+    return defaultValue ?? [];
+  }
+
+  return shadowingUpsertPut$RequestBodySourceType
+      .map(
+        (e) => shadowingUpsertPut$RequestBodySourceTypeFromJson(e.toString()),
+      )
+      .toList();
+}
+
+List<enums.ShadowingUpsertPut$RequestBodySourceType>?
+shadowingUpsertPut$RequestBodySourceTypeNullableListFromJson(
+  List? shadowingUpsertPut$RequestBodySourceType, [
+  List<enums.ShadowingUpsertPut$RequestBodySourceType>? defaultValue,
+]) {
+  if (shadowingUpsertPut$RequestBodySourceType == null) {
+    return defaultValue;
+  }
+
+  return shadowingUpsertPut$RequestBodySourceType
+      .map(
+        (e) => shadowingUpsertPut$RequestBodySourceTypeFromJson(e.toString()),
+      )
+      .toList();
+}
+
+String? shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelNullableToJson(
+  enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel?
+  shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel,
+) {
+  return shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel?.value;
+}
+
+String? shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelToJson(
+  enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+  shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel,
+) {
+  return shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel.value;
+}
+
+enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelFromJson(
+  Object? shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel, [
+  enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel? defaultValue,
+]) {
+  return enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel.values
+          .firstWhereOrNull(
+            (e) =>
+                e.value ==
+                shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel,
+          ) ??
+      defaultValue ??
+      enums
+          .ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+          .swaggerGeneratedUnknown;
+}
+
+enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel?
+shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelNullableFromJson(
+  Object? shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel, [
+  enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel? defaultValue,
+]) {
+  if (shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel == null) {
+    return null;
+  }
+  return enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel.values
+          .firstWhereOrNull(
+            (e) =>
+                e.value ==
+                shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel,
+          ) ??
+      defaultValue;
+}
+
+String shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelExplodedListToJson(
+  List<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>?
+  shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel,
+) {
+  return shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+          ?.map((e) => e.value!)
+          .join(',') ??
+      '';
+}
+
+List<String> shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelListToJson(
+  List<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>?
+  shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel,
+) {
+  if (shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel == null) {
+    return [];
+  }
+
+  return shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+      .map((e) => e.value!)
+      .toList();
+}
+
+List<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>
+shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelListFromJson(
+  List? shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel, [
+  List<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>?
+  defaultValue,
+]) {
+  if (shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel == null) {
+    return defaultValue ?? [];
+  }
+
+  return shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+      .map(
+        (e) => shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelFromJson(
+          e.toString(),
+        ),
+      )
+      .toList();
+}
+
+List<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>?
+shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelNullableListFromJson(
+  List? shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel, [
+  List<enums.ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel>?
+  defaultValue,
+]) {
+  if (shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel == null) {
+    return defaultValue;
+  }
+
+  return shadowingUpsertPut$RequestBody$WordFeedback$ItemLevel
+      .map(
+        (e) => shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelFromJson(
           e.toString(),
         ),
       )

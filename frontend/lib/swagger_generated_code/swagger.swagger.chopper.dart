@@ -322,8 +322,8 @@ final class _$Swagger extends Swagger {
   }
 
   @override
-  Future<Response<ShadowingSavePost$Response>> _shadowingSavePost({
-    required ShadowingSavePost$RequestBody? body,
+  Future<Response<ShadowingUpsertPut$Response>> _shadowingUpsertPut({
+    required ShadowingUpsertPut$RequestBody? body,
     SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
       description: '',
       summary: '',
@@ -335,27 +335,25 @@ final class _$Swagger extends Swagger {
       deprecated: false,
     ),
   }) {
-    final Uri $url = Uri.parse('/shadowing/save');
+    final Uri $url = Uri.parse('/shadowing/upsert');
     final $body = body;
     final Request $request = Request(
-      'POST',
+      'PUT',
       $url,
       client.baseUrl,
       body: $body,
       tag: swaggerMetaData,
     );
-    return client.send<ShadowingSavePost$Response, ShadowingSavePost$Response>(
-      $request,
-    );
+    return client
+        .send<ShadowingUpsertPut$Response, ShadowingUpsertPut$Response>(
+          $request,
+        );
   }
 
   @override
-  Future<Response<ShadowingHistoryGet$Response>> _shadowingHistoryGet({
-    String? sourceId,
-    String? targetText,
-    String? sceneKey,
-    String? limit,
-    String? offset,
+  Future<Response<ShadowingGetGet$Response>> _shadowingGetGet({
+    required String? sourceType,
+    required String? sourceId,
     SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
       description: '',
       summary: '',
@@ -367,13 +365,10 @@ final class _$Swagger extends Swagger {
       deprecated: false,
     ),
   }) {
-    final Uri $url = Uri.parse('/shadowing/history');
+    final Uri $url = Uri.parse('/shadowing/get');
     final Map<String, dynamic> $params = <String, dynamic>{
+      'source_type': sourceType,
       'source_id': sourceId,
-      'target_text': targetText,
-      'scene_key': sceneKey,
-      'limit': limit,
-      'offset': offset,
     };
     final Request $request = Request(
       'GET',
@@ -382,9 +377,8 @@ final class _$Swagger extends Swagger {
       parameters: $params,
       tag: swaggerMetaData,
     );
-    return client
-        .send<ShadowingHistoryGet$Response, ShadowingHistoryGet$Response>(
-          $request,
-        );
+    return client.send<ShadowingGetGet$Response, ShadowingGetGet$Response>(
+      $request,
+    );
   }
 }
