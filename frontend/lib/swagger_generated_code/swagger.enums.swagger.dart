@@ -3,7 +3,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
-enum ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel {
+enum ShadowingGetGet$Response$Data$WordFeedback$ItemLevel {
   @JsonValue(null)
   swaggerGeneratedUnknown(null),
 
@@ -18,12 +18,10 @@ enum ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel {
 
   final String? value;
 
-  const ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevel(
-    this.value,
-  );
+  const ShadowingGetGet$Response$Data$WordFeedback$ItemLevel(this.value);
 }
 
-enum ShadowingSavePost$RequestBodySourceType {
+enum ShadowingGetGetSourceType {
   @JsonValue(null)
   swaggerGeneratedUnknown(null),
 
@@ -32,16 +30,30 @@ enum ShadowingSavePost$RequestBodySourceType {
   @JsonValue('native_expression')
   nativeExpression('native_expression'),
   @JsonValue('reference_answer')
-  referenceAnswer('reference_answer'),
-  @JsonValue('custom')
-  custom('custom');
+  referenceAnswer('reference_answer');
 
   final String? value;
 
-  const ShadowingSavePost$RequestBodySourceType(this.value);
+  const ShadowingGetGetSourceType(this.value);
 }
 
-enum ShadowingSavePost$RequestBody$WordFeedback$ItemLevel {
+enum ShadowingUpsertPut$RequestBodySourceType {
+  @JsonValue(null)
+  swaggerGeneratedUnknown(null),
+
+  @JsonValue('ai_message')
+  aiMessage('ai_message'),
+  @JsonValue('native_expression')
+  nativeExpression('native_expression'),
+  @JsonValue('reference_answer')
+  referenceAnswer('reference_answer');
+
+  final String? value;
+
+  const ShadowingUpsertPut$RequestBodySourceType(this.value);
+}
+
+enum ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel {
   @JsonValue(null)
   swaggerGeneratedUnknown(null),
 
@@ -56,5 +68,5 @@ enum ShadowingSavePost$RequestBody$WordFeedback$ItemLevel {
 
   final String? value;
 
-  const ShadowingSavePost$RequestBody$WordFeedback$ItemLevel(this.value);
+  const ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel(this.value);
 }

@@ -69,6 +69,7 @@ SceneGeneratePost$RequestBody _$SceneGeneratePost$RequestBodyFromJson(
 ) => SceneGeneratePost$RequestBody(
   description: json['description'] as String,
   tone: json['tone'] as String?,
+  targetLanguage: json['target_language'] as String?,
 );
 
 Map<String, dynamic> _$SceneGeneratePost$RequestBodyToJson(
@@ -76,6 +77,7 @@ Map<String, dynamic> _$SceneGeneratePost$RequestBodyToJson(
 ) => <String, dynamic>{
   'description': instance.description,
   'tone': instance.tone,
+  'target_language': instance.targetLanguage,
 };
 
 ScenePolishPost$RequestBody _$ScenePolishPost$RequestBodyFromJson(
@@ -167,14 +169,14 @@ Map<String, dynamic> _$UserSyncPost$RequestBodyToJson(
   UserSyncPost$RequestBody instance,
 ) => <String, dynamic>{'id': instance.id, 'email': instance.email};
 
-ShadowingSavePost$RequestBody _$ShadowingSavePost$RequestBodyFromJson(
+ShadowingUpsertPut$RequestBody _$ShadowingUpsertPut$RequestBodyFromJson(
   Map<String, dynamic> json,
-) => ShadowingSavePost$RequestBody(
+) => ShadowingUpsertPut$RequestBody(
   targetText: json['target_text'] as String,
-  sourceType: shadowingSavePost$RequestBodySourceTypeFromJson(
+  sourceType: shadowingUpsertPut$RequestBodySourceTypeFromJson(
     json['source_type'],
   ),
-  sourceId: json['source_id'] as String?,
+  sourceId: json['source_id'] as String,
   sceneKey: json['scene_key'] as String?,
   pronunciationScore: (json['pronunciation_score'] as num).toDouble(),
   accuracyScore: (json['accuracy_score'] as num?)?.toDouble(),
@@ -183,20 +185,26 @@ ShadowingSavePost$RequestBody _$ShadowingSavePost$RequestBodyFromJson(
   prosodyScore: (json['prosody_score'] as num?)?.toDouble(),
   wordFeedback: (json['word_feedback'] as List<dynamic>?)
       ?.map(
-        (e) => ShadowingSavePost$RequestBody$WordFeedback$Item.fromJson(
+        (e) => ShadowingUpsertPut$RequestBody$WordFeedback$Item.fromJson(
           e as Map<String, dynamic>,
         ),
       )
       .toList(),
   feedbackText: json['feedback_text'] as String?,
-  audioPath: json['audio_path'] as String?,
+  segments: (json['segments'] as List<dynamic>?)
+      ?.map(
+        (e) => ShadowingUpsertPut$RequestBody$Segments$Item.fromJson(
+          e as Map<String, dynamic>,
+        ),
+      )
+      .toList(),
 );
 
-Map<String, dynamic> _$ShadowingSavePost$RequestBodyToJson(
-  ShadowingSavePost$RequestBody instance,
+Map<String, dynamic> _$ShadowingUpsertPut$RequestBodyToJson(
+  ShadowingUpsertPut$RequestBody instance,
 ) => <String, dynamic>{
   'target_text': instance.targetText,
-  'source_type': shadowingSavePost$RequestBodySourceTypeToJson(
+  'source_type': shadowingUpsertPut$RequestBodySourceTypeToJson(
     instance.sourceType,
   ),
   'source_id': instance.sourceId,
@@ -208,7 +216,7 @@ Map<String, dynamic> _$ShadowingSavePost$RequestBodyToJson(
   'prosody_score': instance.prosodyScore,
   'word_feedback': instance.wordFeedback?.map((e) => e.toJson()).toList(),
   'feedback_text': instance.feedbackText,
-  'audio_path': instance.audioPath,
+  'segments': instance.segments?.map((e) => e.toJson()).toList(),
 };
 
 HealthGet$Response _$HealthGet$ResponseFromJson(Map<String, dynamic> json) =>
@@ -351,36 +359,38 @@ Map<String, dynamic> _$UserSyncPost$ResponseToJson(
   'synced_at': instance.syncedAt,
 };
 
-ShadowingSavePost$Response _$ShadowingSavePost$ResponseFromJson(
+ShadowingUpsertPut$Response _$ShadowingUpsertPut$ResponseFromJson(
   Map<String, dynamic> json,
-) => ShadowingSavePost$Response(
+) => ShadowingUpsertPut$Response(
   success: json['success'] as bool,
-  data: ShadowingSavePost$Response$Data.fromJson(
+  data: ShadowingUpsertPut$Response$Data.fromJson(
     json['data'] as Map<String, dynamic>,
   ),
 );
 
-Map<String, dynamic> _$ShadowingSavePost$ResponseToJson(
-  ShadowingSavePost$Response instance,
+Map<String, dynamic> _$ShadowingUpsertPut$ResponseToJson(
+  ShadowingUpsertPut$Response instance,
 ) => <String, dynamic>{
   'success': instance.success,
   'data': instance.data.toJson(),
 };
 
-ShadowingHistoryGet$Response _$ShadowingHistoryGet$ResponseFromJson(
+ShadowingGetGet$Response _$ShadowingGetGet$ResponseFromJson(
   Map<String, dynamic> json,
-) => ShadowingHistoryGet$Response(
+) => ShadowingGetGet$Response(
   success: json['success'] as bool,
-  data: ShadowingHistoryGet$Response$Data.fromJson(
-    json['data'] as Map<String, dynamic>,
-  ),
+  data: json['data'] == null
+      ? null
+      : ShadowingGetGet$Response$Data.fromJson(
+          json['data'] as Map<String, dynamic>,
+        ),
 );
 
-Map<String, dynamic> _$ShadowingHistoryGet$ResponseToJson(
-  ShadowingHistoryGet$Response instance,
+Map<String, dynamic> _$ShadowingGetGet$ResponseToJson(
+  ShadowingGetGet$Response instance,
 ) => <String, dynamic>{
   'success': instance.success,
-  'data': instance.data.toJson(),
+  'data': instance.data?.toJson(),
 };
 
 ChatSendPost$RequestBody$History$Item
@@ -417,36 +427,59 @@ Map<String, dynamic> _$ChatOptimizePost$RequestBody$History$ItemToJson(
   ChatOptimizePost$RequestBody$History$Item instance,
 ) => <String, dynamic>{'role': instance.role, 'content': instance.content};
 
-ShadowingSavePost$RequestBody$WordFeedback$Item
-_$ShadowingSavePost$RequestBody$WordFeedback$ItemFromJson(
+ShadowingUpsertPut$RequestBody$WordFeedback$Item
+_$ShadowingUpsertPut$RequestBody$WordFeedback$ItemFromJson(
   Map<String, dynamic> json,
-) => ShadowingSavePost$RequestBody$WordFeedback$Item(
+) => ShadowingUpsertPut$RequestBody$WordFeedback$Item(
   text: json['text'] as String,
   score: (json['score'] as num).toDouble(),
-  level: shadowingSavePost$RequestBody$WordFeedback$ItemLevelFromJson(
+  level: shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelFromJson(
     json['level'],
   ),
   errorType: json['error_type'] as String,
   phonemes: (json['phonemes'] as List<dynamic>)
       .map(
         (e) =>
-            ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item.fromJson(
+            ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item.fromJson(
               e as Map<String, dynamic>,
             ),
       )
       .toList(),
 );
 
-Map<String, dynamic> _$ShadowingSavePost$RequestBody$WordFeedback$ItemToJson(
-  ShadowingSavePost$RequestBody$WordFeedback$Item instance,
+Map<String, dynamic> _$ShadowingUpsertPut$RequestBody$WordFeedback$ItemToJson(
+  ShadowingUpsertPut$RequestBody$WordFeedback$Item instance,
 ) => <String, dynamic>{
   'text': instance.text,
   'score': instance.score,
-  'level': shadowingSavePost$RequestBody$WordFeedback$ItemLevelToJson(
+  'level': shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelToJson(
     instance.level,
   ),
   'error_type': instance.errorType,
   'phonemes': instance.phonemes.map((e) => e.toJson()).toList(),
+};
+
+ShadowingUpsertPut$RequestBody$Segments$Item
+_$ShadowingUpsertPut$RequestBody$Segments$ItemFromJson(
+  Map<String, dynamic> json,
+) => ShadowingUpsertPut$RequestBody$Segments$Item(
+  text: json['text'] as String,
+  startIndex: (json['start_index'] as num).toDouble(),
+  endIndex: (json['end_index'] as num).toDouble(),
+  score: (json['score'] as num).toDouble(),
+  hasError: json['has_error'] as bool,
+  wordCount: (json['word_count'] as num).toDouble(),
+);
+
+Map<String, dynamic> _$ShadowingUpsertPut$RequestBody$Segments$ItemToJson(
+  ShadowingUpsertPut$RequestBody$Segments$Item instance,
+) => <String, dynamic>{
+  'text': instance.text,
+  'start_index': instance.startIndex,
+  'end_index': instance.endIndex,
+  'score': instance.score,
+  'has_error': instance.hasError,
+  'word_count': instance.wordCount,
 };
 
 ChatSendPost$Response$ReviewFeedback
@@ -485,65 +518,25 @@ Map<String, dynamic> _$ChatShadowPost$Response$DetailsToJson(
   'feedback': instance.feedback,
 };
 
-ShadowingSavePost$Response$Data _$ShadowingSavePost$Response$DataFromJson(
+ShadowingUpsertPut$Response$Data _$ShadowingUpsertPut$Response$DataFromJson(
   Map<String, dynamic> json,
-) => ShadowingSavePost$Response$Data(
+) => ShadowingUpsertPut$Response$Data(
   id: json['id'] as String,
   practicedAt: json['practiced_at'] as String,
 );
 
-Map<String, dynamic> _$ShadowingSavePost$Response$DataToJson(
-  ShadowingSavePost$Response$Data instance,
+Map<String, dynamic> _$ShadowingUpsertPut$Response$DataToJson(
+  ShadowingUpsertPut$Response$Data instance,
 ) => <String, dynamic>{'id': instance.id, 'practiced_at': instance.practicedAt};
 
-ShadowingHistoryGet$Response$Data _$ShadowingHistoryGet$Response$DataFromJson(
+ShadowingGetGet$Response$Data _$ShadowingGetGet$Response$DataFromJson(
   Map<String, dynamic> json,
-) => ShadowingHistoryGet$Response$Data(
-  practices: (json['practices'] as List<dynamic>)
-      .map(
-        (e) => ShadowingHistoryGet$Response$Data$Practices$Item.fromJson(
-          e as Map<String, dynamic>,
-        ),
-      )
-      .toList(),
-  total: (json['total'] as num).toDouble(),
-);
-
-Map<String, dynamic> _$ShadowingHistoryGet$Response$DataToJson(
-  ShadowingHistoryGet$Response$Data instance,
-) => <String, dynamic>{
-  'practices': instance.practices.map((e) => e.toJson()).toList(),
-  'total': instance.total,
-};
-
-ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item
-_$ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson(
-  Map<String, dynamic> json,
-) => ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item(
-  phoneme: json['phoneme'] as String,
-  accuracyScore: (json['accuracy_score'] as num).toDouble(),
-  offset: (json['offset'] as num?)?.toDouble(),
-  duration: (json['duration'] as num?)?.toDouble(),
-);
-
-Map<String, dynamic>
-_$ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$ItemToJson(
-  ShadowingSavePost$RequestBody$WordFeedback$Item$Phonemes$Item instance,
-) => <String, dynamic>{
-  'phoneme': instance.phoneme,
-  'accuracy_score': instance.accuracyScore,
-  'offset': instance.offset,
-  'duration': instance.duration,
-};
-
-ShadowingHistoryGet$Response$Data$Practices$Item
-_$ShadowingHistoryGet$Response$Data$Practices$ItemFromJson(
-  Map<String, dynamic> json,
-) => ShadowingHistoryGet$Response$Data$Practices$Item(
+) => ShadowingGetGet$Response$Data(
   id: json['id'] as String,
-  targetText: json['target_text'] as String,
   sourceType: json['source_type'] as String,
-  sourceId: json['source_id'] as String?,
+  sourceId: json['source_id'] as String,
+  targetText: json['target_text'] as String,
+  sceneKey: json['scene_key'] as String?,
   pronunciationScore: (json['pronunciation_score'] as num).toDouble(),
   accuracyScore: (json['accuracy_score'] as num?)?.toDouble(),
   fluencyScore: (json['fluency_score'] as num?)?.toDouble(),
@@ -551,24 +544,30 @@ _$ShadowingHistoryGet$Response$Data$Practices$ItemFromJson(
   prosodyScore: (json['prosody_score'] as num?)?.toDouble(),
   wordFeedback: (json['word_feedback'] as List<dynamic>)
       .map(
-        (e) =>
-            ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item.fromJson(
-              e as Map<String, dynamic>,
-            ),
+        (e) => ShadowingGetGet$Response$Data$WordFeedback$Item.fromJson(
+          e as Map<String, dynamic>,
+        ),
       )
       .toList(),
   feedbackText: json['feedback_text'] as String?,
-  audioPath: json['audio_path'] as String?,
+  segments: (json['segments'] as List<dynamic>)
+      .map(
+        (e) => ShadowingGetGet$Response$Data$Segments$Item.fromJson(
+          e as Map<String, dynamic>,
+        ),
+      )
+      .toList(),
   practicedAt: json['practiced_at'] as String,
 );
 
-Map<String, dynamic> _$ShadowingHistoryGet$Response$Data$Practices$ItemToJson(
-  ShadowingHistoryGet$Response$Data$Practices$Item instance,
+Map<String, dynamic> _$ShadowingGetGet$Response$DataToJson(
+  ShadowingGetGet$Response$Data instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'target_text': instance.targetText,
   'source_type': instance.sourceType,
   'source_id': instance.sourceId,
+  'target_text': instance.targetText,
+  'scene_key': instance.sceneKey,
   'pronunciation_score': instance.pronunciationScore,
   'accuracy_score': instance.accuracyScore,
   'fluency_score': instance.fluencyScore,
@@ -576,60 +575,98 @@ Map<String, dynamic> _$ShadowingHistoryGet$Response$Data$Practices$ItemToJson(
   'prosody_score': instance.prosodyScore,
   'word_feedback': instance.wordFeedback.map((e) => e.toJson()).toList(),
   'feedback_text': instance.feedbackText,
-  'audio_path': instance.audioPath,
+  'segments': instance.segments.map((e) => e.toJson()).toList(),
   'practiced_at': instance.practicedAt,
 };
 
-ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item
-_$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemFromJson(
+ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item
+_$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson(
   Map<String, dynamic> json,
-) => ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item(
+) => ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item(
+  phoneme: json['phoneme'] as String,
+  accuracyScore: (json['accuracy_score'] as num).toDouble(),
+  offset: (json['offset'] as num?)?.toDouble(),
+  duration: (json['duration'] as num?)?.toDouble(),
+);
+
+Map<String, dynamic>
+_$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemToJson(
+  ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item instance,
+) => <String, dynamic>{
+  'phoneme': instance.phoneme,
+  'accuracy_score': instance.accuracyScore,
+  'offset': instance.offset,
+  'duration': instance.duration,
+};
+
+ShadowingGetGet$Response$Data$WordFeedback$Item
+_$ShadowingGetGet$Response$Data$WordFeedback$ItemFromJson(
+  Map<String, dynamic> json,
+) => ShadowingGetGet$Response$Data$WordFeedback$Item(
   text: json['text'] as String,
   score: (json['score'] as num).toDouble(),
-  level:
-      shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelFromJson(
-        json['level'],
-      ),
+  level: shadowingGetGet$Response$Data$WordFeedback$ItemLevelFromJson(
+    json['level'],
+  ),
   errorType: json['error_type'] as String,
   phonemes: (json['phonemes'] as List<dynamic>)
       .map(
         (e) =>
-            ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item.fromJson(
+            ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item.fromJson(
               e as Map<String, dynamic>,
             ),
       )
       .toList(),
 );
 
-Map<String, dynamic>
-_$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemToJson(
-  ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item instance,
+Map<String, dynamic> _$ShadowingGetGet$Response$Data$WordFeedback$ItemToJson(
+  ShadowingGetGet$Response$Data$WordFeedback$Item instance,
 ) => <String, dynamic>{
   'text': instance.text,
   'score': instance.score,
-  'level':
-      shadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$ItemLevelToJson(
-        instance.level,
-      ),
+  'level': shadowingGetGet$Response$Data$WordFeedback$ItemLevelToJson(
+    instance.level,
+  ),
   'error_type': instance.errorType,
   'phonemes': instance.phonemes.map((e) => e.toJson()).toList(),
 };
 
-ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
-_$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemFromJson(
+ShadowingGetGet$Response$Data$Segments$Item
+_$ShadowingGetGet$Response$Data$Segments$ItemFromJson(
   Map<String, dynamic> json,
-) =>
-    ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item(
-      phoneme: json['phoneme'] as String,
-      accuracyScore: (json['accuracy_score'] as num).toDouble(),
-      offset: (json['offset'] as num?)?.toDouble(),
-      duration: (json['duration'] as num?)?.toDouble(),
-    );
+) => ShadowingGetGet$Response$Data$Segments$Item(
+  text: json['text'] as String,
+  startIndex: (json['start_index'] as num).toDouble(),
+  endIndex: (json['end_index'] as num).toDouble(),
+  score: (json['score'] as num).toDouble(),
+  hasError: json['has_error'] as bool,
+  wordCount: (json['word_count'] as num).toDouble(),
+);
+
+Map<String, dynamic> _$ShadowingGetGet$Response$Data$Segments$ItemToJson(
+  ShadowingGetGet$Response$Data$Segments$Item instance,
+) => <String, dynamic>{
+  'text': instance.text,
+  'start_index': instance.startIndex,
+  'end_index': instance.endIndex,
+  'score': instance.score,
+  'has_error': instance.hasError,
+  'word_count': instance.wordCount,
+};
+
+ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item
+_$ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemFromJson(
+  Map<String, dynamic> json,
+) => ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item(
+  phoneme: json['phoneme'] as String,
+  accuracyScore: (json['accuracy_score'] as num).toDouble(),
+  offset: (json['offset'] as num?)?.toDouble(),
+  duration: (json['duration'] as num?)?.toDouble(),
+);
 
 Map<String, dynamic>
-_$ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$ItemToJson(
-  ShadowingHistoryGet$Response$Data$Practices$Item$WordFeedback$Item$Phonemes$Item
-  instance,
+_$ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$ItemToJson(
+  ShadowingGetGet$Response$Data$WordFeedback$Item$Phonemes$Item instance,
 ) => <String, dynamic>{
   'phoneme': instance.phoneme,
   'accuracy_score': instance.accuracyScore,
