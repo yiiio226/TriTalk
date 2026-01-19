@@ -1266,6 +1266,10 @@ app.post("/tts/word", async (c) => {
       body.voice_name ||
       (body.language ? getGeminiVoiceFromLanguage(body.language) : "Kore");
 
+    console.log(
+      "[TTS Word] 🔤 langCode received:",
+      body.language || "(not provided, defaulting to en-US behavior)",
+    );
     console.log("[TTS Word] Generating TTS", {
       word: body.word.trim(),
       language: body.language,
@@ -1429,6 +1433,7 @@ app.post("/speech/assess", async (c) => {
     // Debug: inspect audio header bytes
     const headerBytes = new Uint8Array(arrayBuffer.slice(0, 44));
     const headerStr = String.fromCharCode(...headerBytes.slice(0, 4));
+    console.log("[Speech/Assess] 🔤 langCode received:", language);
     console.log(
       `[Speech/Assess] Reference: "${referenceText}", Language: ${language}`,
     );
