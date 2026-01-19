@@ -78,7 +78,10 @@ import {
 } from "./schemas";
 
 // Initialize OpenAPIHono app
-const app = new OpenAPIHono<{ Bindings: Env; Variables: { user: any } }>();
+export const app = new OpenAPIHono<{
+  Bindings: Env;
+  Variables: { user: any };
+}>();
 
 // ============================================
 // Error Logging Helper
