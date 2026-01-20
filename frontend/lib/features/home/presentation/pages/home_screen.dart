@@ -166,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             LanguageConstants.getIsoCode(
                               AuthService().currentUser?.targetLanguage,
                             ),
-                          ),
+                          ).replaceAll(RegExp(r'\s*\(.*?\)|（.*?）'), ''),
                         ),
                         style: TextStyle(
                           fontSize: 16,

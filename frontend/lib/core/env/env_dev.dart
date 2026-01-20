@@ -8,10 +8,10 @@ class EnvDev {
       'sb_publishable_nRj0KP57IDdQ7558VhbN-w_Oqvtrl9O';
 
   // For local development, you can use your local backend URL
-  // static const String backendUrl = 'http://192.168.1.3:8787';
+  static const String backendUrl = 'http://192.168.1.5:8787';
   // Or use the deployed backend for development
-  static const String backendUrl =
-      'https://tritalk-backend.tristart226.workers.dev';
+//   static const String backendUrl =
+//       'https://tritalk-backend.tristart226.workers.dev';
 
   static const String googleOAuthIosClientId =
       '23529939770-aimiq75b1piq14d9mtusdqvfs2mf1mj1.apps.googleusercontent.com';
