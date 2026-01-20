@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import '../../../study/data/vocab_service.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
@@ -71,71 +72,88 @@ class FavoritesSheet extends StatelessWidget {
                   );
                 }
 
-                return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (context, index) => const Divider(),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item.phrase,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
+                return CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    CupertinoSliverRefreshControl(
+                      onRefresh: () async {
+                        await VocabService().refresh();
+                      },
+                    ),
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final int itemIndex = index ~/ 2;
+                          if (index.isEven) {
+                            final item = items[itemIndex];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      item.phrase,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        _playWordPronunciation(item.phrase);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: Icon(
+                                          Icons.volume_up_outlined,
+                                          color: AppColors.lightTextSecondary,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(20),
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                _playWordPronunciation(item.phrase);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: Icon(
-                                  Icons.volume_up_outlined,
-                                  color: AppColors.lightTextSecondary,
-                                  size: 16,
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (item.translation.isNotEmpty &&
+                                      item.translation != "Smart Feedback")
+                                    Text(item.translation),
+                                  Text(
+                                    item.tag,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Colors.grey,
                                 ),
+                                onPressed: () {
+                                  service.remove(item.phrase);
+                                },
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (item.translation.isNotEmpty &&
-                              item.translation != "Smart Feedback")
-                            Text(item.translation),
-                          Text(
-                            item.tag,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          size: 20,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          service.remove(item.phrase);
+                            );
+                          }
+                          return const Divider();
                         },
+                        childCount: items.length * 2 - 1,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 );
               },
             ),

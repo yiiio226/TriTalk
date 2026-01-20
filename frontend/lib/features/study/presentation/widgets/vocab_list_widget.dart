@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/services.dart';
 import '../../data/vocab_service.dart';
@@ -62,92 +63,106 @@ class VocabListWidget extends StatelessWidget {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            await VocabService().refresh();
-          },
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.lightSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.lightDivider),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  item.phrase,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.lightTextPrimary,
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                await VocabService().refresh();
+              },
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final int itemIndex = index ~/ 2;
+                    if (index.isEven) {
+                      final item = items[itemIndex];
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.lightDivider),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          item.phrase,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.lightTextPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      // Play Button
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(20),
+                                          onTap: () {
+                                            HapticFeedback.lightImpact();
+                                            _playWordPronunciation(item.phrase);
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(4.0),
+                                            child: Icon(
+                                              Icons.volume_up_outlined,
+                                              color: AppColors.lightTextSecondary,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Play Button
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    _playWordPronunciation(item.phrase);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Icon(
-                                      Icons.volume_up_outlined,
-                                      color: AppColors.lightTextSecondary,
-                                      size: 16,
-                                    ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: AppColors.lightTextSecondary,
                                   ),
+                                  onPressed: () {
+                                    VocabService().remove(item.phrase);
+                                  },
+                                ),
+                              ],
+                            ),
+                            if (item.translation.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                item.translation,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.lightTextSecondary,
+                                  height: 1.5,
                                 ),
                               ),
                             ],
-                          ),
+                          ],
                         ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: AppColors.lightTextSecondary,
-                          ),
-                          onPressed: () {
-                            VocabService().remove(item.phrase);
-                          },
-                        ),
-                      ],
-                    ),
-                    if (item.translation.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        item.translation,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.lightTextSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ],
+                      );
+                    }
+                    return const SizedBox(height: 16);
+                  },
+                  childCount: items.length * 2 - 1,
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         );
       },
     );
