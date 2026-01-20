@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/widgets/bouncing_button.dart';
 import '../../../chat/presentation/pages/chat_screen.dart';
 
 class ScenarioConfigurationScreen extends StatefulWidget {
@@ -41,7 +42,7 @@ class _ScenarioConfigurationScreenState
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               child: Row(
                 children: [
-                  GestureDetector(
+                  BouncingButton(
                     onTap: () => Navigator.pop(context),
                     child: Container(
                       width: 44,
@@ -137,8 +138,8 @@ class _ScenarioConfigurationScreenState
                 top: false,
                 child: SizedBox(
                   height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
+                  child: BouncingButton(
+                    onTap: () {
                       // Create updated scene with modified roles
                       final updatedScene = Scene(
                         id: widget.scene.id,
@@ -163,17 +164,26 @@ class _ScenarioConfigurationScreenState
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
+                    scaleFactor: 0.98,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppRadius.md),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                    child: Text(
-                      'Start Practice',
-                      style: AppTypography.button.copyWith(
-                        fontSize: 18,
-                        color: AppColors.darkTextPrimary,
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Start Practice',
+                        style: AppTypography.button.copyWith(
+                          fontSize: 18,
+                          color: AppColors.darkTextPrimary,
+                        ),
                       ),
                     ),
                   ),
@@ -207,7 +217,7 @@ class _ScenarioConfigurationScreenState
     bool isSelected,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
+    return BouncingButton(
       onTap: onTap,
       child: Container(
         height: 80,
@@ -244,8 +254,9 @@ class _ScenarioConfigurationScreenState
     bool isSelected,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
+    return BouncingButton(
       onTap: onTap,
+      scaleFactor: 0.98,
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -302,7 +313,7 @@ class _ScenarioConfigurationScreenState
                 ),
               ],
             ),
-            GestureDetector(
+            BouncingButton(
               onTap: _swapRoles,
               child: Container(
                 padding: const EdgeInsets.symmetric(
