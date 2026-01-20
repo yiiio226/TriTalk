@@ -51,9 +51,8 @@ class ScanConfig {
   static const List<String> excludeFiles = ['.g.dart', '.freezed.dart'];
 
   /// 排除的文件路径（相对于 lib/）
-  /// 这些文件包含 mock 数据或代码示例，不需要国际化
+  /// 这些文件包含代码示例，不需要国际化
   static const List<String> excludePaths = [
-    'features/scenes/data/datasources/mock_scenes.dart', // Mock 数据
     'core/design/app_design_system.dart', // 代码注释示例
   ];
 

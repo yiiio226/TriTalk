@@ -335,13 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         );
 
                                         if (result == 'delete') {
-                                          if (SceneService().isCustomScene(
-                                            scene,
-                                          )) {
-                                            await SceneService().deleteScene(
-                                              scene.id,
-                                            );
-                                          }
+                                          await SceneService().deleteScene(
+                                            scene.id,
+                                          );
                                         }
                                       },
                                       onLongPress: () {
