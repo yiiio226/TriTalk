@@ -21,11 +21,13 @@
 
 新建 `standard_scenes` 表，存储官方提供的标准场景。
 
+**变更注记**：我们决定清理所有基于旧 Mock ID (`s1`, `s2`...) 的开发数据，转而为标准场景使用标准的 UUID。
+
 ```sql
--- migration: create_standard_scenes.sql
+-- migration: create_standard_scenes.sql (已包含旧数据清理逻辑)
 
 CREATE TABLE standard_scenes (
-  id TEXT PRIMARY KEY,           -- 保持与前端兼容的 ID (如 's1', 'coffee_order')
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),  -- 使用 UUID，不再兼容旧 's1' ID
 
   -- 核心内容
   title TEXT NOT NULL,
@@ -40,7 +42,7 @@ CREATE TABLE standard_scenes (
   category TEXT NOT NULL,        -- 'Daily Life', 'Travel', 'Business'
   difficulty TEXT NOT NULL,      -- 'Easy', 'Medium', 'Hard'
   icon_path TEXT,                -- 'assets/images/...' (保留用于兼容旧版或直到图片完全远端化)
-  color INTEGER NOT NULL,        -- Hex Color (e.g. 4293914865)
+  color BIGINT NOT NULL,         -- Hex Color stored as BigInt (e.g. 4293914865)
 
   -- 语言与排序
   target_language TEXT NOT NULL DEFAULT 'English', -- 该场景用于练习的语言
@@ -76,7 +78,7 @@ CREATE POLICY "Standard scenes are publicly readable"
 {
   "scenes": [
     {
-      "id": "s1",
+      "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // UUID
       "title": "Order Coffee",
       "targetLanguage": "English"
       // ... other fields
@@ -87,13 +89,15 @@ CREATE POLICY "Standard scenes are publicly readable"
 
 ### 2.3 前端改造 (Flutter)
 
+**关键变更**: 由于数据库使用了新的 UUID，前端 `mock_scenes.dart` (重命名为 `fallback_scenes.dart` 后) 中的 ID 也必须更新为对应的 UUID，以保证离线/在线行为一致。
+
 **`SceneService` 逻辑变更**:
 
 1.  **初始化**: 检查 `SceneCache` 是否有该 `targetLanguage` 的缓存。
 2.  **获取**:
     - **优先**: 调用 API `/api/scenes/standard` 获取最新数据并更新缓存。
     - **失败/离线**: 使用本地缓存。
-    - **兜底**: 使用代码中的 `fallback_scenes.dart` (原 `mock_scenes.dart`)。
+    - **兜底**: 使用代码中的 `fallback_scenes.dart` (IDs 需与 DB 保持一致)。
 3.  **合并**:
     - Display List = (API/Cache Scenes) + (Custom Scenes) - (Hidden Scenes)
     - 应用 `SceneOrder` 进行排序。
@@ -110,8 +114,8 @@ CREATE POLICY "Standard scenes are publicly readable"
   - 创建 `standard_scenes` 表结构。
   - 添加 RLS Policies。
 - [x] **1.2 数据迁移 (Data Seeding)**
-  - 将 `mock_scenes.dart` 中的 13 个场景转换为 SQL 插入语句。
-  - 执行 Migration，确保数据库中有初始数据。
+  - **清理旧数据**: 删除 `chat_history`, `bookmarked_conversations`, `user_hidden_scenes` 中引用旧 Mock ID (`s1`...) 的脏数据。
+  - **插入新数据**: 插入使用 UUID 的标准场景数据。
 
 ### Phase 2: 后端 API 开发 (Backend API)
 
@@ -123,7 +127,8 @@ CREATE POLICY "Standard scenes are publicly readable"
 ### Phase 3: 前端数据层改造 (Frontend Data Layer)
 
 - [ ] **3.1 重构 Mock Scenes**
-  - 重命名 `mock_scenes.dart` 为 `fallback_scenes.dart`，明确其兜底用途。
+  - 重命名 `mock_scenes.dart` 为 `fallback_scenes.dart`。
+  - **重要**: 将其中的 ID 更新为 Migration 文件中生成的 UUID。
 - [ ] **3.2 实现 API Client**
   - 在前端添加获取 standard scenes 的 HTTP 请求方法。
 - [ ] **3.3 改造 `SceneService`**
