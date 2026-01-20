@@ -44,7 +44,7 @@ cd frontend
 
 TriTalk 遵循全面的功能优先、分层架构，利用 Riverpod 进行状态管理。
 
-- **[当前架构指南](guide/Architecture.md)**: 项目结构和层的详细介绍。
+- **[当前架构指南](doc/Architecture.md)**: 项目结构和层的详细介绍。
 - **[缓存策略文档](doc/cache_strategy.md)**: 详细介绍了前端的缓存架构、CacheManager 及各模块的缓存规则。
 - **[语言处理架构](doc/language_handling_architecture.md)**: 详细定义了语言设置的单一数据源模式和 BCP-47 标准化规范。
 
