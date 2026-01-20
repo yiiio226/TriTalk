@@ -41,14 +41,24 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-      #config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
     end
   end
 
-  # Workaround for RevenueCat Swift Compiler Error (Main Actor Isolation)
-  # This replaces the entire beginBackgroundTask function body to avoid UIApplication calls.
-  events_manager_path = File.join(installer.sandbox.root, 'RevenueCat/Sources/Events/EventsManager.swift')
-  if File.exist?(events_manager_path)
+  # RevenueCat / Xcode 15.2 Compatibility Fix
+  # 这是一个针对 RevenueCat 和 Xcode 15.2 不兼容导致 Swift Concurrency 编译报错的临时修复。
+  # 该修复仅在本地开发环境 (`flutter run`) 且存在 `env_local.dart` 时生效。
+  # 生产环境构建 (CI/CD) 不受影响，将使用官方 SDK 原样代码。
+  # 
+  # Check if we are in local development environment
+  local_env_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'core', 'env', 'env_local.dart'))
+
+  if File.exist?(local_env_path)
+    puts "⚠️  [TriTalk] Detected env_local.dart: Applying RevenueCat Concurrency Patch..."
+    
+    # Workaround for RevenueCat Swift Compiler Error (Main Actor Isolation)
+    # This replaces the entire beginBackgroundTask function body to avoid UIApplication calls.
+    events_manager_path = File.join(installer.sandbox.root, 'RevenueCat/Sources/Events/EventsManager.swift')
+    if File.exist?(events_manager_path)
     text = File.read(events_manager_path)
     
     patched_marker = "// PATCHED_BY_TRITALK"
@@ -129,5 +139,8 @@ private extension EventsManager {
     else
       puts "RevenueCat EventsManager.swift already patched."
     end
+    end
+  else
+    puts "✅ [TriTalk] No env_local.dart detected: Skipping RevenueCat Patch (Production/Clean Build)."
   end
 end
