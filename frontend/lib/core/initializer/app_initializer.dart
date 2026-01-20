@@ -104,7 +104,13 @@ class AppBootstrap {
       debugPrint('AppBootstrap: Starting bootstrap...');
     }
 
-    // Initialize Supabase first
+    // Initialize environment configuration first (loads .env file)
+    await Env.init();
+    if (kDebugMode) {
+      debugPrint('AppBootstrap: Environment loaded (${Env.name})');
+    }
+
+    // Initialize Supabase
     await Supabase.initialize(
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,

@@ -1,9 +1,8 @@
-import 'env_config.dart';
-import 'env_dev.dart';
-import 'env_local.dart';
-import 'env_prod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Environment configuration that selects local/dev/prod based on
+import 'env_config.dart';
+
+/// Environment configuration that loads values from .env files based on
 /// the --dart-define=ENV compile-time parameter.
 ///
 /// Build commands:
@@ -20,109 +19,57 @@ import 'env_prod.dart';
 /// flutter build apk --dart-define=ENV=prod --release
 /// ```
 class Env {
+  /// Track initialization state
+  static bool _initialized = false;
+
+  /// Initialize the environment configuration by loading the appropriate .env file.
+  /// This must be called before accessing any environment values.
+  static Future<void> init() async {
+    if (_initialized) return;
+
+    final envFile = 'assets/env/.env.${EnvConfig.name}';
+    await dotenv.load(fileName: envFile);
+    _initialized = true;
+  }
+
   /// Current environment type
   static Environment get current => EnvConfig.current;
 
   /// Environment name for logging
   static String get name => EnvConfig.name;
 
-  static String get supabaseUrl {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.supabaseUrl;
-      case Environment.dev:
-        return EnvDev.supabaseUrl;
-      case Environment.prod:
-        return EnvProd.supabaseUrl;
-    }
-  }
+  /// Supabase project URL
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
 
-  static String get supabaseAnonKey {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.supabaseAnonKey;
-      case Environment.dev:
-        return EnvDev.supabaseAnonKey;
-      case Environment.prod:
-        return EnvProd.supabaseAnonKey;
-    }
-  }
+  /// Supabase anonymous/publishable key
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
-  static String get backendUrl {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.backendUrl;
-      case Environment.dev:
-        return EnvDev.backendUrl;
-      case Environment.prod:
-        return EnvProd.backendUrl;
-    }
-  }
+  /// Backend API URL
+  static String get backendUrl => dotenv.env['BACKEND_URL'] ?? '';
 
-  static String get googleOAuthIosClientId {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.googleOAuthIosClientId;
-      case Environment.dev:
-        return EnvDev.googleOAuthIosClientId;
-      case Environment.prod:
-        return EnvProd.googleOAuthIosClientId;
-    }
-  }
+  /// Google OAuth iOS Client ID
+  static String get googleOAuthIosClientId =>
+      dotenv.env['GOOGLE_OAUTH_IOS_CLIENT_ID'] ?? '';
 
-  static String get googleOAuthWebClientId {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.googleOAuthWebClientId;
-      case Environment.dev:
-        return EnvDev.googleOAuthWebClientId;
-      case Environment.prod:
-        return EnvProd.googleOAuthWebClientId;
-    }
-  }
+  /// Google OAuth Web Client ID
+  static String get googleOAuthWebClientId =>
+      dotenv.env['GOOGLE_OAUTH_WEB_CLIENT_ID'] ?? '';
 
-  static bool get forceCloudTTS {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.forceCloudTTS;
-      case Environment.dev:
-        return EnvDev.forceCloudTTS;
-      case Environment.prod:
-        return EnvProd.forceCloudTTS;
-    }
-  }
+  /// Force Cloud TTS flag
+  /// When true, Word TTS will skip local cache and local TTS engine,
+  /// always using cloud API (GCP Vertex AI) for testing purposes.
+  static bool get forceCloudTTS =>
+      dotenv.env['FORCE_CLOUD_TTS']?.toLowerCase() == 'true';
 
-  static String get revenueCatAppleApiKey {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.revenueCatAppleApiKey;
-      case Environment.dev:
-        return EnvDev.revenueCatAppleApiKey;
-      case Environment.prod:
-        return EnvProd.revenueCatAppleApiKey;
-    }
-  }
+  /// RevenueCat Apple API Key
+  static String get revenueCatAppleApiKey =>
+      dotenv.env['REVENUE_CAT_APPLE_API_KEY'] ?? '';
 
-  static String get revenueCatGoogleApiKey {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.revenueCatGoogleApiKey;
-      case Environment.dev:
-        return EnvDev.revenueCatGoogleApiKey;
-      case Environment.prod:
-        return EnvProd.revenueCatGoogleApiKey;
-    }
-  }
+  /// RevenueCat Google API Key
+  static String get revenueCatGoogleApiKey =>
+      dotenv.env['REVENUE_CAT_GOOGLE_API_KEY'] ?? '';
 
   /// Base URL for scene assets on Cloudflare R2
-  static String get sceneAssetsBaseUrl {
-    switch (EnvConfig.current) {
-      case Environment.local:
-        return EnvLocal.sceneAssetsBaseUrl;
-      case Environment.dev:
-        return EnvDev.sceneAssetsBaseUrl;
-      case Environment.prod:
-        return EnvProd.sceneAssetsBaseUrl;
-    }
-  }
+  static String get sceneAssetsBaseUrl =>
+      dotenv.env['SCENE_ASSETS_BASE_URL'] ?? '';
 }
