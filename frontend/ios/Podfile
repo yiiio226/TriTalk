@@ -41,6 +41,93 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      #config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
+    end
+  end
+
+  # Workaround for RevenueCat Swift Compiler Error (Main Actor Isolation)
+  # This replaces the entire beginBackgroundTask function body to avoid UIApplication calls.
+  events_manager_path = File.join(installer.sandbox.root, 'RevenueCat/Sources/Events/EventsManager.swift')
+  if File.exist?(events_manager_path)
+    text = File.read(events_manager_path)
+    
+    patched_marker = "// PATCHED_BY_TRITALK"
+    
+    unless text.include?(patched_marker)
+      puts "Patching RevenueCat EventsManager.swift to fix Swift Concurrency error..."
+      
+      # Find and replace the problematic section (lines 251-290 in original)
+      # The entire #if block that contains beginBackgroundTask
+      old_block = <<~'SWIFT'
+#if swift(>=5.9) && (os(iOS) || os(tvOS) || VISION_OS)
+@available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
+private extension EventsManager {
+
+    /// Begins a background task synchronously and returns a closure to end it.
+    /// This should be called BEFORE spawning async work to prevent the system from
+    /// suspending the app before the task starts executing.
+    ///
+    /// - Parameter taskName: A name for the background task for debugging purposes.
+    /// - Returns: A closure to end the background task, or `nil` if the task couldn't be started.
+    static func beginBackgroundTask(named taskName: String) -> (@Sendable () -> Void)? {
+        guard let application = SystemInfo.sharedUIApplication else {
+            Logger.warn(EventsManagerStrings.background_task_unavailable)
+            return nil
+        }
+
+        let backgroundTaskID: Atomic<UIBackgroundTaskIdentifier?> = .init(nil)
+        backgroundTaskID.value   = application.beginBackgroundTask(withName: taskName) {
+            Logger.warn(EventsManagerStrings.background_task_expired(taskName))
+            if let taskID = backgroundTaskID.value {
+                application.endBackgroundTask(taskID)
+                backgroundTaskID.value = .invalid
+            }
+        }
+
+        if backgroundTaskID.value == .invalid {
+            Logger.warn(EventsManagerStrings.background_task_failed(taskName))
+            return nil
+        }
+
+        Logger.debug(EventsManagerStrings.background_task_started(taskName))
+        return {
+            if let taskID = backgroundTaskID.value {
+                application.endBackgroundTask(taskID)
+            }
+        }
+    }
+
+}
+#endif
+      SWIFT
+      
+      new_block = <<~'SWIFT'
+// PATCHED_BY_TRITALK: Disabled to fix Swift Concurrency MainActor isolation error
+#if swift(>=5.9) && (os(iOS) || os(tvOS) || VISION_OS)
+@available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
+private extension EventsManager {
+
+    /// Background task disabled to avoid MainActor isolation issues in strict concurrency mode.
+    /// This means events may not flush when app goes to background.
+    static func beginBackgroundTask(named taskName: String) -> (@Sendable () -> Void)? {
+        Logger.debug(EventsManagerStrings.background_task_unavailable)
+        return nil
+    }
+
+}
+#endif
+      SWIFT
+      
+      new_text = text.gsub(old_block.strip, new_block.strip)
+      
+      if new_text != text
+        File.write(events_manager_path, new_text)
+        puts "Patched successfully!"
+      else
+        puts "Pattern not found - RevenueCat SDK may have been updated."
+      end
+    else
+      puts "RevenueCat EventsManager.swift already patched."
     end
   end
 end
