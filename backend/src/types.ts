@@ -123,6 +123,9 @@ export interface Env {
 
   // RevenueCat Webhook
   REVENUECAT_WEBHOOK_SECRET?: string;
+
+  // Admin API Key for protected admin endpoints
+  ADMIN_API_KEY?: string;
 }
 
 export interface PolishRequest {

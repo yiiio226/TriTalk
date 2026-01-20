@@ -324,3 +324,68 @@ export const ShadowingGetResponseSchema = z.object({
     })
     .nullable(), // Returns single record or null
 });
+
+// --- Admin Standard Scenes Schemas ---
+
+export const StandardSceneSchema = z.object({
+  id: z
+    .string()
+    .uuid()
+    .optional()
+    .openapi({ example: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" }),
+  title: z.string().openapi({ example: "Order Coffee" }),
+  description: z.string().openapi({ example: "Order a coffee at a cafe" }),
+  ai_role: z.string().openapi({ example: "Barista" }),
+  user_role: z.string().openapi({ example: "Customer" }),
+  initial_message: z
+    .string()
+    .openapi({ example: "Hi! What can I get for you today?" }),
+  goal: z.string().openapi({ example: "Order a coffee" }),
+  emoji: z.string().default("🎭").openapi({ example: "☕" }),
+  category: z.string().openapi({ example: "Daily Life" }),
+  difficulty: z.enum(["Easy", "Medium", "Hard"]).openapi({ example: "Easy" }),
+  icon_path: z
+    .string()
+    .nullable()
+    .optional()
+    .openapi({ example: "assets/images/scenes/coffee_3d.png" }),
+  color: z.number().openapi({ example: 4292932337 }),
+  target_language: z.string().default("en-US").openapi({ example: "en-US" }),
+});
+
+// Request schema for creating/updating scenes (supports batch)
+export const AdminCreateScenesRequestSchema = z.object({
+  scenes: z.array(StandardSceneSchema).min(1).openapi({
+    description: "Array of scenes to create. At least one scene is required.",
+  }),
+});
+
+// Response schema for batch create
+export const AdminCreateScenesResponseSchema = z.object({
+  success: z.boolean(),
+  created_count: z.number().openapi({ example: 3 }),
+  scenes: z.array(
+    z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+    }),
+  ),
+});
+
+// Response schema for list
+export const AdminListScenesResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  scenes: z.array(
+    StandardSceneSchema.extend({
+      id: z.string().uuid(),
+      created_at: z.string().optional(),
+    }),
+  ),
+});
+
+// Response schema for delete
+export const AdminDeleteScenesResponseSchema = z.object({
+  success: z.boolean(),
+  deleted_count: z.number(),
+});

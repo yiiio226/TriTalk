@@ -40,6 +40,10 @@ import {
 
 import { createClient } from "@supabase/supabase-js";
 
+// Admin
+import { adminMiddleware } from "./auth/admin-middleware";
+import { createSupabaseAdminClient } from "./services/supabase-admin";
+
 // Prompts
 import {
   buildAnalyzePrompt,
@@ -75,6 +79,11 @@ import {
   TranscribeResponseSchema,
   TranslateRequestSchema,
   TranslateResponseSchema,
+  // Admin schemas
+  AdminCreateScenesRequestSchema,
+  AdminCreateScenesResponseSchema,
+  AdminListScenesResponseSchema,
+  AdminDeleteScenesResponseSchema,
 } from "./schemas";
 
 // Initialize OpenAPIHono app
@@ -170,8 +179,8 @@ app.use(
       }
       return "null";
     },
-    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-API-Key", "X-Admin-Key"],
     exposeHeaders: ["Content-Length"],
   }),
 );
@@ -184,6 +193,9 @@ app.use("/tts/*", authMiddleware);
 app.use("/speech/*", authMiddleware);
 app.use("/shadowing/*", authMiddleware);
 app.use("/subscription/*", authMiddleware);
+
+// Admin routes - protected by API key
+app.use("/admin/*", adminMiddleware);
 
 // ============================================
 // Routes
@@ -1792,6 +1804,197 @@ app.doc("/doc", {
 });
 
 app.get("/ui", swaggerUI({ url: "/doc" }));
+
+// ============================================
+// Admin Routes - Standard Scenes Management
+// ============================================
+
+// GET /admin/standard-scenes - List all standard scenes
+const adminListScenesRoute = createRoute({
+  method: "get",
+  path: "/admin/standard-scenes",
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: AdminListScenesResponseSchema },
+      },
+      description: "List of all standard scenes",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+
+app.openapi(adminListScenesRoute, async (c) => {
+  try {
+    const env = c.env;
+    const supabaseAdmin = createSupabaseAdminClient(env);
+
+    const { data: scenes, error } = await supabaseAdmin
+      .from("standard_scenes")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch scenes: ${error.message}`);
+    }
+
+    return c.json(
+      {
+        success: true,
+        count: scenes?.length || 0,
+        scenes: scenes || [],
+      },
+      200,
+    );
+  } catch (error) {
+    logError(error, { route: "/admin/standard-scenes", method: "GET" });
+    return c.json({ error: `Failed to list scenes: ${String(error)}` }, 500);
+  }
+});
+
+// POST /admin/standard-scenes - Create one or more scenes (batch)
+const adminCreateScenesRoute = createRoute({
+  method: "post",
+  path: "/admin/standard-scenes",
+  request: {
+    body: {
+      content: {
+        "application/json": { schema: AdminCreateScenesRequestSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: AdminCreateScenesResponseSchema },
+      },
+      description: "Scenes created successfully",
+    },
+    400: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Validation error",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+
+app.openapi(adminCreateScenesRoute, async (c) => {
+  try {
+    const body = c.req.valid("json");
+    const env = c.env;
+    const supabaseAdmin = createSupabaseAdminClient(env);
+
+    // Prepare scenes for insertion (remove optional id if not provided)
+    const scenesToInsert = body.scenes.map((scene) => ({
+      id: scene.id || undefined, // Let DB generate if not provided
+      title: scene.title,
+      description: scene.description,
+      ai_role: scene.ai_role,
+      user_role: scene.user_role,
+      initial_message: scene.initial_message,
+      goal: scene.goal,
+      emoji: scene.emoji || "🎭",
+      category: scene.category,
+      difficulty: scene.difficulty,
+      icon_path: scene.icon_path || null,
+      color: scene.color,
+      target_language: scene.target_language || "en-US",
+    }));
+
+    const { data: createdScenes, error } = await supabaseAdmin
+      .from("standard_scenes")
+      .insert(scenesToInsert)
+      .select("id, title");
+
+    if (error) {
+      throw new Error(`Failed to create scenes: ${error.message}`);
+    }
+
+    console.log(
+      `[Admin] Created ${createdScenes?.length || 0} standard scenes`,
+    );
+
+    return c.json(
+      {
+        success: true,
+        created_count: createdScenes?.length || 0,
+        scenes: createdScenes || [],
+      },
+      200,
+    );
+  } catch (error) {
+    logError(error, { route: "/admin/standard-scenes", method: "POST" });
+    return c.json({ error: `Failed to create scenes: ${String(error)}` }, 500);
+  }
+});
+
+// DELETE /admin/standard-scenes/:id - Delete a scene
+const adminDeleteSceneRoute = createRoute({
+  method: "delete",
+  path: "/admin/standard-scenes/:id",
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: AdminDeleteScenesResponseSchema },
+      },
+      description: "Scene deleted successfully",
+    },
+    404: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Scene not found",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+
+app.openapi(adminDeleteSceneRoute, async (c) => {
+  try {
+    const { id } = c.req.valid("param");
+    const env = c.env;
+    const supabaseAdmin = createSupabaseAdminClient(env);
+
+    const { data, error } = await supabaseAdmin
+      .from("standard_scenes")
+      .delete()
+      .eq("id", id)
+      .select("id");
+
+    if (error) {
+      throw new Error(`Failed to delete scene: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      return c.json({ error: "Scene not found" }, 404);
+    }
+
+    console.log(`[Admin] Deleted standard scene: ${id}`);
+
+    return c.json(
+      {
+        success: true,
+        deleted_count: data.length,
+      },
+      200,
+    );
+  } catch (error) {
+    logError(error, { route: "/admin/standard-scenes/:id", method: "DELETE" });
+    return c.json({ error: `Failed to delete scene: ${String(error)}` }, 500);
+  }
+});
 
 // ============================================
 // Scheduled Tasks (Cron Triggers)
