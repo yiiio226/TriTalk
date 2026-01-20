@@ -47,7 +47,7 @@ const List<Scene> mockScenes = [
     id: 's4',
     title: 'Taking a Taxi',
     description: 'Give directions to the driver',
-    emoji: 'kB',
+    emoji: '🚕',
     aiRole: 'Taxi Driver',
     userRole: 'Passenger',
     initialMessage: 'Hello! Where are you heading to today?',

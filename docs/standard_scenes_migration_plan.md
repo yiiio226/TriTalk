@@ -1,154 +1,112 @@
-# Standard Scenes Data Migration Plan
+# Standard Scenes Migration Plan (Clone Model)
 
-本文档描述将前端硬编码的 `mock_scenes.dart` 迁移至后端数据库的完整技术方案与实施计划。
+本文档描述将前端硬编码的 `mock_scenes.dart` 迁移至后端数据库的完整技术方案。
+**架构决策**：采用 **"纯克隆模式 (Pure Clone Model)"**。标准场景仅作为"种子库"，用户注册时将其完整复制到用户的 `custom_scenarios` 表中。
 
-## 1. 背景与目标 (Background & Objectives)
+## 1. 核心架构 (Architecture)
 
-**现状**：目前所有标准场景数据（如 Cafe, Immigration, Taxi）都硬编码在前端 `mock_scenes.dart` 中。
-**问题**：扩展性差（新增场景需发版）、多语言支持困难、无法进行 A/B 测试。
-**目标**：
+### 1.1 核心概念
 
-1.  **后端化**：建立 `standard_scenes` 数据库表存储场景数据。
-2.  **动态化**：前端通过 API 获取场景，支持热更新。
-3.  **兼容性**：保留本地 Mock 数据作为离线/网络错误时的 Fallback。
-4.  **多语言**：支持根据用户学习目标语言（Target Language）获取对应场景。
+- **Single Source of Truth**: 前端不再维护 Mock 数据，**只查询 `custom_scenarios` 一张表**。
+- **Clone on Init**: 当新用户注册时，后端自动将标准场景库中的内容 `COPY` 到该用户的 `custom_scenarios` 中。
+- **Unified Management**: 排序、删除、编辑、隐藏，全部通过操作 `custom_scenarios` 表完成。
+  - **排序**: `ORDER BY updated_at DESC`。置顶 = 更新 `updated_at`。
+  - **删除**: `DELETE FROM custom_scenarios`。
+  - **编辑**: `UPDATE custom_scenarios`。
 
----
+### 1.2 数据库 Schema 变更
 
-## 2. 架构设计 (Architecture Design)
+创建 `standard_scenes` 表，仅用于存储官方模板，**不直接对用户提供查询 API**。
 
-### 2.1 数据库 Schema (Supabase)
+#### A. 种子库 (Standard Templates)
 
-新建 `standard_scenes` 表，存储官方提供的标准场景。
-
-**变更注记**：我们决定清理所有基于旧 Mock ID (`s1`, `s2`...) 的开发数据，转而为标准场景使用标准的 UUID。
-
-```sql
--- migration: create_standard_scenes.sql (已包含旧数据清理逻辑)
-
+````sql
 CREATE TABLE standard_scenes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),  -- 使用 UUID，不再兼容旧 's1' ID
-
-  -- 核心内容
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
-  description TEXT NOT NULL,
+  description TEXT NOT NULL,  -- 改为 NOT NULL
   ai_role TEXT NOT NULL,
   user_role TEXT NOT NULL,
   initial_message TEXT NOT NULL,
   goal TEXT NOT NULL,
-
-  -- 元数据
-  emoji TEXT NOT NULL DEFAULT '🎭',
-  category TEXT NOT NULL,        -- 'Daily Life', 'Travel', 'Business'
-  difficulty TEXT NOT NULL,      -- 'Easy', 'Medium', 'Hard'
-  icon_path TEXT,                -- 'assets/images/...' (保留用于兼容旧版或直到图片完全远端化)
-  color BIGINT NOT NULL,         -- Hex Color stored as BigInt (e.g. 4293914865)
-
-  -- 语言与排序
-  target_language TEXT NOT NULL DEFAULT 'English', -- 该场景用于练习的语言
-  display_order INTEGER DEFAULT 0,                 -- 排序权重
-  is_active BOOLEAN DEFAULT true,                  -- 软删除/上下架控制
-
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  emoji TEXT NOT NULL DEFAULT '🎭',  -- 添加 NOT NULL
+  category TEXT NOT NULL,
+  difficulty TEXT NOT NULL,
+  icon_path TEXT,
+  color BIGINT NOT NULL,
+  target_language TEXT NOT NULL DEFAULT 'en-US',
+  sort_order INTEGER NOT NULL DEFAULT 0,  -- 新增：控制初始顺序
+  created_at TIMESTAMPTZ DEFAULT NOW()
+  -- 移除 is_active（如果不需要）
 );
 
--- 索引
-CREATE INDEX idx_standard_scenes_language ON standard_scenes(target_language);
-CREATE INDEX idx_standard_scenes_order ON standard_scenes(display_order);
+#### B. 用户场景表 (Custom Scenarios)
 
--- RLS: 公开只读
-ALTER TABLE standard_scenes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Standard scenes are publicly readable"
-  ON standard_scenes FOR SELECT
-  USING (is_active = true);
+增强现有的 `custom_scenarios` 表，使其能承载标准场景的所有能力。
+
+```sql
+ALTER TABLE custom_scenarios
+  ADD COLUMN origin_standard_id UUID,           -- 纯记录，无 FK 约束，允许删除 standard_scenes
+  ADD COLUMN source_type TEXT DEFAULT 'custom', -- 'standard' | 'custom'
+  ADD COLUMN icon_path TEXT,
+  ADD COLUMN color BIGINT DEFAULT 4294967295,   -- Default White
+  ADD COLUMN target_language TEXT DEFAULT 'en-US', -- BCP-47 compliant
+  ADD COLUMN goal TEXT;                         -- 之前可能缺失
 ```
 
-### 2.2 后端 API (Hono)
+**`source_type` 语义：**
+- `'standard'` - 从官方模板库克隆而来
+- `'custom'` - 用户完全原创
 
-**Endpoint**: `GET /api/scenes/standard`
+#### C. 自动化触发器 (Triggers)
 
-**Query Parameters**:
-
-- `target_language`: (Required) 用户学习的目标语言，如 `English`, `Chinese`.
-
-**Response**:
-
-```json
-{
-  "scenes": [
-    {
-      "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", // UUID
-      "title": "Order Coffee",
-      "targetLanguage": "English"
-      // ... other fields
-    }
-  ]
-}
-```
-
-### 2.3 前端改造 (Flutter)
-
-**关键变更**: 由于数据库使用了新的 UUID，前端 `mock_scenes.dart` (重命名为 `fallback_scenes.dart` 后) 中的 ID 也必须更新为对应的 UUID，以保证离线/在线行为一致。
-
-**`SceneService` 逻辑变更**:
-
-1.  **初始化**: 检查 `SceneCache` 是否有该 `targetLanguage` 的缓存。
-2.  **获取**:
-    - **优先**: 调用 API `/api/scenes/standard` 获取最新数据并更新缓存。
-    - **失败/离线**: 使用本地缓存。
-    - **兜底**: 使用代码中的 `fallback_scenes.dart` (IDs 需与 DB 保持一致)。
-3.  **合并**:
-    - Display List = (API/Cache Scenes) + (Custom Scenes) - (Hidden Scenes)
-    - 应用 `SceneOrder` 进行排序。
+- **Trigger**: `on_auth_user_created` -> 调用函数 -> 复制 `standard_scenes` 到 `custom_scenarios`。
 
 ---
 
-## 3. 实施进度 (Implementation Progress)
+## 2. 实施进度 (Implementation Progress)
 
-请在完成每个步骤后勾选 ✅。
+### Phase 1: 数据库与迁移 (Database & Migration)
 
-### Phase 1: 数据库层 (Database Layer)
+- [ ] **1.1 Schema 升级**
+  - 创建 `standard_scenes` 并填入初始种子数据 (13个场景, 使用符合 BCP-47 的语言代码如 `en-US`)。
+  - 修改 `custom_scenarios` 表结构（增加字段）。
+  - 废弃/删除 `user_scene_order`, `user_hidden_scenes` 表。
+- [ ] **1.2 逻辑实现**
+  - 编写 `handle_new_user` 函数和 Trigger (新用户自动复制)。
+  - 编写一次性迁移脚本 (One-off Migration): 为**现有开发用户**补全数据。
 
-- [x] **1.1 创建 Migration 文件**
-  - 创建 `standard_scenes` 表结构。
-  - 添加 RLS Policies。
-- [x] **1.2 数据迁移 (Data Seeding)**
-  - **清理旧数据**: 删除 `chat_history`, `bookmarked_conversations`, `user_hidden_scenes` 中引用旧 Mock ID (`s1`...) 的脏数据。
-  - **插入新数据**: 插入使用 UUID 的标准场景数据。
+### Phase 2: 后端 API (Backend API)
 
-### Phase 2: 后端 API 开发 (Backend API)
+- [ ] **2.1 API 简化与规范**
+  - **无需新增 API Endpoint**。前端直接使用 `SupabaseClient` 查询 `custom_scenarios` 表。
+  - **查询逻辑**: 必须包含 `ORDER BY updated_at DESC` 以实现基于最近活跃时间的排序。
+  - **数据校验**: 确保返回的 `target_language` 字段符合 [BCP-47](https://tools.ietf.org/html/bcp47) 标准 (如 `en-US`, `ja-JP`, `zh-CN`)。
 
-- [ ] **2.1 新增 API Endpoint**
-  - 在 `backend/src/server.ts` (或其他路由文件) 添加 `GET /api/scenes/standard`。
-  - 实现根据 `target_language` 过滤查询。
-  - 确保 `icon_path` 等字段正确返回。
+### Phase 3: 前端改造 (Frontend Refactor)
 
-### Phase 3: 前端数据层改造 (Frontend Data Layer)
+- [ ] **3.1 移除 Mock 逻辑**
+  - 删除 [lib/features/scenes/data/datasources/mock_scenes.dart](cci:7://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/datasources/mock_scenes.dart:0:0-0:0)
+  - 删除 [SceneService](cci:2://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:8:0-469:1) 中：
+    - `_hiddenScenesKeyBase` 常量和相关逻辑
+    - `_orderKeyBase` 常量和 `_sceneOrder` Map
+    - [\_applyOrder()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:392:2-400:3) 方法
+    - [\_hideCloudStandard()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:348:2-360:3) 方法
+    - [\_syncOrderToCloud()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:403:2-419:3) 方法
+    - [isCustomScene()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:300:2-303:3) 方法（新架构下所有场景都在 custom_scenarios）
+- [ ] **3.2 统一数据源**
+  - [refreshScenes()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:102:2-193:3) 只查询 `custom_scenarios`，使用 `.order('updated_at', ascending: false)`
+  - 删除与 `mockScenes` 合并的代码
+  - 删除对 `user_hidden_scenes` 和 `user_scene_order` 的查询
 
-- [ ] **3.1 重构 Mock Scenes**
-  - 重命名 `mock_scenes.dart` 为 `fallback_scenes.dart`。
-  - **重要**: 将其中的 ID 更新为 Migration 文件中生成的 UUID。
-- [ ] **3.2 实现 API Client**
-  - 在前端添加获取 standard scenes 的 HTTP 请求方法。
-- [ ] **3.3 改造 `SceneService`**
-  - 实现 `_fetchStandardScenes` 方法 (API -> Cache -> Fallback)。
-  - 更新 `refreshScenes` 逻辑，整合远程数据。
-- [ ] **3.4 本地缓存 (可选但推荐)**
-  - 使用 `SharedPreferences` 或文件缓存 API 响应，减少启动时的网络依赖。
+## 3. 常见问答 (FAQ)
 
-### Phase 4: 测试与清理 (Testing & Cleanup)
+**Q: 如果官方更新了标准场景怎么办？**
+A: 现有用户的场景**不会**改变（Feature, not bug）。这是用户私有的副本。如果必须强制更新，需运行后台脚本针对 specific `origin_standard_id` 进行 Update。
 
-- [ ] **4.1 验证测试**
-  - 测试正常联网加载（数据来自 DB）。
-  - 测试断网加载（数据来自 Fallback）。
-  - 测试新增场景（在 DB 插入一条新数据，刷新 App 可见）。
-- [ ] **4.2 代码清理**
-  - 确保不再有直接依赖 `mockScenes` 列表的硬编码逻辑（除了 Fallback）。
+**Q: 怎么分辨是用户创建的还是官方的？**
+A: 检查 `origin_standard_id`。如果为 NULL，则是用户完全原创；如果有值，则是基于官方模板。
 
----
-
-## 4. 后续规划 (Future Tasks)
-
-- [ ] **多语言 UI**: 为 Standard Scenes 添加 `standard_scene_translations` 表，支持标题和描述的 UI 本地化（如用中文显示场景卡片，但进入后练习英文）。
-- [ ] **版本控制**:通过 ETag 或 version 字段优化通过流量，仅在数据变更时下载。
+**Q: 怎么做"恢复默认"？**
+A: 提供一个 "Restock / Reset" 按钮，调用 API 重新从 `standard_scenes` 复制一份该场景给用户。
+````
