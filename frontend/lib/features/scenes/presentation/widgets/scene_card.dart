@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'scene_icon_image.dart';
 
 class SceneCard extends StatelessWidget {
   final Scene scene;
@@ -18,6 +19,8 @@ class SceneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = showRole ? 60.0 : 80.0;
+
     return Container(
       decoration: BoxDecoration(
         color: Color(scene.color).withValues(alpha: 0.6), // Use scene color
@@ -36,19 +39,12 @@ class SceneCard extends StatelessWidget {
               Expanded(
                 flex: showRole ? 2 : 3, // Smaller image area in list view
                 child: Center(
-                  child: scene.iconPath.isNotEmpty
-                      ? Image.asset(
-                          scene.iconPath,
-                          width: showRole
-                              ? 60
-                              : 80, // Smaller icon in list view
-                          height: showRole ? 60 : 80,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildEmojiFallback(scene.emoji);
-                          },
-                        )
-                      : _buildEmojiFallback(scene.emoji),
+                  child: SceneIconImage(
+                    path: scene.iconPath,
+                    emoji: scene.emoji,
+                    width: iconSize,
+                    height: iconSize,
+                  ),
                 ),
               ),
               Expanded(
@@ -90,9 +86,5 @@ class SceneCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget _buildEmojiFallback(String emoji) {
-    return Text(emoji, style: const TextStyle(fontSize: 60));
   }
 }

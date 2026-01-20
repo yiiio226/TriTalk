@@ -113,4 +113,16 @@ class Env {
         return EnvProd.revenueCatGoogleApiKey;
     }
   }
+
+  /// Base URL for scene assets on Cloudflare R2
+  static String get sceneAssetsBaseUrl {
+    switch (EnvConfig.current) {
+      case Environment.local:
+        return EnvLocal.sceneAssetsBaseUrl;
+      case Environment.dev:
+        return EnvDev.sceneAssetsBaseUrl;
+      case Environment.prod:
+        return EnvProd.sceneAssetsBaseUrl;
+    }
+  }
 }

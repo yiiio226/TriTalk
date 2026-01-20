@@ -30,4 +30,10 @@ class EnvLocal {
   /// When true, Word TTS will skip local cache and local TTS engine,
   /// always using cloud API (GCP Vertex AI) for testing purposes.
   static const bool forceCloudTTS = false;
+
+  // Scene Assets (Cloudflare R2)
+  /// Base URL for scene icon assets stored on R2
+  /// Local dev uses the same R2 bucket as dev environment
+  static const String sceneAssetsBaseUrl =
+      'https://pub-a8095655217d4956a5672905a708a218.r2.dev/tritalk/dev/assets/';
 }
