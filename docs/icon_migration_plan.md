@@ -66,15 +66,15 @@ WHERE icon_path LIKE 'assets/images/%'
   AND source_type = 'standard'; -- 只更新来自官方的场景，防止误伤用户自定义上传(如果有)
 ```
 
-### 步骤 3: 前端代码改造 (Frontend Refactor)
+### 步骤 3: 前端代码改造 (Frontend Refactor) ✅ 已完成
 
-#### 3.1 引入依赖
+#### 3.1 引入依赖 (已完成)
 
-在 `pubspec.yaml` 中添加 `cached_network_image` 以支持网络图片缓存。
+在 `pubspec.yaml` 中添加 `cached_network_image` 以支持网络图片缓存。 (done)
 
 ```yaml
 dependencies:
-  cached_network_image: ^3.3.0
+  cached_network_image: ^3.4.1
 ```
 
 #### 3.2 配置 Base URL (Environment Configuration)

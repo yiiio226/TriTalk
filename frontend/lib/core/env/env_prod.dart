@@ -24,4 +24,11 @@ class EnvProd {
   // Debug flags - always false in production
   /// Force cloud TTS should always be false in production
   static const bool forceCloudTTS = false;
+
+  // Scene Assets (Cloudflare R2)
+  /// Base URL for scene icon assets stored on R2
+  /// TODO: Production should bind a custom domain (e.g. https://assets.tritalk.com/)
+  /// Currently using development R2 URL
+  static const String sceneAssetsBaseUrl =
+      'https://pub-a8095655217d4956a5672905a708a218.r2.dev/tritalk/dev/assets/';
 }
