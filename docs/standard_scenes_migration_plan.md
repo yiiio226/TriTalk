@@ -66,38 +66,42 @@ ALTER TABLE custom_scenarios
 
 ## 2. 实施进度 (Implementation Progress)
 
-### Phase 1: 数据库与迁移 (Database & Migration)
+### Phase 1: 数据库与迁移 (Database & Migration) ✅
 
-- [ ] **1.1 Schema 升级**
+- [x] **1.1 Schema 升级**
   - 创建 `standard_scenes` 并填入初始种子数据 (13个场景, 使用符合 BCP-47 的语言代码如 `en-US`)。
-  - 修改 `custom_scenarios` 表结构（增加字段）。
+  - 修改 `custom_scenarios` 表结构（增加 `origin_standard_id`, `source_type`, `icon_path`, `color`, `target_language`, `goal` 等字段）。
   - 废弃/删除 `user_scene_order`, `user_hidden_scenes` 表。
-- [ ] **1.2 逻辑实现**
-  - 编写 `handle_new_user` 函数和 Trigger (新用户自动复制)。
-  - 编写一次性迁移脚本 (One-off Migration): 为**现有开发用户**补全数据。
+- [x] **1.2 逻辑实现**
+  - 编写 `handle_new_user_scenes` 函数和 Trigger (新用户自动复制)。
+  - 编写一次性迁移脚本 (One-off Migration): 为现有开发用户补全数据。
+  - 迁移文件：`backend/supabase/migrations/20260120000016_create_standard_scenes.sql`
 
-### Phase 2: 后端 API (Backend API)
+### Phase 2: 后端 API (Backend API) ✅
 
-- [ ] **2.1 API 简化与规范**
+- [x] **2.1 API 简化与规范**
   - **无需新增 API Endpoint**。前端直接使用 `SupabaseClient` 查询 `custom_scenarios` 表。
-  - **查询逻辑**: 必须包含 `ORDER BY updated_at DESC` 以实现基于最近活跃时间的排序。
-  - **数据校验**: 确保返回的 `target_language` 字段符合 [BCP-47](https://tools.ietf.org/html/bcp47) 标准 (如 `en-US`, `ja-JP`, `zh-CN`)。
+  - **查询逻辑**: 使用 `.order('updated_at', ascending: false)` 实现基于最近活跃时间的排序。
+  - **数据校验**: `target_language` 字段符合 [BCP-47](https://tools.ietf.org/html/bcp47) 标准 (如 `en-US`, `ja-JP`, `zh-CN`)。
 
-### Phase 3: 前端改造 (Frontend Refactor)
+### Phase 3: 前端改造 (Frontend Refactor) ✅
 
-- [ ] **3.1 移除 Mock 逻辑**
-  - 删除 [lib/features/scenes/data/datasources/mock_scenes.dart](cci:7://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/datasources/mock_scenes.dart:0:0-0:0)
-  - 删除 [SceneService](cci:2://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:8:0-469:1) 中：
+- [x] **3.1 移除 Mock 逻辑**
+  - 删除 `lib/features/scenes/data/datasources/mock_scenes.dart`
+  - 重写 `SceneService`，移除：
     - `_hiddenScenesKeyBase` 常量和相关逻辑
     - `_orderKeyBase` 常量和 `_sceneOrder` Map
-    - [\_applyOrder()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:392:2-400:3) 方法
-    - [\_hideCloudStandard()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:348:2-360:3) 方法
-    - [\_syncOrderToCloud()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:403:2-419:3) 方法
-    - [isCustomScene()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:300:2-303:3) 方法（新架构下所有场景都在 custom_scenarios）
-- [ ] **3.2 统一数据源**
-  - [refreshScenes()](cci:1://file:///Users/yibocui/Desktop/tri/TriTalk/frontend/lib/features/scenes/data/scene_service.dart:102:2-193:3) 只查询 `custom_scenarios`，使用 `.order('updated_at', ascending: false)`
+    - `_applyOrder()` 方法
+    - `_hideCloudStandard()` 方法
+    - `_syncOrderToCloud()` 方法
+    - `isCustomScene()` 方法（新架构下所有场景都在 custom_scenarios）
+- [x] **3.2 统一数据源**
+  - `refreshScenes()` 只查询 `custom_scenarios`，使用 `.order('updated_at', ascending: false)`
   - 删除与 `mockScenes` 合并的代码
   - 删除对 `user_hidden_scenes` 和 `user_scene_order` 的查询
+- [x] **3.3 更新依赖代码**
+  - `home_screen.dart`: 移除 `isCustomScene()` 调用
+  - `i18n_scanner.dart`: 移除对已删除 mock_scenes.dart 的排除引用
 
 ## 3. 常见问答 (FAQ)
 

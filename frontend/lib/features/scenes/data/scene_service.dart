@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
-import 'package:frontend/features/scenes/data/datasources/mock_scenes.dart';
 import '../../../core/data/local/storage_key_service.dart';
 
+/// SceneService - Pure Clone Model
+///
+/// All scenes are stored in `custom_scenarios` table.
+/// Standard scenes are automatically cloned to user's custom_scenarios on registration.
+/// Sorting is based on `updated_at DESC` - most recently updated scenes appear first.
 class SceneService extends ChangeNotifier {
   static final SceneService _instance = SceneService._internal();
   factory SceneService() => _instance;
@@ -13,21 +17,11 @@ class SceneService extends ChangeNotifier {
     _init();
   }
 
-  static const String _storageKeyBase = 'custom_scenes_v1';
-  static const String _orderKeyBase = 'scene_order_v1';
-  static const String _activityKeyBase = 'scene_activity_v1';
-  static const String _hiddenScenesKeyBase = 'hidden_standard_scenes';
+  static const String _storageKeyBase = 'scenes_cache_v2';
   final _supabase = Supabase.instance.client;
 
-  // Start with mock scenes, custom scenes will be appended
-  List<Scene> _scenes = List.from(mockScenes);
+  List<Scene> _scenes = [];
   List<Scene> get scenes => List.unmodifiable(_scenes);
-
-  // Track scene order (scene_id -> position)
-  Map<String, int> _sceneOrder = {};
-
-  // Track last activity time for each scene
-  Map<String, DateTime> _lastActivityTimes = {};
 
   bool _isLoading = true;
   bool get isLoading => _isLoading;
@@ -37,60 +31,20 @@ class SceneService extends ChangeNotifier {
     refreshScenes();
   }
 
-  // Load custom scenes from local storage and append to mock scenes
+  /// Load scenes from local cache (for offline support)
   Future<void> _loadFromLocal() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storageKey = StorageKeyService();
 
-      // 1. Load Custom Scenes
       final String? jsonString = prefs.getString(
         storageKey.getUserScopedKey(_storageKeyBase),
       );
-      List<Scene> customScenes = [];
+
       if (jsonString != null) {
         final List<dynamic> decoded = jsonDecode(jsonString);
-        customScenes = decoded.map((e) => Scene.fromMap(e)).toList();
+        _scenes = decoded.map((e) => Scene.fromMap(e)).toList();
       }
-
-      // 2. Load Hidden Standard IDs
-      final String? hiddenJson = prefs.getString(
-        storageKey.getUserScopedKey(_hiddenScenesKeyBase),
-      );
-      Set<String> hiddenIds = {};
-      if (hiddenJson != null) {
-        final List<dynamic> decodedHidden = jsonDecode(hiddenJson);
-        hiddenIds = decodedHidden.cast<String>().toSet();
-      }
-
-      // 3. Load Scene Order
-      final String? orderJson = prefs.getString(
-        storageKey.getUserScopedKey(_orderKeyBase),
-      );
-      if (orderJson != null) {
-        final Map<String, dynamic> decoded = jsonDecode(orderJson);
-        _sceneOrder = decoded.map((key, value) => MapEntry(key, value as int));
-      }
-
-      // 4. Load Activity Times
-      final String? activityJson = prefs.getString(
-        storageKey.getUserScopedKey(_activityKeyBase),
-      );
-      if (activityJson != null) {
-        final Map<String, dynamic> decoded = jsonDecode(activityJson);
-        _lastActivityTimes = decoded.map(
-          (key, value) => MapEntry(key, DateTime.parse(value as String)),
-        );
-      }
-
-      // 5. Merge: (Standard - Hidden) + Custom
-      final visibleStandardScenes = mockScenes
-          .where((s) => !hiddenIds.contains(s.id))
-          .toList();
-      _scenes = [...visibleStandardScenes, ...customScenes];
-
-      // 6. Apply ordering
-      _applyOrder();
     } catch (e) {
       debugPrint('Error loading local scenes: $e');
     } finally {
@@ -99,21 +53,22 @@ class SceneService extends ChangeNotifier {
     }
   }
 
-  // Sync from cloud (background) -> Public for manual refresh
+  /// Refresh scenes from Supabase (Single Source of Truth)
+  /// Scenes are ordered by updated_at DESC (most recent first)
   Future<void> refreshScenes() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 1. Fetch Custom Scenes
-      final customResponse = await _supabase
+      // Query custom_scenarios with ORDER BY updated_at DESC
+      final response = await _supabase
           .from('custom_scenarios')
           .select()
           .eq('user_id', userId)
-          .timeout(const Duration(seconds: 5));
+          .order('updated_at', ascending: false)
+          .timeout(const Duration(seconds: 10));
 
-      List<Scene> cloudCustomScenes = [];
-      cloudCustomScenes = customResponse.map((e) {
+      _scenes = response.map<Scene>((e) {
         return Scene(
           id: e['id'],
           title: e['title'] ?? '',
@@ -126,155 +81,54 @@ class SceneService extends ChangeNotifier {
           difficulty: e['difficulty'] ?? 'Easy',
           goal: e['goal'] ?? '',
           iconPath: e['icon_path'] ?? '',
-          color: e['color'] ?? 0xFF000000,
-          targetLanguage: e['target_language'] ?? 'English',
+          color: e['color'] ?? 0xFFFFFFFF,
+          targetLanguage: e['target_language'] ?? 'en-US',
         );
       }).toList();
 
-      // 2. Fetch Hidden Standard Scenes
-      final hiddenResponse = await _supabase
-          .from('user_hidden_scenes')
-          .select('scene_id')
-          .eq('user_id', userId)
-          .timeout(const Duration(seconds: 5));
-
-      Set<String> hiddenIds = {};
-      hiddenIds = hiddenResponse.map((e) => e['scene_id'] as String).toSet();
-
-      // 3. Fetch Scene Order from Cloud
-      try {
-        final orderResponse = await _supabase
-            .from('user_scene_order')
-            .select('scene_order')
-            .eq('user_id', userId)
-            .maybeSingle()
-            .timeout(const Duration(seconds: 5));
-
-        if (orderResponse != null && orderResponse['scene_order'] != null) {
-          final Map<String, dynamic> cloudOrder = jsonDecode(
-            orderResponse['scene_order'],
-          );
-          // Merge cloud order with local order (cloud takes precedence)
-          _sceneOrder = cloudOrder.map(
-            (key, value) => MapEntry(key, value as int),
-          );
-          debugPrint(
-            'Fetched scene order from cloud: ${_sceneOrder.length} items',
-          );
-        }
-      } catch (e) {
-        debugPrint('Error fetching scene order from cloud (non-critical): $e');
-        // Continue with local order if cloud fetch fails
-      }
-
-      // 4. Merge: (Standard - Hidden) + Custom
-      // Cloud is the single source of truth for custom scenes
-      final visibleStandardScenes = mockScenes
-          .where((s) => !hiddenIds.contains(s.id))
-          .toList();
-
-      // Build final scene list: Visible Standard + Cloud Custom
-      // Cloud is authoritative - if a scene was deleted on another device,
-      // it won't be in cloudCustomScenes and won't appear here
-      List<Scene> finalScenes = [...visibleStandardScenes];
-      finalScenes.addAll(cloudCustomScenes);
-
-      _scenes = finalScenes;
-
-      // Apply ordering
-      _applyOrder();
-
+      _isLoading = false;
       notifyListeners();
 
-      // Update local cache with cloud data (cloud is source of truth)
-      await _saveLocal(cloudCustomScenes, hiddenIds.toList());
+      // Update local cache
+      await _saveLocal();
     } catch (e) {
-      debugPrint('Error fetching cloud scenes (non-critical): $e');
+      debugPrint('Error fetching scenes from cloud: $e');
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  // Save custom scenes AND hidden IDs locally
-  Future<void> _saveLocal(
-    List<Scene> customScenes,
-    List<String> hiddenIds,
-  ) async {
+  /// Save scenes to local cache
+  Future<void> _saveLocal() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storageKey = StorageKeyService();
 
-      // Save Custom Scenes
-      final String customJson = jsonEncode(
-        customScenes.map((e) => e.toMap()).toList(),
+      final String jsonString = jsonEncode(
+        _scenes.map((e) => e.toMap()).toList(),
       );
       await prefs.setString(
         storageKey.getUserScopedKey(_storageKeyBase),
-        customJson,
-      );
-
-      // Save Hidden IDs
-      final String hiddenJson = jsonEncode(hiddenIds);
-      await prefs.setString(
-        storageKey.getUserScopedKey(_hiddenScenesKeyBase),
-        hiddenJson,
-      );
-
-      // Save Scene Order
-      final String orderJson = jsonEncode(_sceneOrder);
-      await prefs.setString(
-        storageKey.getUserScopedKey(_orderKeyBase),
-        orderJson,
-      );
-
-      // Save Activity Times
-      final Map<String, String> activityMap = _lastActivityTimes.map(
-        (key, value) => MapEntry(key, value.toIso8601String()),
-      );
-      final String activityJson = jsonEncode(activityMap);
-      await prefs.setString(
-        storageKey.getUserScopedKey(_activityKeyBase),
-        activityJson,
+        jsonString,
       );
     } catch (e) {
       debugPrint('Error saving local scenes: $e');
     }
   }
 
+  /// Add a new scene (user-created)
   Future<void> addScene(Scene scene) async {
-    // Set activity time for new scene
-    _lastActivityTimes[scene.id] = DateTime.now();
-
-    // Move new scene to top by inserting at index 0
+    // Insert at top of list (optimistic UI)
     _scenes.insert(0, scene);
-
-    // Update order map to reflect new positions
-    _sceneOrder.clear();
-    for (int i = 0; i < _scenes.length; i++) {
-      _sceneOrder[_scenes[i].id] = i;
-    }
-
     notifyListeners();
 
-    // Update Local & Cloud
-    final mockIds = mockScenes.map((e) => e.id).toSet();
-    final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
-    final hiddenIds = mockScenes
-        .where((s) => !_scenes.any((current) => current.id == s.id))
-        .map((s) => s.id)
-        .toList();
-
-    await _saveLocal(customScenes, hiddenIds);
-    _addCloud(scene);
-    _syncOrderToCloud(); // Sync the new order to cloud
-  }
-
-  Future<void> _addCloud(Scene scene) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
       await _supabase
           .from('custom_scenarios')
-          .upsert({
+          .insert({
             'id': scene.id,
             'user_id': userId,
             'title': scene.title,
@@ -289,48 +143,29 @@ class SceneService extends ChangeNotifier {
             'color': scene.color,
             'icon_path': scene.iconPath,
             'target_language': scene.targetLanguage,
-            'updated_at': DateTime.now().toIso8601String(),
+            'source_type': 'custom', // User-created scene
           })
           .timeout(const Duration(seconds: 5));
+
+      await _saveLocal();
     } catch (e) {
-      debugPrint('Error syncing scene to cloud: $e');
+      debugPrint('Error adding scene to cloud: $e');
+      // Rollback optimistic update
+      _scenes.removeWhere((s) => s.id == scene.id);
+      notifyListeners();
     }
   }
 
-  // Helper to check if a scene is custom
-  bool isCustomScene(Scene scene) {
-    if (mockScenes.any((s) => s.id == scene.id)) return false;
-    return true;
-  }
-
+  /// Delete a scene
   Future<void> deleteScene(String sceneId) async {
-    // 1. Remove from in-memory list
+    // Store for rollback
+    final sceneIndex = _scenes.indexWhere((s) => s.id == sceneId);
+    final deletedScene = sceneIndex >= 0 ? _scenes[sceneIndex] : null;
+
+    // Optimistic UI update
     _scenes.removeWhere((s) => s.id == sceneId);
     notifyListeners();
 
-    // 2. Identify lists
-    final mockIds = mockScenes.map((e) => e.id).toSet();
-    final isCustom = !mockIds.contains(sceneId);
-
-    final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
-    // Hidden IDs are those in mockScenes but NOT in _scenes
-    final hiddenIds = mockScenes
-        .where((s) => !_scenes.any((current) => current.id == s.id))
-        .map((s) => s.id)
-        .toList();
-
-    // 3. Save Local
-    await _saveLocal(customScenes, hiddenIds);
-
-    // 4. Sync Cloud
-    if (isCustom) {
-      _deleteCloudCustom(sceneId);
-    } else {
-      _hideCloudStandard(sceneId);
-    }
-  }
-
-  Future<void> _deleteCloudCustom(String sceneId) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
@@ -341,130 +176,113 @@ class SceneService extends ChangeNotifier {
           .eq('user_id', userId)
           .eq('id', sceneId)
           .timeout(const Duration(seconds: 5));
+
+      await _saveLocal();
     } catch (e) {
       debugPrint('Error deleting scene from cloud: $e');
-    }
-  }
-
-  Future<void> _hideCloudStandard(String sceneId) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      await _supabase
-          .from('user_hidden_scenes')
-          .insert({'user_id': userId, 'scene_id': sceneId})
-          .timeout(const Duration(seconds: 5));
-    } catch (e) {
-      debugPrint('Error hiding standard scene: $e');
-    }
-  }
-
-  // Reorder scenes by moving a scene from one position to another
-  Future<void> reorderScenes(int oldIndex, int newIndex) async {
-    if (oldIndex == newIndex) return;
-
-    // Update the scenes list
-    final scene = _scenes.removeAt(oldIndex);
-    _scenes.insert(newIndex, scene);
-
-    // Update the order map
-    _sceneOrder.clear();
-    for (int i = 0; i < _scenes.length; i++) {
-      _sceneOrder[_scenes[i].id] = i;
-    }
-
-    notifyListeners();
-
-    // Save to local storage
-    final mockIds = mockScenes.map((e) => e.id).toSet();
-    final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
-    final hiddenIds = mockScenes
-        .where((s) => !_scenes.any((current) => current.id == s.id))
-        .map((s) => s.id)
-        .toList();
-    await _saveLocal(customScenes, hiddenIds);
-
-    // Sync to cloud
-    _syncOrderToCloud();
-  }
-
-  // Apply the saved order to the scenes list
-  void _applyOrder() {
-    if (_sceneOrder.isEmpty) return;
-
-    _scenes.sort((a, b) {
-      final orderA = _sceneOrder[a.id] ?? 999999;
-      final orderB = _sceneOrder[b.id] ?? 999999;
-      return orderA.compareTo(orderB);
-    });
-  }
-
-  // Sync scene order to cloud
-  Future<void> _syncOrderToCloud() async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      await _supabase
-          .from('user_scene_order')
-          .upsert({
-            'user_id': userId,
-            'scene_order': jsonEncode(_sceneOrder),
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .timeout(const Duration(seconds: 5));
-    } catch (e) {
-      debugPrint('Error syncing scene order to cloud: $e');
-    }
-  }
-
-  // Move scene to top when it has new activity
-  Future<void> moveSceneToTop(String sceneId) async {
-    // Update activity time
-    _lastActivityTimes[sceneId] = DateTime.now();
-
-    // Find the scene
-    final sceneIndex = _scenes.indexWhere((s) => s.id == sceneId);
-    if (sceneIndex == -1 || sceneIndex == 0) {
-      // Scene not found or already at top
-      if (sceneIndex == 0) {
-        // Just update activity time and save
-        final mockIds = mockScenes.map((e) => e.id).toSet();
-        final customScenes = _scenes
-            .where((s) => !mockIds.contains(s.id))
-            .toList();
-        final hiddenIds = mockScenes
-            .where((s) => !_scenes.any((current) => current.id == s.id))
-            .map((s) => s.id)
-            .toList();
-        await _saveLocal(customScenes, hiddenIds);
+      // Rollback optimistic update
+      if (deletedScene != null && sceneIndex >= 0) {
+        _scenes.insert(sceneIndex, deletedScene);
+        notifyListeners();
       }
-      return;
     }
+  }
 
-    // Move scene to top
+  /// Move scene to top (update updated_at to bring it to the top of the list)
+  Future<void> moveSceneToTop(String sceneId) async {
+    final sceneIndex = _scenes.indexWhere((s) => s.id == sceneId);
+    if (sceneIndex == -1 || sceneIndex == 0) return;
+
+    // Optimistic UI update
     final scene = _scenes.removeAt(sceneIndex);
     _scenes.insert(0, scene);
-
-    // Update order map
-    _sceneOrder.clear();
-    for (int i = 0; i < _scenes.length; i++) {
-      _sceneOrder[_scenes[i].id] = i;
-    }
-
     notifyListeners();
 
-    // Save to local storage
-    final mockIds = mockScenes.map((e) => e.id).toSet();
-    final customScenes = _scenes.where((s) => !mockIds.contains(s.id)).toList();
-    final hiddenIds = mockScenes
-        .where((s) => !_scenes.any((current) => current.id == s.id))
-        .map((s) => s.id)
-        .toList();
-    await _saveLocal(customScenes, hiddenIds);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
 
-    // Sync to cloud
-    _syncOrderToCloud();
+      // Update updated_at to bring scene to top (ORDER BY updated_at DESC)
+      await _supabase
+          .from('custom_scenarios')
+          .update({'updated_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('user_id', userId)
+          .eq('id', sceneId)
+          .timeout(const Duration(seconds: 5));
+
+      await _saveLocal();
+    } catch (e) {
+      debugPrint('Error moving scene to top: $e');
+      // Refresh from cloud to get correct order
+      await refreshScenes();
+    }
+  }
+
+  /// Reorder scenes - dragging a scene will move it to the top
+  ///
+  /// In the new architecture, any reorder action updates `updated_at` to NOW,
+  /// which moves the scene to the top of the list (ORDER BY updated_at DESC).
+  /// This creates a "most recently interacted" sorting behavior.
+  Future<void> reorderScenes(int oldIndex, int newIndex) async {
+    if (oldIndex == newIndex) return;
+    if (oldIndex < 0 || oldIndex >= _scenes.length) return;
+
+    final scene = _scenes[oldIndex];
+
+    // Delegate to moveSceneToTop - any drag action moves scene to top
+    await moveSceneToTop(scene.id);
+  }
+
+  /// Update a scene
+  Future<void> updateScene(Scene scene) async {
+    // Find and update in local list
+    final index = _scenes.indexWhere((s) => s.id == scene.id);
+    if (index == -1) return;
+
+    final oldScene = _scenes[index];
+    _scenes[index] = scene;
+    notifyListeners();
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _supabase
+          .from('custom_scenarios')
+          .update({
+            'title': scene.title,
+            'description': scene.description,
+            'ai_role': scene.aiRole,
+            'user_role': scene.userRole,
+            'initial_message': scene.initialMessage,
+            'emoji': scene.emoji,
+            'category': scene.category,
+            'difficulty': scene.difficulty,
+            'goal': scene.goal,
+            'color': scene.color,
+            'icon_path': scene.iconPath,
+            'target_language': scene.targetLanguage,
+            // updated_at is auto-updated by DB trigger
+          })
+          .eq('user_id', userId)
+          .eq('id', scene.id)
+          .timeout(const Duration(seconds: 5));
+
+      await _saveLocal();
+    } catch (e) {
+      debugPrint('Error updating scene: $e');
+      // Rollback
+      _scenes[index] = oldScene;
+      notifyListeners();
+    }
+  }
+
+  /// Get a scene by ID
+  Scene? getSceneById(String sceneId) {
+    try {
+      return _scenes.firstWhere((s) => s.id == sceneId);
+    } catch (_) {
+      return null;
+    }
   }
 }
