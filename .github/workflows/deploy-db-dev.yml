@@ -45,7 +45,7 @@ jobs:
           DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres?options=-c%20search_path%3Dtritalk_schema%2Cextensions%2Cpublic"
 
           echo "Full connection URL (masked password): postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres?options=-c%20search_path%3Dtritalk_schema%2Cextensions%2Cpublic"
-          echo "Using tritalk_schema for Dev environment"
+          echo "\n\n\nUsing tritalk_schema for Dev environment"
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
