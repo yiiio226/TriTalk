@@ -32,7 +32,8 @@ jobs:
 
           # No PGOPTIONS set - uses default PostgreSQL search_path (public schema)
           # This ensures all tables are created in 'public' for Production
-          npx supabase db push --db-url "$DB_URL"
+          # Use --include-all to allow migrations with earlier timestamps to be applied
+          npx supabase db push --db-url "$DB_URL" --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_PROD_DB_PASSWORD }}
