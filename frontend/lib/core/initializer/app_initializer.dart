@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/core/env/env.dart';
+import 'package:frontend/core/env/env_config.dart';
 import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
 import '../services/streaming_tts_service.dart';
@@ -74,6 +75,7 @@ class AppInitializer {
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
       debug: kDebugMode,
+      postgrestOptions: PostgrestClientOptions(schema: Env.supabaseSchema),
     );
   }
 
@@ -111,10 +113,12 @@ class AppBootstrap {
     }
 
     // Initialize Supabase
+    // Use schema from environment variable for consistency
     await Supabase.initialize(
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
       debug: kDebugMode,
+      postgrestOptions: PostgrestClientOptions(schema: Env.supabaseSchema),
     );
 
     // Initialize SharedPreferences

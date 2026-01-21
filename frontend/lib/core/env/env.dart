@@ -44,6 +44,9 @@ class Env {
   /// Supabase anonymous/publishable key
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
+  /// Supabase db schema name
+  static String get supabaseSchema => dotenv.env['SUPABASE_SCHEMA'] ?? '';
+
   /// Backend API URL
   static String get backendUrl => dotenv.env['BACKEND_URL'] ?? '';
 
