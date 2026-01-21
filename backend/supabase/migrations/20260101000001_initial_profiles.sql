@@ -26,10 +26,10 @@ create policy "Users can update own profile." on profiles
   for update using (auth.uid() = id);
 
 -- This triggers a function every time a user is created
-create function public.handle_new_user()
+create function handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, name, avatar_url)
+  insert into profiles (id, name, avatar_url)
   values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
   return new;
 end;
@@ -37,4 +37,4 @@ $$ language plpgsql security definer;
 
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+  for each row execute procedure handle_new_user();
