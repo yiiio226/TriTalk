@@ -8,12 +8,15 @@ import type { Env } from "../types";
 /**
  * Create a Supabase client with user's token for RLS.
  */
-export function createSupabaseClient(env: Env, token: string): SupabaseClient {
+export function createSupabaseClient(env: Env, token: string) {
   return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
     global: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+    },
+    db: {
+      schema: env.SUPABASE_SCHEMA || "public",
     },
   });
 }

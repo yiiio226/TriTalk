@@ -110,6 +110,8 @@ export interface Env {
   SUPABASE_ANON_KEY: string;
   // Service role key for backend operations (bypasses RLS)
   SUPABASE_SERVICE_ROLE_KEY?: string;
+  // Database schema (default: public, dev: tritalk_schema)
+  SUPABASE_SCHEMA?: string;
 
   // Azure Speech API credentials for Pronunciation Assessment
   AZURE_SPEECH_KEY?: string;

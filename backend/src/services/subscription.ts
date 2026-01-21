@@ -186,7 +186,7 @@ export function getPlatformFromStore(store?: string): Platform | null {
  * 插入或更新订阅记录
  */
 async function upsertSubscription(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   data: SubscriptionData,
 ): Promise<void> {
   const { error } = await supabase.from("user_subscriptions").upsert(
@@ -214,7 +214,7 @@ async function upsertSubscription(
  * 更新订阅状态
  */
 async function updateSubscriptionStatus(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   userId: string,
   status: SubscriptionStatus,
 ): Promise<void> {
@@ -240,7 +240,7 @@ async function updateSubscriptionStatus(
  * 将订阅重置为免费用户
  */
 async function updateSubscriptionToFree(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   userId: string,
 ): Promise<void> {
   const { error } = await supabase
@@ -262,7 +262,7 @@ async function updateSubscriptionToFree(
  * 转移订阅（用户账号迁移）
  */
 async function transferSubscription(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   oldUserId: string,
   newUserId: string,
 ): Promise<void> {
@@ -281,7 +281,7 @@ async function transferSubscription(
  * 记录 Webhook 事件日志
  */
 async function logWebhookEvent(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   event: RevenueCatWebhookEvent["event"],
   success: boolean,
   errorMessage?: string,
@@ -315,7 +315,7 @@ async function logWebhookEvent(
  * @returns Result with success status and optional error
  */
 export async function handleRevenueCatWebhook(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   payload: RevenueCatWebhookEvent,
 ): Promise<{ success: boolean; error?: string }> {
   const { event } = payload;
@@ -504,7 +504,7 @@ function getActiveEntitlements(
  * 前端可以直接检查 active_entitlements 或 is_premium
  */
 export async function getUserSubscription(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
   userId: string,
 ): Promise<UserSubscription> {
   const { data, error } = await supabase
@@ -544,7 +544,7 @@ export async function getUserSubscription(
  * 过期的订阅也会被正确处理。
  */
 export async function cleanupExpiredSubscriptions(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, string, any>,
 ): Promise<{ cleaned: number; errors: number }> {
   let cleaned = 0;
   let errors = 0;

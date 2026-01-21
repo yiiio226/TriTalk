@@ -1739,6 +1739,11 @@ app.post("/webhook/revenuecat", async (c) => {
     const supabase = createClient(
       env.SUPABASE_URL,
       env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        db: {
+          schema: env.SUPABASE_SCHEMA || "public",
+        },
+      },
     );
 
     const result = await handleRevenueCatWebhook(supabase, payload);
@@ -2033,6 +2038,11 @@ export default {
     const supabase = createClient(
       env.SUPABASE_URL,
       env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        db: {
+          schema: env.SUPABASE_SCHEMA || "public",
+        },
+      },
     );
 
     // 执行订阅清理
