@@ -54,7 +54,7 @@ jobs:
           # 2. Dynamically inject search_path into migration files (below)
           #    This ensures schema isolation even if the pooler ignores the connection string params
           echo "Injecting schema config to migrations..."
-          sed -i '1s/^/SET search_path TO tritalk_schema, extensions, public;\n/' backend/supabase/migrations/*.sql
+          sed -i '1s/^/SET search_path TO tritalk_schema, extensions, public;\n/' supabase/migrations/*.sql
 
           # Use --include-all to allow migrations with earlier timestamps to be applied
           npx supabase db push --db-url "$DB_URL" --include-all
