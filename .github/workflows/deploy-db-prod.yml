@@ -30,8 +30,13 @@ jobs:
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
-          # No PGOPTIONS set - uses default PostgreSQL search_path (public schema)
-          # This ensures all tables are created in 'public' for Production
+          # CRITICAL: Remove tritalk_schema before migrations to force all tables into public schema
+          # This ensures that even if migrations have "SET search_path TO tritalk_schema...",
+          # they will fall back to public when tritalk_schema doesn't exist
+          echo "Ensuring tritalk_schema doesn't exist in Prod..."
+          npx --yes supabase db execute --db-url "$DB_URL" --sql "DROP SCHEMA IF EXISTS tritalk_schema CASCADE;"
+
+          # Now run migrations - all tables will be created in public schema
           # Use --include-all to allow migrations with earlier timestamps to be applied
           npx supabase db push --db-url "$DB_URL" --include-all
         env:

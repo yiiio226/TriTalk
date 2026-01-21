@@ -41,17 +41,19 @@ jobs:
           echo "First 3 chars of encoded password: ${ENC_PASSWORD:0:3}***"
 
           # Use AWS IPv4 pooler hostname since GitHub Actions doesn't support IPv6
-          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+          # Add search_path in connection string as additional safeguard
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres?options=-c%20search_path%3Dtritalk_schema%2Cextensions%2Cpublic"
 
-          echo "Full connection URL (masked password): postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
-          echo "Using search_path: tritalk_schema,extensions,public (via PGOPTIONS)"
+          echo "Full connection URL (masked password): postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres?options=-c%20search_path%3Dtritalk_schema%2Cextensions%2Cpublic"
+          echo "Using tritalk_schema for Dev environment"
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
 
-          # Set search_path via PGOPTIONS for Dev environment
-          # This ensures all migrations run in tritalk_schema instead of public
+          # Double protection for schema isolation:
+          # 1. Connection URL includes search_path parameter (above)
+          # 2. Migration files start with "SET search_path TO tritalk_schema, extensions, public;"
           # Use --include-all to allow migrations with earlier timestamps to be applied
-          PGOPTIONS="-c search_path=tritalk_schema,extensions,public" npx supabase db push --db-url "$DB_URL" --include-all
+          npx supabase db push --db-url "$DB_URL" --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DEV_DB_PASSWORD }}
