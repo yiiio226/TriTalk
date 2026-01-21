@@ -12,7 +12,7 @@ import type { Env } from "../types";
  * Create a Supabase admin client that bypasses RLS.
  * Use this for admin operations on protected tables like `standard_scenes`.
  */
-export function createSupabaseAdminClient(env: Env): SupabaseClient {
+export function createSupabaseAdminClient(env: Env) {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
   }
@@ -21,6 +21,9 @@ export function createSupabaseAdminClient(env: Env): SupabaseClient {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+    },
+    db: {
+      schema: env.SUPABASE_SCHEMA || "public",
     },
   });
 }
