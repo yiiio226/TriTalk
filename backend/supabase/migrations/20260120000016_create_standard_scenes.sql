@@ -91,11 +91,11 @@ CREATE INDEX IF NOT EXISTS idx_custom_scenarios_updated_user ON custom_scenarios
 -- 4. FUNCTION & TRIGGER: AUTO-CLONE FOR NEW USERS
 -- ============================================
 
-CREATE OR REPLACE FUNCTION public.handle_new_user_scenes() 
+CREATE OR REPLACE FUNCTION handle_new_user_scenes() 
 RETURNS TRIGGER AS $$
 BEGIN
   -- Insert all standard scenes into custom_scenarios for the new user
-  INSERT INTO public.custom_scenarios (
+  INSERT INTO custom_scenarios (
     user_id,
     title,
     description,
@@ -131,7 +131,7 @@ BEGIN
     'standard', -- Mark as cloned from standard
     -- Use ROW_NUMBER offset to maintain predictable initial order (first scene = newest)
     NOW() - (ROW_NUMBER() OVER (ORDER BY s.id) * INTERVAL '1 second')
-  FROM public.standard_scenes s;
+  FROM standard_scenes s;
 
   RETURN NEW;
 END;
@@ -141,7 +141,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 DROP TRIGGER IF EXISTS on_auth_user_created_scenes ON auth.users;
 CREATE TRIGGER on_auth_user_created_scenes
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_scenes();
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user_scenes();
 
 
 -- ============================================
@@ -156,7 +156,7 @@ BEGIN
   FOR user_record IN SELECT id FROM auth.users LOOP
     
     -- Insert standard scenes for this user IF they don't have them already
-    INSERT INTO public.custom_scenarios (
+    INSERT INTO custom_scenarios (
       user_id,
       title,
       description,
@@ -192,9 +192,9 @@ BEGIN
       'standard', -- Mark as cloned from standard
       -- Use ROW_NUMBER offset to maintain predictable initial order (first scene = newest)
       NOW() - (ROW_NUMBER() OVER (ORDER BY s.id) * INTERVAL '1 second')
-    FROM public.standard_scenes s
+    FROM standard_scenes s
     WHERE NOT EXISTS (
-      SELECT 1 FROM public.custom_scenarios cs 
+      SELECT 1 FROM custom_scenarios cs 
       WHERE cs.user_id = user_record.id 
       AND cs.origin_standard_id = s.id
     );
