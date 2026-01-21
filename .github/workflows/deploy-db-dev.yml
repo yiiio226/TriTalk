@@ -41,9 +41,10 @@ jobs:
           echo "First 3 chars of encoded password: ${ENC_PASSWORD:0:3}***"
 
           # Use AWS IPv4 pooler hostname since GitHub Actions doesn't support IPv6
-          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+          # Force search_path to tritalk_schema to isolate Dev environment in a shared DB
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENC_PASSWORD}@aws-0-us-west-2.pooler.supabase.com:5432/postgres?options=-c%20search_path%3Dtritalk_schema,extensions"
 
-          echo "Full connection URL (masked password): postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+          echo "Full connection URL (masked password): postgresql://postgres.${SUPABASE_PROJECT_REF}:***@aws-0-us-west-2.pooler.supabase.com:5432/postgres?options=-c%20search_path%3Dtritalk_schema,extensions"
 
           npx supabase link --project-ref $SUPABASE_PROJECT_REF
           npx supabase db push --db-url "$DB_URL"

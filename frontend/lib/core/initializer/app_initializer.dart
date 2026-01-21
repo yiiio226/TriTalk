@@ -74,6 +74,7 @@ class AppInitializer {
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
       debug: kDebugMode,
+      postgrestOptions: PostgrestClientOptions(schema: Env.supabaseSchema),
     );
   }
 
@@ -107,14 +108,18 @@ class AppBootstrap {
     // Initialize environment configuration first (loads .env file)
     await Env.init();
     if (kDebugMode) {
-      debugPrint('AppBootstrap: Environment loaded (${Env.name})');
+      debugPrint(
+        '\n\n\n ✅✅AppBootstrap: Environment loaded. with schema (${Env.name}), (${Env.supabaseSchema})',
+      );
     }
 
     // Initialize Supabase
+    // Use schema from environment variable for consistency
     await Supabase.initialize(
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
       debug: kDebugMode,
+      postgrestOptions: PostgrestClientOptions(schema: Env.supabaseSchema),
     );
 
     // Initialize SharedPreferences
