@@ -29,6 +29,7 @@ class ChatBubble extends StatefulWidget {
   final VoidCallback?
   onContentChanged; // Callback when content changes (for auto-scroll)
   final String targetLanguage; // Language for assessment/TTS
+  final bool isSending; // Whether a message is currently being sent (for loading state)
 
   const ChatBubble({
     super.key,
@@ -42,6 +43,7 @@ class ChatBubble extends StatefulWidget {
     this.onSelectionToggle,
     this.onContentChanged,
     this.targetLanguage = 'en-US', // Default for backward compatibility
+    this.isSending = false, // Default to false
   });
 
   @override
@@ -590,6 +592,7 @@ class _ChatBubbleState extends State<ChatBubble>
                     ),
                   ],
                   // Analyze button for user messages (only show when no feedback exists)
+                  // Show loading state if message is being sent (waiting for feedback)
                   if (isUser &&
                       !widget.message.isLoading &&
                       !hasFeedback &&
@@ -602,14 +605,16 @@ class _ChatBubbleState extends State<ChatBubble>
                         children: [
                           // Analyze button
                           GestureDetector(
-                            onTap: () => widget.onShowFeedback?.call(),
+                            onTap: (widget.isSending || widget.message.isAnalyzing)
+                                ? null
+                                : () => widget.onShowFeedback?.call(),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: widget.message.isAnalyzing
+                                color: (widget.isSending || widget.message.isAnalyzing)
                                     ? AppColors.ln200
                                     : AppColors.ln100,
                                 borderRadius: BorderRadius.circular(16),
@@ -617,7 +622,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (widget.message.isAnalyzing)
+                                  if (widget.isSending || widget.message.isAnalyzing)
                                     const SizedBox(
                                       width: 10,
                                       height: 10,
@@ -637,7 +642,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                     ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    widget.message.isAnalyzing
+                                    (widget.isSending || widget.message.isAnalyzing)
                                         ? "Analyzing..."
                                         : "Analyze",
                                     style: const TextStyle(

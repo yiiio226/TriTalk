@@ -200,13 +200,20 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       final finalMessages = List<Message>.from(state.messages)
         ..removeWhere((m) => m.id == loadingId);
 
+      // Update user message with feedback (feedback is about the user's message, not AI's)
+      final userMsgIndex = finalMessages.indexWhere((m) => m.id == userMsgId);
+      if (userMsgIndex != -1 && response.feedback != null) {
+        finalMessages[userMsgIndex] = finalMessages[userMsgIndex].copyWith(
+          feedback: response.feedback,
+        );
+      }
+
       final aiMessage = Message(
         id: _uuid.v4(),
         content: response.message,
         isUser: false,
         timestamp: DateTime.now(),
         translation: response.translation,
-        feedback: response.feedback,
         isAnimated: true,
       );
 
@@ -477,7 +484,11 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       ..add(userMessage)
       ..add(aiMessage);
 
-    state = state.copyWith(messages: currentMessages, isRecording: false);
+    state = state.copyWith(
+      messages: currentMessages,
+      isRecording: false,
+      isSending: true, // Set sending state for loading UI
+    );
 
     _repository.syncMessages(sceneKey: _sceneId, messages: currentMessages);
 
@@ -501,6 +512,9 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
         }
       }
 
+      // Clear sending state
+      state = state.copyWith(isSending: false);
+
       // Sync messages after stream completes to save AI reply to database
       _repository.syncMessages(sceneKey: _sceneId, messages: state.messages);
 
@@ -519,6 +533,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
         state = state.copyWith(
           messages: errorMessages,
           error: "Voice message failed: $e",
+          isSending: false, // Clear sending state on error
         );
         _repository.syncMessages(sceneKey: _sceneId, messages: errorMessages);
       } else {
