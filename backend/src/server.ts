@@ -605,14 +605,34 @@ app.post("/chat/send-voice", async (c) => {
             replyText.substring(0, 50),
           );
 
-          // Send combined metadata with transcript only
-          // Note: Analysis is NOT included here - it's triggered on-demand when user clicks "Analyze"
+          // Build feedback object from analysis data (same as /chat/send)
+          const feedback = {
+            is_perfect: analysisData.is_perfect || false,
+            corrected_text: sanitizeText(analysisData.corrected_text || transcript),
+            native_expression: sanitizeText(analysisData.native_expression || ""),
+            explanation: sanitizeText(
+              analysisData.grammar_explanation || analysisData.explanation || "",
+            ),
+            grammar_explanation: sanitizeText(
+              analysisData.grammar_explanation || analysisData.explanation || "",
+            ),
+            native_expression_reason: sanitizeText(
+              analysisData.native_expression_reason || "",
+            ),
+            example_answer: sanitizeText(analysisData.example_answer || ""),
+            example_answer_reason: sanitizeText(
+              analysisData.example_answer_reason || "",
+            ),
+          };
+
+          // Send combined metadata with transcript and feedback
           await stream.writeln(
             JSON.stringify({
               type: "metadata",
               data: {
                 transcript, // From Step 1
                 translation: null, // TODO: Add translation step if needed
+                review_feedback: feedback, // Grammar feedback for automatic display
               },
             }),
           );

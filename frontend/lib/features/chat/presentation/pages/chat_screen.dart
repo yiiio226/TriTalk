@@ -645,6 +645,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               targetLanguage:
                                   widget.scene.targetLanguage, // Pass language
                               isMultiSelectMode: _isMultiSelectMode,
+                              isSending: _state.isSending, // Pass sending state
                               onLongPress:
                                   null, // Handled by outer GestureDetector
                               onSelectionToggle:

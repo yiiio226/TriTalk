@@ -604,44 +604,38 @@ class ApiService {
                 // Parse metadata event
                 final data = json['data'];
                 if (data != null) {
-                  final analysis = data['analysis'];
-
-                  // Only create feedback objects if analysis exists
-                  VoiceFeedback? voiceFeedback;
+                  // Try to get review_feedback directly (new format)
                   ReviewFeedback? reviewFeedback;
-
-                  if (analysis != null) {
-                    voiceFeedback = VoiceFeedback(
-                      pronunciationScore: 0,
-                      correctedText: analysis['corrected_text'] ?? '',
-                      nativeExpression: analysis['native_expression'] ?? '',
-                      feedback: analysis['explanation'] ?? '',
-                      sentenceBreakdown: [],
-                      errorFocus: null,
-                    );
-
-                    reviewFeedback = ReviewFeedback(
-                      isPerfect: analysis['is_perfect'] ?? false,
-                      correctedText: analysis['corrected_text'] ?? '',
-                      nativeExpression: analysis['native_expression'] ?? '',
-                      explanation: analysis['explanation'] ?? '',
-                      exampleAnswer: analysis['example_answer'] ?? '',
-                    );
+                  if (data['review_feedback'] != null) {
+                    reviewFeedback = ReviewFeedback.fromJson(data['review_feedback']);
+                  } else {
+                    // Fallback to legacy analysis format
+                    final analysis = data['analysis'];
+                    if (analysis != null) {
+                      reviewFeedback = ReviewFeedback(
+                        isPerfect: analysis['is_perfect'] ?? false,
+                        correctedText: analysis['corrected_text'] ?? '',
+                        nativeExpression: analysis['native_expression'] ?? '',
+                        explanation: analysis['explanation'] ?? '',
+                        exampleAnswer: analysis['example_answer'] ?? '',
+                      );
+                    }
                   }
+
+                  // Create default voice feedback (will be replaced by Azure data if available)
+                  final voiceFeedback = VoiceFeedback(
+                    pronunciationScore: 0,
+                    correctedText: '',
+                    nativeExpression: '',
+                    feedback: '',
+                    sentenceBreakdown: [],
+                    errorFocus: null,
+                  );
 
                   final response = VoiceMessageResponse(
                     message: '',
                     translation: data['translation'],
-                    voiceFeedback:
-                        voiceFeedback ??
-                        VoiceFeedback(
-                          pronunciationScore: 0,
-                          correctedText: '',
-                          nativeExpression: '',
-                          feedback: '',
-                          sentenceBreakdown: [],
-                          errorFocus: null,
-                        ),
+                    voiceFeedback: voiceFeedback,
                     reviewFeedback: reviewFeedback,
                     transcript: data['transcript'],
                   );

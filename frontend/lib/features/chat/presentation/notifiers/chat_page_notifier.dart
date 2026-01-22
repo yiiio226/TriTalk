@@ -200,13 +200,20 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       final finalMessages = List<Message>.from(state.messages)
         ..removeWhere((m) => m.id == loadingId);
 
+      // Update user message with feedback (feedback is about the user's message, not AI's)
+      final userMsgIndex = finalMessages.indexWhere((m) => m.id == userMsgId);
+      if (userMsgIndex != -1 && response.feedback != null) {
+        finalMessages[userMsgIndex] = finalMessages[userMsgIndex].copyWith(
+          feedback: response.feedback,
+        );
+      }
+
       final aiMessage = Message(
         id: _uuid.v4(),
         content: response.message,
         isUser: false,
         timestamp: DateTime.now(),
         translation: response.translation,
-        feedback: response.feedback,
         isAnimated: true,
       );
 
