@@ -484,7 +484,11 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       ..add(userMessage)
       ..add(aiMessage);
 
-    state = state.copyWith(messages: currentMessages, isRecording: false);
+    state = state.copyWith(
+      messages: currentMessages,
+      isRecording: false,
+      isSending: true, // Set sending state for loading UI
+    );
 
     _repository.syncMessages(sceneKey: _sceneId, messages: currentMessages);
 
@@ -508,6 +512,9 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
         }
       }
 
+      // Clear sending state
+      state = state.copyWith(isSending: false);
+
       // Sync messages after stream completes to save AI reply to database
       _repository.syncMessages(sceneKey: _sceneId, messages: state.messages);
 
@@ -526,6 +533,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
         state = state.copyWith(
           messages: errorMessages,
           error: "Voice message failed: $e",
+          isSending: false, // Clear sending state on error
         );
         _repository.syncMessages(sceneKey: _sceneId, messages: errorMessages);
       } else {
