@@ -615,7 +615,7 @@ class _ChatBubbleState extends State<ChatBubble>
                               ),
                               decoration: BoxDecoration(
                                 color: (widget.isSending || widget.message.isAnalyzing)
-                                    ? AppColors.ln200
+                                    ? AppColors.ln100
                                     : AppColors.ln100,
                                 borderRadius: BorderRadius.circular(16),
                               ),
