@@ -115,12 +115,23 @@ class AppBootstrap {
 
     // Initialize Supabase
     // Use schema from environment variable for consistency
+    if (kDebugMode) {
+      debugPrint('🔍 [Supabase] Initializing with:');
+      debugPrint('🔍 [Supabase] URL: ${Env.supabaseUrl}');
+      debugPrint('🔍 [Supabase] Schema: ${Env.supabaseSchema}');
+    }
+    
     await Supabase.initialize(
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
       debug: kDebugMode,
       postgrestOptions: PostgrestClientOptions(schema: Env.supabaseSchema),
     );
+    
+    if (kDebugMode) {
+      debugPrint('🔍 [Supabase] ✅ Initialization complete');
+      debugPrint('🔍 [Supabase] Client schema: ${Supabase.instance.client.rest.schema}');
+    }
 
     // Initialize SharedPreferences
     _prefs = await SharedPreferences.getInstance();
