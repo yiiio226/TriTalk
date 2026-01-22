@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,15 +59,29 @@ class SceneService extends ChangeNotifier {
   Future<void> refreshScenes() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        debugPrint('🔍 [SceneService] No user ID, skipping refresh');
+        return;
+      }
+
+      debugPrint('🔍 [SceneService] Starting refresh for user: $userId');
+      debugPrint('🔍 [SceneService] Schema: ${_supabase.rest.schema}');
+      
+      final startTime = DateTime.now();
 
       // Query custom_scenarios with ORDER BY updated_at DESC
+      debugPrint('🔍 [SceneService] Executing query...');
       final response = await _supabase
           .from('custom_scenarios')
           .select()
           .eq('user_id', userId)
           .order('updated_at', ascending: false)
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30)); // Increased from 10s to handle slow networks
+
+      final duration = DateTime.now().difference(startTime);
+      debugPrint('🔍 [SceneService] Query completed in ${duration.inMilliseconds}ms');
+      debugPrint('🔍 [SceneService] Response type: ${response.runtimeType}');
+      debugPrint('🔍 [SceneService] Response length: ${response is List ? response.length : 'N/A'}');
 
       _scenes = response.map<Scene>((e) {
         return Scene(
@@ -86,13 +101,18 @@ class SceneService extends ChangeNotifier {
         );
       }).toList();
 
+      debugPrint('🔍 [SceneService] ✅ Successfully loaded ${_scenes.length} scenes');
       _isLoading = false;
       notifyListeners();
 
       // Update local cache
       await _saveLocal();
     } catch (e) {
-      debugPrint('Error fetching scenes from cloud: $e');
+      debugPrint('🔍 [SceneService] ❌ Error fetching scenes from cloud: $e');
+      debugPrint('🔍 [SceneService] Error type: ${e.runtimeType}');
+      if (e is TimeoutException) {
+        debugPrint('🔍 [SceneService] ⏱️ Query timed out after 10 seconds');
+      }
       _isLoading = false;
       notifyListeners();
     }

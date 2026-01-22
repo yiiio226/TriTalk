@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -25,7 +26,7 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   /// Load initial messages for the scene
   /// Forces sync from cloud to ensure latest messages are loaded across devices
   Future<void> loadMessages() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null, showErrorBanner: false);
     try {
       // Force sync from cloud to get latest messages (important for cross-device sync)
       final messages = await _repository.fetchHistory(
@@ -33,14 +34,31 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
         forceSync: true,
       );
 
-      state = state.copyWith(isLoading: false, messages: messages);
+      state = state.copyWith(
+        isLoading: false,
+        messages: messages,
+        error: null,
+        showErrorBanner: false,
+      );
 
       // If this is a new conversation (no messages), automatically generate AI's first message
       if (messages.isEmpty) {
         await _generateInitialAIMessage();
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      final errorMessage = e.toString();
+      final isTimeout = errorMessage.contains('TimeoutException') || 
+                        errorMessage.contains('timed out') ||
+                        errorMessage.contains('timeout');
+      
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMessage,
+        showErrorBanner: true,
+        isTimeoutError: isTimeout,
+      );
+      
+      debugPrint('🔍 [ChatPageNotifier] Load failed: $errorMessage (timeout: $isTimeout)');
     }
   }
 
