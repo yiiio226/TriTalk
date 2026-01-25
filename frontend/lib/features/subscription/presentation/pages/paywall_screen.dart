@@ -204,7 +204,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final activePro = _isYearly ? proYearly : proMonthly;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           // Background Blobs
@@ -409,17 +410,21 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       : () => _purchasePackage(activePackage),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       _selectedTier == SubscriptionTier.pro
                           ? "Start 7-Day Free Trial"
                           : "Subscribe",
-                      style: AppTypography.button.copyWith(color: Colors.white),
+                      style: AppTypography.button.copyWith(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
