@@ -198,7 +198,9 @@ enum PaidFeature {
 
 ### 10.3 使用方法 (Usage)
 
-在 UI 层（如按钮点击事件）中调用 `FeatureGate().performWithFeatureCheck`：
+`FeatureGate().performWithFeatureCheck` 支持两种调用方式：**回调模式**（适合同步 UI 操作）和 **Await 模式**（适合异步 API 调用）。
+
+**方式 1：回调模式 (Callback Style)** - 适合导航、简单的 UI 更新
 
 ```dart
 // 示例：点击"创建场景"按钮
@@ -209,16 +211,32 @@ FeatureGate().performWithFeatureCheck(
     // ✅ 权限验证通过，执行原有逻辑
     Navigator.pushNamed(context, '/create_scenario');
   },
-  onPaywallCancelled: () {
-    // (可选) 用户关闭 Paywall 且未付费
-    debugPrint("用户取消了订阅");
-  },
 );
+```
+
+**方式 2：Await 模式 (Async/Await Style)** - 适合异步操作 (如发送请求)
+
+```dart
+// 示例：发送聊天消息
+void _sendMessage() async {
+  // 1. 先检查权限
+  final granted = await FeatureGate().performWithFeatureCheck(
+    context,
+    feature: PaidFeature.dailyConversation,
+  );
+
+  // 2. 根据结果执行异步逻辑
+  if (granted) {
+    await chatNotifier.sendChat(text);
+  }
+}
 ```
 
 ### 10.4 内部逻辑流程
 
-1. **检查 Debug 标记**: 若 `Env.forcePaywall` 为 true，强制弹窗。
+方法签名：`Future<bool> performWithFeatureCheck(...)`
+
+1. **检查 Debug 标记**: 若 `Env.forcePaywall` 为 true，强制弹窗，返回 `false`。
 2. **检查硬性门槛 (Gatekeeping)**:
    - 例如 `pitchAnalysis` 必须是 Plus 或 Pro 用户。
    - 不满足 -> 弹出 Paywall。
@@ -226,9 +244,9 @@ FeatureGate().performWithFeatureCheck(
    - 读取 `UsageService` 获取今日已用次数。
    - 对比当前等级的配额 (Free/Plus/Pro)。
    - 已超限 -> 弹出 Paywall。
-4. **执行回调**:
-   - 如果用户已付费或未超限 -> 执行 `onGranted()`。
-   - 如果用户在 Paywall 页面完成了订阅 -> 自动重新检查 -> 满足条件则执行 `onGranted()`。
+4. **结果处理**:
+   - **通过/已付费** -> 调用 `onGranted` (如有)，并返回 `true`。
+   - **取消/未付费** -> 调用 `onPaywallCancelled` (如有)，并返回 `false`。
 
 ### 10.5 配额配置 (FeatureGate)
 

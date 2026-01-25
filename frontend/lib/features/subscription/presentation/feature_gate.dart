@@ -72,22 +72,40 @@ class FeatureGate {
 
   /// Try to perform a restricted action
   ///
+  /// Returns [true] if access is granted (user is eligible or upgraded via Paywall),
+  /// [false] if access is denied or cancelled.
+  ///
+  /// Usage:
+  /// ```dart
+  /// // Style 1: Callback (Synchronous UI actions like Navigation)
+  /// FeatureGate().performWithFeatureCheck(
+  ///   context,
+  ///   feature: PaidFeature.customScenarios,
+  ///   onGranted: () => Navigator.pushNamed(context, '...'),
+  /// );
+  ///
+  /// // Style 2: Await (Async API calls)
+  /// if (await FeatureGate().performWithFeatureCheck(context, feature: ...)) {
+  ///   await chatNotifier.sendChat(text);
+  /// }
+  /// ```
+  ///
   /// Flows:
   /// 1. Check Env.forcePaywall override
   /// 2. Check Feature Access (Gatekeeping) -> Show Paywall
   /// 3. Check Quota Limits -> Show Paywall
-  /// 4. Grant Access -> Call [onGranted]
-  Future<void> performWithFeatureCheck(
+  /// 4. Grant Access -> Call [onGranted] (if provided) and return [true]
+  Future<bool> performWithFeatureCheck(
     BuildContext context, {
     required PaidFeature feature,
-    required VoidCallback onGranted,
+    VoidCallback? onGranted,
     VoidCallback? onPaywallCancelled,
   }) async {
     // 0. Debug: Force Paywall
     if (Env.forcePaywall) {
       await PaywallRoute.show(context, reason: "Debug: Force Paywall");
       onPaywallCancelled?.call();
-      return;
+      return false;
     }
 
     // 1. Check Hard Gates
@@ -95,11 +113,12 @@ class FeatureGate {
       await PaywallRoute.show(context, reason: "Unlock ${feature.name}");
       // Check if user subscribed after paywall
       if (hasAccess(feature)) {
-        onGranted();
+        onGranted?.call();
+        return true;
       } else {
         onPaywallCancelled?.call();
+        return false;
       }
-      return;
     }
 
     // 2. Check Quota (Usage)
@@ -114,14 +133,16 @@ class FeatureGate {
       // Re-check after paywall (user might have upgraded)
       final newLimit = getQuotaLimit(feature);
       if (newLimit == -1 || used < newLimit) {
-        onGranted();
+        onGranted?.call();
+        return true;
       } else {
         onPaywallCancelled?.call();
+        return false;
       }
-      return;
     }
 
     // 3. Granted
-    onGranted();
+    onGranted?.call();
+    return true;
   }
 }
