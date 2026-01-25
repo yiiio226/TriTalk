@@ -248,19 +248,21 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ), // Added bottom padding for footer
                     child: Column(
                       children: [
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
                         Text(
                           "Unlock Your Full Potential",
                           style: AppTypography.headline2.copyWith(
-                            color: AppColors.primary,
+                            color: AppColors.ln900,
+                            letterSpacing: -0.5,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           "Master language with AI-powered practice",
                           style: AppTypography.body1.copyWith(
                             color: AppColors.ln500,
+                            height: 1.5,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -374,8 +376,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Widget _buildBillingOption(Package package, bool isYearlyOption) {
-    final isSelected = _isYearly == isYearlyOption;
+    // Logic: Yearly = Green (Savings), Monthly = Blue (Standard)
+    final bool isSelected = _isYearly == isYearlyOption;
     final product = package.storeProduct;
+
+    // Semantic colors based on option type
+    final Color activeBg = isYearlyOption ? AppColors.lg50 : AppColors.lb50;
+    final Color activeBorder = isYearlyOption
+        ? AppColors.lg500
+        : AppColors.lb500;
+    final Color activeText = isYearlyOption ? AppColors.lg800 : AppColors.lb800;
+    final Color activeIcon = isYearlyOption ? AppColors.lg500 : AppColors.lb500;
+
     // Calculate monthly equivalent for yearly
     String subtitle = "";
     if (isYearlyOption) {
@@ -385,41 +397,34 @@ class _PaywallScreenState extends State<PaywallScreen> {
     }
 
     return GestureDetector(
-      onTap: () => setState(() => _isYearly = isYearlyOption),
-      child: Container(
+      onTap: () {
+        setState(() => _isYearly = isYearlyOption);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          color: isSelected ? activeBg : Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isSelected
-                ? (_selectedTier == SubscriptionTier.pro
-                      ? AppColors.secondary
-                      : AppColors.primary)
-                : AppColors.ln200,
+            color: isSelected ? activeBorder : AppColors.ln200,
             width: isSelected ? 2 : 1,
           ),
-          color: isSelected
-              ? (_selectedTier == SubscriptionTier.pro
-                    ? AppColors.secondary.withOpacity(0.05)
-                    : AppColors.primary.withOpacity(0.05))
-              : Colors.white,
+          boxShadow: isSelected ? AppShadows.sm : [],
         ),
         child: Row(
           children: [
             // Radio Circle
             Container(
-              width: 20,
-              height: 20,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected
-                      ? (_selectedTier == SubscriptionTier.pro
-                            ? AppColors.secondary
-                            : AppColors.primary)
-                      : AppColors.ln300,
+                  color: isSelected ? activeIcon : AppColors.ln300,
                   width: isSelected ? 6 : 1.5,
                 ),
+                color: Colors.white,
               ),
             ),
             const SizedBox(width: 16),
@@ -427,21 +432,46 @@ class _PaywallScreenState extends State<PaywallScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    isYearlyOption ? "Yearly" : "Monthly",
-                    style: AppTypography.body1.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ln900,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        isYearlyOption ? "Yearly" : "Monthly",
+                        style: AppTypography.subtitle1.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ln900,
+                        ),
+                      ),
+                      if (isYearlyOption) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.lg100,
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
+                          ),
+                          child: Text(
+                            "SAVE 40%",
+                            style: AppTypography.overline.copyWith(
+                              color: AppColors.lg800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  if (isYearlyOption)
-                    Text(
-                      "Best Value",
-                      style: AppTypography.caption.copyWith(
-                        color: _selectedTier == SubscriptionTier.pro
-                            ? AppColors.secondary
-                            : AppColors.primary,
-                        fontWeight: FontWeight.bold,
+                  if (isSelected && isYearlyOption)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        "Best Value",
+                        style: AppTypography.caption.copyWith(
+                          color: activeText,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
@@ -452,8 +482,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
               children: [
                 Text(
                   product.priceString,
-                  style: AppTypography.body1.copyWith(
-                    fontWeight: FontWeight.bold,
+                  style: AppTypography.subtitle1.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ln900,
                   ),
                 ),
                 if (subtitle.isNotEmpty)
@@ -492,17 +523,27 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final isSelected = _selectedTier == tier;
     return GestureDetector(
       onTap: () => setState(() => _selectedTier = tier),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.full),
-          boxShadow: isSelected ? AppShadows.sm : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           text,
           style: AppTypography.button.copyWith(
             color: isSelected ? AppColors.ln900 : AppColors.ln500,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
       ),
