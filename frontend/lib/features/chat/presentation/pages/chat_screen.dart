@@ -25,6 +25,8 @@ import 'package:frontend/core/widgets/styled_drawer.dart';
 
 import '../../chat.dart'; // Import feature barrel file
 import 'package:frontend/core/utils/l10n_ext.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Scene scene;
@@ -221,6 +223,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   void _startVoiceRecording() async {
+    // Style 2: Await for async voice input check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.voiceInput,
+    );
+    if (!granted) return;
+
     final hasPermission = await _audioRecorder.hasPermission();
     if (!hasPermission) {
       final status = await Permission.microphone.request();
@@ -374,9 +383,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
   }
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+
+    // Style 2: Await for async API call
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.dailyConversation,
+    );
+    if (!granted) return;
 
     _textController.clear();
     _notifier.sendMessage(text);
@@ -1111,6 +1127,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   // Helper method to optimize message
   Future<void> _optimizeMessage() async {
+    // Style 2: Await for grammar analysis (AI Rewrite) check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.grammarAnalysis,
+    );
+    if (!granted) return;
+
     final text = _textController.text.trim();
     _notifier.setOptimizing(true);
 
@@ -1304,6 +1327,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return;
     }
 
+    // Style 2: Await - check speechAssessment for voice, grammarAnalysis for text
+    final featureToCheck = message.isVoiceMessage
+        ? PaidFeature.speechAssessment
+        : PaidFeature.grammarAnalysis;
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: featureToCheck,
+    );
+    if (!granted) return;
+
     // For voice messages, wait for transcript to be available first
     if (message.isVoiceMessage && message.content.isEmpty) {
       // Set analyzing state to show loading spinner
@@ -1370,7 +1403,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
   }
 
-  void _handleAnalyze(Message message) {
+  void _handleAnalyze(Message message) async {
     // If analysis already exists, show it directly
     if (message.analysis != null) {
       showModalBottomSheet(
@@ -1387,6 +1420,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       );
       return;
     }
+
+    // Style 2: Await for grammar analysis API check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.grammarAnalysis,
+    );
+    if (!granted) return;
 
     // Create stream
     // Note: We don't await the stream here; we pass it to the sheet.

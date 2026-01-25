@@ -81,7 +81,7 @@ class SceneService extends ChangeNotifier {
       final duration = DateTime.now().difference(startTime);
       debugPrint('🔍 [SceneService] Query completed in ${duration.inMilliseconds}ms');
       debugPrint('🔍 [SceneService] Response type: ${response.runtimeType}');
-      debugPrint('🔍 [SceneService] Response length: ${response is List ? response.length : 'N/A'}');
+      debugPrint('🔍 [SceneService] Response length: ${response.length}');
 
       _scenes = response.map<Scene>((e) {
         return Scene(
