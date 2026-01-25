@@ -411,9 +411,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: _selectedTier == SubscriptionTier.pro
-                          ? AppColors.secondary
-                          : AppColors.primary,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     alignment: Alignment.center,
