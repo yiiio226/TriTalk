@@ -25,6 +25,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _isPurchasing = false;
   String? _error;
   bool _isYearly = true; // Default to yearly for better value
+  SubscriptionTier _selectedTier = SubscriptionTier.pro; // Default to Pro
 
   @override
   void initState() {
@@ -239,7 +240,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                    padding: const EdgeInsets.fromLTRB(
+                      24,
+                      0,
+                      24,
+                      180,
+                    ), // Added bottom padding for footer
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
@@ -264,14 +270,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         _buildToggleSwitch(),
                         const SizedBox(height: 32),
 
-                        // PRO CARD (Highlighted)
-                        if (activePro != null)
-                          _buildProCard(activePro, proMonthly, proYearly),
-
-                        const SizedBox(height: 24),
-
-                        // PLUS CARD
-                        if (activePlus != null)
+                        // Selected Card
+                        if (_selectedTier == SubscriptionTier.pro &&
+                            activePro != null)
+                          _buildProCard(activePro, proMonthly, proYearly)
+                        else if (_selectedTier == SubscriptionTier.plus &&
+                            activePlus != null)
                           _buildPlusCard(activePlus, plusMonthly, plusYearly),
 
                         const SizedBox(height: 32),
@@ -291,12 +295,111 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ],
             ),
           ),
+
+          // Sticky Footer
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildStickyFooter(activePlus, activePro),
+          ),
+
           if (_isPurchasing)
             Container(
               color: Colors.black12,
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStickyFooter(Package? activePlus, Package? activePro) {
+    final activePackage = _selectedTier == SubscriptionTier.pro
+        ? activePro
+        : activePlus;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 16,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTierSelector(),
+              const SizedBox(height: 16),
+              if (activePackage != null)
+                GestureDetector(
+                  onTap: _isPurchasing
+                      ? null
+                      : () => _purchasePackage(activePackage),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: _selectedTier == SubscriptionTier.pro
+                          ? AppColors.secondary
+                          : AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _selectedTier == SubscriptionTier.pro
+                          ? "Start 7-Day Free Trial"
+                          : "Subscribe",
+                      style: AppTypography.button.copyWith(color: Colors.white),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTierSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.ln100,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(child: _buildTierOption("Plus", SubscriptionTier.plus)),
+          Expanded(child: _buildTierOption("Pro", SubscriptionTier.pro)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTierOption(String text, SubscriptionTier tier) {
+    final isSelected = _selectedTier == tier;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTier = tier),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          boxShadow: isSelected ? AppShadows.sm : null,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: AppTypography.button.copyWith(
+            color: isSelected ? AppColors.ln900 : AppColors.ln500,
+          ),
+        ),
       ),
     );
   }
@@ -440,21 +543,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                   _buildFeatureLine("Pitch Contour Analysis", isDark: true),
                   _buildFeatureLine("Unlimited Custom Scenarios", isDark: true),
-                  const SizedBox(height: 24),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      "Start 7-Day Free Trial",
-                      style: AppTypography.button.copyWith(color: Colors.white),
-                    ),
-                  ),
+                  // Removed internal button
                 ],
               ),
             ),
@@ -505,20 +594,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
             _buildFeatureLine("20 Conversations / day"),
             _buildFeatureLine("20 Pronunciation Checks / day"),
             _buildFeatureLine("Grammar Analysis"),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.ln100,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                "Subscribe",
-                style: AppTypography.button.copyWith(color: AppColors.ln900),
-              ),
-            ),
           ],
         ),
       ),
