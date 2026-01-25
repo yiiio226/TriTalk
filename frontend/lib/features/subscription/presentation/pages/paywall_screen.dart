@@ -439,9 +439,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final product = package.storeProduct;
 
     // Unified selected styles
-    final Color activeBg = AppColors.primary.withOpacity(
-      0.05,
-    ); // Subtle dark tint
+    final Color activeBg = AppColors.lightBackground;
     final Color activeBorder = AppColors.primary;
     final Color activeText = AppColors.primary;
     final Color activeIcon = AppColors.primary;
@@ -466,7 +464,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isSelected ? activeBorder : AppColors.ln200,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1 : 1,
           ),
           boxShadow: isSelected ? AppShadows.sm : [],
         ),
