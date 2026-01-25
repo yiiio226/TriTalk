@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:frontend/features/auth/domain/models/user.dart';
 import 'package:frontend/features/auth/data/services/auth_service.dart';
+import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/core/data/language_constants.dart';
 import '../data/local/storage_key_service.dart';
 import 'auth_state.dart';
@@ -37,6 +38,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           needsOnboarding: needsOnboarding,
         );
+
+        // Initialize RevenueCat with user ID
+        if (user != null) {
+          await RevenueCatService().initialize(user.id);
+        }
 
         if (kDebugMode) {
           debugPrint(
@@ -75,13 +81,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (success) {
         // Re-initialize to get fresh user data
         await _authService.init();
+        final user = _authService.currentUser;
 
         state = state.copyWith(
           loadingType: AuthLoadingType.none,
           status: AuthStatus.authenticated,
-          user: _authService.currentUser,
+          user: user,
           needsOnboarding: _authService.needsOnboarding,
         );
+
+        // Initialize RevenueCat
+        if (user != null) {
+          await RevenueCatService().initialize(user.id);
+          await RevenueCatService().login(user.id);
+        }
 
         // Migrate old data if needed
         await StorageKeyService().migrateOldDataIfNeeded();
@@ -116,13 +129,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (success) {
         // Re-initialize to get fresh user data
         await _authService.init();
+        final user = _authService.currentUser;
 
         state = state.copyWith(
           loadingType: AuthLoadingType.none,
           status: AuthStatus.authenticated,
-          user: _authService.currentUser,
+          user: user,
           needsOnboarding: _authService.needsOnboarding,
         );
+
+        // Initialize RevenueCat
+        if (user != null) {
+          await RevenueCatService().initialize(user.id);
+          await RevenueCatService().login(user.id);
+        }
 
         // Migrate old data if needed
         await StorageKeyService().migrateOldDataIfNeeded();
@@ -153,6 +173,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       await _authService.logout();
+      await RevenueCatService().logout();
 
       state = const AuthState(status: AuthStatus.unauthenticated);
 
