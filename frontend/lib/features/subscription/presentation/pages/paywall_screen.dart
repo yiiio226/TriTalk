@@ -215,12 +215,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
-                  colors: [
-                    AppColors.secondary.withOpacity(0.8),
-                    AppColors.secondary.withOpacity(0.0),
-                    Colors.white,
-                  ],
-                  stops: const [0.0, 0.5, 0.8],
+                  colors: [AppColors.secondary.withOpacity(0.6), Colors.white],
+                  stops: const [0.0, 0.3],
                 ),
               ),
             ),
