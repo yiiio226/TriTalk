@@ -20,6 +20,8 @@ import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/features/study/data/shadowing_history_service.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class ShadowingSheet extends ConsumerStatefulWidget {
   final String targetText;
@@ -243,6 +245,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   /// Play text-to-speech for the target text (correct pronunciation)
   /// Delegates to TtsPlaybackMixin for streaming and caching logic
   Future<void> _playTextToSpeech() async {
+    // Style 2: Await for TTS quota check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.ttsSpeak,
+    );
+    if (!granted) return;
+
     await playTts(
       text: widget.targetText,
       cacheKey: widget.messageId,
@@ -277,6 +286,13 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
   /// Play pronunciation for a single word
   Future<void> _playWordPronunciation(String word) async {
+    // Style 2: Await for word pronunciation quota check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.wordPronunciation,
+    );
+    if (!granted) return;
+
     // Clean the word (keep hyphens and apostrophes for proper pronunciation)
     // Remove only sentence-ending punctuation like . , ! ? ; :
     final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
@@ -498,7 +514,15 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
           _isRecording = false;
           _currentRecordingPath = path; // Save path for replay
         });
-        _analyzeAudio(path);
+
+        // Style 2: Check speechAssessment quota before analyzing
+        final granted = await FeatureGate().performWithFeatureCheck(
+          context,
+          feature: PaidFeature.speechAssessment,
+        );
+        if (granted) {
+          _analyzeAudio(path);
+        }
       } else {
         setState(() {
           _isRecording = false;

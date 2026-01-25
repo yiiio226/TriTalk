@@ -15,6 +15,8 @@ import '../../../../core/data/local/preferences_service.dart';
 import '../../../../core/mixins/tts_playback_mixin.dart';
 import '../../../../features/study/data/shadowing_history_service.dart';
 import '../../../../core/widgets/top_toast.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -29,7 +31,8 @@ class ChatBubble extends StatefulWidget {
   final VoidCallback?
   onContentChanged; // Callback when content changes (for auto-scroll)
   final String targetLanguage; // Language for assessment/TTS
-  final bool isSending; // Whether a message is currently being sent (for loading state)
+  final bool
+  isSending; // Whether a message is currently being sent (for loading state)
 
   const ChatBubble({
     super.key,
@@ -605,7 +608,8 @@ class _ChatBubbleState extends State<ChatBubble>
                         children: [
                           // Analyze button
                           GestureDetector(
-                            onTap: (widget.isSending || widget.message.isAnalyzing)
+                            onTap:
+                                (widget.isSending || widget.message.isAnalyzing)
                                 ? null
                                 : () => widget.onShowFeedback?.call(),
                             child: Container(
@@ -614,7 +618,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: (widget.isSending || widget.message.isAnalyzing)
+                                color:
+                                    (widget.isSending ||
+                                        widget.message.isAnalyzing)
                                     ? AppColors.ln100
                                     : AppColors.ln100,
                                 borderRadius: BorderRadius.circular(16),
@@ -622,7 +628,8 @@ class _ChatBubbleState extends State<ChatBubble>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (widget.isSending || widget.message.isAnalyzing)
+                                  if (widget.isSending ||
+                                      widget.message.isAnalyzing)
                                     const SizedBox(
                                       width: 10,
                                       height: 10,
@@ -642,7 +649,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                     ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    (widget.isSending || widget.message.isAnalyzing)
+                                    (widget.isSending ||
+                                            widget.message.isAnalyzing)
                                         ? "Analyzing..."
                                         : "Analyze",
                                     style: const TextStyle(
@@ -1232,6 +1240,13 @@ class _ChatBubbleState extends State<ChatBubble>
   /// Play text-to-speech for the message content using true streaming
   /// Delegates to TtsPlaybackMixin for streaming and caching logic
   Future<void> _playTextToSpeech() async {
+    // Style 2: Await for TTS quota check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.ttsSpeak,
+    );
+    if (!granted) return;
+
     await playTts(
       text: widget.message.content,
       cacheKey: widget.message.id,

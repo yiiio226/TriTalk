@@ -8,6 +8,8 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'favorites_skeleton_loader.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class VocabListWidget extends StatelessWidget {
   final String? sceneId;
@@ -20,7 +22,14 @@ class VocabListWidget extends StatelessWidget {
     this.targetLanguage = 'en-US', // Default for backward compatibility
   });
 
-  Future<void> _playWordPronunciation(String word) async {
+  Future<void> _playWordPronunciation(BuildContext context, String word) async {
+    // Style 2: Await for word pronunciation quota check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.wordPronunciation,
+    );
+    if (!granted) return;
+
     // Clean the word (keep hyphens and apostrophes for proper pronunciation)
     // Remove only sentence-ending punctuation like . , ! ? ; :
     final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
@@ -76,90 +85,90 @@ class VocabListWidget extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final int itemIndex = index ~/ 2;
-                    if (index.isEven) {
-                      final item = items[itemIndex];
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightSurface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.lightDivider),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          item.phrase,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.lightTextPrimary,
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final int itemIndex = index ~/ 2;
+                  if (index.isEven) {
+                    final item = items[itemIndex];
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.lightDivider),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        item.phrase,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.lightTextPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Play Button
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(20),
+                                        onTap: () {
+                                          HapticFeedback.lightImpact();
+                                          _playWordPronunciation(
+                                            context,
+                                            item.phrase,
+                                          );
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Icon(
+                                            Icons.volume_up_outlined,
+                                            color: AppColors.lightTextSecondary,
+                                            size: 16,
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      // Play Button
-                                      Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(20),
-                                          onTap: () {
-                                            HapticFeedback.lightImpact();
-                                            _playWordPronunciation(item.phrase);
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(4.0),
-                                            child: Icon(
-                                              Icons.volume_up_outlined,
-                                              color: AppColors.lightTextSecondary,
-                                              size: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    color: AppColors.lightTextSecondary,
-                                  ),
-                                  onPressed: () {
-                                    VocabService().remove(item.phrase);
-                                  },
-                                ),
-                              ],
-                            ),
-                            if (item.translation.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                item.translation,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.lightTextSecondary,
-                                  height: 1.5,
+                                    ),
+                                  ],
                                 ),
                               ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.lightTextSecondary,
+                                ),
+                                onPressed: () {
+                                  VocabService().remove(item.phrase);
+                                },
+                              ),
                             ],
+                          ),
+                          if (item.translation.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              item.translation,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.lightTextSecondary,
+                                height: 1.5,
+                              ),
+                            ),
                           ],
-                        ),
-                      );
-                    }
-                    return const SizedBox(height: 16);
-                  },
-                  childCount: items.length * 2 - 1,
-                ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox(height: 16);
+                }, childCount: items.length * 2 - 1),
               ),
             ),
           ],

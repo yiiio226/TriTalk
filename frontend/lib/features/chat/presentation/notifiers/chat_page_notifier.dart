@@ -26,7 +26,11 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   /// Load initial messages for the scene
   /// Forces sync from cloud to ensure latest messages are loaded across devices
   Future<void> loadMessages() async {
-    state = state.copyWith(isLoading: true, error: null, showErrorBanner: false);
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      showErrorBanner: false,
+    );
     try {
       // Force sync from cloud to get latest messages (important for cross-device sync)
       final messages = await _repository.fetchHistory(
@@ -47,18 +51,21 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
       }
     } catch (e) {
       final errorMessage = e.toString();
-      final isTimeout = errorMessage.contains('TimeoutException') || 
-                        errorMessage.contains('timed out') ||
-                        errorMessage.contains('timeout');
-      
+      final isTimeout =
+          errorMessage.contains('TimeoutException') ||
+          errorMessage.contains('timed out') ||
+          errorMessage.contains('timeout');
+
       state = state.copyWith(
         isLoading: false,
         error: errorMessage,
         showErrorBanner: true,
         isTimeoutError: isTimeout,
       );
-      
-      debugPrint('🔍 [ChatPageNotifier] Load failed: $errorMessage (timeout: $isTimeout)');
+
+      debugPrint(
+        '🔍 [ChatPageNotifier] Load failed: $errorMessage (timeout: $isTimeout)',
+      );
     }
   }
 
@@ -384,8 +391,16 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
     if (index != -1) {
       final newMessages = List<Message>.from(state.messages)..removeAt(index);
       state = state.copyWith(messages: newMessages);
-      // Now send as new
-      await sendMessage(failedMsg.content);
+
+      // Check if it was a voice message
+      if (failedMsg.audioPath != null && failedMsg.audioDuration != null) {
+        await sendVoiceMessage(failedMsg.audioPath!, failedMsg.audioDuration!);
+      } else {
+        // Fallback to text
+        // If content is the error message, don't send it.
+        if (failedMsg.content == 'Failed to process voice message') return;
+        await sendMessage(failedMsg.content);
+      }
     }
   }
 
