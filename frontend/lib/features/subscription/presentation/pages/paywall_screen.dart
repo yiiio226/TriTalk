@@ -204,18 +204,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final activePro = _isYearly ? proYearly : proMonthly;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.lightBackground,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Background Blobs
-          ..._buildBackgroundBlobs(),
-
-          // Blur Overlay for smoother transition
+          // Background Gradient
           Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-              child: Container(color: Colors.transparent),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    AppColors.secondary.withOpacity(0.8),
+                    AppColors.secondary.withOpacity(0.0),
+                    Colors.white,
+                  ],
+                  stops: const [0.0, 0.5, 0.8],
+                ),
+              ),
             ),
           ),
 
@@ -757,67 +764,5 @@ class _PaywallScreenState extends State<PaywallScreen> {
     if (p == null) return false;
     final pid = p.storeProduct.identifier;
     return pid == id || pid.startsWith('$id:');
-  }
-
-  List<Widget> _buildBackgroundBlobs() {
-    return [
-      // 1. The Core Source (Top Right) - Strong Brand Teal
-      Positioned(
-        top: -160,
-        right: -120,
-        child: _buildBlurCircle(
-          size: 580,
-          color: AppColors.secondary.withOpacity(0.45),
-          blur: 120,
-        ),
-      ),
-      // 2. The Flow (Mid-Right moving to center) - Lighter Teal
-      Positioned(
-        top: -60,
-        right: 150,
-        child: _buildBlurCircle(
-          size: 550,
-          color: AppColors.secondary.withOpacity(0.15),
-          blur: 140,
-        ),
-      ),
-      // 3. The Fade (Left side) - Subtle Cool Tint
-      Positioned(
-        top: 20,
-        left: -150,
-        child: _buildBlurCircle(
-          size: 600,
-          color: AppColors.lb100.withOpacity(0.25),
-          blur: 160,
-        ),
-      ),
-      // 4. Bottom Anchor - White to ensure readability at bottom
-      Positioned(
-        bottom: -200,
-        left: 0,
-        right: 0,
-        child: _buildBlurCircle(
-          size: 800,
-          color: Colors.white.withOpacity(0.8),
-          blur: 150,
-        ),
-      ),
-    ];
-  }
-
-  Widget _buildBlurCircle({
-    required double size,
-    required Color color,
-    required double blur,
-  }) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        boxShadow: [BoxShadow(color: color, blurRadius: blur, spreadRadius: 0)],
-      ),
-    );
   }
 }
