@@ -75,4 +75,8 @@ class Env {
   /// Base URL for scene assets on Cloudflare R2
   static String get sceneAssetsBaseUrl =>
       dotenv.env['SCENE_ASSETS_BASE_URL'] ?? '';
+
+  /// Force show paywall not matter for user status.
+  static bool get forcePaywall =>
+      dotenv.env['FORCE_PAYWALL']?.toLowerCase() == 'true';
 }
