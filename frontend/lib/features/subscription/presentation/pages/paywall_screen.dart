@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -208,6 +209,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
         children: [
           // Background Blobs
           ..._buildBackgroundBlobs(),
+
+          // Blur Overlay for smoother transition
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
 
           SafeArea(
             child: Column(
@@ -747,44 +756,45 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   List<Widget> _buildBackgroundBlobs() {
     return [
-      // Top Right - Primary Brand Teal (Stronger)
+      // 1. The Core Source (Top Right) - Strong Brand Teal
       Positioned(
-        top: -120,
-        right: -80,
+        top: -160,
+        right: -120,
         child: _buildBlurCircle(
-          size: 320,
-          color: AppColors.secondary.withOpacity(0.12),
-          blur: 100,
-        ),
-      ),
-      // Top Left - Subtle cool tint
-      Positioned(
-        top: -100,
-        left: -100,
-        child: _buildBlurCircle(
-          size: 300,
-          color: AppColors.lb100.withOpacity(0.4),
+          size: 580,
+          color: AppColors.secondary.withOpacity(0.45),
           blur: 120,
         ),
       ),
-      // Bottom Left - Secondary Teal (Softer)
+      // 2. The Flow (Mid-Right moving to center) - Lighter Teal
       Positioned(
-        bottom: 200,
-        left: -100,
+        top: -60,
+        right: 150,
         child: _buildBlurCircle(
-          size: 400,
-          color: AppColors.secondary.withOpacity(0.08),
+          size: 550,
+          color: AppColors.secondary.withOpacity(0.15),
           blur: 140,
         ),
       ),
-      // Bottom Right - Warm/Light accent
+      // 3. The Fade (Left side) - Subtle Cool Tint
       Positioned(
-        bottom: -50,
-        right: -50,
+        top: 20,
+        left: -150,
         child: _buildBlurCircle(
-          size: 250,
-          color: AppColors.lg50.withOpacity(0.8), // Minty white
-          blur: 80,
+          size: 600,
+          color: AppColors.lb100.withOpacity(0.25),
+          blur: 160,
+        ),
+      ),
+      // 4. Bottom Anchor - White to ensure readability at bottom
+      Positioned(
+        bottom: -200,
+        left: 0,
+        right: 0,
+        child: _buildBlurCircle(
+          size: 800,
+          color: Colors.white.withOpacity(0.8),
+          blur: 150,
         ),
       ),
     ];
@@ -801,9 +811,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color,
-        boxShadow: [
-          BoxShadow(color: color, blurRadius: blur, spreadRadius: 20),
-        ],
+        boxShadow: [BoxShadow(color: color, blurRadius: blur, spreadRadius: 0)],
       ),
     );
   }
