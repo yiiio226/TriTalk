@@ -166,135 +166,138 @@ graph LR
 
 ---
 
-## 10. 前端实现设计 (Frontend Implementation)
+## 10. 前端实现 (Frontend Implementation)
 
-为了支持 UI 层的 Paywall 流程开发，建议在 `RevenueCatService` 和逻辑层实现以下辅助机制。
+已在 `frontend/lib/features/subscription/` 下实现了完整的付费门槛控制机制。
 
-### 10.1 功能枚举定义 (PaidFeature)
+### 10.1 核心组件
 
-明确所有受限的功能点，便于代码引用。
+- **`FeatureGate`** (`presentation/feature_gate.dart`): 单例拦截器，统一处理权限检查和 Paywall 触发。
+- **`UsageService`** (`domain/services/usage_service.dart`): 用量追踪接口，用于统计每日使用次数。
+- **`PaywallRoute`** (`presentation/paywall_route.dart`): 路由辅助类。
+
+### 10.2 功能枚举 (PaidFeature)
+
+位于 `domain/models/paid_feature.dart`:
 
 ```dart
 enum PaidFeature {
   // --- 次数限制类 (Quota Limited) ---
-  dailyConversation,    // AI 对话 (每日会话/消息数)
+  dailyConversation,    // AI 对话
   voiceInput,           // 语音输入
-  speechAssessment,     // 句子发音评估
-  wordPronunciation,    // 单词发音 (Free: 10/day, Plus/Pro: Unlimited)
-  grammarAnalysis,      // 语法深度分析
-  ttsSpeak,             // AI 消息朗读
+  speechAssessment,     // 发音评估
+  wordPronunciation,    // 单词发音
+  grammarAnalysis,      // 语法分析
+  ttsSpeak,             // TTS 朗读
 
   // --- 访问权限类 (Gatekeepers) ---
-  pitchAnalysis,        // 音高对比分析 (仅 Plus/Pro)
-  customScenarios,      // 自定义场景 (Free: 不可创建, Plus: 10个, Pro: 50个)
+  pitchAnalysis,        // 音高分析 (仅 Plus/Pro)
+  customScenarios,      // 自定义场景 (Free不可创建)
 }
 ```
 
-### 10.2 权限判断辅助方法 (Design Logic)
+### 10.3 使用方法 (Usage)
 
-建议在 `RevenueCatService` 或 `SubscriptionService` 中扩展以下方法：
+`FeatureGate().performWithFeatureCheck` 支持两种调用方式：**回调模式**（适合同步 UI 操作）和 **Await 模式**（适合异步 API 调用）。
 
-#### A. 获取权益限额 (Quota Configuration)
-
-> [!IMPORTANT]
-> **Source of Truth**: 配额数值应由 **后端 API** (如 `/config` 或 `/user/profile`) 下发，以支持动态运营调整。
-> 前端应优先读取后端配置，以下逻辑仅作为 **Default/Fallback**。
+**方式 1：回调模式 (Callback Style)** - 适合导航、简单的 UI 更新
 
 ```dart
-/// 获取当前用户的配额（优先读取后端配置，返回 -1 代表无限制）
+// 示例：点击"创建场景"按钮
+FeatureGate().performWithFeatureCheck(
+  context,
+  feature: PaidFeature.customScenarios,
+  onGranted: () {
+    // ✅ 权限验证通过，执行原有逻辑
+    Navigator.pushNamed(context, '/create_scenario');
+  },
+);
+```
+
+**方式 2：Await 模式 (Async/Await Style)** - 适合异步操作 (如发送请求)
+
+```dart
+// 示例：发送聊天消息
+void _sendMessage() async {
+  // 1. 先检查权限
+  final granted = await FeatureGate().performWithFeatureCheck(
+    context,
+    feature: PaidFeature.dailyConversation,
+  );
+
+  // 2. 根据结果执行异步逻辑
+  if (granted) {
+    await chatNotifier.sendChat(text);
+  }
+}
+```
+
+### 10.4 内部逻辑流程
+
+方法签名：`Future<bool> performWithFeatureCheck(...)`
+
+1. **检查 Debug 标记**: 若 `Env.forcePaywall` 为 true，强制弹窗，返回 `false`。
+2. **检查硬性门槛 (Gatekeeping)**:
+   - 例如 `pitchAnalysis` 必须是 Plus 或 Pro 用户。
+   - 不满足 -> 弹出 Paywall。
+3. **检查每日限额 (Quota Check)**:
+   - 读取 `UsageService` 获取今日已用次数。
+   - 对比当前等级的配额 (Free/Plus/Pro)。
+   - 已超限 -> 弹出 Paywall。
+4. **结果处理**:
+   - **通过/已付费** -> 调用 `onGranted` (如有)，并返回 `true`。
+   - **取消/未付费** -> 调用 `onPaywallCancelled` (如有)，并返回 `false`。
+
+### 10.5 配额配置 (FeatureGate)
+
+目前配额策略硬编码在 `FeatureGate.getQuotaLimit` 中，作为本地兜底。
+
+> **注意**: `UsageServiceImpl` 目前使用内存缓存 (`_usageCounts`)，重启 App 会重置。
+> **TODO**: 需要对接 `SharedPreferences` 或后端 API 实现持久化和跨端同步。
+
+```dart
+// 伪代码逻辑
 int getQuotaLimit(PaidFeature feature) {
-  // 1. 尝试读取后端动态配置
-  // int? remoteLimit = AppConfig.current.getLimit(feature, currentTier);
-  // if (remoteLimit != null) return remoteLimit;
-
-  // 2. 本地兜底策略 (Default Fallback)
-  final tier = currentTier;
-  switch (feature) {
-    case PaidFeature.dailyConversation:
-    case PaidFeature.voiceInput:
-    case PaidFeature.speechAssessment:
-    case PaidFeature.grammarAnalysis:
-    case PaidFeature.ttsSpeak:
-      if (tier == SubscriptionTier.pro) return 100;
-      if (tier == SubscriptionTier.plus) return 20;
-      return 3; // Free
-
-    case PaidFeature.wordPronunciation:
-      if (tier == SubscriptionTier.free) return 10;
-      return -1; // Plus/Pro 无限制
-
-    case PaidFeature.customScenarios:
-      if (tier == SubscriptionTier.pro) return 50;
-      if (tier == SubscriptionTier.plus) return 10;
-      return 0; // Free 不可创建
-
-    default:
-      return 0; // 默认无额度/不支持
-  }
+  final tier = RevenueCatService().currentTier;
+  // ... 根据 Tier 返回 3, 20, 100 或 -1 (无限)
 }
 ```
 
-#### B. 检查功能可用性 (UI Helpers)
+### 10.6 Integration Points (Checklist)
 
-用于 UI 组件决定是执行操作、显示锁图标，还是弹出 Paywall。
+> [!IMPT]
+> 以下是所有需要接入 `FeatureGate().performWithFeatureCheck` 的代码位置。
+
+| Feature Enum          | Core Component | File Path                                                      | Method / Trigger                   | Recommended Style      | Notes                                      |
+| :-------------------- | :------------- | :------------------------------------------------------------- | :--------------------------------- | :--------------------- | :----------------------------------------- |
+| **customScenarios**   | Home Screen    | `features/home/presentation/pages/home_screen.dart`            | `FloatingActionButton.onPressed`   | **Style 1 (Callback)** | 点击"+"号创建新场景前检查 (Navigation)     |
+| **dailyConversation** | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_sendMessage`                     | **Style 2 (Await)**    | 发送文本消息前检查 (Async API)             |
+| **voiceInput**        | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_startVoiceRecording`             | **Style 2 (Await)**    | 点击麦克风开始录音前检查 (Async Logic)     |
+| **speechAssessment**  | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleUserMessageAnalysis`       | **Style 2 (Await)**    | 点击"Analyze" (Voice Msg) 前检查 (API)     |
+| **speechAssessment**  | Shadowing      | `features/study/presentation/widgets/shadowing_sheet.dart`     | `_stopRecording` / `_analyzeAudio` | **Style 2 (Await)**    | 跟读录音结束分析前检查 (API)               |
+| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleUserMessageAnalysis`       | **Style 2 (Await)**    | 点击"Analyze" (Text Msg) 前检查 (API)      |
+| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleAnalyze`                   | **Style 2 (Await)**    | 点击 AI 消息的 "Analyze" 前检查 (API)      |
+| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_optimizeMessage`                 | **Style 2 (Await)**    | 点击"魔法棒" (AI Rewrite) 前检查 (API)     |
+| **ttsSpeak**          | Chat Bubble    | `features/chat/presentation/widgets/chat_bubble.dart`          | `_playPauseVoice` or Speaker Icon  | **Style 2 (Await)**    | 点击消息朗读 (Speaker Icon) 前检查 (Audio) |
+| **ttsSpeak**          | Shadowing      | `features/study/presentation/widgets/shadowing_sheet.dart`     | `_playTextToSpeech`                | **Style 2 (Await)**    | 点击播放原句音频前检查 (Audio)             |
+| **wordPronunciation** | Vocab List     | `features/study/presentation/widgets/vocab_list_widget.dart`   | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **wordPronunciation** | Feedback       | `features/chat/presentation/widgets/voice_feedback_sheet.dart` | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **wordPronunciation** | Analysis       | `features/study/presentation/widgets/analysis_sheet.dart`      | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **wordPronunciation** | Favorites      | `features/profile/presentation/widgets/favorites_sheet.dart`   | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **pitchAnalysis**     | Feedback       | `features/chat/presentation/widgets/voice_feedback_sheet.dart` | `_buildIntonation` (UI)            | **Style 1 (Callback)** | 解锁后刷新 UI (setState)                   |
+
+**Reference Styles**:
 
 ```dart
-/// 检查是否**有资格**使用某功能 (不包含用量检查)
-/// 主要用于显示 UI 锁头图标 (例如 Custom Scenario 按钮在 Free版 会显示锁)
-bool hasAccess(PaidFeature feature) {
-   if (feature == PaidFeature.pitchAnalysis) {
-     return hasPlus; // 必须是 Plus 或以上
-   }
-   if (feature == PaidFeature.customScenarios) {
-     return hasPlus; // 必须是 Plus 或以上才能创建
-   }
-   return true; // 次数限制类功能对所有人开放访问，只是额度不同
-}
-```
+// Style 1: Callback (Synchronous UI actions like Navigation)
+FeatureGate().performWithFeatureCheck(
+  context,
+  feature: PaidFeature.customScenarios,
+  onGranted: () => Navigator.pushNamed(context, '...'),
+);
 
-### 10.3 Paywall 触发流程 (UI Flow)
-
-封装一个通用的拦截器，供 UI 层调用。
-
-```dart
-/// 尝试执行受限操作
-///
-/// 用于按钮点击事件。
-/// 1. 检查 Feature 权限 (如 Free 用户点击创建自定义场景 -> 弹 Paywall)
-/// 2. 检查 剩余次数 (如 Free 用户第 4 次发音评估 -> 弹 Paywall)
-/// 3. 通过 -> 执行 [onGranted]
-void performRestrictedAction(
-  BuildContext context, {
-  required PaidFeature feature,
-  required VoidCallback onGranted,
-  VoidCallback? onPaywallCancelled,
-}) {
-  // 0. 开发调试: 强制 Paywall
-  // 需要在 Env 中添加 forcePaywall 变量
-  if (Env.forcePaywall) {
-    PaywallRoute.show(context, reason: "Debug: Force Paywall");
-    return;
-  }
-
-  // 1. 检查硬性门槛 (Gatekeeping)
-  if (!hasAccess(feature)) {
-    // Show Paywall (Reason: Unlock Feature)
-    PaywallRoute.show(context, reason: "Unlock ${feature.name}");
-    return;
-  }
-
-  // 2. 检查剩余次数 (Quota Check)
-  //此处需结合后端的计数器或本地计数缓存
-  int limit = getQuotaLimit(feature);
-  int used = _usageService.getUsedCount(feature);
-
-  if (limit != -1 && used >= limit) {
-    // Show Paywall (Reason: Quota Exceeded)
-    PaywallRoute.show(context, reason: "Daily limit reached");
-    return;
-  }
-
-  // 3. 通过
-  onGranted();
+// Style 2: Await (Async API calls)
+if (await FeatureGate().performWithFeatureCheck(context, feature: ...)) {
+  await chatNotifier.sendChat(text);
 }
 ```
