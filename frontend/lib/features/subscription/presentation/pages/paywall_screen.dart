@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -101,19 +102,101 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final currentOffering = offerings?.current;
     final packages = currentOffering?.availablePackages ?? [];
 
+    // DEBUG LOGGING
+    if (kDebugMode) {
+      print("💰 Paywall Debug: Found ${packages.length} packages");
+      for (var p in packages) {
+        print("   - ${p.identifier} (Product: ${p.storeProduct.identifier})");
+      }
+    }
+
     // Find packages
-    final plusMonthly = packages.firstWhereOrNull(
+    var plusMonthly = packages.firstWhereOrNull(
       (p) => _matchesProduct(p, 'tritalkplusmonthly'),
     );
-    final plusYearly = packages.firstWhereOrNull(
+    var plusYearly = packages.firstWhereOrNull(
       (p) => _matchesProduct(p, 'tritalkplusyearly'),
     );
-    final proMonthly = packages.firstWhereOrNull(
+    var proMonthly = packages.firstWhereOrNull(
       (p) => _matchesProduct(p, 'tritalkpromonthly'),
     );
-    final proYearly = packages.firstWhereOrNull(
+    var proYearly = packages.firstWhereOrNull(
       (p) => _matchesProduct(p, 'tritalkproyearly'),
     );
+
+    // FALLBACK FOR DEVELOPMENT / TESTING
+    // If no products found, create mock packages so UI can be reviewed
+    if (packages.isEmpty) {
+      // Create mock StoreProduct
+      final mockProductPlusMonth = StoreProduct(
+        'tritalkplusmonthly',
+        'Plus Monthly',
+        'Plus',
+        9.99,
+        '\$9.99',
+        'USD',
+      );
+      final mockProductPlusYear = StoreProduct(
+        'tritalkplusyearly',
+        'Plus Yearly',
+        'Plus',
+        71.99,
+        '\$71.99',
+        'USD',
+      );
+      final mockProductProMonth = StoreProduct(
+        'tritalkpromonthly',
+        'Pro Monthly',
+        'Pro',
+        24.99,
+        '\$24.99',
+        'USD',
+      );
+      final mockProductProYear = StoreProduct(
+        'tritalkproyearly',
+        'Pro Yearly',
+        'Pro',
+        179.99,
+        '\$179.99',
+        'USD',
+      );
+
+      // Create a mock context.
+      // PresentedOfferingContext usually requires offeringIdentifier, placementIdentifier, and targetingContext.
+      // We'll pass dummy values for the strings and null for the targeting context if allowed,
+      // or empty strings/objects.
+      // Based on typical definition: PresentedOfferingContext(this.offeringIdentifier, this.placementIdentifier, this.targetingContext)
+      final mockContext = PresentedOfferingContext(
+        'mock_offering',
+        'mock_placement',
+        null,
+      );
+
+      plusMonthly = Package(
+        'tritalkplusmonthly',
+        PackageType.monthly,
+        mockProductPlusMonth,
+        mockContext,
+      );
+      plusYearly = Package(
+        'tritalkplusyearly',
+        PackageType.annual,
+        mockProductPlusYear,
+        mockContext,
+      );
+      proMonthly = Package(
+        'tritalkpromonthly',
+        PackageType.monthly,
+        mockProductProMonth,
+        mockContext,
+      );
+      proYearly = Package(
+        'tritalkproyearly',
+        PackageType.annual,
+        mockProductProYear,
+        mockContext,
+      );
+    }
 
     final activePlus = _isYearly ? plusYearly : plusMonthly;
     final activePro = _isYearly ? proYearly : proMonthly;
