@@ -212,11 +212,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
+                gradient: RadialGradient(
+                  center: Alignment.topRight,
+                  radius: 1.3,
                   colors: [AppColors.secondary.withOpacity(0.6), Colors.white],
-                  stops: const [0.0, 0.3],
+                  stops: const [0.0, 0.7],
                 ),
               ),
             ),
