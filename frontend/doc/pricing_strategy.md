@@ -268,20 +268,36 @@ int getQuotaLimit(PaidFeature feature) {
 > [!IMPT]
 > 以下是所有需要接入 `FeatureGate().performWithFeatureCheck` 的代码位置。
 
-| Feature Enum          | Core Component | File Path                                                      | Method / Trigger                   | Notes                                      |
-| :-------------------- | :------------- | :------------------------------------------------------------- | :--------------------------------- | :----------------------------------------- |
-| **customScenarios**   | Home Screen    | `features/home/presentation/pages/home_screen.dart`            | `FloatingActionButton.onPressed`   | 点击"+"号创建新场景前检查                  |
-| **dailyConversation** | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_sendMessage`                     | 发送文本消息前检查 (Migrate from Notifier) |
-| **voiceInput**        | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_startVoiceRecording`             | 点击麦克风开始录音前检查                   |
-| **speechAssessment**  | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleUserMessageAnalysis`       | 点击"Analyze" (Voice Msg) 前检查           |
-| **speechAssessment**  | Shadowing      | `features/study/presentation/widgets/shadowing_sheet.dart`     | `_stopRecording` / `_analyzeAudio` | 跟读录音结束分析前检查                     |
-| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleUserMessageAnalysis`       | 点击"Analyze" (Text Msg) 前检查            |
-| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleAnalyze`                   | 点击 AI 消息的 "Analyze" 前检查            |
-| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_optimizeMessage`                 | 点击"魔法棒" (AI Rewrite) 前检查           |
-| **ttsSpeak**          | Chat Bubble    | `features/chat/presentation/widgets/chat_bubble.dart`          | `_playPauseVoice` or Speaker Icon  | 点击消息朗读 (Speaker Icon) 前检查         |
-| **ttsSpeak**          | Shadowing      | `features/study/presentation/widgets/shadowing_sheet.dart`     | `_playTextToSpeech`                | 点击播放原句音频前检查                     |
-| **wordPronunciation** | Vocab List     | `features/study/presentation/widgets/vocab_list_widget.dart`   | `_playWordPronunciation`           | 点击单词播放发音时检查                     |
-| **wordPronunciation** | Feedback       | `features/chat/presentation/widgets/voice_feedback_sheet.dart` | `_playWordPronunciation`           | 点击单词播放发音时检查                     |
-| **wordPronunciation** | Analysis       | `features/study/presentation/widgets/analysis_sheet.dart`      | `_playWordPronunciation`           | 点击单词播放发音时检查                     |
-| **wordPronunciation** | Favorites      | `features/profile/presentation/widgets/favorites_sheet.dart`   | `_playWordPronunciation`           | 点击单词播放发音时检查                     |
-| **pitchAnalysis**     | Feedback       | `features/chat/presentation/widgets/voice_feedback_sheet.dart` | `_buildIntonation` (UI)            | 构建语调图表时检查 (或使用遮罩层覆盖)      |
+| Feature Enum          | Core Component | File Path                                                      | Method / Trigger                   | Recommended Style      | Notes                                      |
+| :-------------------- | :------------- | :------------------------------------------------------------- | :--------------------------------- | :--------------------- | :----------------------------------------- |
+| **customScenarios**   | Home Screen    | `features/home/presentation/pages/home_screen.dart`            | `FloatingActionButton.onPressed`   | **Style 1 (Callback)** | 点击"+"号创建新场景前检查 (Navigation)     |
+| **dailyConversation** | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_sendMessage`                     | **Style 2 (Await)**    | 发送文本消息前检查 (Async API)             |
+| **voiceInput**        | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_startVoiceRecording`             | **Style 2 (Await)**    | 点击麦克风开始录音前检查 (Async Logic)     |
+| **speechAssessment**  | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleUserMessageAnalysis`       | **Style 2 (Await)**    | 点击"Analyze" (Voice Msg) 前检查 (API)     |
+| **speechAssessment**  | Shadowing      | `features/study/presentation/widgets/shadowing_sheet.dart`     | `_stopRecording` / `_analyzeAudio` | **Style 2 (Await)**    | 跟读录音结束分析前检查 (API)               |
+| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleUserMessageAnalysis`       | **Style 2 (Await)**    | 点击"Analyze" (Text Msg) 前检查 (API)      |
+| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_handleAnalyze`                   | **Style 2 (Await)**    | 点击 AI 消息的 "Analyze" 前检查 (API)      |
+| **grammarAnalysis**   | Chat Screen    | `features/chat/presentation/pages/chat_screen.dart`            | `_optimizeMessage`                 | **Style 2 (Await)**    | 点击"魔法棒" (AI Rewrite) 前检查 (API)     |
+| **ttsSpeak**          | Chat Bubble    | `features/chat/presentation/widgets/chat_bubble.dart`          | `_playPauseVoice` or Speaker Icon  | **Style 2 (Await)**    | 点击消息朗读 (Speaker Icon) 前检查 (Audio) |
+| **ttsSpeak**          | Shadowing      | `features/study/presentation/widgets/shadowing_sheet.dart`     | `_playTextToSpeech`                | **Style 2 (Await)**    | 点击播放原句音频前检查 (Audio)             |
+| **wordPronunciation** | Vocab List     | `features/study/presentation/widgets/vocab_list_widget.dart`   | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **wordPronunciation** | Feedback       | `features/chat/presentation/widgets/voice_feedback_sheet.dart` | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **wordPronunciation** | Analysis       | `features/study/presentation/widgets/analysis_sheet.dart`      | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **wordPronunciation** | Favorites      | `features/profile/presentation/widgets/favorites_sheet.dart`   | `_playWordPronunciation`           | **Style 2 (Await)**    | 点击单词播放发音时检查 (Audio)             |
+| **pitchAnalysis**     | Feedback       | `features/chat/presentation/widgets/voice_feedback_sheet.dart` | `_buildIntonation` (UI)            | **Style 1 (Callback)** | 解锁后刷新 UI (setState)                   |
+
+**Reference Styles**:
+
+```dart
+// Style 1: Callback (Synchronous UI actions like Navigation)
+FeatureGate().performWithFeatureCheck(
+  context,
+  feature: PaidFeature.customScenarios,
+  onGranted: () => Navigator.pushNamed(context, '...'),
+);
+
+// Style 2: Await (Async API calls)
+if (await FeatureGate().performWithFeatureCheck(context, feature: ...)) {
+  await chatNotifier.sendChat(text);
+}
+```
