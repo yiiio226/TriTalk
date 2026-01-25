@@ -66,7 +66,6 @@ graph LR
 | **场景功能** | 预置场景                 | 全部(12个) | 5个     | 全部(12个) | 全部(12个) |
 |              | 自定义场景（含 AI 生成） | 10个       | ❌      | 10个       | 50个       |
 | **TTS 语音** | AI 消息朗读              | 20次/天    | 3次/天  | 20次/天    | 100次/天   |
-| **数据同步** | 多设备同步               | ✅         | ❌      | ✅         | ✅         |
 
 **💡 使用时长估算**:
 
@@ -164,3 +163,138 @@ graph LR
 | 付费转化率低   | 优化 onboarding + 突出价值  |
 | 用户流失率高   | 学习提醒 + 打卡奖励         |
 | 竞品价格战     | 差异化功能 + 内容壁垒       |
+
+---
+
+## 10. 前端实现设计 (Frontend Implementation)
+
+为了支持 UI 层的 Paywall 流程开发，建议在 `RevenueCatService` 和逻辑层实现以下辅助机制。
+
+### 10.1 功能枚举定义 (PaidFeature)
+
+明确所有受限的功能点，便于代码引用。
+
+```dart
+enum PaidFeature {
+  // --- 次数限制类 (Quota Limited) ---
+  dailyConversation,    // AI 对话 (每日会话/消息数)
+  voiceInput,           // 语音输入
+  speechAssessment,     // 句子发音评估
+  wordPronunciation,    // 单词发音 (Free: 10/day, Plus/Pro: Unlimited)
+  grammarAnalysis,      // 语法深度分析
+  ttsSpeak,             // AI 消息朗读
+
+  // --- 访问权限类 (Gatekeepers) ---
+  pitchAnalysis,        // 音高对比分析 (仅 Plus/Pro)
+  customScenarios,      // 自定义场景 (Free: 不可创建, Plus: 10个, Pro: 50个)
+}
+```
+
+### 10.2 权限判断辅助方法 (Design Logic)
+
+建议在 `RevenueCatService` 或 `SubscriptionService` 中扩展以下方法：
+
+#### A. 获取权益限额 (Quota Configuration)
+
+> [!IMPORTANT]
+> **Source of Truth**: 配额数值应由 **后端 API** (如 `/config` 或 `/user/profile`) 下发，以支持动态运营调整。
+> 前端应优先读取后端配置，以下逻辑仅作为 **Default/Fallback**。
+
+```dart
+/// 获取当前用户的配额（优先读取后端配置，返回 -1 代表无限制）
+int getQuotaLimit(PaidFeature feature) {
+  // 1. 尝试读取后端动态配置
+  // int? remoteLimit = AppConfig.current.getLimit(feature, currentTier);
+  // if (remoteLimit != null) return remoteLimit;
+
+  // 2. 本地兜底策略 (Default Fallback)
+  final tier = currentTier;
+  switch (feature) {
+    case PaidFeature.dailyConversation:
+    case PaidFeature.voiceInput:
+    case PaidFeature.speechAssessment:
+    case PaidFeature.grammarAnalysis:
+    case PaidFeature.ttsSpeak:
+      if (tier == SubscriptionTier.pro) return 100;
+      if (tier == SubscriptionTier.plus) return 20;
+      return 3; // Free
+
+    case PaidFeature.wordPronunciation:
+      if (tier == SubscriptionTier.free) return 10;
+      return -1; // Plus/Pro 无限制
+
+    case PaidFeature.customScenarios:
+      if (tier == SubscriptionTier.pro) return 50;
+      if (tier == SubscriptionTier.plus) return 10;
+      return 0; // Free 不可创建
+
+    default:
+      return 0; // 默认无额度/不支持
+  }
+}
+```
+
+#### B. 检查功能可用性 (UI Helpers)
+
+用于 UI 组件决定是执行操作、显示锁图标，还是弹出 Paywall。
+
+```dart
+/// 检查是否**有资格**使用某功能 (不包含用量检查)
+/// 主要用于显示 UI 锁头图标 (例如 Custom Scenario 按钮在 Free版 会显示锁)
+bool hasAccess(PaidFeature feature) {
+   if (feature == PaidFeature.pitchAnalysis) {
+     return hasPlus; // 必须是 Plus 或以上
+   }
+   if (feature == PaidFeature.customScenarios) {
+     return hasPlus; // 必须是 Plus 或以上才能创建
+   }
+   return true; // 次数限制类功能对所有人开放访问，只是额度不同
+}
+```
+
+### 10.3 Paywall 触发流程 (UI Flow)
+
+封装一个通用的拦截器，供 UI 层调用。
+
+```dart
+/// 尝试执行受限操作
+///
+/// 用于按钮点击事件。
+/// 1. 检查 Feature 权限 (如 Free 用户点击创建自定义场景 -> 弹 Paywall)
+/// 2. 检查 剩余次数 (如 Free 用户第 4 次发音评估 -> 弹 Paywall)
+/// 3. 通过 -> 执行 [onGranted]
+void performRestrictedAction(
+  BuildContext context, {
+  required PaidFeature feature,
+  required VoidCallback onGranted,
+  VoidCallback? onPaywallCancelled,
+}) {
+  // 0. 开发调试: 强制 Paywall
+  // 需要在 Env 中添加 forcePaywall 变量
+  if (Env.forcePaywall) {
+    PaywallRoute.show(context, reason: "Debug: Force Paywall");
+    return;
+  }
+
+  // 1. 检查硬性门槛 (Gatekeeping)
+  if (!hasAccess(feature)) {
+    // Show Paywall (Reason: Unlock Feature)
+    PaywallRoute.show(context, reason: "Unlock ${feature.name}");
+    return;
+  }
+
+  // 2. 检查剩余次数 (Quota Check)
+  //此处需结合后端的计数器或本地计数缓存
+  int limit = getQuotaLimit(feature);
+  int used = _usageService.getUsedCount(feature);
+
+  if (limit != -1 && used >= limit) {
+    // Show Paywall (Reason: Quota Exceeded)
+    PaywallRoute.show(context, reason: "Daily limit reached");
+    return;
+  }
+
+  // 3. 通过
+  onGranted();
+}
+```
