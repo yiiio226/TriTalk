@@ -206,6 +206,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          // Background Blobs
+          ..._buildBackgroundBlobs(),
+
           SafeArea(
             child: Column(
               children: [
@@ -224,15 +227,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           color: AppColors.ln900,
                         ),
                         onPressed: () => Navigator.pop(context),
-                      ),
-                      TextButton(
-                        onPressed: _isPurchasing ? null : _restorePurchases,
-                        child: Text(
-                          context.l10n.subscription_restore,
-                          style: AppTypography.button.copyWith(
-                            color: AppColors.ln500,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -283,8 +277,62 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         const SizedBox(height: 32),
 
                         // Terms
+                        // Restore Purchase
+                        TextButton(
+                          onPressed: _isPurchasing ? null : _restorePurchases,
+                          child: Text(
+                            context.l10n.subscription_restore,
+                            style: AppTypography.body2.copyWith(
+                              color: AppColors.ln500,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+
+                        // Legal Links
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Navigate to Privacy Policy
+                              },
+                              child: Text(
+                                "Privacy Policy",
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "•",
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.ln400,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Navigate to Terms of Service
+                              },
+                              child: Text(
+                                "Terms of Service",
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         Text(
-                          "Recurring billing, cancel anytime.\nBy continuing you agree to our Terms & Privacy Policy.",
+                          "Recurring billing, cancel anytime.",
                           style: AppTypography.caption.copyWith(
                             color: AppColors.ln400,
                           ),
@@ -553,9 +601,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: AppColors.lightSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.lg,
+        border: Border.all(color: AppColors.ln200),
+        boxShadow: AppShadows.md,
       ),
       child: Stack(
         children: [
@@ -584,19 +633,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
               children: [
                 Text(
                   "Pro",
-                  style: AppTypography.headline3.copyWith(color: Colors.white),
+                  style: AppTypography.headline3.copyWith(
+                    color: AppColors.ln900,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                _buildFeatureLine("100 Conversations / day", isDark: true),
-                _buildFeatureLine(
-                  "100 Pronunciation Checks / day",
-                  isDark: true,
-                ),
-                _buildFeatureLine("100 Grammar Analyses / day", isDark: true),
-                _buildFeatureLine("100 AI Message Reads / day", isDark: true),
-                _buildFeatureLine("Pitch Contour Analysis", isDark: true),
-                _buildFeatureLine("50 Custom Scenarios", isDark: true),
-                _buildFeatureLine("Multi-device Sync", isDark: true),
+                _buildFeatureLine("100 Conversations / day"),
+                _buildFeatureLine("100 Pronunciation Checks / day"),
+                _buildFeatureLine("100 Grammar Analyses / day"),
+                _buildFeatureLine("100 AI Message Reads / day"),
+                _buildFeatureLine("Pitch Contour Analysis"),
+                _buildFeatureLine("50 Custom Scenarios"),
+                _buildFeatureLine("Multi-device Sync"),
               ],
             ),
           ),
@@ -695,5 +743,68 @@ class _PaywallScreenState extends State<PaywallScreen> {
     if (p == null) return false;
     final pid = p.storeProduct.identifier;
     return pid == id || pid.startsWith('$id:');
+  }
+
+  List<Widget> _buildBackgroundBlobs() {
+    return [
+      // Top Right - Primary Brand Teal (Stronger)
+      Positioned(
+        top: -120,
+        right: -80,
+        child: _buildBlurCircle(
+          size: 320,
+          color: AppColors.secondary.withOpacity(0.12),
+          blur: 100,
+        ),
+      ),
+      // Top Left - Subtle cool tint
+      Positioned(
+        top: -100,
+        left: -100,
+        child: _buildBlurCircle(
+          size: 300,
+          color: AppColors.lb100.withOpacity(0.4),
+          blur: 120,
+        ),
+      ),
+      // Bottom Left - Secondary Teal (Softer)
+      Positioned(
+        bottom: 200,
+        left: -100,
+        child: _buildBlurCircle(
+          size: 400,
+          color: AppColors.secondary.withOpacity(0.08),
+          blur: 140,
+        ),
+      ),
+      // Bottom Right - Warm/Light accent
+      Positioned(
+        bottom: -50,
+        right: -50,
+        child: _buildBlurCircle(
+          size: 250,
+          color: AppColors.lg50.withOpacity(0.8), // Minty white
+          blur: 80,
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildBlurCircle({
+    required double size,
+    required Color color,
+    required double blur,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: [
+          BoxShadow(color: color, blurRadius: blur, spreadRadius: 20),
+        ],
+      ),
+    );
   }
 }
