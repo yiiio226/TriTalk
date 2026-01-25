@@ -299,7 +299,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
           // Sticky Footer
           Align(
             alignment: Alignment.bottomCenter,
-            child: _buildStickyFooter(activePlus, activePro),
+            child: _buildStickyFooter(
+              _selectedTier == SubscriptionTier.pro ? proMonthly : plusMonthly,
+              _selectedTier == SubscriptionTier.pro ? proYearly : plusYearly,
+            ),
           ),
 
           if (_isPurchasing)
@@ -312,10 +315,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  Widget _buildStickyFooter(Package? activePlus, Package? activePro) {
-    final activePackage = _selectedTier == SubscriptionTier.pro
-        ? activePro
-        : activePlus;
+  Widget _buildStickyFooter(Package? monthlyPackage, Package? yearlyPackage) {
+    final activePackage = _isYearly ? yearlyPackage : monthlyPackage;
 
     return Container(
       decoration: BoxDecoration(
@@ -329,13 +330,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
         ],
       ),
       child: SafeArea(
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildTierSelector(),
-              const SizedBox(height: 16),
+              if (monthlyPackage != null && yearlyPackage != null) ...[
+                _buildBillingOption(yearlyPackage, true),
+                const SizedBox(height: 12),
+                _buildBillingOption(monthlyPackage, false),
+                const SizedBox(height: 16),
+              ],
+
               if (activePackage != null)
                 GestureDetector(
                   onTap: _isPurchasing
@@ -366,39 +373,99 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  Widget _buildTierSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.ln100,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          Expanded(child: _buildTierOption("Plus", SubscriptionTier.plus)),
-          Expanded(child: _buildTierOption("Pro", SubscriptionTier.pro)),
-        ],
-      ),
-    );
-  }
+  Widget _buildBillingOption(Package package, bool isYearlyOption) {
+    final isSelected = _isYearly == isYearlyOption;
+    final product = package.storeProduct;
+    // Calculate monthly equivalent for yearly
+    String subtitle = "";
+    if (isYearlyOption) {
+      final monthlyPrice = product.price / 12;
+      subtitle =
+          "${product.currencyCode} ${monthlyPrice.toStringAsFixed(2)} / mo";
+    }
 
-  Widget _buildTierOption(String text, SubscriptionTier tier) {
-    final isSelected = _selectedTier == tier;
     return GestureDetector(
-      onTap: () => setState(() => _selectedTier = tier),
+      onTap: () => setState(() => _isYearly = isYearlyOption),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          boxShadow: isSelected ? AppShadows.sm : null,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: AppTypography.button.copyWith(
-            color: isSelected ? AppColors.ln900 : AppColors.ln500,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: isSelected
+                ? (_selectedTier == SubscriptionTier.pro
+                      ? AppColors.secondary
+                      : AppColors.primary)
+                : AppColors.ln200,
+            width: isSelected ? 2 : 1,
           ),
+          color: isSelected
+              ? (_selectedTier == SubscriptionTier.pro
+                    ? AppColors.secondary.withOpacity(0.05)
+                    : AppColors.primary.withOpacity(0.05))
+              : Colors.white,
+        ),
+        child: Row(
+          children: [
+            // Radio Circle
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? (_selectedTier == SubscriptionTier.pro
+                            ? AppColors.secondary
+                            : AppColors.primary)
+                      : AppColors.ln300,
+                  width: isSelected ? 6 : 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isYearlyOption ? "Yearly" : "Monthly",
+                    style: AppTypography.body1.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ln900,
+                    ),
+                  ),
+                  if (isYearlyOption)
+                    Text(
+                      "Best Value",
+                      style: AppTypography.caption.copyWith(
+                        color: _selectedTier == SubscriptionTier.pro
+                            ? AppColors.secondary
+                            : AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  product.priceString,
+                  style: AppTypography.body1.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (subtitle.isNotEmpty)
+                  Text(
+                    subtitle,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.ln500,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -414,18 +481,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildToggleButton("Monthly", !_isYearly),
-          _buildToggleButton("Yearly (-40%)", _isYearly),
+          _buildTierToggleButton("Plus", SubscriptionTier.plus),
+          _buildTierToggleButton("Pro", SubscriptionTier.pro),
         ],
       ),
     );
   }
 
-  Widget _buildToggleButton(String text, bool isSelected) {
+  Widget _buildTierToggleButton(String text, SubscriptionTier tier) {
+    final isSelected = _selectedTier == tier;
     return GestureDetector(
-      onTap: () => setState(() => _isYearly = text.contains("Yearly")),
+      onTap: () => setState(() => _selectedTier = tier),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.full),
@@ -434,7 +502,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         child: Text(
           text,
           style: AppTypography.button.copyWith(
-            color: isSelected ? AppColors.primary : AppColors.ln500,
+            color: isSelected ? AppColors.ln900 : AppColors.ln500,
           ),
         ),
       ),
