@@ -611,7 +611,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.lightSurface,
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(
           AppRadius.xl,
         ), // Match SceneCard radius
@@ -669,7 +669,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.lightSurface,
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(AppRadius.xl), // Match SceneCard
         border: Border.all(color: AppColors.ln200),
         boxShadow: AppShadows.sm, // Match SceneCard
