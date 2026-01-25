@@ -23,6 +23,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _isLoading = true;
   bool _isPurchasing = false;
   String? _error;
+  bool _isYearly = true; // Default to yearly for better value
 
   @override
   void initState() {
@@ -30,91 +31,50 @@ class _PaywallScreenState extends State<PaywallScreen> {
     _loadOfferings();
   }
 
-  /// Load available offerings from RevenueCat
   Future<void> _loadOfferings() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
-
     try {
       final service = RevenueCatService();
-      if (service.offerings == null) {
-        await service.refreshOfferings();
-      }
+      // Ensure we have latest info
+      await service.refreshOfferings();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final offerings = RevenueCatService().offerings;
-    final currentOffering = offerings?.current;
-
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: BackButton(color: AppColors.lightTextPrimary),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_error != null || currentOffering == null) {
+    if (_error != null) {
       return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: BackButton(color: AppColors.lightTextPrimary),
-          title: Text(
-            context.l10n.subscription_upgrade,
-            style: AppTypography.headline4.copyWith(
-              color: AppColors.lightTextPrimary,
-            ),
-          ),
-        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                CupertinoIcons.exclamationmark_circle,
-                size: 48,
-                color: AppColors.lightTextSecondary,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _error ?? context.l10n.subscription_noProductsAvailable,
-                style: AppTypography.body1.copyWith(
-                  color: AppColors.lightTextSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _loadOfferings,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                ),
-                child: Text(context.l10n.chat_retry),
-              ),
+              Text("Error loading plans: $_error"),
+              TextButton(onPressed: _loadOfferings, child: const Text("Retry")),
             ],
           ),
         ),
       );
     }
 
-    // Get packages from the current offering
-    final packages = currentOffering.availablePackages;
+    final offerings = RevenueCatService().offerings;
+    final currentOffering = offerings?.current;
+    final packages = currentOffering?.availablePackages ?? [];
 
-    // Match products using helper method for cross-platform compatibility
+    // Find packages
     final plusMonthly = packages.firstWhereOrNull(
       (p) => _matchesProduct(p, 'tritalkplusmonthly'),
     );
@@ -128,255 +88,264 @@ class _PaywallScreenState extends State<PaywallScreen> {
       (p) => _matchesProduct(p, 'tritalkproyearly'),
     );
 
+    final activePlus = _isYearly ? plusYearly : plusMonthly;
+    final activePro = _isYearly ? proYearly : proMonthly;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: BackButton(color: AppColors.lightTextPrimary),
-        title: Text(
-          context.l10n.subscription_choosePlan,
-          style: AppTypography.headline4.copyWith(
-            color: AppColors.lightTextPrimary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _isPurchasing ? null : _restorePurchases,
-            child: Text(
-              context.l10n.subscription_restore,
-              style: AppTypography.body2.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  // Premium Illustration
-                  Container(
-                    height: 180,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage(
-                          'assets/images/illustrations/premium_illustration.png',
-                        ),
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    context.l10n.subscription_unlockPotential,
-                    style: AppTypography.headline1.copyWith(
-                      color: AppColors.lightTextPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    context.l10n.subscription_description,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.body1.copyWith(
-                      color: AppColors.lightTextSecondary,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Plus Tier Section
-                  _buildTierSection(
-                    tier: SubscriptionTier.plus,
-                    monthlyPackage: plusMonthly,
-                    yearlyPackage: plusYearly,
-                    features: [
-                      context.l10n.subscription_featureUnlimitedMessages,
-                      context.l10n.subscription_featureAdvancedFeedback,
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Pro Tier Section
-                  _buildTierSection(
-                    tier: SubscriptionTier.pro,
-                    monthlyPackage: proMonthly,
-                    yearlyPackage: proYearly,
-                    features: [
-                      context.l10n.subscription_featureAllPlusFeatures,
-                      context.l10n.subscription_featurePremiumScenarios,
-                      context.l10n.subscription_featurePrioritySupport,
-                    ],
-                    isPrimary: true,
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-          // Loading overlay
-          if (_isPurchasing)
-            Container(
-              color: Colors.black.withValues(alpha: 0.3),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
-
-      ),
-    );
-  }
-
-  /// Build a subscription tier section
-  Widget _buildTierSection({
-    required SubscriptionTier tier,
-    Package? monthlyPackage,
-    Package? yearlyPackage,
-    required List<String> features,
-    bool isPrimary = false,
-  }) {
-    final hasPlan = monthlyPackage != null || yearlyPackage != null;
-    if (!hasPlan) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isPrimary
-            ? AppColors.primary.withValues(alpha: 0.05)
-            : Colors.grey[50],
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isPrimary ? AppColors.primary : Colors.grey[200]!,
-          width: isPrimary ? 2 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Tier header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isPrimary ? AppColors.primary : Colors.grey[300],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  tier.displayName,
-                  style: AppTypography.subtitle2.copyWith(
-                    color: isPrimary ? Colors.white : Colors.grey[700],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (isPrimary) ...[
-                const SizedBox(width: 8),
-                Container(
+            child: Column(
+              children: [
+                // Header
+                Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          CupertinoIcons.xmark,
+                          color: AppColors.ln900,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      TextButton(
+                        onPressed: _isPurchasing ? null : _restorePurchases,
+                        child: Text(
+                          context.l10n.subscription_restore,
+                          style: AppTypography.button.copyWith(
+                            color: AppColors.ln500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    context.l10n.subscription_recommended,
-                    style: AppTypography.caption.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Text(
+                          "Unlock Your Full Potential",
+                          style: AppTypography.headline2.copyWith(
+                            color: AppColors.primary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Master language with AI-powered practice",
+                          style: AppTypography.body1.copyWith(
+                            color: AppColors.ln500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Monthly / Yearly Switch
+                        _buildToggleSwitch(),
+                        const SizedBox(height: 32),
+
+                        // PRO CARD (Highlighted)
+                        if (activePro != null)
+                          _buildProCard(activePro, proMonthly, proYearly),
+
+                        const SizedBox(height: 24),
+
+                        // PLUS CARD
+                        if (activePlus != null)
+                          _buildPlusCard(activePlus, plusMonthly, plusYearly),
+
+                        const SizedBox(height: 32),
+
+                        // Terms
+                        Text(
+                          "Recurring billing, cancel anytime.\nBy continuing you agree to our Terms & Privacy Policy.",
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.ln400,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Features list
-          ...features.map(
-            (feature) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.checkmark_alt_circle_fill,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      feature,
-                      style: AppTypography.body2.copyWith(
-                        color: AppColors.lightTextPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Package options
-          if (yearlyPackage != null)
-            _buildPackageButton(yearlyPackage, isYearly: true),
-          if (monthlyPackage != null) ...[
-            const SizedBox(height: 8),
-            _buildPackageButton(monthlyPackage, isYearly: false),
-          ],
+          if (_isPurchasing)
+            Container(
+              color: Colors.black12,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
         ],
       ),
     );
   }
 
-  /// Build a package purchase button
-  Widget _buildPackageButton(Package package, {required bool isYearly}) {
-    final product = package.storeProduct;
+  Widget _buildToggleSwitch() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.ln100,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleButton("Monthly", !_isYearly),
+          _buildToggleButton("Yearly (-40%)", _isYearly),
+        ],
+      ),
+    );
+  }
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isPurchasing ? null : () => _purchasePackage(package),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          backgroundColor: isYearly ? AppColors.primary : Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            side: isYearly
-                ? BorderSide.none
-                : BorderSide(color: AppColors.primary),
+  Widget _buildToggleButton(String text, bool isSelected) {
+    return GestureDetector(
+      onTap: () => setState(() => _isYearly = text.contains("Yearly")),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          boxShadow: isSelected ? AppShadows.sm : null,
+        ),
+        child: Text(
+          text,
+          style: AppTypography.button.copyWith(
+            color: isSelected ? AppColors.primary : AppColors.ln500,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      ),
+    );
+  }
+
+  Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
+    final product = package.storeProduct;
+    // Calculate display price (if yearly, show price per month)
+    String pricePerMonth = product.priceString;
+    if (_isYearly && yearly != null) {
+      // Simple heuristic string formatting, real app should use precise math
+      final price = yearly.storeProduct.price;
+      pricePerMonth = (price / 12).toStringAsFixed(2);
+      // Add currency symbol matching storeProduct if possible, here assuming format
+      pricePerMonth = "${product.currencyCode} $pricePerMonth / mo";
+    }
+
+    return GestureDetector(
+      onTap: _isPurchasing ? null : () => _purchasePackage(package),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary, // Dark theme
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.lg,
+        ),
+        child: Stack(
           children: [
-            Text(
-              isYearly
-                  ? context.l10n.subscription_yearlyPlan
-                  : context.l10n.subscription_monthlyPlan,
-              style: AppTypography.button.copyWith(
-                color: isYearly ? Colors.white : AppColors.primary,
+            // Badge
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: const BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.lg),
+                    bottomLeft: Radius.circular(AppRadius.lg),
+                  ),
+                ),
+                child: Text(
+                  "MOST POPULAR",
+                  style: AppTypography.overline.copyWith(color: Colors.white),
+                ),
               ),
             ),
-            Text(
-              product.priceString,
-              style: AppTypography.button.copyWith(
-                color: isYearly ? Colors.white : AppColors.primary,
-                fontWeight: FontWeight.bold,
+
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Pro",
+                        style: AppTypography.headline3.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Icon(CupertinoIcons.star_fill, color: AppColors.secondary, size: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        _isYearly && yearly != null
+                            ? pricePerMonth.split(' ')[1]
+                            : product
+                                  .priceString, // Hacky extraction, ideal is using formatted price
+                        style: AppTypography.headline1.copyWith(
+                          color: Colors.white,
+                          fontSize: 36,
+                        ),
+                      ),
+                      if (_isYearly)
+                        Text(
+                          " / mo",
+                          style: AppTypography.body1.copyWith(
+                            color: Colors.white70,
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (_isYearly)
+                    Text(
+                      "Billed ${product.priceString} yearly",
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.white54,
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+                  _buildFeatureLine("100 Conversations / day", isDark: true),
+                  _buildFeatureLine(
+                    "100 Pronunciation Checks / day",
+                    isDark: true,
+                  ),
+                  _buildFeatureLine("Pitch Contour Analysis", isDark: true),
+                  _buildFeatureLine("Unlimited Custom Scenarios", isDark: true),
+                  const SizedBox(height: 24),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      "Start 7-Day Free Trial",
+                      style: AppTypography.button.copyWith(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -385,78 +354,128 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  /// Handle package purchase
+  Widget _buildPlusCard(Package package, Package? monthly, Package? yearly) {
+    final product = package.storeProduct;
+    // Calculate display price
+    String pricePerMonth = product.priceString;
+    if (_isYearly && yearly != null) {
+      final price = yearly.storeProduct.price;
+      pricePerMonth =
+          "${product.currencyCode} ${(price / 12).toStringAsFixed(2)} / mo";
+    }
+
+    return GestureDetector(
+      onTap: _isPurchasing ? null : () => _purchasePackage(package),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.lightSurface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.ln200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Plus",
+              style: AppTypography.headline3.copyWith(color: AppColors.ln900),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isYearly ? "$pricePerMonth" : product.priceString,
+              style: AppTypography.headline3.copyWith(color: AppColors.ln900),
+            ),
+            if (_isYearly)
+              Text(
+                "Billed ${product.priceString} yearly",
+                style: AppTypography.caption.copyWith(color: AppColors.ln500),
+              ),
+
+            const SizedBox(height: 20),
+            _buildFeatureLine("20 Conversations / day"),
+            _buildFeatureLine("20 Pronunciation Checks / day"),
+            _buildFeatureLine("Grammar Analysis"),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.ln100,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                "Subscribe",
+                style: AppTypography.button.copyWith(color: AppColors.ln900),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureLine(String text, {bool isDark = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.checkmark_alt,
+            color: isDark ? AppColors.secondary : AppColors.primary,
+            size: 18,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.body2.copyWith(
+                color: isDark ? Colors.white : AppColors.ln900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _purchasePackage(Package package) async {
     setState(() => _isPurchasing = true);
-
     final result = await RevenueCatService().purchasePackage(package);
-
     if (!mounted) return;
-
     setState(() => _isPurchasing = false);
 
-    switch (result) {
-      case SubscriptionPurchaseResult.success:
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.subscription_purchaseSuccess),
-            backgroundColor: Colors.green,
-          ),
-        );
-      case SubscriptionPurchaseResult.cancelled:
-        // User cancelled, no action needed
-        break;
-      case SubscriptionPurchaseResult.error:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.subscription_purchaseFailed),
-            backgroundColor: Colors.red,
-          ),
-        );
+    if (result == SubscriptionPurchaseResult.success) {
+      Navigator.pop(context);
+    } else if (result == SubscriptionPurchaseResult.error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Purchase failed. Please try again.')),
+      );
     }
   }
 
-  /// Handle restore purchases
   Future<void> _restorePurchases() async {
     setState(() => _isPurchasing = true);
-
     final success = await RevenueCatService().restorePurchases();
-
     if (!mounted) return;
-
     setState(() => _isPurchasing = false);
 
     if (success && RevenueCatService().currentTier != SubscriptionTier.free) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.subscription_purchasesRestored),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.subscription_noPurchasesToRestore)),
-      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l10n.subscription_restoreFailed),
-          backgroundColor: Colors.red,
+          content: Text(
+            success ? 'No active subscriptions found.' : 'Restore failed.',
+          ),
         ),
       );
     }
   }
 
-  /// Match product ID across platforms
-  ///
-  /// Apple: identifier == 'tritalkplusmonthly'
-  /// Google Play: identifier == 'tritalkplusmonthly:monthly-autorenewing'
-  ///
-  /// Uses startsWith to ensure cross-platform compatibility
-  bool _matchesProduct(Package package, String productId) {
-    final identifier = package.storeProduct.identifier;
-    return identifier == productId || identifier.startsWith('$productId:');
+  bool _matchesProduct(Package? p, String id) {
+    if (p == null) return false;
+    final pid = p.storeProduct.identifier;
+    return pid == id || pid.startsWith('$id:');
   }
 }
