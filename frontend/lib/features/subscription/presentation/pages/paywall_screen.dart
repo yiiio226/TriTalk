@@ -434,16 +434,17 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _buildBillingOption(Package package, bool isYearlyOption) {
     // Logic: Yearly = Green (Savings), Monthly = Blue (Standard)
+    // Simplified logic: Selected = Primary (Black), Unselected = White
     final bool isSelected = _isYearly == isYearlyOption;
     final product = package.storeProduct;
 
-    // Semantic colors based on option type
-    final Color activeBg = isYearlyOption ? AppColors.lg50 : AppColors.lb50;
-    final Color activeBorder = isYearlyOption
-        ? AppColors.lg500
-        : AppColors.lb500;
-    final Color activeText = isYearlyOption ? AppColors.lg800 : AppColors.lb800;
-    final Color activeIcon = isYearlyOption ? AppColors.lg500 : AppColors.lb500;
+    // Unified selected styles
+    final Color activeBg = AppColors.primary.withOpacity(
+      0.05,
+    ); // Subtle dark tint
+    final Color activeBorder = AppColors.primary;
+    final Color activeText = AppColors.primary;
+    final Color activeIcon = AppColors.primary;
 
     // Calculate monthly equivalent for yearly
     String subtitle = "";
@@ -481,7 +482,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   color: isSelected ? activeIcon : AppColors.ln300,
                   width: isSelected ? 6 : 1.5,
                 ),
-                color: Colors.white,
+                color: Colors.white, // Inner dot always white
               ),
             ),
             const SizedBox(width: 16),
@@ -526,7 +527,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       child: Text(
                         "Best Value",
                         style: AppTypography.caption.copyWith(
-                          color: activeText,
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -611,9 +612,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(
+          AppRadius.xl,
+        ), // Match SceneCard radius
         border: Border.all(color: AppColors.ln200),
-        boxShadow: AppShadows.md,
+        boxShadow: AppShadows.sm, // Match SceneCard shadow
       ),
       child: Stack(
         children: [
@@ -622,10 +625,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
             top: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.secondary,
                 borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(AppRadius.lg),
+                  topRight: Radius.circular(AppRadius.xl), // Update corner
                   bottomLeft: Radius.circular(AppRadius.lg),
                 ),
               ),
@@ -667,8 +670,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.xl), // Match SceneCard
         border: Border.all(color: AppColors.ln200),
+        boxShadow: AppShadows.sm, // Match SceneCard
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
