@@ -230,7 +230,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 MediaQuery.of(context).padding.top +
                     60, // Top padding for header
                 24,
-                180,
+                320, // Increased bottom padding for scrolling space
               ),
               child: Column(
                 children: [
