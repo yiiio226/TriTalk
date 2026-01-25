@@ -170,13 +170,13 @@ graph LR
 
 已在 `frontend/lib/features/subscription/` 下实现了完整的付费门槛控制机制。
 
-### 10.1 核心组件
+### 10.1 核心组件 （已完成）
 
 - **`FeatureGate`** (`presentation/feature_gate.dart`): 单例拦截器，统一处理权限检查和 Paywall 触发。
 - **`UsageService`** (`domain/services/usage_service.dart`): 用量追踪接口，用于统计每日使用次数。
 - **`PaywallRoute`** (`presentation/paywall_route.dart`): 路由辅助类。
 
-### 10.2 功能枚举 (PaidFeature)
+### 10.2 功能枚举 (PaidFeature) （已完成）
 
 位于 `domain/models/paid_feature.dart`:
 
@@ -263,7 +263,7 @@ int getQuotaLimit(PaidFeature feature) {
 }
 ```
 
-### 10.6 Integration Points (Checklist)
+### 10.6 Integration Points (Checklist) (已完成)
 
 > [!IMPT]
 > 以下是所有需要接入 `FeatureGate().performWithFeatureCheck` 的代码位置。
