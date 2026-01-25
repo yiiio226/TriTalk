@@ -469,15 +469,22 @@ app.openapi(transcribeRoute, async (c) => {
 // POST /chat/send-voice - Two-step process: transcribe then respond
 app.post("/chat/send-voice", async (c) => {
   console.log("[/chat/send-voice] Request received");
+  let audioBase64: string = "";
+  let audioFormat: string = "";
+  let sceneContext: string = "";
+  let history: any[] = [];
+  let nativeLang: string = "";
+  let targetLang: string = "";
+  let env: Env;
+  
   try {
     const formData = await c.req.formData();
-    const env = c.env as Env;
+    env = c.env as Env;
     const audioFile = formData.get("audio");
-    const sceneContext = (formData.get("scene_context") as string) || "";
+    sceneContext = (formData.get("scene_context") as string) || "";
     const historyStr = (formData.get("history") as string) || "[]";
-    const nativeLang =
-      (formData.get("native_language") as string) || "Chinese (Simplified)";
-    const targetLang = (formData.get("target_language") as string) || "English";
+    nativeLang = (formData.get("native_language") as string) || "Chinese (Simplified)";
+    targetLang = (formData.get("target_language") as string) || "English";
 
     console.log("[/chat/send-voice] Parsed form data:", {
       hasAudio: !!audioFile,
@@ -485,7 +492,6 @@ app.post("/chat/send-voice", async (c) => {
       historyLength: historyStr?.length,
     });
 
-    let history: any[] = [];
     try {
       history = JSON.parse(historyStr);
     } catch (e) {}
@@ -496,75 +502,15 @@ app.post("/chat/send-voice", async (c) => {
 
     const audioBlob = audioFile as File;
     const arrayBuffer = await audioBlob.arrayBuffer();
-    const audioBase64 = arrayBufferToBase64(arrayBuffer);
+    audioBase64 = arrayBufferToBase64(arrayBuffer);
     const fileName = audioBlob.name || "audio.wav";
-    const audioFormat = detectAudioFormat(fileName);
+    audioFormat = detectAudioFormat(fileName);
 
     console.log(
       `[Send Voice] File: ${fileName}, Format: ${audioFormat}, Size: ${arrayBuffer.byteLength} bytes`,
     );
 
-    // ============================================
-    // STEP 1: Transcribe the audio
-    // ============================================
-    console.log("[Send Voice] Step 1: Transcribing audio...");
-    const transcriptPrompt = buildTranscriptionPrompt();
-
-    const transcriptResponse = await callOpenRouterMultimodal(
-      env.OPENROUTER_API_KEY,
-      env.OPENROUTER_TRANSCRIBE_MODEL,
-      transcriptPrompt,
-      [
-        {
-          type: "text",
-          text: "Transcribe the following audio exactly as spoken:",
-        },
-        {
-          type: "input_audio",
-          input_audio: {
-            data: audioBase64,
-            format: audioFormat,
-          },
-        },
-      ],
-      false, // Plain text mode for transcription
-    );
-
-    const transcript = sanitizeText(transcriptResponse).trim();
-    console.log(
-      "[Send Voice] Step 1 complete. Transcript:",
-      transcript.substring(0, 50),
-    );
-
-    // ============================================
-    // STEP 2: Generate AI response based on transcript
-    // ============================================
-    console.log("[Send Voice] Step 2: Generating AI response...");
-    const systemPrompt = buildChatSystemPrompt(
-      sceneContext,
-      nativeLang,
-      targetLang,
-    );
-
-    const messages = [{ role: "system", content: systemPrompt }];
-
-    if (history && history.length > 0) {
-      const recentHistory = history.slice(-5);
-      messages.push(...recentHistory);
-    }
-
-    // Add the user's transcribed message
-    messages.push({
-      role: "user",
-      content: `<<LATEST_USER_MESSAGE>>${transcript}<</LATEST_USER_MESSAGE>>`,
-    });
-
-    const response = await callOpenRouterStreaming(
-      env.OPENROUTER_API_KEY,
-      env.OPENROUTER_CHAT_MODEL,
-      messages,
-    );
-
+    // Set headers immediately to prevent timeout
     c.header("Content-Type", "application/x-ndjson");
     c.header("Content-Encoding", "Identity");
 
@@ -575,100 +521,156 @@ app.post("/chat/send-voice", async (c) => {
           console.log("Stream aborted: /chat/send-voice");
         });
 
-        let fullResponse = "";
+        try {
+          // ============================================
+          // STEP 1: Transcribe the audio (Looking for faster response)
+          // ============================================
+          console.log("[Send Voice] Step 1: Transcribing audio...");
+          const transcriptPrompt = buildTranscriptionPrompt();
 
-        // Accumulate the full JSON response from Step 2
-        for await (const line of iterateStreamLines(response)) {
-          if (line === "data: [DONE]") continue;
-          if (line.startsWith("data: ")) {
-            try {
-              const jsonStr = line.slice(6);
-              const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content || "";
-              if (content) {
-                fullResponse += content;
+          const transcriptResponse = await callOpenRouterMultimodal(
+            env.OPENROUTER_API_KEY,
+            env.OPENROUTER_TRANSCRIBE_MODEL,
+            transcriptPrompt,
+            [
+              {
+                type: "text",
+                text: "Transcribe the following audio exactly as spoken:",
+              },
+              {
+                type: "input_audio",
+                input_audio: {
+                  data: audioBase64,
+                  format: audioFormat,
+                },
+              },
+            ],
+            false, // Plain text mode for transcription
+          );
+
+          const transcript = sanitizeText(transcriptResponse).trim();
+          console.log(
+            "[Send Voice] Step 1 complete. Transcript:",
+            transcript.substring(0, 50),
+          );
+
+          // ============================================
+          // STEP 2: Generate AI response based on transcript
+          // ============================================
+          console.log("[Send Voice] Step 2: Generating AI response...");
+          const systemPrompt = buildChatSystemPrompt(
+            sceneContext,
+            nativeLang,
+            targetLang,
+          );
+
+          const messages = [{ role: "system", content: systemPrompt }];
+
+          if (history && history.length > 0) {
+            const recentHistory = history.slice(-5);
+            messages.push(...recentHistory);
+          }
+
+          // Add the user's transcribed message
+          messages.push({
+            role: "user",
+            content: `<<LATEST_USER_MESSAGE>>${transcript}<</LATEST_USER_MESSAGE>>`,
+          });
+
+          const response = await callOpenRouterStreaming(
+            env.OPENROUTER_API_KEY,
+            env.OPENROUTER_CHAT_MODEL,
+            messages,
+          );
+
+          let fullResponse = "";
+
+          // Accumulate the full JSON response from Step 2
+          for await (const line of iterateStreamLines(response)) {
+            if (line === "data: [DONE]") continue;
+            if (line.startsWith("data: ")) {
+              try {
+                const jsonStr = line.slice(6);
+                const parsed = JSON.parse(jsonStr);
+                const content = parsed.choices?.[0]?.delta?.content || "";
+                if (content) {
+                  fullResponse += content;
+                }
+              } catch (e) {
+                // Skip malformed JSON
               }
-            } catch (e) {
-              // Skip malformed JSON
             }
           }
-        }
 
-        // Parse the complete JSON response
-        try {
-          const data = parseJSON(fullResponse);
-          const replyText = sanitizeText(data.reply || "");
-          const analysisData = data.analysis || {};
+          // Parse the complete JSON response
+          try {
+            const data = parseJSON(fullResponse);
+            const replyText = sanitizeText(data.reply || "");
+            const analysisData = data.analysis || {};
 
-          console.log(
-            "[Send Voice] Step 2 complete. Reply:",
-            replyText.substring(0, 50),
-          );
-
-          // Build feedback object from analysis data (same as /chat/send)
-          const feedback = {
-            is_perfect: analysisData.is_perfect || false,
-            corrected_text: sanitizeText(analysisData.corrected_text || transcript),
-            native_expression: sanitizeText(analysisData.native_expression || ""),
-            explanation: sanitizeText(
-              analysisData.grammar_explanation || analysisData.explanation || "",
-            ),
-            grammar_explanation: sanitizeText(
-              analysisData.grammar_explanation || analysisData.explanation || "",
-            ),
-            native_expression_reason: sanitizeText(
-              analysisData.native_expression_reason || "",
-            ),
-            example_answer: sanitizeText(analysisData.example_answer || ""),
-            example_answer_reason: sanitizeText(
-              analysisData.example_answer_reason || "",
-            ),
-          };
-
-          // Send combined metadata with transcript and feedback
-          await stream.writeln(
-            JSON.stringify({
-              type: "metadata",
-              data: {
-                transcript, // From Step 1
-                translation: null, // TODO: Add translation step if needed
-                review_feedback: feedback, // Grammar feedback for automatic display
-              },
-            }),
-          );
-
-          // Stream the reply text character by character for smooth UX
-          // (simulate streaming even though we have the full text)
-          for (let i = 0; i < replyText.length; i++) {
-            await stream.writeln(
-              JSON.stringify({ type: "token", content: replyText[i] }),
+            console.log(
+              "[Send Voice] Step 2 complete. Reply:",
+              replyText.substring(0, 50),
             );
-            // Small delay to simulate natural streaming (optional)
-            // await new Promise(resolve => setTimeout(resolve, 10));
-          }
-        } catch (e) {
-          console.error("[Send Voice] Failed to parse response:", e);
-          console.error(
-            "[Send Voice] Raw response:",
-            fullResponse.substring(0, 200),
-          );
 
-          // Send error
+            // Build feedback object from analysis data
+            const feedback = {
+              is_perfect: analysisData.is_perfect || false,
+              corrected_text: sanitizeText(analysisData.corrected_text || transcript),
+              native_expression: sanitizeText(analysisData.native_expression || ""),
+              explanation: sanitizeText(
+                analysisData.grammar_explanation || analysisData.explanation || "",
+              ),
+              grammar_explanation: sanitizeText(
+                analysisData.grammar_explanation || analysisData.explanation || "",
+              ),
+              native_expression_reason: sanitizeText(
+                analysisData.native_expression_reason || "",
+              ),
+              example_answer: sanitizeText(analysisData.example_answer || ""),
+              example_answer_reason: sanitizeText(
+                analysisData.example_answer_reason || "",
+              ),
+            };
+
+            // Send combined metadata with transcript and feedback
+            await stream.writeln(
+              JSON.stringify({
+                type: "metadata",
+                data: {
+                  transcript, // From Step 1
+                  translation: null,
+                  review_feedback: feedback,
+                },
+              }),
+            );
+
+            // Stream the reply text character by character for smooth UX
+            for (let i = 0; i < replyText.length; i++) {
+              await stream.writeln(
+                JSON.stringify({ type: "token", content: replyText[i] }),
+              );
+            }
+          } catch (e) {
+            console.error("[Send Voice] Failed to parse response:", e);
+              await stream.writeln(
+              JSON.stringify({
+                type: "error",
+                error: "Failed to parse AI response",
+              }),
+            );
+          }
+
+          await stream.writeln(JSON.stringify({ type: "done" }));
+        } catch (err) {
+          console.error("Stream error in /chat/send-voice:", err);
           await stream.writeln(
-            JSON.stringify({
-              type: "error",
-              error: "Failed to parse AI response",
-            }),
+            JSON.stringify({ type: "error", error: String(err) }),
           );
         }
-
-        await stream.writeln(JSON.stringify({ type: "done" }));
       },
       async (err, stream) => {
-        console.error("Stream error in /chat/send-voice:", err);
-        await stream.writeln(
-          JSON.stringify({ type: "error", error: String(err) }),
-        );
+        console.error("Stream setup error:", err);
       },
     );
   } catch (error) {

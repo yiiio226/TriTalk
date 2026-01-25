@@ -757,7 +757,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     } else if (_isTimeoutError) {
       errorText = 'Request timed out. Please check your connection.';
     } else {
-      errorText = 'Failed to send message. Please try again.';
+      var rawError =
+          _state.error ?? 'Failed to send message. Please try again.';
+      // Clean up the error message for display
+      errorText = rawError
+          .replaceAll('Exception: ', '')
+          .replaceAll('Error: ', '');
+      if (errorText.contains('OpenRouter API error')) {
+        // Keep it somewhat technical for beta users but cleaner
+        if (errorText.contains('400')) {
+          errorText = 'Configuration Error (400). Please report this bug.';
+        } else {
+          errorText = 'AI Service Error. Please try again later.';
+        }
+      }
     }
 
     return Container(
