@@ -7,6 +7,8 @@ import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/features/speech/speech.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;
@@ -19,7 +21,14 @@ class FavoritesSheet extends StatelessWidget {
     this.targetLanguage = 'en-US', // Default for backward compatibility
   });
 
-  Future<void> _playWordPronunciation(String word) async {
+  Future<void> _playWordPronunciation(BuildContext context, String word) async {
+    // Style 2: Await for word pronunciation quota check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.wordPronunciation,
+    );
+    if (!granted) return;
+
     final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
     if (cleanWord.isEmpty) return;
 
@@ -83,75 +92,75 @@ class FavoritesSheet extends StatelessWidget {
                       },
                     ),
                     SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final int itemIndex = index ~/ 2;
-                          if (index.isEven) {
-                            final item = items[itemIndex];
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      item.phrase,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final int itemIndex = index ~/ 2;
+                        if (index.isEven) {
+                          final item = items[itemIndex];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    item.phrase,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () {
-                                        HapticFeedback.lightImpact();
-                                        _playWordPronunciation(item.phrase);
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child: Icon(
-                                          Icons.volume_up_outlined,
-                                          color: AppColors.lightTextSecondary,
-                                          size: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (item.translation.isNotEmpty &&
-                                      item.translation != "Smart Feedback")
-                                    Text(item.translation),
-                                  Text(
-                                    item.tag,
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                  color: Colors.grey,
                                 ),
-                                onPressed: () {
-                                  service.remove(item.phrase);
-                                },
+                                const SizedBox(width: 8),
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      _playWordPronunciation(
+                                        context,
+                                        item.phrase,
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Icon(
+                                        Icons.volume_up_outlined,
+                                        color: AppColors.lightTextSecondary,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (item.translation.isNotEmpty &&
+                                    item.translation != "Smart Feedback")
+                                  Text(item.translation),
+                                Text(
+                                  item.tag,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                size: 20,
+                                color: Colors.grey,
                               ),
-                            );
-                          }
-                          return const Divider();
-                        },
-                        childCount: items.length * 2 - 1,
-                      ),
+                              onPressed: () {
+                                service.remove(item.phrase);
+                              },
+                            ),
+                          );
+                        }
+                        return const Divider();
+                      }, childCount: items.length * 2 - 1),
                     ),
                   ],
                 );

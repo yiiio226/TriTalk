@@ -6,6 +6,8 @@ import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/utils/l10n_ext.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class VoiceFeedbackSheet extends ConsumerStatefulWidget {
   final VoiceFeedback feedback;
@@ -151,6 +153,13 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
 
   /// Play pronunciation for a word
   Future<void> _playWordPronunciation(String word) async {
+    // Style 2: Await for word pronunciation quota check
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.wordPronunciation,
+    );
+    if (!granted) return;
+
     // Clean the word (keep hyphens and apostrophes for proper pronunciation)
     // Remove only sentence-ending punctuation like . , ! ? ; :
     final cleanWord = word.replaceAll(RegExp(r'[.,!?;:"]'), '').trim();
