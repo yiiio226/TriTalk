@@ -146,7 +146,7 @@
 	"@subscription_choosePlan": {
 		"description": "Title for subscription plan selection"
 	},
-	"subscription_restore": "Restore",
+	"subscription_restore": "Restore Purchases",
 	"@subscription_restore": {
 		"description": "Button text to restore previous purchases"
 	},

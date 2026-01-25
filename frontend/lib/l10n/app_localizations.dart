@@ -311,7 +311,7 @@ abstract class AppLocalizations {
   /// Button text to restore previous purchases
   ///
   /// In en, this message translates to:
-  /// **'Restore'**
+  /// **'Restore Purchases'**
   String get subscription_restore;
 
   /// Headline on paywall screen

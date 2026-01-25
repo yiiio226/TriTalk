@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -203,98 +204,159 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final activePro = _isYearly ? proYearly : proMonthly;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.lightBackground,
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+          // Background Gradient
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topRight,
+                  radius: 1.3,
+                  colors: [AppColors.secondary.withOpacity(0.6), Colors.white],
+                  stops: const [0.0, 0.7],
+                ),
+              ),
+            ),
+          ),
+
+          // Scrollable Content
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                MediaQuery.of(context).padding.top +
+                    60, // Top padding for header
+                24,
+                320, // Increased bottom padding for scrolling space
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  Text(
+                    "Unlock Your Full Potential",
+                    style: AppTypography.headline2.copyWith(
+                      color: AppColors.ln900,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          CupertinoIcons.xmark,
-                          color: AppColors.ln900,
-                        ),
-                        onPressed: () => Navigator.pop(context),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Master language with AI-powered practice",
+                    style: AppTypography.body1.copyWith(
+                      color: AppColors.ln500,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Monthly / Yearly Switch
+                  _buildToggleSwitch(),
+                  const SizedBox(height: 32),
+
+                  // Selected Card
+                  if (_selectedTier == SubscriptionTier.pro &&
+                      activePro != null)
+                    _buildProCard(activePro, proMonthly, proYearly)
+                  else if (_selectedTier == SubscriptionTier.plus &&
+                      activePlus != null)
+                    _buildPlusCard(activePlus, plusMonthly, plusYearly),
+
+                  const SizedBox(height: 32),
+
+                  // Terms
+                  // Restore Purchase
+                  TextButton(
+                    onPressed: _isPurchasing ? null : _restorePurchases,
+                    child: Text(
+                      context.l10n.subscription_restore,
+                      style: AppTypography.body2.copyWith(
+                        color: AppColors.ln500,
+                        fontWeight: FontWeight.w600,
                       ),
-                      TextButton(
-                        onPressed: _isPurchasing ? null : _restorePurchases,
+                    ),
+                  ),
+
+                  // Legal Links
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: Navigate to Privacy Policy
+                        },
                         child: Text(
-                          context.l10n.subscription_restore,
-                          style: AppTypography.button.copyWith(
-                            color: AppColors.ln500,
+                          "Privacy Policy",
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          "•",
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.ln400,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: Navigate to Terms of Service
+                        },
+                        child: Text(
+                          "Terms of Service",
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      24,
-                      0,
-                      24,
-                      180,
-                    ), // Added bottom padding for footer
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        Text(
-                          "Unlock Your Full Potential",
-                          style: AppTypography.headline2.copyWith(
-                            color: AppColors.ln900,
-                            letterSpacing: -0.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Master language with AI-powered practice",
-                          style: AppTypography.body1.copyWith(
-                            color: AppColors.ln500,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Monthly / Yearly Switch
-                        _buildToggleSwitch(),
-                        const SizedBox(height: 32),
-
-                        // Selected Card
-                        if (_selectedTier == SubscriptionTier.pro &&
-                            activePro != null)
-                          _buildProCard(activePro, proMonthly, proYearly)
-                        else if (_selectedTier == SubscriptionTier.plus &&
-                            activePlus != null)
-                          _buildPlusCard(activePlus, plusMonthly, plusYearly),
-
-                        const SizedBox(height: 32),
-
-                        // Terms
-                        Text(
-                          "Recurring billing, cancel anytime.\nBy continuing you agree to our Terms & Privacy Policy.",
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.ln400,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                  const SizedBox(height: 12),
+                  Text(
+                    "Recurring billing, cancel anytime.",
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.ln400,
                     ),
+                    textAlign: TextAlign.center,
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // Fixed Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        CupertinoIcons.xmark,
+                        color: AppColors.ln900,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
 
@@ -352,19 +414,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       : () => _purchasePackage(activePackage),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
-                      color: _selectedTier == SubscriptionTier.pro
-                          ? AppColors.secondary
-                          : AppColors.primary,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      _selectedTier == SubscriptionTier.pro
-                          ? "Start 7-Day Free Trial"
-                          : "Subscribe",
-                      style: AppTypography.button.copyWith(color: Colors.white),
+                      "Start 7-Day Free Trial",
+                      style: AppTypography.button.copyWith(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -377,16 +439,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _buildBillingOption(Package package, bool isYearlyOption) {
     // Logic: Yearly = Green (Savings), Monthly = Blue (Standard)
+    // Simplified logic: Selected = Primary (Black), Unselected = White
     final bool isSelected = _isYearly == isYearlyOption;
     final product = package.storeProduct;
 
-    // Semantic colors based on option type
-    final Color activeBg = isYearlyOption ? AppColors.lg50 : AppColors.lb50;
-    final Color activeBorder = isYearlyOption
-        ? AppColors.lg500
-        : AppColors.lb500;
-    final Color activeText = isYearlyOption ? AppColors.lg800 : AppColors.lb800;
-    final Color activeIcon = isYearlyOption ? AppColors.lg500 : AppColors.lb500;
+    // Unified selected styles
+    final Color activeBg = AppColors.lightBackground;
+    final Color activeBorder = AppColors.primary;
+    final Color activeText = AppColors.primary;
+    final Color activeIcon = AppColors.primary;
 
     // Calculate monthly equivalent for yearly
     String subtitle = "";
@@ -408,7 +469,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isSelected ? activeBorder : AppColors.ln200,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1 : 1,
           ),
           boxShadow: isSelected ? AppShadows.sm : [],
         ),
@@ -424,7 +485,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   color: isSelected ? activeIcon : AppColors.ln300,
                   width: isSelected ? 6 : 1.5,
                 ),
-                color: Colors.white,
+                color: Colors.white, // Inner dot always white
               ),
             ),
             const SizedBox(width: 16),
@@ -469,7 +530,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       child: Text(
                         "Best Value",
                         style: AppTypography.caption.copyWith(
-                          color: activeText,
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -504,46 +565,66 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _buildToggleSwitch() {
     return Container(
+      width: 240, // Fixed comfortable width for two options
+      height: 48,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.ln100,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
         children: [
-          _buildTierToggleButton("Plus", SubscriptionTier.plus),
-          _buildTierToggleButton("Pro", SubscriptionTier.pro),
+          // The Sliding Indicator
+          AnimatedAlign(
+            alignment: _selectedTier == SubscriptionTier.plus
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            child: Container(
+              width: 116, // (240 - 8) / 2
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // The Text Labels
+          Row(
+            children: [
+              _buildToggleOption("Plus", SubscriptionTier.plus),
+              _buildToggleOption("Pro", SubscriptionTier.pro),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTierToggleButton(String text, SubscriptionTier tier) {
+  Widget _buildToggleOption(String text, SubscriptionTier tier) {
     final isSelected = _selectedTier == tier;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTier = tier),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          text,
-          style: AppTypography.button.copyWith(
-            color: isSelected ? AppColors.ln900 : AppColors.ln500,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTier = tier),
+        behavior: HitTestBehavior.translucent, // Ensure entire area is tappable
+        child: Container(
+          alignment: Alignment.center,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: AppTypography.button.copyWith(
+              fontSize: 15, // Slightly larger
+              color: isSelected ? AppColors.ln900 : AppColors.ln500,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+            child: Text(text),
           ),
         ),
       ),
@@ -553,9 +634,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.lg,
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(
+          AppRadius.xl,
+        ), // Match SceneCard radius
+        border: Border.all(color: AppColors.ln200),
+        boxShadow: AppShadows.sm, // Match SceneCard shadow
       ),
       child: Stack(
         children: [
@@ -564,10 +648,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
             top: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.secondary,
                 borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(AppRadius.lg),
+                  topRight: Radius.circular(AppRadius.xl), // Update corner
                   bottomLeft: Radius.circular(AppRadius.lg),
                 ),
               ),
@@ -584,19 +668,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
               children: [
                 Text(
                   "Pro",
-                  style: AppTypography.headline3.copyWith(color: Colors.white),
+                  style: AppTypography.headline3.copyWith(
+                    color: AppColors.ln900,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                _buildFeatureLine("100 Conversations / day", isDark: true),
-                _buildFeatureLine(
-                  "100 Pronunciation Checks / day",
-                  isDark: true,
-                ),
-                _buildFeatureLine("100 Grammar Analyses / day", isDark: true),
-                _buildFeatureLine("100 AI Message Reads / day", isDark: true),
-                _buildFeatureLine("Pitch Contour Analysis", isDark: true),
-                _buildFeatureLine("50 Custom Scenarios", isDark: true),
-                _buildFeatureLine("Multi-device Sync", isDark: true),
+                _buildFeatureLine("100 Conversations / day"),
+                _buildFeatureLine("100 Pronunciation Checks / day"),
+                _buildFeatureLine("100 Grammar Analyses / day"),
+                _buildFeatureLine("100 AI Message Reads / day"),
+                _buildFeatureLine("Pitch Contour Analysis"),
+                _buildFeatureLine("50 Custom Scenarios"),
+                _buildFeatureLine("Multi-device Sync"),
               ],
             ),
           ),
@@ -609,9 +692,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(AppRadius.xl), // Match SceneCard
         border: Border.all(color: AppColors.ln200),
+        boxShadow: AppShadows.sm, // Match SceneCard
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

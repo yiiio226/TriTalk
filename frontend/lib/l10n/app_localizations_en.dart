@@ -119,7 +119,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscription_choosePlan => 'Choose a Plan';
 
   @override
-  String get subscription_restore => 'Restore';
+  String get subscription_restore => 'Restore Purchases';
 
   @override
   String get subscription_unlockPotential => 'Unlock Full Potential';
