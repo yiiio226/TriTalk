@@ -421,9 +421,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      _selectedTier == SubscriptionTier.pro
-                          ? "Start 7-Day Free Trial"
-                          : "Subscribe",
+                      "Start 7-Day Free Trial",
                       style: AppTypography.button.copyWith(
                         color: Colors.white,
                         fontSize: 18,
@@ -567,46 +565,66 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _buildToggleSwitch() {
     return Container(
+      width: 240, // Fixed comfortable width for two options
+      height: 48,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.ln100,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
         children: [
-          _buildTierToggleButton("Plus", SubscriptionTier.plus),
-          _buildTierToggleButton("Pro", SubscriptionTier.pro),
+          // The Sliding Indicator
+          AnimatedAlign(
+            alignment: _selectedTier == SubscriptionTier.plus
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            child: Container(
+              width: 116, // (240 - 8) / 2
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // The Text Labels
+          Row(
+            children: [
+              _buildToggleOption("Plus", SubscriptionTier.plus),
+              _buildToggleOption("Pro", SubscriptionTier.pro),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTierToggleButton(String text, SubscriptionTier tier) {
+  Widget _buildToggleOption(String text, SubscriptionTier tier) {
     final isSelected = _selectedTier == tier;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTier = tier),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          text,
-          style: AppTypography.button.copyWith(
-            color: isSelected ? AppColors.ln900 : AppColors.ln500,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTier = tier),
+        behavior: HitTestBehavior.translucent, // Ensure entire area is tappable
+        child: Container(
+          alignment: Alignment.center,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: AppTypography.button.copyWith(
+              fontSize: 15, // Slightly larger
+              color: isSelected ? AppColors.ln900 : AppColors.ln500,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+            child: Text(text),
           ),
         ),
       ),
