@@ -28,16 +28,43 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   void initState() {
     super.initState();
+    RevenueCatService().addListener(_onRevenueCatUpdate);
     _loadOfferings();
   }
 
+  @override
+  void dispose() {
+    RevenueCatService().removeListener(_onRevenueCatUpdate);
+    super.dispose();
+  }
+
+  void _onRevenueCatUpdate() {
+    if (mounted) {
+      setState(() {
+        // Trigger rebuild to update UI based on new offering/customer info
+      });
+      // If we were loading or had error, retry fetching offerings if initialized now
+      if (RevenueCatService().isInitialized && (_isLoading || _error != null)) {
+        _loadOfferings();
+      }
+    }
+  }
+
   Future<void> _loadOfferings() async {
+    final service = RevenueCatService();
+
+    // Safety check: Don't attempt to use SDK if not configured
+    if (!service.isInitialized) {
+      if (mounted) setState(() => _isLoading = true);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
+
     try {
-      final service = RevenueCatService();
       // Ensure we have latest info
       await service.refreshOfferings();
     } catch (e) {
