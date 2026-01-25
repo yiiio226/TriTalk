@@ -222,140 +222,141 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ),
           ),
 
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+          // Scrollable Content
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                MediaQuery.of(context).padding.top +
+                    60, // Top padding for header
+                24,
+                180,
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  Text(
+                    "Unlock Your Full Potential",
+                    style: AppTypography.headline2.copyWith(
+                      color: AppColors.ln900,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          CupertinoIcons.xmark,
-                          color: AppColors.ln900,
-                        ),
-                        onPressed: () => Navigator.pop(context),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Master language with AI-powered practice",
+                    style: AppTypography.body1.copyWith(
+                      color: AppColors.ln500,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Monthly / Yearly Switch
+                  _buildToggleSwitch(),
+                  const SizedBox(height: 32),
+
+                  // Selected Card
+                  if (_selectedTier == SubscriptionTier.pro &&
+                      activePro != null)
+                    _buildProCard(activePro, proMonthly, proYearly)
+                  else if (_selectedTier == SubscriptionTier.plus &&
+                      activePlus != null)
+                    _buildPlusCard(activePlus, plusMonthly, plusYearly),
+
+                  const SizedBox(height: 32),
+
+                  // Terms
+                  // Restore Purchase
+                  TextButton(
+                    onPressed: _isPurchasing ? null : _restorePurchases,
+                    child: Text(
+                      context.l10n.subscription_restore,
+                      style: AppTypography.body2.copyWith(
+                        color: AppColors.ln500,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
+                    ),
                   ),
-                ),
 
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      24,
-                      0,
-                      24,
-                      180,
-                    ), // Added bottom padding for footer
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        Text(
-                          "Unlock Your Full Potential",
-                          style: AppTypography.headline2.copyWith(
-                            color: AppColors.ln900,
-                            letterSpacing: -0.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Master language with AI-powered practice",
-                          style: AppTypography.body1.copyWith(
-                            color: AppColors.ln500,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Monthly / Yearly Switch
-                        _buildToggleSwitch(),
-                        const SizedBox(height: 32),
-
-                        // Selected Card
-                        if (_selectedTier == SubscriptionTier.pro &&
-                            activePro != null)
-                          _buildProCard(activePro, proMonthly, proYearly)
-                        else if (_selectedTier == SubscriptionTier.plus &&
-                            activePlus != null)
-                          _buildPlusCard(activePlus, plusMonthly, plusYearly),
-
-                        const SizedBox(height: 32),
-
-                        // Terms
-                        // Restore Purchase
-                        TextButton(
-                          onPressed: _isPurchasing ? null : _restorePurchases,
-                          child: Text(
-                            context.l10n.subscription_restore,
-                            style: AppTypography.body2.copyWith(
-                              color: AppColors.ln500,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  // Legal Links
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: Navigate to Privacy Policy
+                        },
+                        child: Text(
+                          "Privacy Policy",
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-
-                        // Legal Links
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                // TODO: Navigate to Privacy Policy
-                              },
-                              child: Text(
-                                "Privacy Policy",
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                "•",
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.ln400,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                // TODO: Navigate to Terms of Service
-                              },
-                              child: Text(
-                                "Terms of Service",
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Recurring billing, cancel anytime.",
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          "•",
                           style: AppTypography.caption.copyWith(
                             color: AppColors.ln400,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                      ],
-                    ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: Navigate to Terms of Service
+                        },
+                        child: Text(
+                          "Terms of Service",
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Recurring billing, cancel anytime.",
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.ln400,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Fixed Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        CupertinoIcons.xmark,
+                        color: AppColors.ln900,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
 
