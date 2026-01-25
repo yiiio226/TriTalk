@@ -510,160 +510,84 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
-    final product = package.storeProduct;
-    // Calculate display price (if yearly, show price per month)
-    String pricePerMonth = product.priceString;
-    if (_isYearly && yearly != null) {
-      // Simple heuristic string formatting, real app should use precise math
-      final price = yearly.storeProduct.price;
-      pricePerMonth = (price / 12).toStringAsFixed(2);
-      // Add currency symbol matching storeProduct if possible, here assuming format
-      pricePerMonth = "${product.currencyCode} $pricePerMonth / mo";
-    }
-
-    return GestureDetector(
-      onTap: _isPurchasing ? null : () => _purchasePackage(package),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primary, // Dark theme
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppShadows.lg,
-        ),
-        child: Stack(
-          children: [
-            // Badge
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: const BoxDecoration(
-                  color: AppColors.secondary,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(AppRadius.lg),
-                    bottomLeft: Radius.circular(AppRadius.lg),
-                  ),
-                ),
-                child: Text(
-                  "MOST POPULAR",
-                  style: AppTypography.overline.copyWith(color: Colors.white),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.lg,
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: const BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(AppRadius.lg),
+                  bottomLeft: Radius.circular(AppRadius.lg),
                 ),
               ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        "Pro",
-                        style: AppTypography.headline3.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Icon(CupertinoIcons.star_fill, color: AppColors.secondary, size: 20),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        _isYearly && yearly != null
-                            ? pricePerMonth.split(' ')[1]
-                            : product
-                                  .priceString, // Hacky extraction, ideal is using formatted price
-                        style: AppTypography.headline1.copyWith(
-                          color: Colors.white,
-                          fontSize: 36,
-                        ),
-                      ),
-                      if (_isYearly)
-                        Text(
-                          " / mo",
-                          style: AppTypography.body1.copyWith(
-                            color: Colors.white70,
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (_isYearly)
-                    Text(
-                      "Billed ${product.priceString} yearly",
-                      style: AppTypography.caption.copyWith(
-                        color: Colors.white54,
-                      ),
-                    ),
-
-                  const SizedBox(height: 24),
-                  _buildFeatureLine("100 Conversations / day", isDark: true),
-                  _buildFeatureLine(
-                    "100 Pronunciation Checks / day",
-                    isDark: true,
-                  ),
-                  _buildFeatureLine("Pitch Contour Analysis", isDark: true),
-                  _buildFeatureLine("Unlimited Custom Scenarios", isDark: true),
-                  // Removed internal button
-                ],
+              child: Text(
+                "MOST POPULAR",
+                style: AppTypography.overline.copyWith(color: Colors.white),
               ),
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Pro",
+                  style: AppTypography.headline3.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: 24),
+                _buildFeatureLine("100 Conversations / day", isDark: true),
+                _buildFeatureLine(
+                  "100 Pronunciation Checks / day",
+                  isDark: true,
+                ),
+                _buildFeatureLine("100 Grammar Analyses / day", isDark: true),
+                _buildFeatureLine("100 AI Message Reads / day", isDark: true),
+                _buildFeatureLine("Pitch Contour Analysis", isDark: true),
+                _buildFeatureLine("50 Custom Scenarios", isDark: true),
+                _buildFeatureLine("Multi-device Sync", isDark: true),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPlusCard(Package package, Package? monthly, Package? yearly) {
-    final product = package.storeProduct;
-    // Calculate display price
-    String pricePerMonth = product.priceString;
-    if (_isYearly && yearly != null) {
-      final price = yearly.storeProduct.price;
-      pricePerMonth =
-          "${product.currencyCode} ${(price / 12).toStringAsFixed(2)} / mo";
-    }
-
-    return GestureDetector(
-      onTap: _isPurchasing ? null : () => _purchasePackage(package),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.lightSurface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.ln200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Plus",
-              style: AppTypography.headline3.copyWith(color: AppColors.ln900),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _isYearly ? "$pricePerMonth" : product.priceString,
-              style: AppTypography.headline3.copyWith(color: AppColors.ln900),
-            ),
-            if (_isYearly)
-              Text(
-                "Billed ${product.priceString} yearly",
-                style: AppTypography.caption.copyWith(color: AppColors.ln500),
-              ),
-
-            const SizedBox(height: 20),
-            _buildFeatureLine("20 Conversations / day"),
-            _buildFeatureLine("20 Pronunciation Checks / day"),
-            _buildFeatureLine("Grammar Analysis"),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.ln200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Plus",
+            style: AppTypography.headline3.copyWith(color: AppColors.ln900),
+          ),
+          const SizedBox(height: 24),
+          _buildFeatureLine("20 Conversations / day"),
+          _buildFeatureLine("20 Pronunciation Checks / day"),
+          _buildFeatureLine("20 Grammar Analyses / day"),
+          _buildFeatureLine("20 AI Message Reads / day"),
+          _buildFeatureLine("Pitch Contour Analysis"),
+          _buildFeatureLine("10 Custom Scenarios"),
+          _buildFeatureLine("Multi-device Sync"),
+        ],
       ),
     );
   }
