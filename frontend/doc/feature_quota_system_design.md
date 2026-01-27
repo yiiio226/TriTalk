@@ -387,11 +387,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 1.  **模型 (Models)**: 更新 `PaidFeature` 枚举以匹配数据库键名。
 2.  **服务 (Service)**: 创建 `SupabaseUsageService` 实现 `UsageService` 接口。
     - 实现上述的缓存 + 异步同步逻辑。
+    - **集成缓存**: 创建并使用 `FeatureQuotaCacheProvider` (见 `cache_strategy.md`) 来管理本地持久化，而不是直接操作 SharedPreferences。
+    - **UTC 约束**: 确保在判断 Daily Quota 是否刷新时，严格使用 `DateTime.now().toUtc()`。
 3.  **FeatureGate**:
     - 更新 `getQuotaLimit` 以从获取的配置中读取。
     - 确保 Check 逻辑是非阻塞的。
 
-## 6. 迁移步骤
+## 6. 迁移步骤 (已完成)
 
 1.  **创建迁移 SQL**:
     - 创建表。
