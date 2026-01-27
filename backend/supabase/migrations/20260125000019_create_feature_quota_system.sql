@@ -142,24 +142,25 @@ BEGIN
     CASE
       -- Daily 类型：如果日期不匹配，视为新的一天，返回 0
       WHEN fl.refresh_period = 'daily'
-           AND (usage_json -> fl.feature_key ->>> 'period') != current_date
+           AND (usage_json -> fl.feature_key ->> 'period') != current_date
       THEN 0
       -- Static 类型 或 日期匹配：返回实际 count
-      ELSE COALESCE((usage_json -> fl.feature_key ->>> 'count')::INT, 0)
+      ELSE COALESCE((usage_json -> fl.feature_key ->> 'count')::INT, 0)
     END AS used_count,
     fl.quota_limit,
     -- 计算剩余量
     CASE
       WHEN fl.quota_limit = -1 THEN -1  -- 无限制
       WHEN fl.refresh_period = 'daily'
-           AND (usage_json -> fl.feature_key ->>> 'period') != current_date
+           AND (usage_json -> fl.feature_key ->> 'period') != current_date
       THEN fl.quota_limit  -- 新的一天，剩余 = 总额
-      ELSE GREATEST(0, fl.quota_limit - COALESCE((usage_json -> fl.feature_key ->>> 'count')::INT, 0))
+      ELSE GREATEST(0, fl.quota_limit - COALESCE((usage_json -> fl.feature_key ->> 'count')::INT, 0))
     END AS remaining,
     fl.refresh_period
   FROM feature_limits fl
   WHERE fl.tier = current_tier
     AND fl.is_active = true  -- 只查询活跃的配置
+    AND fl.effective_from <= NOW()
     AND (fl.effective_to IS NULL OR fl.effective_to > NOW());  -- 未过期
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -201,6 +202,7 @@ BEGIN
   WHERE fl.tier = current_tier
     AND fl.feature_key = feature
     AND fl.is_active = true
+    AND fl.effective_from <= NOW()
     AND (fl.effective_to IS NULL OR fl.effective_to > NOW())
   LIMIT 1;
 
@@ -220,12 +222,19 @@ BEGIN
     current_period := 'lifetime';  -- static 类型
   END IF;
 
-  -- 4. 获取当前用量数据
-  SELECT COALESCE(ufu.usage_data, '{}'::jsonb)
-  INTO usage_json
-  FROM user_feature_usage ufu
-  WHERE ufu.user_id = auth.uid();
+  -- 4. 锁定并获取当前用量数据 (Lock and Load)
+  -- 确保记录存在，防止并发插入冲突
+  INSERT INTO user_feature_usage (user_id, usage_data)
+  VALUES (auth.uid(), '{}'::jsonb)
+  ON CONFLICT (user_id) DO NOTHING;
 
+  -- 锁定行以进行更新
+  SELECT usage_data INTO usage_json
+  FROM user_feature_usage
+  WHERE user_id = auth.uid()
+  FOR UPDATE;
+
+  -- 理论上不应该为 NULL，但以防万一
   IF usage_json IS NULL THEN
     usage_json := '{}'::jsonb;
   END IF;
@@ -240,7 +249,7 @@ BEGIN
     new_count := amount;
   END IF;
 
-  -- 6. 超额检查
+  -- 6. 超额检查 - 关键：在持有锁的情况下检查
   IF quota_limit != -1 AND new_count > quota_limit THEN
     RETURN jsonb_build_object(
       'success', false,
@@ -249,7 +258,7 @@ BEGIN
     );
   END IF;
 
-  -- 7. 更新记录
+  -- 7. 更新记录 (Update)
   UPDATE user_feature_usage
   SET
     usage_data = jsonb_set(
@@ -263,22 +272,6 @@ BEGIN
     ),
     updated_at = NOW()
   WHERE user_id = auth.uid();
-
-  -- 如果用户记录不存在，插入一条新记录
-  IF NOT FOUND THEN
-    INSERT INTO user_feature_usage (user_id, usage_data)
-    VALUES (
-      auth.uid(),
-      jsonb_build_object(
-        feature,
-        jsonb_build_object(
-          'count', new_count,
-          'period', current_period,
-          'updated_at', EXTRACT(EPOCH FROM NOW() AT TIME ZONE 'UTC')::BIGINT * 1000
-        )
-      )
-    );
-  END IF;
 
   -- 8. 计算剩余配额
   IF quota_limit = -1 THEN
