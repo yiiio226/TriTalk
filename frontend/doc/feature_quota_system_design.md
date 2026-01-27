@@ -386,6 +386,52 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 4.  **兜底防护 (Hard Guard)**:
     - 真正的硬性拦截由后端的业务 API (Cloudflare Worker) 实现。API 在执行昂贵操作前会复核配额。前端检查主要用于**用户体验优化**。
 
+### 5.1.1 Gate 自动扣费策略 (Auto-consume in Gate) ✅
+
+`FeatureGate.performWithFeatureCheck` 方法在检查通过后，应**自动调用** `trackUsage` 进行用量记录，而非依赖业务代码手动调用。
+
+**设计决策理由**:
+
+| 考量维度       | Gate 自动扣费     | 业务手动扣费                    |
+| -------------- | ----------------- | ------------------------------- |
+| **遗漏风险**   | ✅ 不可能遗漏     | ❌ 高风险，每个调用点都可能忘记 |
+| **代码一致性** | ✅ 集中管理       | ❌ 分散在各业务代码中           |
+| **开发体验**   | ✅ 业务代码零负担 | ❌ 需记住额外调用               |
+| **误扣费**     | ⚠️ 需规范调用时机 | ✅ 业务控制精准                 |
+
+**核心实现**:
+
+```dart
+Future<bool> performWithFeatureCheck(...) async {
+  // 1. Check Hard Gates (hasAccess)
+  // 2. Check Quota (canUse)
+
+  // 3. ✅ Auto-track usage BEFORE granting access
+  await _usageService.trackUsage(feature);
+
+  // 4. Grant access
+  onGranted?.call();
+  return true;
+}
+```
+
+**调用时机原则 (Critical)**:
+
+> ⚠️ **Gate 检查必须放在"不可逆操作"的触发点，而非"可取消流程"的入口**
+
+| 场景           | ❌ 错误做法               | ✅ 正确做法                        |
+| -------------- | ------------------------- | ---------------------------------- |
+| 发送消息       | -                         | 点击发送按钮时检查 (点击即发送)    |
+| 创建自定义场景 | 点击 FAB 打开对话框时检查 | 对话框内"确认创建"按钮时检查       |
+| 语法分析       | 点击菜单项时检查          | 菜单项点击后直接发起分析，同时检查 |
+
+**误扣费规避**:
+
+对于 `static` (终身) 类型的配额（如 `customScenarios`），误扣一次的影响远大于 `daily` 类型。因此：
+
+- `daily` 类型：调用时机要求相对宽松
+- `static` 类型：**必须**严格遵循"不可逆触发点"原则
+
 ### 5.1.2 订阅自适应同步 (Subscription Adaptive Sync) (已完成)
 
 为了确保用户在购买或续费后立即获得最新的配额，系统实现了**订阅状态自动同步机制**：
@@ -420,10 +466,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 4.  ✅ **服务实现 (Service)**: 创建 `UsageServiceImpl`。
     - `lib/features/subscription/data/services/supabase_usage_service.dart`
     - 实现缓存 + 异步同步逻辑、`WidgetsBindingObserver` 生命周期监听
-5.  ⬜ **FeatureGate 重构**: 更新 `FeatureGate` 以使用新服务。
+5.  ✅ **FeatureGate 自动扣费**: 在 `performWithFeatureCheck` 中集成 `trackUsage`。
     - `lib/features/subscription/presentation/feature_gate.dart`
-    - 从 `UsageServiceImpl` 迁移到 `UsageServiceImpl`
-    - 使用 `usageService.getQuotaLimit()` 替代硬编码
+    - 在检查通过后、`onGranted` 回调前，调用 `_usageService.trackUsage(feature)`
+    - 确保扣费为异步操作，不阻塞 UI（使用 `unawaited`）
 6.  ⬜ **DI 集成**: 在 App 初始化时注册 `UsageServiceImpl`。
     - 在 `AppBootstrap` 或 `AppInitializer` 中初始化
     - 注册 `FeatureQuotaCacheProvider` 到 `CacheManager`
@@ -431,6 +477,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
     - 监听 `RevenueCatService` 的订阅状态变化
     - 实现防抖 (Debounce) 和重试 (Retry) 机制
     - 调用 `usageService.syncFromServer()` 强制刷新
+8.  ✅ **调用点修正**: 修正 `static` 类型配额的 Gate 调用位置。
+    - `customScenarios`: 将 Gate 从 `home_screen.dart` FAB 移至 `custom_scene_dialog.dart` 的 "Generate" 按钮
+    - 审查所有 `performWithFeatureCheck` 调用点，确保符合"不可逆触发点"原则
 
 ## 6. 迁移步骤 (已完成)
 
