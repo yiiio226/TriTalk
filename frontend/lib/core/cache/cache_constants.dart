@@ -19,4 +19,8 @@ class CacheConstants {
   /// Directory name for word TTS cache
   /// Format: {documentsDir}/word_tts_cache/
   static const String wordTtsCacheDir = 'word_tts_cache';
+
+  /// Key prefix for feature quota cache
+  /// Format: {userId}_feature_quota_v1
+  static const String featureQuotaPrefix = 'feature_quota_v1';
 }

@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 /// - [shadowCache]: Shadowing practice results (JSON in SharedPreferences)
 /// - [ttsCache]: TTS audio files (WAV files on disk)
 /// - [wordTts]: Word pronunciation audio (WAV files on disk)
+/// - [featureQuota]: Feature quota status (JSON in SharedPreferences)
 enum CacheType {
   /// Chat history cache - stores conversation messages per scene
   chatHistory,
@@ -20,6 +21,9 @@ enum CacheType {
 
   /// Word TTS cache - stores word pronunciation audio files
   wordTts,
+
+  /// Feature quota cache - stores usage limits and counts per feature
+  featureQuota,
 }
 
 /// Abstract interface for cache providers.

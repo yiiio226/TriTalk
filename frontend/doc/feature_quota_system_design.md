@@ -364,34 +364,73 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
     - **Select**: 用户只能查看自己的用量 (`auth.uid() = user_id`)。
     - **Update**: **全员禁止**。更新必须通过 `track_feature_usage` RPC 进行，以确保逻辑一致性 (重置日期、检查上限)。
 
-## 5. 前端集成计划
+## 5. 前端集成计划 (部分已完成)
 
 ### 5.1 性能优化策略 (Optimistic UI)
 
 为了避免每次操作都阻塞等待网络请求，前端将采用 **“本地乐观检查 + 异步同步”** 策略。
 
-1.  **初始化 (Init)**:
-    - App 启动时，调用 `get_user_quota_status` 一次性拉取最新的 Limit 和 Count，存入前端内存缓存 (`UsageService`).
+1.  **初始化与恢复 (Init & Resume)**:
+    - App 启动或**从后台返回 (`onResumed`)** 时，调用 `get_user_quota_status` 拉取最新状态。
+    - 总是先加载本地缓存到内存，确保 UI 可交互。
 2.  **本地检查 (Check)**:
     - 用户点击功能时，`FeatureGate` **仅检查本地缓存**。
-    - 如果 `cache.count < cache.limit`，立即返回 `true`。**零延迟，不等待网络**。
+    - **UTC Reset Check**: 检查前会比较缓存中的 `period_date` 和当前 UTC 日期，如果跨天则临时视为 0 用量。
+    - 如果 `cache.count < cache.limit`，立即返回 `true`。
 3.  **异步同步 (Async Sync)**:
     - 在执行业务逻辑的同时，前端后台**异步**调用 `track_feature_usage` RPC。
-    - 如果 RPC 成功：静默。
-    - 如果 RPC 失败或返回“已超额”：在下一次操作或 UI 刷新时回滚本地状态或弹出提示。
+    - **Conflict Handling**:
+      - 如果 RPC 成功：(静默)。
+      - 如果 RPC 失败 (Network Error)：保留本地乐观状态 (Fail-Open)。
+      - 如果 RPC 返回“已超额 (Exceeded)”：**强制更新**本地状态为“已耗尽”，并在下次操作时拦截。
 4.  **兜底防护 (Hard Guard)**:
     - 真正的硬性拦截由后端的业务 API (Cloudflare Worker) 实现。API 在执行昂贵操作前会复核配额。前端检查主要用于**用户体验优化**。
 
+### 5.1.2 订阅自适应同步 (Subscription Adaptive Sync) (已完成)
+
+为了确保用户在购买或续费后立即获得最新的配额，系统实现了**订阅状态自动同步机制**：
+
+1.  **监听变更 (Listening)**:
+    - `UsageServiceImpl` 在初始化时监听 `RevenueCatService`。
+    - 仅在 `currentTier` 发生实际变化时触发（忽略无关的 Offerings 更新）。
+
+2.  **防抖机制 (Debouncing)**:
+    - 引入 500ms 防抖计时器。
+    - 合并短时间内连续的状态变化（如购买成功后的一系列回调），减少不必要的网络请求。
+
+3.  **智能重试 (Smart Retry)**:
+    - **问题**: RevenueCat SDK 的本地回调通常比后端 Webhook 更新数据库要快。
+    - **策略**: 当收到前端 Tier 变更通知后，如果 `syncFromServer()` 返回的后端 Tier 仍旧是旧的：
+      - 自动触发重试逻辑。
+      - **Max Retries**: 3 次。
+      - **Delay**: 每次间隔 2 秒。
+    - 这确保了即使 webhook 有几秒钟的延迟，前端最终也能同步到正确的配额限制。
+
 ### 5.2 开发任务
 
-1.  **模型 (Models)**: 更新 `PaidFeature` 枚举以匹配数据库键名。
-2.  **服务 (Service)**: 创建 `SupabaseUsageService` 实现 `UsageService` 接口。
-    - 实现上述的缓存 + 异步同步逻辑。
-    - **集成缓存**: 创建并使用 `FeatureQuotaCacheProvider` (见 `cache_strategy.md`) 来管理本地持久化，而不是直接操作 SharedPreferences。
-    - **UTC 约束**: 确保在判断 Daily Quota 是否刷新时，严格使用 `DateTime.now().toUtc()`。
-3.  **FeatureGate**:
-    - 更新 `getQuotaLimit` 以从获取的配置中读取。
-    - 确保 Check 逻辑是非阻塞的。
+1.  ✅ **模型 (Models)**: 创建配额状态模型。
+    - `lib/features/subscription/domain/models/feature_quota_status.dart`
+    - 包含 `FeatureQuotaStatus`、`TrackUsageResult`、`FeatureQuotaCache`
+2.  ✅ **服务接口 (Interface)**: 扩展 `UsageService` 接口。
+    - `lib/features/subscription/domain/services/usage_service.dart`
+    - 新增：`getQuotaStatus()`、`canUse()`、`trackUsage()`、`syncFromServer()`
+3.  ✅ **缓存 Provider**: 创建 `FeatureQuotaCacheProvider`。
+    - `lib/core/cache/providers/feature_quota_cache_provider.dart`
+    - 实现 `CacheProvider` 接口，支持惰性每日重置
+4.  ✅ **服务实现 (Service)**: 创建 `UsageServiceImpl`。
+    - `lib/features/subscription/data/services/supabase_usage_service.dart`
+    - 实现缓存 + 异步同步逻辑、`WidgetsBindingObserver` 生命周期监听
+5.  ⬜ **FeatureGate 重构**: 更新 `FeatureGate` 以使用新服务。
+    - `lib/features/subscription/presentation/feature_gate.dart`
+    - 从 `UsageServiceImpl` 迁移到 `UsageServiceImpl`
+    - 使用 `usageService.getQuotaLimit()` 替代硬编码
+6.  ⬜ **DI 集成**: 在 App 初始化时注册 `UsageServiceImpl`。
+    - 在 `AppBootstrap` 或 `AppInitializer` 中初始化
+    - 注册 `FeatureQuotaCacheProvider` 到 `CacheManager`
+7.  ✅ **订阅变更联动**: 当 Tier 变化时刷新配额缓存。
+    - 监听 `RevenueCatService` 的订阅状态变化
+    - 实现防抖 (Debounce) 和重试 (Retry) 机制
+    - 调用 `usageService.syncFromServer()` 强制刷新
 
 ## 6. 迁移步骤 (已完成)
 

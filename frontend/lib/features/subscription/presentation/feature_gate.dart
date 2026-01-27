@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/cache/providers/feature_quota_cache_provider.dart';
+import 'package:frontend/core/data/local/storage_key_service.dart';
 import 'package:frontend/core/env/env.dart';
+import 'package:frontend/core/initializer/app_initializer.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/features/subscription/data/services/usage_service_impl.dart';
 import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
 import 'package:frontend/features/subscription/domain/services/usage_service.dart';
 import 'package:frontend/features/subscription/presentation/paywall_route.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Interceptor for paid feature access control
 ///
@@ -19,7 +23,20 @@ class FeatureGate {
   // Singleton instance
   static final FeatureGate _instance = FeatureGate._internal();
   factory FeatureGate() => _instance;
-  FeatureGate._internal() : _usageService = UsageServiceImpl();
+
+  FeatureGate._internal()
+    : _usageService = UsageServiceImpl(
+        cacheProvider: FeatureQuotaCacheProvider(
+          prefs: AppBootstrap.prefs,
+          storageKey: StorageKeyService(),
+        ),
+        supabase: Supabase.instance.client,
+      );
+
+  /// Initialize the usage service (load cache, start sync)
+  Future<void> initialize() async {
+    await _usageService.initialize();
+  }
 
   /// Get the current quota limit for a feature (Source of Truth should be backend)
   /// Returns -1 for unlimited.
@@ -59,14 +76,23 @@ class FeatureGate {
   /// Check if the user has access eligibility (ignoring usage count)
   /// Used for UI lock icons.
   bool hasAccess(PaidFeature feature) {
+    debugPrint('FeatureGate: Checking access for ${feature.name}');
     final hasPlus = RevenueCatService().hasPlus;
 
     if (feature == PaidFeature.pitchAnalysis) {
+      debugPrint(
+        'FeatureGate: ${feature.name} access -> $hasPlus (Requires Plus)',
+      );
       return hasPlus; // Requires Plus+
     }
     if (feature == PaidFeature.customScenarios) {
+      debugPrint(
+        'FeatureGate: ${feature.name} access -> $hasPlus (Requires Plus)',
+      );
       return hasPlus; // Requires Plus+ to create/access (based on doc)
     }
+
+    debugPrint('FeatureGate: ${feature.name} access -> true (Quota limited)');
     return true; // Quota-limited features are accessible to all, just limited
   }
 
@@ -103,7 +129,10 @@ class FeatureGate {
   }) async {
     // 0. Debug: Force Paywall
     if (Env.forcePaywall) {
-      await PaywallRoute.show(context, reason: "Debug: Force Paywall");
+      await PaywallRoute.show(
+        context,
+        reason: "\n\n\n✅✅✅Debug: Force Paywall✅✅✅",
+      );
       onPaywallCancelled?.call();
       return false;
     }
@@ -122,17 +151,13 @@ class FeatureGate {
     }
 
     // 2. Check Quota (Usage)
-    int limit = getQuotaLimit(feature);
-    int used = _usageService.getUsedCount(feature);
-
-    if (limit != -1 && used >= limit) {
+    if (!_usageService.canUse(feature)) {
       await PaywallRoute.show(
         context,
         reason: "Daily limit reached for ${feature.name}",
       );
       // Re-check after paywall (user might have upgraded)
-      final newLimit = getQuotaLimit(feature);
-      if (newLimit == -1 || used < newLimit) {
+      if (_usageService.canUse(feature)) {
         onGranted?.call();
         return true;
       } else {
