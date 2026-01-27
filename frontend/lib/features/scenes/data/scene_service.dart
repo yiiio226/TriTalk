@@ -66,7 +66,7 @@ class SceneService extends ChangeNotifier {
 
       debugPrint('🔍 [SceneService] Starting refresh for user: $userId');
       debugPrint('🔍 [SceneService] Schema: ${_supabase.rest.schema}');
-      
+
       final startTime = DateTime.now();
 
       // Query custom_scenarios with ORDER BY updated_at DESC
@@ -76,11 +76,14 @@ class SceneService extends ChangeNotifier {
           .select()
           .eq('user_id', userId)
           .order('updated_at', ascending: false)
-          .timeout(const Duration(seconds: 30)); // Increased from 10s to handle slow networks
+          .timeout(
+            const Duration(seconds: 30),
+          ); // Increased from 10s to handle slow networks
 
       final duration = DateTime.now().difference(startTime);
-      debugPrint('🔍 [SceneService] Query completed in ${duration.inMilliseconds}ms');
-      debugPrint('🔍 [SceneService] Response type: ${response.runtimeType}');
+      debugPrint(
+        '🔍 [SceneService] Query completed in ${duration.inMilliseconds}ms',
+      );
       debugPrint('🔍 [SceneService] Response length: ${response.length}');
 
       _scenes = response.map<Scene>((e) {
@@ -101,7 +104,9 @@ class SceneService extends ChangeNotifier {
         );
       }).toList();
 
-      debugPrint('🔍 [SceneService] ✅ Successfully loaded ${_scenes.length} scenes');
+      debugPrint(
+        '🔍 [SceneService] ✅ Successfully loaded ${_scenes.length} scenes',
+      );
       _isLoading = false;
       notifyListeners();
 

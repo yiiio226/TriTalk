@@ -153,9 +153,13 @@
 - ✅ **Widget 级状态**: `ShadowingSheet` 内部维护一个 `Map<String, String>` 记录分段 Key 到本地路径的映射，避免重复请求。
 - ✅ **物理缓存**: 实际音频文件由 `StreamingTtsService` 统一管理和持久化。
 
-### 6️⃣ FeatureQuotaService - 功能配额缓存
+### 6️⃣ FeatureQuotaService - 功能配额缓存 (已实现)
 
-**文件**: `lib/features/subscription/data/services/feature_quota_cache_provider.dart` (对应的 Service 为 `SupabaseUsageService`)
+**文件**:
+
+- **CacheProvider**: `lib/core/cache/providers/feature_quota_cache_provider.dart`
+- **Service**: `lib/features/subscription/data/services/supabase_usage_service.dart`
+- **模型**: `lib/features/subscription/domain/models/feature_quota_status.dart`
 
 **缓存策略**: **Optimistic Sync (乐观同步 / 预加载)**
 
@@ -171,22 +175,39 @@
 {
   "updated_at": 1706164800000,
   "features": {
-     "daily_conversation": { "used": 5, "limit": 20, "remaining": 15, "period": "daily" },
-     "custom_scenarios": { "used": 2, "limit": 10, "remaining": 8, "period": "static" }
+     "daily_conversation": {
+        "used": 5,
+        "limit": 20,
+        "period_date": "2026-01-27", // 关键：记录上次使用的 UTC 日期
+        "refresh_rule": "daily"      // 关键：记录刷新规则
+     },
+     "custom_scenarios": {
+        "used": 2,
+        "limit": 10,
+        "period_date": "lifetime",
+        "refresh_rule": "static"
+     }
   }
 }
 ```
 
 **运作机制**:
 
-1.  **启动 (Hydration)**:
-    - App 启动时，`SupabaseUsageService` 通过 Provider 从 SharedPreferences 读取上次缓存的状态到**内存**，确保 `FeatureGate` 在网络请求完成前立即可用（即使数据稍旧）。
-    - 同时发起网络请求 `get_user_quota_status`，获取最新数据后更新内存和磁盘缓存。
+1.  **启动与恢复 (Hydration & Resume)**:
+    - App 启动 (`Init`) 或从后台切回前台 (`onResumed`) 时，`UsageServiceImpl` 都会触发数据同步。
+    - **内存优先**: 总是先加载本地 SharedPreferences 到内存，确保 UI 即使冷启动也能瞬间响应，随后用网络数据“最终一致”地更新。
 2.  **乐观更新 (Optimistic UI)**:
-    - 当用户触发功能（如 `track_feature_usage`）时，**先**修改内存和磁盘缓存中的 `used` 和 `remaining`。
-    - **后** 发送 RPC 请求。如果 RPC 失败或返回超额，则回滚缓存状态。
-3.  **每日重置 (Client-Side Reset Simulation)**:
-    - 在读取缓存时，Provider 会检查 `updated_at` (或者记录中的 `period` 字段)。如果是 `daily` 类型的配额且日期已跨天，本地逻辑会自动将 `used` 视为 0，直到服务端最新数据返回。
+    - 当用户触发功能时，**先**修改内存状态。
+    - **后** 发送 RPC 请求。
+3.  **冲突处理 (Conflict Resolution)**:
+    - **网络失败**: 保持乐观状态（允许用户继续使用，Fail-Open，体验优先）。
+    - **服务端拒绝 (Quota Exceeded)**: **强制覆盖**本地状态为“已耗尽”，而不是简单的回滚。这防止了本地与服务端状态永久不一致。
+4.  **每日重置 (Client-Side Reset Simulation)**:
+    - 读取缓存时，检查 `refresh_rule == 'daily'`。
+    - 对比 `period_date` 与 `Current UTC Date`。如果日期不同，视为新的一天（Used = 0）。
+5.  **订阅同步 (Subscription Sync)**:
+    - **联动更新**: 监听 RevenueCat 订阅状态变化。当 Tier 变更时（如 Free -> Pro），触发 `syncFromServer`。
+    - **防抖与重试**: 采用 500ms 防抖防止频繁请求，并支持 3 次重试以解决 Webhook 延迟导致的后端数据滞后问题。
 
 **关键约束**:
 

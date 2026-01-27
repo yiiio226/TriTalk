@@ -8,6 +8,7 @@ import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
 import '../services/streaming_tts_service.dart';
 import '../cache/cache_initializer.dart';
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
 
 /// Provider for SharedPreferences instance
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -120,17 +121,19 @@ class AppBootstrap {
       debugPrint('🔍 [Supabase] URL: ${Env.supabaseUrl}');
       debugPrint('🔍 [Supabase] Schema: ${Env.supabaseSchema}');
     }
-    
+
     await Supabase.initialize(
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
       debug: kDebugMode,
       postgrestOptions: PostgrestClientOptions(schema: Env.supabaseSchema),
     );
-    
+
     if (kDebugMode) {
       debugPrint('🔍 [Supabase] ✅ Initialization complete');
-      debugPrint('🔍 [Supabase] Client schema: ${Supabase.instance.client.rest.schema}');
+      debugPrint(
+        '🔍 [Supabase] Client schema: ${Supabase.instance.client.rest.schema}',
+      );
     }
 
     // Initialize SharedPreferences
@@ -143,6 +146,12 @@ class AppBootstrap {
     await initializeCacheSystem();
     if (kDebugMode) {
       debugPrint('AppBootstrap: Cache system initialized');
+    }
+
+    // Initialize Feature Gate (Quota System)
+    await FeatureGate().initialize();
+    if (kDebugMode) {
+      debugPrint('AppBootstrap: FeatureGate initialized');
     }
 
     // Initialize SoLoud audio engine for streaming TTS
