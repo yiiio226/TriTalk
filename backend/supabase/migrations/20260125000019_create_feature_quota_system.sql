@@ -105,7 +105,7 @@ RETURNS TABLE (
 ) AS $$
 DECLARE
   current_tier TEXT;
-  current_date TEXT;
+  today_date TEXT;
   usage_json JSONB;
 BEGIN
   -- 1. 获取用户当前订阅等级 (默认 'free')
@@ -121,7 +121,7 @@ BEGIN
   END IF;
 
   -- 2. 获取今天的日期 (UTC)
-  current_date := to_char(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD');
+  today_date := to_char(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD');
 
   -- 3. 获取用户的 usage_data
   SELECT COALESCE(ufu.usage_data, '{}'::jsonb)
@@ -142,7 +142,7 @@ BEGIN
     CASE
       -- Daily 类型：如果日期不匹配，视为新的一天，返回 0
       WHEN fl.refresh_period = 'daily'
-           AND (usage_json -> fl.feature_key ->> 'period') != current_date
+           AND (usage_json -> fl.feature_key ->> 'period') != today_date
       THEN 0
       -- Static 类型 或 日期匹配：返回实际 count
       ELSE COALESCE((usage_json -> fl.feature_key ->> 'count')::INT, 0)
@@ -152,7 +152,7 @@ BEGIN
     CASE
       WHEN fl.quota_limit = -1 THEN -1  -- 无限制
       WHEN fl.refresh_period = 'daily'
-           AND (usage_json -> fl.feature_key ->> 'period') != current_date
+           AND (usage_json -> fl.feature_key ->> 'period') != today_date
       THEN fl.quota_limit  -- 新的一天，剩余 = 总额
       ELSE GREATEST(0, fl.quota_limit - COALESCE((usage_json -> fl.feature_key ->> 'count')::INT, 0))
     END AS remaining,
