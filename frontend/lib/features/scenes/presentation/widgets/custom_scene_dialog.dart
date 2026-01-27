@@ -7,7 +7,8 @@ import '../../../../core/data/local/preferences_service.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
-
+import 'package:frontend/features/subscription/presentation/feature_gate.dart';
+import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({super.key});
@@ -32,6 +33,13 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
 
   void _generateScene() async {
     if (_scenarioController.text.trim().isEmpty) return;
+
+    // Check feature access before generating (this will auto-track usage)
+    final granted = await FeatureGate().performWithFeatureCheck(
+      context,
+      feature: PaidFeature.customScenarios,
+    );
+    if (!granted) return;
 
     setState(() {
       _isLoading = true;
@@ -130,7 +138,10 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: AppColors.primary),
+                        const Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
@@ -173,22 +184,22 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                               minLines: null,
                               expands: true,
                               textAlignVertical: TextAlignVertical.top,
-                                decoration: const InputDecoration(
-                                  hintText:
-                                      'Example: I need to return a defective product, but the store clerk is being difficult...',
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  focusedErrorBorder: InputBorder.none,
-                                  filled: false,
-                                  contentPadding: EdgeInsets.fromLTRB(
-                                    16,
-                                    16,
-                                    40,
-                                    16,
-                                  ),
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'Example: I need to return a defective product, but the store clerk is being difficult...',
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                focusedErrorBorder: InputBorder.none,
+                                filled: false,
+                                contentPadding: EdgeInsets.fromLTRB(
+                                  16,
+                                  16,
+                                  40,
+                                  16,
                                 ),
+                              ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),

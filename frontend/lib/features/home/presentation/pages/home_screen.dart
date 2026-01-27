@@ -15,8 +15,6 @@ import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../scenes/presentation/pages/scenario_configuration_screen.dart';
 import 'package:frontend/core/utils/l10n_ext.dart';
 import 'package:frontend/core/data/language_constants.dart';
-import 'package:frontend/features/subscription/presentation/feature_gate.dart';
-import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,40 +55,35 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _isDragging
           ? null
           : FloatingActionButton(
-              onPressed: () {
-                // Style 1: Callback for navigation action
-                FeatureGate().performWithFeatureCheck(
-                  context,
-                  feature: PaidFeature.customScenarios,
-                  onGranted: () async {
-                    final result = await showModalBottomSheet<Scene>(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      barrierColor: Colors.white.withValues(alpha: 0.5),
-                      builder: (context) => Padding(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
-                        ),
-                        child: const CustomSceneDialog(),
-                      ),
-                    );
-
-                    if (result != null) {
-                      // Add via service
-                      await SceneService().addScene(result);
-                      // Navigate to configuration screen
-                      if (!mounted) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ScenarioConfigurationScreen(scene: result),
-                        ),
-                      );
-                    }
-                  },
+              onPressed: () async {
+                // Gate check moved to CustomSceneDialog's "Generate" button
+                // to avoid charging when user cancels the dialog
+                final result = await showModalBottomSheet<Scene>(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  barrierColor: Colors.white.withValues(alpha: 0.5),
+                  builder: (context) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: const CustomSceneDialog(),
+                  ),
                 );
+
+                if (result != null) {
+                  // Add via service
+                  await SceneService().addScene(result);
+                  // Navigate to configuration screen
+                  if (!mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ScenarioConfigurationScreen(scene: result),
+                    ),
+                  );
+                }
               },
               backgroundColor: Colors.black,
               elevation: 4,

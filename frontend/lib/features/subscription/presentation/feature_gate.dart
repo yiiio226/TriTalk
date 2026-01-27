@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/core/cache/providers/feature_quota_cache_provider.dart';
 import 'package:frontend/core/data/local/storage_key_service.dart';
@@ -142,6 +144,8 @@ class FeatureGate {
       await PaywallRoute.show(context, reason: "Unlock ${feature.name}");
       // Check if user subscribed after paywall
       if (hasAccess(feature)) {
+        // Track usage after upgrade (async, non-blocking)
+        unawaited(_usageService.trackUsage(feature));
         onGranted?.call();
         return true;
       } else {
@@ -158,6 +162,8 @@ class FeatureGate {
       );
       // Re-check after paywall (user might have upgraded)
       if (_usageService.canUse(feature)) {
+        // Track usage after upgrade (async, non-blocking)
+        unawaited(_usageService.trackUsage(feature));
         onGranted?.call();
         return true;
       } else {
@@ -166,7 +172,10 @@ class FeatureGate {
       }
     }
 
-    // 3. Granted
+    // 3. Track usage (async, non-blocking) before granting access
+    unawaited(_usageService.trackUsage(feature));
+
+    // 4. Granted
     onGranted?.call();
     return true;
   }
