@@ -18,12 +18,13 @@
 
 目前支持以下 4 种主要缓存类型：
 
-| 缓存类型 (Enum) | 对应 Provider              | 存储介质                 | 用途           |
-| :-------------- | :------------------------- | :----------------------- | :------------- |
-| `ttsCache`      | `TtsCacheProvider`         | 文件系统 (WAV)           | TTS 音频流文件 |
-| `wordTts`       | `WordTtsCacheProvider`     | 文件系统 (WAV)           | 单词发音音频   |
-| `chatHistory`   | `ChatHistoryCacheProvider` | SharedPreferences (JSON) | 聊天消息记录   |
-| `shadowCache`   | `ShadowingCacheProvider`   | SharedPreferences (JSON) | 跟读练习结果   |
+| 缓存类型 (Enum) | 对应 Provider               | 存储介质                 | 用途           |
+| :-------------- | :-------------------------- | :----------------------- | :------------- |
+| `ttsCache`      | `TtsCacheProvider`          | 文件系统 (WAV)           | TTS 音频流文件 |
+| `wordTts`       | `WordTtsCacheProvider`      | 文件系统 (WAV)           | 单词发音音频   |
+| `chatHistory`   | `ChatHistoryCacheProvider`  | SharedPreferences (JSON) | 聊天消息记录   |
+| `shadowCache`   | `ShadowingCacheProvider`    | SharedPreferences (JSON) | 跟读练习结果   |
+| `featureQuota`  | `FeatureQuotaCacheProvider` | SharedPreferences (JSON) | 功能配额状态   |
 
 ### 3. 常量管理
 
@@ -151,6 +152,52 @@
 
 - ✅ **Widget 级状态**: `ShadowingSheet` 内部维护一个 `Map<String, String>` 记录分段 Key 到本地路径的映射，避免重复请求。
 - ✅ **物理缓存**: 实际音频文件由 `StreamingTtsService` 统一管理和持久化。
+
+### 6️⃣ FeatureQuotaService - 功能配额缓存
+
+**文件**: `lib/features/subscription/data/services/feature_quota_cache_provider.dart` (对应的 Service 为 `SupabaseUsageService`)
+
+**缓存策略**: **Optimistic Sync (乐观同步 / 预加载)**
+
+该缓存存储用户的当前功能配额状态（Limit + Usage），用于支持 `FeatureGate` 的零延迟检查。
+
+**存储规则**:
+
+```dart
+// Cache Key (来自 CacheConstants.featureQuotaPrefix)
+'{userId}_feature_quota_v1'
+
+// 存储内容 (JSON String)
+{
+  "updated_at": 1706164800000,
+  "features": {
+     "daily_conversation": { "used": 5, "limit": 20, "remaining": 15, "period": "daily" },
+     "custom_scenarios": { "used": 2, "limit": 10, "remaining": 8, "period": "static" }
+  }
+}
+```
+
+**运作机制**:
+
+1.  **启动 (Hydration)**:
+    - App 启动时，`SupabaseUsageService` 通过 Provider 从 SharedPreferences 读取上次缓存的状态到**内存**，确保 `FeatureGate` 在网络请求完成前立即可用（即使数据稍旧）。
+    - 同时发起网络请求 `get_user_quota_status`，获取最新数据后更新内存和磁盘缓存。
+2.  **乐观更新 (Optimistic UI)**:
+    - 当用户触发功能（如 `track_feature_usage`）时，**先**修改内存和磁盘缓存中的 `used` 和 `remaining`。
+    - **后** 发送 RPC 请求。如果 RPC 失败或返回超额，则回滚缓存状态。
+3.  **每日重置 (Client-Side Reset Simulation)**:
+    - 在读取缓存时，Provider 会检查 `updated_at` (或者记录中的 `period` 字段)。如果是 `daily` 类型的配额且日期已跨天，本地逻辑会自动将 `used` 视为 0，直到服务端最新数据返回。
+
+**关键约束**:
+
+> ⚠️ **UTC Time Only**:
+> 前端进行重置判定时，**必须强制使用 UTC 时间** (`DateTime.now().toUtc()`) 来判断是否过了一天。严禁使用本地时区，因为后端的 `daily` 刷新逻辑是死板地基于 UTC 00:00 的。
+
+**特点**:
+
+- ✅ **零延迟拦截**: `FeatureGate` 的检查完全基于同步的内存/本地数据。
+- ✅ **故障降级**: 若网络不可用，用户仍可基于本地缓存的剩余额度继续使用（虽然可能存在作弊风险，但优先保证体验）。
+- ✅ **统一清理**: 随 `CacheManager.clearAllUserCache()` 自动清除，无需额外处理。
 
 ---
 
