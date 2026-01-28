@@ -205,13 +205,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   List<Widget> _buildFloatingElements() {
     final elements = [
-      {'text': 'Hello', 'color': AppColors.lb100, 'x': 0.1, 'y': 0.15},
-      {'text': '你好', 'color': AppColors.lr100, 'x': 0.85, 'y': 0.2},
-      {'text': 'Bonjour', 'color': AppColors.lg100, 'x': 0.15, 'y': 0.75},
-      {'text': 'Hola', 'color': AppColors.ly100, 'x': 0.8, 'y': 0.7},
-      {'text': 'こんにちは', 'color': AppColors.lp100, 'x': 0.5, 'y': 0.1},
-      {'text': 'Ciao', 'color': AppColors.lo100, 'x': 0.2, 'y': 0.5},
-      {'text': '안녕하세요', 'color': AppColors.lb100, 'x': 0.75, 'y': 0.45},
+      // Top Left - Blue
+      {'text': 'Hello', 'color': AppColors.lb100, 'x': 0.1, 'y': 0.26},
+      // Top Right - Red
+      {'text': '你好', 'color': AppColors.lr100, 'x': 0.72, 'y': 0.25},
+      // Bottom Left - Green
+      {'text': 'Bonjour', 'color': AppColors.lg100, 'x': 0.15, 'y': 0.78},
+      // Bottom Right - Yellow
+      {'text': 'Hola', 'color': AppColors.ly100, 'x': 0.73, 'y': 0.75},
+      // Top Center - Purple
+      {'text': 'こんにちは', 'color': AppColors.lp100, 'x': 0.43, 'y': 0.16},
+      // Middle Left Edge - Orange (Moved further left)
+      {'text': 'Ciao', 'color': AppColors.lo100, 'x': 0.08, 'y': 0.52},
+      // Middle Right Edge - Blue (Moved further right)
+      {'text': '안녕하세요', 'color': AppColors.lb100, 'x': 0.76, 'y': 0.42},
     ];
 
     return elements.asMap().entries.map((entry) {
@@ -221,8 +228,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       return AnimatedBuilder(
         animation: Listenable.merge([_floatController, _fadeAnimation]),
         builder: (context, child) {
+          // Reduced float offset slightly (15 instead of 20) to maintain safe zone
           final offset =
-              20 * (index % 2 == 0 ? 1 : -1) * _floatController.value;
+              15 * (index % 2 == 0 ? 1 : -1) * _floatController.value;
 
           return Positioned(
             left: MediaQuery.of(context).size.width * (element['x'] as double),
