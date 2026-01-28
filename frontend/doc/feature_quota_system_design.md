@@ -498,7 +498,7 @@ Future<bool> performWithFeatureCheck(...) async {
 
 ```sql
 -- ============================================
--- 插入默认配额配置 (基于 pricing_strategy.md)
+-- 插入默认配额配置 (基于 pricing_strategy.md 2026-01-28 版本)
 -- ============================================
 INSERT INTO feature_limits (tier, feature_key, quota_limit, refresh_period, is_active) VALUES
 -- Free tier
@@ -509,24 +509,27 @@ INSERT INTO feature_limits (tier, feature_key, quota_limit, refresh_period, is_a
 ('free', 'grammar_analysis', 3, 'daily', true),
 ('free', 'tts_speak', 3, 'daily', true),
 ('free', 'custom_scenarios', 0, 'static', true),        -- Free 用户不能创建
+('free', 'pitch_analysis', 0, 'daily', true),           -- Free 用户不可用
 
 -- Plus tier
-('plus', 'daily_conversation', 20, 'daily', true),
-('plus', 'voice_input', 20, 'daily', true),
+('plus', 'daily_conversation', -1, 'daily', true),      -- 无限制
+('plus', 'voice_input', -1, 'daily', true),             -- 无限制
 ('plus', 'speech_assessment', 20, 'daily', true),
 ('plus', 'word_pronunciation', -1, 'static', true),     -- 无限制
-('plus', 'grammar_analysis', 20, 'daily', true),
-('plus', 'tts_speak', 20, 'daily', true),
-('plus', 'custom_scenarios', 10, 'static', true),       -- 终身 10 个
+('plus', 'grammar_analysis', -1, 'daily', true),        -- 无限制
+('plus', 'tts_speak', 100, 'daily', true),
+('plus', 'custom_scenarios', 30, 'static', true),       -- 终身 30 个
+('plus', 'pitch_analysis', -1, 'daily', true),          -- 无限制
 
 -- Pro tier
-('pro', 'daily_conversation', 100, 'daily', true),
-('pro', 'voice_input', 100, 'daily', true),
+('pro', 'daily_conversation', -1, 'daily', true),       -- 无限制
+('pro', 'voice_input', -1, 'daily', true),              -- 无限制
 ('pro', 'speech_assessment', 100, 'daily', true),
 ('pro', 'word_pronunciation', -1, 'static', true),      -- 无限制
-('pro', 'grammar_analysis', 100, 'daily', true),
-('pro', 'tts_speak', 100, 'daily', true),
-('pro', 'custom_scenarios', 50, 'static', true);        -- 终身 50 个
+('pro', 'grammar_analysis', -1, 'daily', true),         -- 无限制
+('pro', 'tts_speak', -1, 'daily', true),                -- 无限制
+('pro', 'custom_scenarios', -1, 'static', true),        -- 无限制
+('pro', 'pitch_analysis', -1, 'daily', true);           -- 无限制
 ```
 
 ### 6.2 现有用户初始化 (已完成)
@@ -545,3 +548,119 @@ WHERE NOT EXISTS (
   WHERE user_feature_usage.user_id = auth.users.id
 );
 ```
+
+## 7. 配额调整更新 (2026-01-28)
+
+根据最新的 [定价策略](../../pricing_strategy.md)，我们需要更新 Plus 和 Pro 用户的配额配置，并引入 `pitch_analysis` 功能。
+
+**变更摘要**:
+
+1.  **Plus 用户**:
+    - `daily_conversation` (AI 对话), `voice_input` (语音输入), `grammar_analysis` (语法分析) 从 20/天 提升为 **无限** (-1)。
+    - `tts_speak` (TTS) 从 20/天 提升为 **100/天**。
+    - `custom_scenarios` (自定义场景) 从 10 个 提升为 **30 个**。
+2.  **Pro 用户**:
+    - `daily_conversation`, `voice_input`, `grammar_analysis`, `tts_speak`, `custom_scenarios` 均为 **无限** (-1)。
+3.  **新增功能**:
+    - `pitch_analysis` (音高对比分析): Free (0 不可用), Plus (无限), Pro (无限)。
+4.  **保持不变**:
+    - `speech_assessment` (发音评估): Free (3/天), Plus (20/天), Pro (100/天) — 维持原配额。
+    - `word_pronunciation` (单词发音): Free (10/天), Plus (无限), Pro (无限) — 维持原配额。
+
+### 7.1 更新 SQL
+
+运行以下 SQL 以更新现有配置和插入新功能限制：
+
+```sql
+-- ============================================
+-- 1. 更新 Plus 和 Pro 用户额度 (2026-01-28)
+-- ============================================
+
+-- Check existing limits before update if needed
+-- SELECT * FROM feature_limits;
+
+-- Update Plus Tier
+UPDATE feature_limits SET quota_limit = -1 WHERE tier = 'plus' AND feature_key IN ('daily_conversation', 'voice_input', 'grammar_analysis');
+UPDATE feature_limits SET quota_limit = 100 WHERE tier = 'plus' AND feature_key = 'tts_speak';
+UPDATE feature_limits SET quota_limit = 30 WHERE tier = 'plus' AND feature_key = 'custom_scenarios';
+
+-- Update Pro Tier
+UPDATE feature_limits SET quota_limit = -1 WHERE tier = 'pro' AND feature_key IN ('daily_conversation', 'voice_input', 'grammar_analysis', 'tts_speak', 'custom_scenarios');
+
+-- ============================================
+-- 2. 插入新功能: 音高分析 (pitch_analysis)
+-- ============================================
+INSERT INTO feature_limits (tier, feature_key, quota_limit, refresh_period, is_active) VALUES
+('free', 'pitch_analysis', 0, 'daily', true),
+('plus', 'pitch_analysis', -1, 'daily', true),
+('pro', 'pitch_analysis', -1, 'daily', true)
+ON CONFLICT (tier, feature_key) DO UPDATE
+SET quota_limit = EXCLUDED.quota_limit;
+```
+
+## 8. 运维指南 (Maintenance Guide)
+
+本章节旨在指导未来的配额调整和新功能接入。
+
+### 8.1 调整现有配额 (Quota Updates)
+
+**数据库 (Source of Truth)**
+配额配置完全由后端数据库 `feature_limits` 表控制。调整配额**不需要**发布前端新版本，只需执行 SQL 更新即可即时生效（用户重启 App 或缓存过期后同步）。
+
+SQL 模板：
+
+```sql
+-- 将 Plus 用户的 TTS 额度调整为 200/天
+UPDATE feature_limits
+SET quota_limit = 200
+WHERE tier = 'plus' AND feature_key = 'tts_speak';
+
+-- 将 Free 用户的对话改为无限 (测试促销)
+UPDATE feature_limits
+SET quota_limit = -1
+WHERE tier = 'free' AND feature_key = 'daily_conversation';
+```
+
+**前端代码 (UsageService)**
+前端 `usage_service_impl.dart` 中有一个 `_getFallbackLimit` 方法。此方法仅在**用户离线**或**冷启动尚未拉取到配置**时提供兜底值。
+
+- **建议**: 每次大幅调整配额策略时，同步更新此方法中的硬编码值，以保证离线体验的一致性。
+- **非强制**: 如果不更新，仅仅是离线时显示的额度是旧的，联网后会立即修正为数据库中的新值。
+
+### 8.2 接入新功能 (Adding New Features)
+
+接入一个新的受限功能（例如：AI 写作批改 `ai_writing`）的完整流程：
+
+1.  **后端配置 (Database)**
+    在 `feature_limits` 表中为该功能插入所有 Tier 的配置。
+
+    ```sql
+    INSERT INTO feature_limits (tier, feature_key, quota_limit, refresh_period, is_active) VALUES
+    ('free', 'ai_writing', 3, 'daily', true),
+    ('plus', 'ai_writing', 50, 'daily', true),
+    ('pro', 'ai_writing', -1, 'daily', true);
+    ```
+
+2.  **前端定义 (PaidFeature Enum)**
+    在 `lib/features/subscription/domain/models/paid_feature.dart` 中添加枚举值。
+
+    ```dart
+    enum PaidFeature {
+      ...
+      aiWriting,
+    }
+    ```
+
+3.  **前端映射 (UsageService)**
+    在 `usage_service_impl.dart` 中更新映射逻辑：
+    - `_getFeatureKey`: 添加 `PaidFeature.aiWriting => 'ai_writing'` 的映射。
+    - `_getFallbackLimit`: 添加默认兜底值。
+
+4.  **UI 接入 (FeatureGate)**
+    在功能入口处使用 `FeatureGate` 进行拦截。
+    ```dart
+    FeatureGate(
+      feature: PaidFeature.aiWriting,
+      child: WritingButton(...),
+    )
+    ```

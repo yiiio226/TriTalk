@@ -398,11 +398,20 @@ class UsageServiceImpl with WidgetsBindingObserver implements UsageService {
     switch (feature) {
       case PaidFeature.dailyConversation:
       case PaidFeature.voiceInput:
-      case PaidFeature.speechAssessment:
       case PaidFeature.grammarAnalysis:
-      case PaidFeature.ttsSpeak:
+        if (tier == SubscriptionTier.pro || tier == SubscriptionTier.plus) {
+          return -1;
+        }
+        return 3;
+
+      case PaidFeature.speechAssessment:
         if (tier == SubscriptionTier.pro) return 100;
         if (tier == SubscriptionTier.plus) return 20;
+        return 3;
+
+      case PaidFeature.ttsSpeak:
+        if (tier == SubscriptionTier.pro) return -1;
+        if (tier == SubscriptionTier.plus) return 100;
         return 3;
 
       case PaidFeature.wordPronunciation:
@@ -410,12 +419,13 @@ class UsageServiceImpl with WidgetsBindingObserver implements UsageService {
         return -1; // Unlimited
 
       case PaidFeature.customScenarios:
-        if (tier == SubscriptionTier.pro) return 50;
-        if (tier == SubscriptionTier.plus) return 10;
+        if (tier == SubscriptionTier.pro) return -1;
+        if (tier == SubscriptionTier.plus) return 30;
         return 0; // Free cannot create
 
       case PaidFeature.pitchAnalysis:
-        return -1; // Gate-only, no quota
+        if (tier == SubscriptionTier.free) return 0;
+        return -1; // Unlimited for Plus/Pro
     }
   }
 }
