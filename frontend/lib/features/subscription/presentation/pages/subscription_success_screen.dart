@@ -125,10 +125,13 @@ class _SubscriptionSuccessScreenState extends State<SubscriptionSuccessScreen>
                       color: _themeColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.celebration_rounded,
-                      size: 64,
-                      color: _themeColor,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/illustrations/subscription_success_3d.png',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),
