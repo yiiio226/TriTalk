@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
+import 'package:frontend/features/subscription/presentation/widgets/falling_confetti_widget.dart';
 
 class SubscriptionSuccessScreen extends StatefulWidget {
   final SubscriptionTier tier;
@@ -84,7 +85,8 @@ class _SubscriptionSuccessScreenState extends State<SubscriptionSuccessScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
+      body: FallingConfettiWidget(
+        child: Stack(
         children: [
           // Background confetti-like decorations (static but decorative)
           Positioned(
@@ -208,6 +210,7 @@ class _SubscriptionSuccessScreenState extends State<SubscriptionSuccessScreen>
             ),
           ),
         ],
+      ),
       ),
     );
   }
