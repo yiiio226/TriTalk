@@ -7,6 +7,7 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/utils/l10n_ext.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
+import 'package:frontend/features/subscription/presentation/widgets/paywall_skeleton_loader.dart';
 
 /// Paywall screen for displaying subscription options
 ///
@@ -79,10 +80,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const PaywallSkeletonLoader();
     }
 
     if (_error != null) {
@@ -672,12 +670,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildFeatureLine("100 Conversations / day"),
+                _buildFeatureLine("Unlimited Conversations"),
                 _buildFeatureLine("100 Pronunciation Checks / day"),
-                _buildFeatureLine("100 Grammar Analyses / day"),
-                _buildFeatureLine("100 AI Message Reads / day"),
+                _buildFeatureLine("Unlimited Grammar Analyses"),
+                _buildFeatureLine("Unlimited AI Message Reads"),
                 _buildFeatureLine("Pitch Contour Analysis"),
-                _buildFeatureLine("50 Custom Scenarios"),
+                _buildFeatureLine("Unlimited Custom Scenarios"),
                 _buildFeatureLine("Multi-device Sync"),
               ],
             ),
@@ -704,12 +702,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
             style: AppTypography.headline3.copyWith(color: AppColors.ln900),
           ),
           const SizedBox(height: 24),
-          _buildFeatureLine("20 Conversations / day"),
+          _buildFeatureLine("Unlimited Conversations"),
           _buildFeatureLine("20 Pronunciation Checks / day"),
-          _buildFeatureLine("20 Grammar Analyses / day"),
-          _buildFeatureLine("20 AI Message Reads / day"),
+          _buildFeatureLine("Unlimited Grammar Analyses"),
+          _buildFeatureLine("100 AI Message Reads / day"),
           _buildFeatureLine("Pitch Contour Analysis"),
-          _buildFeatureLine("10 Custom Scenarios"),
+          _buildFeatureLine("30 Custom Scenarios"),
           _buildFeatureLine("Multi-device Sync"),
         ],
       ),
