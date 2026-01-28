@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:frontend/core/cache/providers/feature_quota_cache_provider.dart';
+import 'package:frontend/core/env/env.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/features/subscription/domain/models/feature_quota_status.dart';
 import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
@@ -221,6 +222,9 @@ class UsageServiceImpl with WidgetsBindingObserver implements UsageService {
 
   @override
   bool canUse(PaidFeature feature) {
+    if (Env.skipVipCheck) {
+      return true;
+    }
     final status = getQuotaStatus(feature);
     if (status == null) {
       // No cache, allow (fail-open for UX)

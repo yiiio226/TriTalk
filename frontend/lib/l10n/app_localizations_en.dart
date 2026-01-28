@@ -76,7 +76,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profile_vocabularySentencesChatHistory =>
-      'Vocabulary, Sentences, Chat History';
+      'Vocabulary, Sentences, Grammar, Chat History';
 
   @override
   String get profile_upgradeToPro => 'Upgrade to Pro';

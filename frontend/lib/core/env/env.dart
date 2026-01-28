@@ -79,4 +79,8 @@ class Env {
   /// Force show paywall not matter for user status.
   static bool get forcePaywall =>
       dotenv.env['FORCE_PAYWALL']?.toLowerCase() == 'true';
+
+  /// Skip VIP check for testing purposes.
+  static bool get skipVipCheck =>
+      dotenv.env['SKIP_VIP_CHECK']?.toLowerCase() == 'true';
 }

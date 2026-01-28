@@ -97,7 +97,7 @@
 | `profile_screen.dart` | 301  | `Native Language`                     | `profileNativeLanguage`       |
 | `profile_screen.dart` | 316  | `Learning Language`                   | `profileLearningLanguage`     |
 | `profile_screen.dart` | 339  | `Favorites`                           | `profileFavorites`            |
-| `profile_screen.dart` | 340  | `Vocabulary, Sentences, Chat History` | `profileFavoritesSubtitle`    |
+| `profile_screen.dart` | 340  | `Vocabulary, Sentences, Grammar, Chat History` | `profileFavoritesSubtitle`    |
 | `profile_screen.dart` | 356  | `Upgrade to Pro`                      | `profileUpgradeToPro`         |
 | `profile_screen.dart` | 357  | `Get unlimited chats...`              | `profileUpgradeToProSubtitle` |
 | `profile_screen.dart` | 373  | `Log Out`                             | `profileLogOut`               |
