@@ -88,7 +88,7 @@
 	"@profile_learningLanguage": {
 		"description": "Source: features/profile/presentation/pages/profile_screen.dart:316 (title)"
 	},
-	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Chat History",
+	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Grammar, Chat History",
 	"@profile_vocabularySentencesChatHistory": {
 		"description": "Source: features/profile/presentation/pages/profile_screen.dart:340 (title)"
 	},

@@ -233,7 +233,7 @@ abstract class AppLocalizations {
   /// Source: features/profile/presentation/pages/profile_screen.dart:340 (title)
   ///
   /// In en, this message translates to:
-  /// **'Vocabulary, Sentences, Chat History'**
+  /// **'Vocabulary, Sentences, Grammar, Chat History'**
   String get profile_vocabularySentencesChatHistory;
 
   /// Source: features/profile/presentation/pages/profile_screen.dart:356 (title)
