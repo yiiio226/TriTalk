@@ -78,6 +78,9 @@ class FeatureGate {
   /// Check if the user has access eligibility (ignoring usage count)
   /// Used for UI lock icons.
   bool hasAccess(PaidFeature feature) {
+    if (Env.skipVipCheck) {
+      return true;
+    }
     debugPrint('FeatureGate: Checking access for ${feature.name}');
     final hasPlus = RevenueCatService().hasPlus;
 
