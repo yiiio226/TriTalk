@@ -26,6 +26,15 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   /// Load initial messages for the scene
   /// Forces sync from cloud to ensure latest messages are loaded across devices
   Future<void> loadMessages() async {
+    // If we're currently sending a message, don't reload to avoid interrupting the flow
+    // The ongoing send operation will update the state when it completes
+    if (state.isSending) {
+      debugPrint(
+        '🔍 [ChatPageNotifier] Skipping loadMessages - message send in progress',
+      );
+      return;
+    }
+
     state = state.copyWith(
       isLoading: true,
       error: null,
@@ -323,7 +332,27 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   }
 
   String _buildSceneContext() {
-    return 'AI Role: ${_scene.aiRole}, User Role: ${_scene.userRole}. ${_scene.description}';
+    // Map personality to specific AI behavior instructions
+    String personalityInstruction = '';
+    switch (_scene.personality) {
+      case 'Gentle':
+        personalityInstruction =
+            'Be patient, encouraging, and supportive. Provide positive reinforcement and gentle corrections. Use a warm, friendly tone.';
+        break;
+      case 'Strict':
+        personalityInstruction =
+            'Be direct, challenging, and precise. Point out errors clearly and push for improvement. Maintain a professional, no-nonsense tone.';
+        break;
+      case 'Humorous':
+        personalityInstruction =
+            'Be fun, lighthearted, and engaging. Use appropriate humor and keep the conversation enjoyable. Make learning feel like a pleasant experience.';
+        break;
+      default:
+        personalityInstruction =
+            'Be helpful and adaptive to the user\'s needs.';
+    }
+
+    return 'AI Role: ${_scene.aiRole}, User Role: ${_scene.userRole}. ${_scene.description}\n\nPersonality Style: $personalityInstruction';
   }
 
   /// Analyze a user message
