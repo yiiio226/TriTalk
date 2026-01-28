@@ -891,7 +891,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 splashColor: Colors.white.withOpacity(0.1),
                 highlightColor: Colors.white.withOpacity(0.05),
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, isPro ? 24 : 16),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -979,55 +979,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             // Upgrade Button (Only for Plus)
                             if (!isPro) ...[
                               const SizedBox(height: 16),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const PaywallScreen(
-                                        showProOnly: true,
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PaywallScreen(
+                                              showProOnly: true,
+                                            ),
                                       ),
+                                    );
+                                  },
+                                  // Refined Button Design
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 10,
                                     ),
-                                  );
-                                },
-                                // Refined Button Design
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(
-                                      30,
-                                    ), // Pill shape
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'UPGRADE TO PRO',
-                                        style: AppTypography.button.copyWith(
-                                          color: baseStart, // Theme color
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 12,
-                                          letterSpacing: 0.5,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(
+                                        30,
+                                      ), // Pill shape
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
                                         ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        color: baseStart,
-                                        size: 14,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'UPGRADE TO PRO',
+                                          style: AppTypography.button.copyWith(
+                                            color: baseStart, // Theme color
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: baseStart,
+                                          size: 14,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
