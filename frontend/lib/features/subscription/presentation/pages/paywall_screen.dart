@@ -12,11 +12,10 @@ import 'package:frontend/features/subscription/presentation/pages/subscription_s
 
 /// Paywall screen for displaying subscription options
 ///
-/// This screen shows the available subscription tiers (Plus and Pro)
-/// with monthly and yearly options. Users can purchase subscriptions
-/// or restore previous purchases.
 class PaywallScreen extends StatefulWidget {
-  const PaywallScreen({super.key});
+  final bool showProOnly;
+
+  const PaywallScreen({super.key, this.showProOnly = false});
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -27,11 +26,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _isPurchasing = false;
   String? _error;
   bool _isYearly = true; // Default to yearly for better value
-  SubscriptionTier _selectedTier = SubscriptionTier.pro; // Default to Pro
+  late SubscriptionTier _selectedTier;
 
   @override
   void initState() {
     super.initState();
+    _selectedTier = SubscriptionTier.pro;
     RevenueCatService().addListener(_onRevenueCatUpdate);
     _loadOfferings();
   }
@@ -253,8 +253,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   const SizedBox(height: 32),
 
                   // Monthly / Yearly Switch
-                  _buildToggleSwitch(),
-                  const SizedBox(height: 32),
+                  if (!widget.showProOnly) ...[
+                    _buildToggleSwitch(),
+                    const SizedBox(height: 32),
+                  ] else ...[
+                    // Add some spacing if toggle is hidden
+                    const SizedBox(height: 16),
+                  ],
 
                   // Selected Card
                   if (_selectedTier == SubscriptionTier.pro &&

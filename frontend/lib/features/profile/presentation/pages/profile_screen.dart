@@ -526,162 +526,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (tier == SubscriptionTier.free) {
       return _buildUpgradeCard(context);
     } else {
-      return _buildActiveSubscriptionCard(context, tier);
+      return _buildRefinedSubscriptionCard(context, tier);
     }
   }
 
-  Widget _buildActiveSubscriptionCard(
-    BuildContext context,
-    SubscriptionTier tier,
-  ) {
-    final isPro = tier == SubscriptionTier.pro;
-    final gradientColors = isPro
-        ? [AppColors.lp800, AppColors.lp500] // Purple for Pro
-        : [AppColors.lb800, AppColors.lb500]; // Blue for Plus
 
-    final shadowColor = isPro ? AppColors.lp500 : AppColors.lb500;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withOpacity(0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Manage subscription could go to Paywall or a simplified manage screen
-            // For now, let's go to Paywall to see details/upgrade if Plus
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const PaywallScreen()),
-            );
-          },
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          child: Stack(
-            children: [
-              // Decorative background circles
-              Positioned(
-                top: -30,
-                right: -30,
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -20,
-                left: 40,
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        isPro ? Icons.diamond_rounded : Icons.star_rounded,
-                        color: isPro ? AppColors.lp500 : AppColors.lb500,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                isPro ? 'TriTalk Pro' : 'TriTalk Plus',
-                                style: AppTypography.headline4.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.full,
-                                  ),
-                                ),
-                                child: Text(
-                                  'ACTIVE',
-                                  style: AppTypography.overline.copyWith(
-                                    color: Colors.white,
-                                    letterSpacing: 0.5,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isPro
-                                ? 'Unlimited AI Practice'
-                                : 'Advanced Features Unlocked',
-                            style: AppTypography.body2.copyWith(
-                              color: Colors.white.withOpacity(0.9),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildMenuCard(
     BuildContext context, {
@@ -880,6 +729,283 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRefinedSubscriptionCard(
+    BuildContext context,
+    SubscriptionTier tier,
+  ) {
+    final isPro = tier == SubscriptionTier.pro;
+
+    // Premium Color Palette
+    final baseStart = isPro
+        ? const Color(0xFF7C3AED) // Rich Purple
+        : const Color(0xFF2563EB); // Royal Blue
+    final baseEnd = isPro
+        ? const Color(0xFF5B21B6) // Deep Purple
+        : const Color(0xFF1E40AF); // Deep Blue
+    final accentGlow = isPro
+        ? const Color(0xFFA78BFA).withOpacity(0.5) // Light Purple Glow
+        : const Color(0xFF60A5FA).withOpacity(0.5); // Light Blue Glow
+
+    final shadowColor = isPro
+        ? const Color(0xFF7C3AED)
+        : const Color(0xFF2563EB);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withOpacity(0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: Stack(
+          children: [
+            // 1. Base Gradient Background
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [baseStart, baseEnd],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Top-Right Large Glow (Ambient Light)
+            Positioned(
+              top: -80,
+              right: -60,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [accentGlow.withOpacity(0.4), Colors.transparent],
+                    stops: const [0.0, 0.8],
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Bottom-Right Medium Glow (Secondary Light)
+            Positioned(
+              bottom: -40,
+              right: -40,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      isPro
+                          ? const Color(0xFFC4B5FD).withOpacity(0.15)
+                          : const Color(0xFF93C5FD).withOpacity(0.15),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.7],
+                  ),
+                ),
+              ),
+            ),
+
+            // 4. Top-Left Subtle Highlight (Depth)
+            Positioned(
+              top: -40,
+              left: -40,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Colors.white.withOpacity(0.1), Colors.transparent],
+                    stops: const [0.0, 0.6],
+                  ),
+                ),
+              ),
+            ),
+
+            // 5. Content with Glass-like touch
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PaywallScreen(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                splashColor: Colors.white.withOpacity(0.1),
+                highlightColor: Colors.white.withOpacity(0.05),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Icon Badge
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isPro ? Icons.diamond_rounded : Icons.star_rounded,
+                          color: baseStart, // Match the theme color
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      // Text Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    isPro ? 'TriTalk Pro' : 'TriTalk Plus',
+                                    style: AppTypography.headline4.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20, // Slightly larger
+                                      height: 1.2,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'ACTIVE',
+                                    style: AppTypography.overline.copyWith(
+                                      color: Colors.white,
+                                      letterSpacing: 0.8,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              isPro
+                                  ? 'Unlimited AI Practice'
+                                  : 'Advanced Features Unlocked',
+                              style: AppTypography.body2.copyWith(
+                                color: Colors.white.withOpacity(0.95),
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            // Upgrade Button (Only for Plus)
+                            if (!isPro) ...[
+                              const SizedBox(height: 16),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const PaywallScreen(
+                                        showProOnly: true,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                // Refined Button Design
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(
+                                      30,
+                                    ), // Pill shape
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'UPGRADE TO PRO',
+                                        style: AppTypography.button.copyWith(
+                                          color: baseStart, // Theme color
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: baseStart,
+                                        size: 14,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
