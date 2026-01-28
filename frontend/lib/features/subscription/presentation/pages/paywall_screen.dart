@@ -7,6 +7,7 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/utils/l10n_ext.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
+import 'package:frontend/features/subscription/presentation/widgets/paywall_skeleton_loader.dart';
 
 /// Paywall screen for displaying subscription options
 ///
@@ -79,10 +80,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const PaywallSkeletonLoader();
     }
 
     if (_error != null) {
