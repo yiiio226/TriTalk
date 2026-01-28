@@ -786,55 +786,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             // 2. Top-Right Large Glow (Ambient Light)
             Positioned(
-              top: -100,
-              right: -80,
+              top: -80,
+              right: -60,
               child: Container(
-                width: 250,
-                height: 250,
+                width: 300,
+                height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [accentGlow, Colors.transparent],
-                    stops: const [0.0, 0.7],
-                    center: Alignment.center,
+                    colors: [accentGlow.withOpacity(0.4), Colors.transparent],
+                    stops: const [0.0, 0.8],
                   ),
                 ),
               ),
             ),
 
-            // 3. Bottom-Left Subtle Glow
+            // 3. Bottom-Right Medium Glow (Secondary Light)
             Positioned(
-              bottom: -50,
-              left: -50,
+              bottom: -40,
+              right: -40,
               child: Container(
-                width: 200,
-                height: 200,
+                width: 180,
+                height: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
                       isPro
-                          ? const Color(0xFFC4B5FD).withOpacity(0.2)
-                          : const Color(0xFF93C5FD).withOpacity(0.2),
+                          ? const Color(0xFFC4B5FD).withOpacity(0.15)
+                          : const Color(0xFF93C5FD).withOpacity(0.15),
                       Colors.transparent,
                     ],
+                    stops: const [0.0, 0.7],
                   ),
                 ),
               ),
             ),
 
-            // 4. Abstract Shape (Circle Outline Effect)
+            // 4. Top-Left Subtle Highlight (Depth)
             Positioned(
-              top: 20,
-              right: -20,
+              top: -40,
+              left: -40,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 150,
+                height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.05),
-                    width: 20,
+                  gradient: RadialGradient(
+                    colors: [Colors.white.withOpacity(0.1), Colors.transparent],
+                    stops: const [0.0, 0.6],
                   ),
                 ),
               ),
