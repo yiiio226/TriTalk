@@ -126,7 +126,7 @@ class _SubscriptionSuccessScreenState extends State<SubscriptionSuccessScreen>
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.check_rounded,
+                      Icons.celebration_rounded,
                       size: 64,
                       color: _themeColor,
                     ),
