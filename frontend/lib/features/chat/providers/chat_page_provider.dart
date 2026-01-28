@@ -5,9 +5,12 @@ import '../chat.dart';
 /// Provider for the ChatPageNotifier.
 ///
 /// Uses .family to create a unique notifier for each Scene.
-/// Uses .autoDispose to clean up state when the screen is closed.
-final chatPageNotifierProvider = StateNotifierProvider.autoDispose
-    .family<ChatPageNotifier, ChatPageState, Scene>((ref, scene) {
+/// State is preserved when navigating away to allow ongoing API requests to complete.
+final chatPageNotifierProvider =
+    StateNotifierProvider.family<ChatPageNotifier, ChatPageState, Scene>((
+      ref,
+      scene,
+    ) {
       final repository = ref.watch(chatRepositoryProvider);
       return ChatPageNotifier(repository: repository, scene: scene);
     });

@@ -140,7 +140,7 @@ class _ScenarioConfigurationScreenState
                   height: 56,
                   child: BouncingButton(
                     onTap: () {
-                      // Create updated scene with modified roles
+                      // Create updated scene with modified roles and personality
                       final updatedScene = Scene(
                         id: widget.scene.id,
                         title: widget.scene.title,
@@ -154,6 +154,8 @@ class _ScenarioConfigurationScreenState
                         goal: widget.scene.goal,
                         iconPath: widget.scene.iconPath,
                         color: widget.scene.color,
+                        personality:
+                            _selectedPersonality, // Pass selected personality
                       );
                       
                       // Navigate to ChatScreen with updated scene
