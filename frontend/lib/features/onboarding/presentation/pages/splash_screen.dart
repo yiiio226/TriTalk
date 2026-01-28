@@ -1,6 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/auth/auth_provider.dart';
 import '../../../../core/auth/auth_state.dart';
@@ -9,7 +9,13 @@ import '../../../home/presentation/pages/home_screen.dart';
 import '../../../auth/presentation/pages/login_screen.dart';
 import 'onboarding_screen.dart';
 
-/// Splash screen that handles initial navigation based on auth state
+/// Splash screen with Floating Language Elements
+///
+/// Features:
+/// - Floating multilingual text bubbles
+/// - Smooth floating animations
+/// - Rotation effects
+/// - Language learning theme
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -18,9 +24,13 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _floatController;
+  late AnimationController _rotateController;
+  
   late Animation<double> _fadeAnimation;
+  
   bool _hasNavigated = false;
   bool _isInitialized = false;
 
@@ -28,27 +38,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
 
-    // Setup animations
-    _animationController = AnimationController(
+    // Fade animation controller
+    _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
-    _animationController.addListener(() {
+    // Float animation controller (continuous)
+    _floatController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    // Rotate animation controller (continuous)
+    _rotateController = AnimationController(
+      duration: const Duration(seconds: 20),
+      vsync: this,
+    )..repeat();
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
+
+    _fadeController.addListener(() {
       final authState = ref.read(authProvider);
       if (authState.status != AuthStatus.unknown) {
         _navigateBasedOnAuthState(authState);
       }
     });
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
-    );
-
-    _animationController.forward();
+    _fadeController.forward();
 
     // Initialize auth after a short delay to show splash animation
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -60,14 +82,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _initializeAuth() async {
     if (_isInitialized) return;
     _isInitialized = true;
-
-    // Initialize auth state
     await ref.read(authProvider.notifier).initialize();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _fadeController.dispose();
+    _floatController.dispose();
+    _rotateController.dispose();
     super.dispose();
   }
 
@@ -75,7 +97,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (_hasNavigated || !mounted) return;
 
     // Wait for animation to complete (at least partially)
-    if (_animationController.value < 0.6) {
+    if (_fadeController.value < 0.6) {
       return;
     }
 
@@ -83,17 +105,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     Widget destination;
     switch (authState.status) {
       case AuthStatus.authenticated:
-        if (authState.needsOnboarding) {
-          destination = const OnboardingScreen();
-        } else {
-          destination = const HomeScreen();
-        }
+        destination = authState.needsOnboarding
+            ? const OnboardingScreen()
+            : const HomeScreen();
         break;
       case AuthStatus.unauthenticated:
         destination = const LoginScreen();
         break;
       case AuthStatus.unknown:
-        // Still loading, don't navigate yet
         return;
     }
 
@@ -113,10 +132,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Listen to auth state changes
     final authState = ref.watch(authProvider);
 
-    // Use post-frame callback to navigate after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (authState.status != AuthStatus.unknown) {
         _navigateBasedOnAuthState(authState);
@@ -125,104 +142,124 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _fadeAnimation.value,
+      body: Stack(
+        children: [
+          // Floating language elements
+          ..._buildFloatingElements(),
+
+          // Center logo and title
+          Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // App Logo with Shimmer overlay
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Original Logo Layer
-                      Container(
+                  // App Logo
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: AppShadows.xl,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Image.asset(
+                        'assets/icon/icon.png',
                         width: 120,
                         height: 120,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 30,
-                              offset: const Offset(0, 15),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(30),
-                          child: Image.asset(
-                            'assets/icon/icon.png',
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                        fit: BoxFit.cover,
                       ),
-                      // Shimmer Overlay Layer
-                      Shimmer.fromColors(
-                        baseColor: Colors.white.withValues(alpha: 0.0),
-                        highlightColor: Colors.white.withValues(alpha: 0.4),
-                        period: const Duration(milliseconds: 1500),
-                        child: Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  // App Name with Shimmer overlay
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Original Text Layer
-                      Text(
-                        'TriTalk',
-                        style: AppTypography.headline1.copyWith(
-                          color: AppColors.lightTextPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      // Shimmer Overlay Layer
-                      Shimmer.fromColors(
-                        baseColor: Colors.white.withValues(alpha: 0.0),
-                        highlightColor: Colors.white.withValues(alpha: 0.4),
-                        period: const Duration(milliseconds: 1500),
-                        child: Text(
-                          'TriTalk',
-                          style: AppTypography.headline1.copyWith(
-                            color: AppColors.lightTextPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  
+                  SizedBox(height: AppSpacing.xl),
+
+                  // App Name
+                  Text(
+                    'TriTalk',
+                    style: AppTypography.headline1.copyWith(
+                      color: AppColors.lightTextPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  
+                  SizedBox(height: AppSpacing.sm),
+                  
                   // Tagline
                   Text(
                     'Your AI Language Practice Companion',
                     style: AppTypography.body1.copyWith(
-                      color: AppColors.lightTextPrimary,
+                      color: AppColors.lightTextSecondary,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.xxl),
-                  // Loading indicator removed as per request
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  List<Widget> _buildFloatingElements() {
+    final elements = [
+      {'text': 'Hello', 'color': AppColors.lb100, 'x': 0.1, 'y': 0.15},
+      {'text': '你好', 'color': AppColors.lr100, 'x': 0.85, 'y': 0.2},
+      {'text': 'Bonjour', 'color': AppColors.lg100, 'x': 0.15, 'y': 0.75},
+      {'text': 'Hola', 'color': AppColors.ly100, 'x': 0.8, 'y': 0.7},
+      {'text': 'こんにちは', 'color': AppColors.lp100, 'x': 0.5, 'y': 0.1},
+      {'text': 'Ciao', 'color': AppColors.lo100, 'x': 0.2, 'y': 0.5},
+      {'text': '안녕하세요', 'color': AppColors.lb100, 'x': 0.75, 'y': 0.45},
+    ];
+
+    return elements.asMap().entries.map((entry) {
+      final index = entry.key;
+      final element = entry.value;
+
+      return AnimatedBuilder(
+        animation: Listenable.merge([_floatController, _fadeAnimation]),
+        builder: (context, child) {
+          final offset =
+              20 * (index % 2 == 0 ? 1 : -1) * _floatController.value;
+
+          return Positioned(
+            left: MediaQuery.of(context).size.width * (element['x'] as double),
+            top:
+                MediaQuery.of(context).size.height * (element['y'] as double) +
+                offset,
+            child: Opacity(
+              opacity: _fadeAnimation.value * 0.8,
+              child: Transform.rotate(
+                angle:
+                    _rotateController.value *
+                    2 *
+                    math.pi *
+                    (index % 2 == 0 ? 0.1 : -0.1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: element['color'] as Color,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    boxShadow: AppShadows.sm,
+                  ),
+                  child: Text(
+                    element['text'] as String,
+                    style: AppTypography.body2.copyWith(
+                      color: AppColors.lightTextPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }).toList();
   }
 }
