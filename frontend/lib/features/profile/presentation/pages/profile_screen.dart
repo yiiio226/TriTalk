@@ -610,14 +610,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondary.withOpacity(0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-            spreadRadius: -4,
-          ),
-        ],
+        boxShadow: AppShadows.lg,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -803,21 +796,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ? const Color(0xFFA78BFA).withOpacity(0.5) // Light Purple Glow
         : const Color(0xFF60A5FA).withOpacity(0.5); // Light Blue Glow
 
-    final shadowColor = isPro
-        ? const Color(0xFF7C3AED)
-        : const Color(0xFF2563EB);
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withOpacity(0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-            spreadRadius: -4,
-          ),
-        ],
+        boxShadow: AppShadows.md,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xl),
