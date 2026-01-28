@@ -8,6 +8,7 @@ import 'package:frontend/core/utils/l10n_ext.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
 import 'package:frontend/features/subscription/presentation/widgets/paywall_skeleton_loader.dart';
+import 'package:frontend/features/subscription/presentation/pages/subscription_success_screen.dart';
 
 /// Paywall screen for displaying subscription options
 ///
@@ -750,17 +751,29 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _purchasePackage(Package package) async {
     setState(() => _isPurchasing = true);
-    final result = await RevenueCatService().purchasePackage(package);
+
+    // SIMULATION LOGIC: Skip actual payment flow
+    // Determine tier from package ID
+    final isPlus = package.identifier.contains('plus');
+    final tier = isPlus ? SubscriptionTier.plus : SubscriptionTier.pro;
+
+    // Artificial delay to simulate network request
+    await Future.delayed(const Duration(seconds: 2));
+
     if (!mounted) return;
+
+    // Update global state via service
+    RevenueCatService().debugSimulatePurchase(tier);
+
     setState(() => _isPurchasing = false);
 
-    if (result == SubscriptionPurchaseResult.success) {
-      Navigator.pop(context);
-    } else if (result == SubscriptionPurchaseResult.error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Purchase failed. Please try again.')),
-      );
-    }
+    // Navigate to success screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SubscriptionSuccessScreen(tier: tier),
+      ),
+    );
   }
 
   Future<void> _restorePurchases() async {

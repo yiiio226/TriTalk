@@ -8,6 +8,8 @@ import 'package:frontend/features/profile/data/services/user_service.dart';
 import 'package:frontend/core/data/language_constants.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'favorites_screen.dart'; // Import UnifiedFavoritesScreen
+import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
+import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
 import '../../../subscription/presentation/pages/paywall_screen.dart';
 import '../../../onboarding/presentation/pages/splash_screen.dart'; // For logout navigation
 import 'package:frontend/core/utils/l10n_ext.dart';
@@ -35,6 +37,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    RevenueCatService().addListener(_onSubscriptionUpdate);
+  }
+
+  @override
+  void dispose() {
+    RevenueCatService().removeListener(_onSubscriptionUpdate);
+    super.dispose();
+  }
+
+  void _onSubscriptionUpdate() {
+    if (mounted) setState(() {});
   }
 
   void _loadUserData() {
@@ -401,7 +414,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 horizontal: AppSpacing.lg,
                 vertical: AppSpacing.md,
               ),
-              child: _buildUpgradeCard(context),
+              child: _buildSubscriptionSection(context),
             ),
 
             const SizedBox(height: AppSpacing.md),
@@ -503,6 +516,168 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionSection(BuildContext context) {
+    final tier = RevenueCatService().currentTier;
+    if (tier == SubscriptionTier.free) {
+      return _buildUpgradeCard(context);
+    } else {
+      return _buildActiveSubscriptionCard(context, tier);
+    }
+  }
+
+  Widget _buildActiveSubscriptionCard(
+    BuildContext context,
+    SubscriptionTier tier,
+  ) {
+    final isPro = tier == SubscriptionTier.pro;
+    final gradientColors = isPro
+        ? [AppColors.lp800, AppColors.lp500] // Purple for Pro
+        : [AppColors.lb800, AppColors.lb500]; // Blue for Plus
+
+    final shadowColor = isPro ? AppColors.lp500 : AppColors.lb500;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withOpacity(0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Manage subscription could go to Paywall or a simplified manage screen
+            // For now, let's go to Paywall to see details/upgrade if Plus
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PaywallScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Stack(
+            children: [
+              // Decorative background circles
+              Positioned(
+                top: -30,
+                right: -30,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -20,
+                left: 40,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        isPro ? Icons.diamond_rounded : Icons.star_rounded,
+                        color: isPro ? AppColors.lp500 : AppColors.lb500,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                isPro ? 'TriTalk Pro' : 'TriTalk Plus',
+                                style: AppTypography.headline4.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.full,
+                                  ),
+                                ),
+                                child: Text(
+                                  'ACTIVE',
+                                  style: AppTypography.overline.copyWith(
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isPro
+                                ? 'Unlimited AI Practice'
+                                : 'Advanced Features Unlocked',
+                            style: AppTypography.body2.copyWith(
+                              color: Colors.white.withOpacity(0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
