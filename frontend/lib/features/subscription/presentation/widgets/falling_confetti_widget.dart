@@ -24,6 +24,7 @@ class _FallingConfettiWidgetState extends State<FallingConfettiWidget>
     'assets/images/illustrations/confetti_star_3d.png',
     'assets/images/illustrations/confetti_ribbon_3d.png',
     'assets/images/illustrations/confetti_ball_3d.png',
+    'assets/images/illustrations/confetti_green_star_3d.png',
   ];
 
   @override
