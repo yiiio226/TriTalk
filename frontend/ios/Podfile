@@ -46,72 +46,37 @@ post_install do |installer|
 
   # RevenueCat / Xcode 15.2 Compatibility Fix
   # 这是一个针对 RevenueCat 和 Xcode 15.2 不兼容导致 Swift Concurrency 编译报错的临时修复。
-  # 该修复仅在本地开发环境 (`flutter run`) 且存在 `env_local.dart` 时生效。
+  # 该修复仅在本地开发环境 (`flutter run --dart-define=ENV=local`) 且存在 `.env.local` 时生效。
   # 生产环境构建 (CI/CD) 不受影响，将使用官方 SDK 原样代码。
   # 
-  # Check if we are in local development environment
-  local_env_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'core', 'env', 'env_local.dart'))
+  # Check if we are in local development environment by looking for .env.local
+  local_env_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'assets', 'env', '.env.local'))
 
   if File.exist?(local_env_path)
-    puts "⚠️  [TriTalk] Detected env_local.dart: Applying RevenueCat Concurrency Patch..."
+    puts "⚠️  [TriTalk] Detected .env.local: Applying RevenueCat Concurrency Patch..."
     
     # Workaround for RevenueCat Swift Compiler Error (Main Actor Isolation)
-    # This replaces the entire beginBackgroundTask function body to avoid UIApplication calls.
+    # This replaces the beginBackgroundTask function to avoid UIApplication calls that violate MainActor isolation.
     events_manager_path = File.join(installer.sandbox.root, 'RevenueCat/Sources/Events/EventsManager.swift')
     if File.exist?(events_manager_path)
-    text = File.read(events_manager_path)
-    
-    patched_marker = "// PATCHED_BY_TRITALK"
-    
-    unless text.include?(patched_marker)
-      puts "Patching RevenueCat EventsManager.swift to fix Swift Concurrency error..."
+      text = File.read(events_manager_path)
       
-      # Find and replace the problematic section (lines 251-290 in original)
-      # The entire #if block that contains beginBackgroundTask
-      old_block = <<~'SWIFT'
-#if swift(>=5.9) && (os(iOS) || os(tvOS) || VISION_OS)
-@available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
-private extension EventsManager {
-
-    /// Begins a background task synchronously and returns a closure to end it.
-    /// This should be called BEFORE spawning async work to prevent the system from
-    /// suspending the app before the task starts executing.
-    ///
-    /// - Parameter taskName: A name for the background task for debugging purposes.
-    /// - Returns: A closure to end the background task, or `nil` if the task couldn't be started.
-    static func beginBackgroundTask(named taskName: String) -> (@Sendable () -> Void)? {
-        guard let application = SystemInfo.sharedUIApplication else {
-            Logger.warn(EventsManagerStrings.background_task_unavailable)
-            return nil
-        }
-
-        let backgroundTaskID: Atomic<UIBackgroundTaskIdentifier?> = .init(nil)
-        backgroundTaskID.value   = application.beginBackgroundTask(withName: taskName) {
-            Logger.warn(EventsManagerStrings.background_task_expired(taskName))
-            if let taskID = backgroundTaskID.value {
-                application.endBackgroundTask(taskID)
-                backgroundTaskID.value = .invalid
-            }
-        }
-
-        if backgroundTaskID.value == .invalid {
-            Logger.warn(EventsManagerStrings.background_task_failed(taskName))
-            return nil
-        }
-
-        Logger.debug(EventsManagerStrings.background_task_started(taskName))
-        return {
-            if let taskID = backgroundTaskID.value {
-                application.endBackgroundTask(taskID)
-            }
-        }
-    }
-
-}
-#endif
-      SWIFT
+      patched_marker = "// PATCHED_BY_TRITALK"
       
-      new_block = <<~'SWIFT'
+      unless text.include?(patched_marker)
+        puts "Patching RevenueCat EventsManager.swift to fix Swift Concurrency error..."
+        
+        # Use regex to match the problematic #if block containing beginBackgroundTask
+        # This is more robust than exact string matching as it handles whitespace/encoding differences
+        pattern = /
+          (\#if\s+swift\(\>=5\.9\)\s+&&\s+\(os\(iOS\)\s+\|\|\s+os\(tvOS\)\s+\|\|\s+VISION_OS\)\s*\n)
+          (@available\(iOS\s+15\.0,\s+tvOS\s+15\.0,\s+macOS\s+12\.0,\s+watchOS\s+8\.0,\s+\*\)\s*\n)
+          (private\s+extension\s+EventsManager\s*\{\s*\n)
+          (.*?beginBackgroundTask.*?)
+          (\}\s*\n\#endif)
+        /mx
+        
+        replacement = <<~'SWIFT'
 // PATCHED_BY_TRITALK: Disabled to fix Swift Concurrency MainActor isolation error
 #if swift(>=5.9) && (os(iOS) || os(tvOS) || VISION_OS)
 @available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
@@ -126,21 +91,70 @@ private extension EventsManager {
 
 }
 #endif
-      SWIFT
-      
-      new_text = text.gsub(old_block.strip, new_block.strip)
-      
-      if new_text != text
-        File.write(events_manager_path, new_text)
-        puts "Patched successfully!"
+        SWIFT
+        
+        new_text = text.sub(pattern, replacement.strip)
+        
+        if new_text != text
+          File.write(events_manager_path, new_text)
+          puts "✅ Patched RevenueCat EventsManager.swift successfully!"
+        else
+          puts "⚠️  Pattern not found - RevenueCat SDK may have been updated. Trying alternative patch..."
+          
+          # Alternative: Direct line-based replacement for the function body
+          # Find the static func beginBackgroundTask line and replace the entire function
+          if text.include?("static func beginBackgroundTask(named taskName: String)")
+            lines = text.lines
+            patched_lines = []
+            skip_until_closing_brace = false
+            brace_depth = 0
+            in_target_function = false
+            function_replaced = false
+            
+            lines.each_with_index do |line, index|
+              if !function_replaced && line.include?("static func beginBackgroundTask(named taskName: String)")
+                in_target_function = true
+                brace_depth = 0
+                # Add patched function instead
+                patched_lines << "    // PATCHED_BY_TRITALK: Disabled to fix Swift Concurrency MainActor isolation error\n"
+                patched_lines << "    static func beginBackgroundTask(named taskName: String) -> (@Sendable () -> Void)? {\n"
+                patched_lines << "        Logger.debug(EventsManagerStrings.background_task_unavailable)\n"
+                patched_lines << "        return nil\n"
+                patched_lines << "    }\n"
+                skip_until_closing_brace = true
+                next
+              end
+              
+              if skip_until_closing_brace
+                brace_depth += line.count('{') - line.count('}')
+                if line.strip == "}" && brace_depth <= 0
+                  skip_until_closing_brace = false
+                  in_target_function = false
+                  function_replaced = true
+                end
+                next
+              end
+              
+              patched_lines << line
+            end
+            
+            if function_replaced
+              File.write(events_manager_path, patched_lines.join)
+              puts "✅ Patched RevenueCat EventsManager.swift using alternative method!"
+            else
+              puts "❌ Could not patch RevenueCat EventsManager.swift - please report this issue."
+            end
+          else
+            puts "❌ Could not find beginBackgroundTask function in EventsManager.swift"
+          end
+        end
       else
-        puts "Pattern not found - RevenueCat SDK may have been updated."
+        puts "✅ RevenueCat EventsManager.swift already patched."
       end
     else
-      puts "RevenueCat EventsManager.swift already patched."
-    end
+      puts "⚠️  RevenueCat EventsManager.swift not found at expected path."
     end
   else
-    puts "✅ [TriTalk] No env_local.dart detected: Skipping RevenueCat Patch (Production/Clean Build)."
+    puts "✅ [TriTalk] No .env.local detected: Skipping RevenueCat Patch (Production/Clean Build)."
   end
 end
