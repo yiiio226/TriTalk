@@ -344,12 +344,22 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        CupertinoIcons.xmark,
-                        color: AppColors.ln900,
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[100],
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          CupertinoIcons.xmark,
+                          color: AppColors.ln900,
+                          size: 24,
+                        ),
                       ),
-                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
