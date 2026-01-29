@@ -112,7 +112,7 @@ class AppColors {
   // ===========================================================================
   static const Color lightBackground = Color(0xFFF8FAFC); // Page Background
   static const Color lightSurface = Color(0xFFFFFFFF); // 卡片表面
-  static const Color lightDivider = ln100;
+  static const Color lightDivider = ln50;
 
   // ===========================================================================
   // Light Theme State Colors

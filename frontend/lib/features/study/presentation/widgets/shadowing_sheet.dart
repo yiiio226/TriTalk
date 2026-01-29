@@ -10,8 +10,12 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shimmer/shimmer.dart';
+import 'dart:ui'; // For ImageFilter
 
 import 'package:frontend/core/design/app_design_system.dart';
+
+import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
+import 'package:frontend/features/subscription/presentation/paywall_route.dart';
 
 import 'package:frontend/core/mixins/tts_playback_mixin.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
@@ -1207,8 +1211,17 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       children: [
         _buildScoreCard(feedback),
         const SizedBox(height: 32),
-        _buildAzureWordFeedback(feedback),
-        if (feedback.azureProsodyScore != null) _buildProsodySection(feedback),
+        _PaidFeatureBlurGuard(
+          unlockReason: 'Unlock detailed pronunciation feedback',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildAzureWordFeedback(feedback),
+              if (feedback.azureProsodyScore != null)
+                _buildProsodySection(feedback),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -2290,4 +2303,125 @@ class DragTailPainter extends CustomPainter {
   @override
   bool shouldRepaint(DragTailPainter oldDelegate) =>
       oldDelegate.offset != offset || oldDelegate.color != color;
+}
+
+/// A widget that blurs its child and shows a lock overlay if the user
+/// does not have access to the paid feature (Plus tier).
+class _PaidFeatureBlurGuard extends StatelessWidget {
+  final Widget child;
+  final String unlockReason;
+
+  const _PaidFeatureBlurGuard({
+    required this.child,
+    this.unlockReason = 'Unlock detailed feedback',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: RevenueCatService(),
+      builder: (context, _) {
+        final isPlus = RevenueCatService().hasPlus;
+
+        if (isPlus) {
+          return child;
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // 1. The blurred content
+                ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.6, // Dim the content slightly
+                      child: child,
+                    ),
+                  ),
+                ),
+
+                // 2. White/Surface Overlay for "frosted" look
+                Positioned.fill(
+                  child: Container(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surface.withValues(alpha: 0.4),
+                  ),
+                ),
+
+                // 3. The Premium Unlock Button
+                Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        PaywallRoute.show(context, reason: unlockReason);
+                      },
+                      splashColor: AppColors.secondary.withValues(alpha: 0.1),
+                      highlightColor: AppColors.secondary.withValues(
+                        alpha: 0.05,
+                      ),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            // Premium Gradient (Purple)
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.secondary,
+                                AppColors.secondary,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            // Glowing Shadow
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.4,
+                                ),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.lock_open_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Unlock Premium',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
