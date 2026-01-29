@@ -811,7 +811,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
+        border: Border(top: BorderSide(color: AppColors.ln100, width: 1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -877,7 +877,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 40),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
+        // border: Border(top: BorderSide(color: AppColors.ln100, width: 1)),
+        boxShadow: AppShadows.sm,
       ),
       child: _isRecordingVoice
           ? _buildRecordingMode()
@@ -997,7 +998,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.ln100,
+              color: AppColors.ln50,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Colors.transparent, width: 0),
             ),
