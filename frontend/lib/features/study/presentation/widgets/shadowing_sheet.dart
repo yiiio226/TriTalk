@@ -17,6 +17,7 @@ import 'package:frontend/core/mixins/tts_playback_mixin.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
 import 'package:frontend/core/utils/language_utils.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 import 'package:frontend/features/study/data/shadowing_history_service.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/chat/domain/models/message.dart';
@@ -822,9 +823,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Shadowing Practice',
-                          style: TextStyle(
+                        Text(
+                          context.l10n.shadowing_title,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -985,7 +986,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _isRecording ? 'Cancel' : 'Listen',
+                      _isRecording
+                          ? context.l10n.home_cancel
+                          : context.l10n.chat_listen,
                       style: TextStyle(
                         fontSize: 12,
                         color: _isRecording && _dragAction == 'cancel'
@@ -1076,8 +1079,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                     const SizedBox(height: 8),
                     Text(
                       _isRecording
-                          ? 'Complete'
-                          : (_feedback == null ? 'Not Rated' : 'My Score'),
+                          ? context.l10n.shadowing_complete
+                          : (_feedback == null
+                                ? context.l10n.shadowing_notRated
+                                : context.l10n.shadowing_myScore),
                       style: TextStyle(
                         fontSize: 12,
                         color: _isRecording && _dragAction == 'complete'
@@ -1180,7 +1185,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _feedback == null ? 'Hold to Record' : 'Record Again',
+                  _feedback == null
+                      ? context.l10n.shadowing_holdToRecord
+                      : context.l10n.shadowing_recordAgain,
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.lightTextSecondary,

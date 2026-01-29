@@ -9,6 +9,7 @@ import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/features/subscription/presentation/feature_gate.dart';
 import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class CustomSceneDialog extends StatefulWidget {
   const CustomSceneDialog({super.key});
@@ -143,10 +144,11 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                           color: AppColors.primary,
                         ),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
+                          // LINT FIX: Removed const
                           child: Text(
-                            'Create Scenario',
-                            style: TextStyle(
+                            context.l10n.home_createScenario,
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
@@ -161,7 +163,7 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Describe a situation you want to practice. AI will create a roleplay scenario for you.',
+                      context.l10n.home_createScenarioDescription,
                       style: TextStyle(color: AppColors.lightTextSecondary),
                     ),
                     const SizedBox(height: 24),
@@ -184,16 +186,15 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                               minLines: null,
                               expands: true,
                               textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
-                                hintText:
-                                    'Example: I need to return a defective product, but the store clerk is being difficult...',
+                              decoration: InputDecoration(
+                                hintText: context.l10n.home_createScenarioHint,
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
                                 errorBorder: InputBorder.none,
                                 focusedErrorBorder: InputBorder.none,
                                 filled: false,
-                                contentPadding: EdgeInsets.fromLTRB(
+                                contentPadding: const EdgeInsets.fromLTRB(
                                   16,
                                   16,
                                   40,
@@ -267,9 +268,9 @@ class _CustomSceneDialogState extends State<CustomSceneDialog> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
-                                'Generate Scenario',
-                                style: TextStyle(
+                            : Text(
+                                context.l10n.home_generateScenario,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),

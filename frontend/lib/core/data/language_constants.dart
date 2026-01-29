@@ -1,3 +1,6 @@
+import 'package:flutter/widgets.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
+
 class LanguageOption {
   final String code; // ISO Code: 'en-US', 'zh-CN'
   final String label; // Display Name: 'English (US)', 'Chinese'
@@ -44,6 +47,33 @@ class LanguageConstants {
       if (code == 'English') return 'English (US)';
       if (code.contains('Chinese')) return 'Chinese (Simplified)';
       return code;
+    }
+  }
+
+  /// Get localized label using context
+  static String getLocalizedLabel(BuildContext context, String? code) {
+    if (code == null || code.isEmpty) return 'Select Language';
+    switch (code) {
+      case 'en-US':
+        return context.l10n.lang_en_US;
+      case 'en-GB':
+        return context.l10n.lang_en_GB;
+      case 'zh-CN':
+        return context.l10n.lang_zh_CN;
+      case 'ja-JP':
+        return context.l10n.lang_ja_JP;
+      case 'ko-KR':
+        return context.l10n.lang_ko_KR;
+      case 'es-ES':
+        return context.l10n.lang_es_ES;
+      case 'es-MX':
+        return context.l10n.lang_es_MX;
+      case 'fr-FR':
+        return context.l10n.lang_fr_FR;
+      case 'de-DE':
+        return context.l10n.lang_de_DE;
+      default:
+        return getLabel(code);
     }
   }
 

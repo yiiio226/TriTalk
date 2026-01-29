@@ -98,215 +98,161 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
-  /// Source: core/widgets/error_screen.dart:13 (title)
+  /// The title of the application
   ///
   /// In en, this message translates to:
-  /// **'TriTalk - Error'**
-  String get common_tritalkError;
+  /// **'TriTalk'**
+  String get appTitle;
 
-  /// Source: features/home/presentation/pages/home_screen.dart:541 (Text)
+  /// Greeting shown on the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'Hi! Ready to practice?'**
+  String get home_greeting;
+
+  /// Label for the daily goal section
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Goal'**
+  String get home_dailyGoal;
+
+  /// Section title for recent conversation scenarios
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Scenarios'**
+  String get home_recentScenarios;
+
+  /// Section title to explore new scenarios
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Scenarios'**
+  String get home_exploreScenarios;
+
+  /// Button text to start a new chat
+  ///
+  /// In en, this message translates to:
+  /// **'Start Chat'**
+  String get home_startChat;
+
+  /// Cancel button text
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get home_cancel;
 
-  /// Source: features/scenes/presentation/widgets/scene_options_drawer.dart:28 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Favorites'**
-  String get scenes_favorites;
-
-  /// Source: features/scenes/presentation/widgets/scene_options_drawer.dart:37 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Clear Conversation'**
-  String get scenes_clearConversation;
-
-  /// Source: features/scenes/presentation/widgets/scene_options_drawer.dart:46 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Bookmark Conversation'**
-  String get scenes_bookmarkConversation;
-
-  /// Source: features/study/presentation/widgets/save_note_sheet.dart:62 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Saved to Notebook!'**
-  String get study_savedToNotebook;
-
-  /// Source: features/study/presentation/widgets/analysis_sheet.dart:335 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'SUMMARY'**
-  String get study_summary;
-
-  /// Source: features/study/presentation/widgets/analysis_sheet.dart:358 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'SENTENCE STRUCTURE'**
-  String get study_sentenceStructure;
-
-  /// Source: features/study/presentation/widgets/analysis_sheet.dart:367 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'GRAMMAR POINTS'**
-  String get study_grammarPoints;
-
-  /// Source: features/study/presentation/widgets/analysis_sheet.dart:376 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'VOCABULARY'**
-  String get study_vocabulary;
-
-  /// Source: features/study/presentation/widgets/analysis_sheet.dart:385 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'IDIOMS & SLANG'**
-  String get study_idiomsSlang;
-
-  /// Source: features/study/presentation/widgets/analysis_sheet.dart:576 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Analysis not available'**
-  String get study_analysisNotAvailable;
-
-  /// Source: features/chat/presentation/pages/chat_screen.dart:807 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get chat_delete;
-
-  /// Source: features/chat/presentation/pages/chat_screen.dart:977 (hintText)
+  /// Hint text for the message input field
   ///
   /// In en, this message translates to:
   /// **'Type a message...'**
   String get chat_typeAMessage;
 
-  /// Source: features/chat/presentation/pages/chat_screen.dart:1012 (tooltip)
+  /// Instruction for voice input
+  ///
+  /// In en, this message translates to:
+  /// **'Press to speak'**
+  String get chat_pressToSpeak;
+
+  /// Instruction for voice input
+  ///
+  /// In en, this message translates to:
+  /// **'Release to send'**
+  String get chat_releaseToSend;
+
+  /// Button tooltip for AI text optimization
   ///
   /// In en, this message translates to:
   /// **'Optimize with AI'**
   String get chat_optimizeWithAi;
 
-  /// Source: features/chat/presentation/widgets/chat_history_list_widget.dart:96 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Conversation deleted'**
-  String get chat_conversationDeleted;
-
-  /// Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:241 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Analyzing pronunciation...'**
-  String get chat_analyzingPronunciation;
-
-  /// Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:477 (Text)
+  /// Button text to retry a failed action
   ///
   /// In en, this message translates to:
   /// **'Retry'**
   String get chat_retry;
 
-  /// Source: features/subscription/presentation/pages/paywall_screen.dart:87 (Text)
+  /// Delete action
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Pro!'**
-  String get subscription_welcomeToPro;
+  /// **'Delete'**
+  String get chat_delete;
 
-  /// Source: features/subscription/presentation/pages/paywall_screen.dart:115 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Purchases Restored'**
-  String get subscription_purchasesRestored;
-
-  /// Source: features/profile/presentation/pages/profile_screen.dart:301 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'Native Language'**
-  String get profile_nativeLanguage;
-
-  /// Source: features/profile/presentation/pages/profile_screen.dart:316 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'Learning Language'**
-  String get profile_learningLanguage;
-
-  /// Source: features/profile/presentation/pages/profile_screen.dart:340 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'Vocabulary, Sentences, Grammar, Chat History'**
-  String get profile_vocabularySentencesChatHistory;
-
-  /// Source: features/profile/presentation/pages/profile_screen.dart:356 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'Upgrade to Pro'**
-  String get profile_upgradeToPro;
-
-  /// Source: features/profile/presentation/pages/profile_screen.dart:357 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'Get unlimited chats and advanced feedback'**
-  String get profile_getUnlimitedChatsAnd;
-
-  /// Source: features/profile/presentation/pages/profile_screen.dart:373 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'Log Out'**
-  String get profile_logOut;
-
-  /// Source: features/onboarding/presentation/pages/onboarding_screen.dart:57 (Text)
-  ///
-  /// In en, this message translates to:
-  /// **'Session expired. Please log in again.'**
-  String get onboarding_sessionExpiredPleaseLog;
-
-  /// Source: main.dart:78 (title)
-  ///
-  /// In en, this message translates to:
-  /// **'TriTalk'**
-  String get tritalk;
-
-  /// Label for app display language setting in profile screen
-  ///
-  /// In en, this message translates to:
-  /// **'App Language'**
-  String get profile_appLanguage;
-
-  /// Title for app language selection dialog
-  ///
-  /// In en, this message translates to:
-  /// **'Select App Language'**
-  String get profile_selectAppLanguage;
-
-  /// Section title for language settings in profile screen
+  /// Section header for language settings in profile
   ///
   /// In en, this message translates to:
   /// **'Language Settings'**
   String get profile_languageSettings;
 
-  /// Option label for following system language setting
+  /// Label for app interface language setting
   ///
   /// In en, this message translates to:
-  /// **'System Default'**
-  String get common_systemDefault;
+  /// **'App Language'**
+  String get profile_appLanguage;
 
-  /// Subtitle on home screen prompting user to select a practice scenario
+  /// Label for user's native language setting
   ///
   /// In en, this message translates to:
-  /// **'Choose a scenario to practice your {language}'**
-  String home_chooseScenario(String language);
+  /// **'Native Language'**
+  String get profile_nativeLanguage;
 
-  /// Title for the upgrade/paywall screen
+  /// Label for user's target learning language setting
   ///
   /// In en, this message translates to:
-  /// **'Upgrade'**
-  String get subscription_upgrade;
+  /// **'Learning Language'**
+  String get profile_learningLanguage;
 
-  /// Title for subscription plan selection
+  /// Button text to upgrade subscription
   ///
   /// In en, this message translates to:
-  /// **'Choose a Plan'**
-  String get subscription_choosePlan;
+  /// **'Upgrade to Pro'**
+  String get profile_upgradeToPro;
+
+  /// Button text to log out
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get profile_logOut;
+
+  /// Subtitle for Favorites, listing categories
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary, Sentences, Chat History'**
+  String get profile_vocabularySentencesChatHistory;
+
+  /// Generic loading text
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get common_loading;
+
+  /// Generic error title
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get common_error;
+
+  /// Generic success title
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get common_success;
+
+  /// Generic save button text
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get common_save;
+
+  /// Generic confirm button text
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get common_confirm;
+
+  /// Label showing current subscription tier
+  ///
+  /// In en, this message translates to:
+  /// **'Current Plan: {tier}'**
+  String subscription_currentTier(Object tier);
 
   /// Button text to restore previous purchases
   ///
@@ -415,6 +361,444 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop'**
   String get chat_stop;
+
+  /// Button label for perfect pronunciation
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect'**
+  String get chat_perfect;
+
+  /// Button label for feedback
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get chat_feedback;
+
+  /// Status text while analyzing
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing...'**
+  String get chat_analyzing;
+
+  /// Button label to start analysis
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get chat_analyze;
+
+  /// Button label to hide text
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Text'**
+  String get chat_hide_text;
+
+  /// Button label to show text
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get chat_text;
+
+  /// Button label for shadowing practice
+  ///
+  /// In en, this message translates to:
+  /// **'Shadow'**
+  String get chat_shadow;
+
+  /// Button to translate text
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get chat_translate;
+
+  /// Button to save content
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get chat_save;
+
+  /// Title for favorites screen
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get scenes_favorites;
+
+  /// Option to clear conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Conversation'**
+  String get scenes_clearConversation;
+
+  /// Option to bookmark conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark Conversation'**
+  String get scenes_bookmarkConversation;
+
+  /// Title for analysis sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence Analysis'**
+  String get analysis_title;
+
+  /// Label for original sentence in analysis
+  ///
+  /// In en, this message translates to:
+  /// **'ORIGINAL SENTENCE'**
+  String get analysis_originalSentence;
+
+  /// Toast message when word is saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saved \"{word}\" to Vocabulary'**
+  String analysis_savedToVocab(Object word);
+
+  /// Toast message when idiom is saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Idiom'**
+  String get analysis_savedIdiom;
+
+  /// Title for shadowing practice sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Shadowing Practice'**
+  String get shadowing_title;
+
+  /// Instruction to hold button to record
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to Record'**
+  String get shadowing_holdToRecord;
+
+  /// Instruction to record again
+  ///
+  /// In en, this message translates to:
+  /// **'Record Again'**
+  String get shadowing_recordAgain;
+
+  /// Status label for complete
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get shadowing_complete;
+
+  /// Status label for not rated
+  ///
+  /// In en, this message translates to:
+  /// **'Not Rated'**
+  String get shadowing_notRated;
+
+  /// Label for user's score
+  ///
+  /// In en, this message translates to:
+  /// **'My Score'**
+  String get shadowing_myScore;
+
+  /// Title for quick save sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Save'**
+  String get saveNote_title;
+
+  /// Instruction for saving notes
+  ///
+  /// In en, this message translates to:
+  /// **'Tap words to select specific vocabulary, or save the entire sentence.'**
+  String get saveNote_instruction;
+
+  /// Button to save entire sentence
+  ///
+  /// In en, this message translates to:
+  /// **'Save Entire Sentence'**
+  String get saveNote_saveSentence;
+
+  /// Button to save selected words
+  ///
+  /// In en, this message translates to:
+  /// **'Save Selected ({count})'**
+  String saveNote_saveSelected(Object count);
+
+  /// Title for suggestions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get chat_suggestions;
+
+  /// Error message for failed suggestions
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load suggestions: {error}'**
+  String chat_suggestionsFailed(Object error);
+
+  /// Title for delete conversation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Conversation'**
+  String get chat_deleteConversation;
+
+  /// Content for delete conversation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this conversation? This will also remove it from your home screen.'**
+  String get chat_deleteConversationContent;
+
+  /// Title for create scenario dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Create Scenario'**
+  String get home_createScenario;
+
+  /// Description for create scenario dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Describe a situation you want to practice. AI will create a roleplay scenario for you.'**
+  String get home_createScenarioDescription;
+
+  /// Hint text for scenario description
+  ///
+  /// In en, this message translates to:
+  /// **'Example: I need to return a defective product, but the store clerk is being difficult...'**
+  String get home_createScenarioHint;
+
+  /// Button to generate scenario
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Scenario'**
+  String get home_generateScenario;
+
+  /// Title for selecting native language
+  ///
+  /// In en, this message translates to:
+  /// **'Select Native Language'**
+  String get profile_selectNative;
+
+  /// Title for selecting learning language
+  ///
+  /// In en, this message translates to:
+  /// **'Select Learning Language'**
+  String get profile_selectLearning;
+
+  /// Section header for tools
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get profile_tools;
+
+  /// Tab label for vocabulary
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary'**
+  String get tab_vocabulary;
+
+  /// Tab label for sentence
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence'**
+  String get tab_sentence;
+
+  /// Tab label for grammar
+  ///
+  /// In en, this message translates to:
+  /// **'Grammar'**
+  String get tab_grammar;
+
+  /// Tab label for chat
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get tab_chat;
+
+  /// Empty state message for saved sentences
+  ///
+  /// In en, this message translates to:
+  /// **'No analyzed sentences saved yet'**
+  String get study_noSavedSentences;
+
+  /// Title for the app language selection dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Select App Language'**
+  String get profile_selectAppLanguage;
+
+  /// Label for system default language option
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get profile_systemDefault;
+
+  /// Subtitle on home screen prompting to choose a scenario
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a scenario to practice {language}'**
+  String home_chooseScenario(String language);
+
+  /// Error message when session expires
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired. Please log in again.'**
+  String get onboarding_sessionExpiredPleaseLog;
+
+  /// Header for summary section
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get study_summary;
+
+  /// Header for sentence structure section
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence Structure'**
+  String get study_sentenceStructure;
+
+  /// Header for grammar points section
+  ///
+  /// In en, this message translates to:
+  /// **'Grammar Points'**
+  String get study_grammarPoints;
+
+  /// Header for vocabulary section
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary'**
+  String get study_vocabulary;
+
+  /// Header for idioms and slang section
+  ///
+  /// In en, this message translates to:
+  /// **'Idioms & Slang'**
+  String get study_idiomsSlang;
+
+  /// Message when analysis is not available
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis not available'**
+  String get study_analysisNotAvailable;
+
+  /// Success message when content is saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Notebook'**
+  String get study_savedToNotebook;
+
+  /// Message when conversation is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation deleted'**
+  String get chat_conversationDeleted;
+
+  /// Toast message when grammar point is saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Grammar Point'**
+  String get analysis_savedGrammarPoint;
+
+  /// Language name for English (US)
+  ///
+  /// In en, this message translates to:
+  /// **'English (US)'**
+  String get lang_en_US;
+
+  /// Language name for English (UK)
+  ///
+  /// In en, this message translates to:
+  /// **'English (UK)'**
+  String get lang_en_GB;
+
+  /// Language name for Chinese (Simplified)
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese (Simplified)'**
+  String get lang_zh_CN;
+
+  /// Language name for Japanese
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get lang_ja_JP;
+
+  /// Language name for Korean
+  ///
+  /// In en, this message translates to:
+  /// **'Korean'**
+  String get lang_ko_KR;
+
+  /// Language name for Spanish (Spain)
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish (Spain)'**
+  String get lang_es_ES;
+
+  /// Language name for Spanish (Mexico)
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish (Mexico)'**
+  String get lang_es_MX;
+
+  /// Language name for French
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get lang_fr_FR;
+
+  /// Language name for German
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get lang_de_DE;
+
+  /// Message when messages are deleted
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Deleted 1 message} other{Deleted {count} messages}}'**
+  String chat_messagesDeleted(num count);
+
+  /// Message when a scene is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Scene deleted'**
+  String get home_sceneDeleted;
+
+  /// Prefix for example sentence
+  ///
+  /// In en, this message translates to:
+  /// **'Example: {text}'**
+  String study_example(String text);
+
+  /// Toast message when a scenario is saved to favorites
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Favorites'**
+  String get home_savedToFavorites;
+
+  /// Option to clear conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Conversation'**
+  String get home_clearConversation;
+
+  /// Content for clear conversation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear this conversation and start over?'**
+  String get home_clearConversationContent;
+
+  /// Toast message when conversation is cleared
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation cleared'**
+  String get home_conversationCleared;
+
+  /// Button to clear content
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get home_clear;
+
+  /// Error message when trying to bookmark empty conversation
+  ///
+  /// In en, this message translates to:
+  /// **'No messages to bookmark'**
+  String get home_noMessagesToBookmark;
 }
 
 class _AppLocalizationsDelegate

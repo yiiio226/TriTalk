@@ -204,9 +204,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Sentence Analysis',
-                        style: TextStyle(
+                      Text(
+                        context.l10n.analysis_title,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -281,9 +281,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'ORIGINAL SENTENCE',
-                                  style: TextStyle(
+                                Text(
+                                  context.l10n.analysis_originalSentence,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.lightTextSecondary,
@@ -723,8 +723,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                               ? point.explanation.substring(0, 30)
                               : point.explanation);
                     final contentToSave = point.structure.isNotEmpty
-                        ? "${point.explanation}\\n\\n例: ${point.example}"
-                        : "例: ${point.example}";
+                        ? "${point.explanation}\n\n${context.l10n.study_example(point.example)}"
+                        : context.l10n.study_example(point.example);
 
                     if (!isSaved) {
                       VocabService().add(
@@ -738,7 +738,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       });
                       showTopToast(
                         context,
-                        'Saved Grammar Point',
+                        context.l10n.analysis_savedGrammarPoint,
                         isError: false,
                       );
                     }
@@ -766,7 +766,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           if (point.example.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              '例: ${point.example}',
+              context.l10n.study_example(point.example),
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
@@ -855,7 +855,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       });
                       showTopToast(
                         context,
-                        'Saved "${vocab.word}" to Vocabulary',
+                        context.l10n.analysis_savedToVocab(vocab.word),
                       );
                     }
                   },
@@ -882,7 +882,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           if (vocab.example.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              '例: ${vocab.example}',
+              context.l10n.study_example(vocab.example),
               style: const TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
@@ -938,7 +938,11 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       setState(() {
                         _savedIdioms.add(idiom.text);
                       });
-                      showTopToast(context, 'Saved Idiom', isError: false);
+                      showTopToast(
+                        context,
+                        context.l10n.analysis_savedIdiom,
+                        isError: false,
+                      );
                     }
                   },
                   child: Padding(

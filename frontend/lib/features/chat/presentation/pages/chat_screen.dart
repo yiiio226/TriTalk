@@ -463,9 +463,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   const SizedBox(width: 12),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    child: Text(
+                      context.l10n.chat_delete,
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
                     ),
                   ),
                 ],
@@ -483,7 +483,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       if (mounted) {
         showTopToast(
           context,
-          'Deleted $deletedCount message${deletedCount > 1 ? 's' : ''}',
+          context.l10n.chat_messagesDeleted(deletedCount),
           isError: false,
         );
       }
@@ -1225,9 +1225,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Clear Conversation',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              context.l10n.scenes_clearConversation,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1285,14 +1285,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Delete Conversation',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              context.l10n.chat_deleteConversation,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Are you sure you want to delete this conversation? This will also remove it from your home screen.',
-              style: TextStyle(fontSize: 16, color: Colors.black87),
+            Text(
+              context.l10n.chat_deleteConversationContent,
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
             const SizedBox(height: 24),
             Row(
@@ -1314,9 +1314,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     // Return 'delete' signal to previous screen
                     Navigator.pop(context, 'delete');
                   },
-                  child: const Text(
-                    'Delete',
-                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  child: Text(
+                    context.l10n.chat_delete,
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
               ],

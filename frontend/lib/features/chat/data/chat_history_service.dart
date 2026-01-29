@@ -144,11 +144,17 @@ class ChatHistoryService {
           .eq('user_id', userId)
           .eq('scene_key', sceneKey)
           .maybeSingle()
-          .timeout(const Duration(seconds: 15)); // Increased from 5s to handle slow networks
+          .timeout(
+            const Duration(seconds: 15),
+          ); // Increased from 5s to handle slow networks
 
       final duration = DateTime.now().difference(startTime);
-      debugPrint('🔍 [ChatHistory] Query completed in ${duration.inMilliseconds}ms');
-      debugPrint('🔍 [ChatHistory] Response: ${response != null ? 'found' : 'null'}');
+      debugPrint(
+        '🔍 [ChatHistory] Query completed in ${duration.inMilliseconds}ms',
+      );
+      debugPrint(
+        '🔍 [ChatHistory] Response: ${response != null ? 'found' : 'null'}',
+      );
 
       final localMessages = _histories[sceneKey] ?? [];
 
@@ -159,7 +165,9 @@ class ChatHistoryService {
             .map((json) => Message.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        debugPrint('🔍 [ChatHistory] Cloud has ${cloudMessages.length} messages');
+        debugPrint(
+          '🔍 [ChatHistory] Cloud has ${cloudMessages.length} messages',
+        );
 
         // Get cloud update timestamp
         final cloudUpdatedAt = response['updated_at'] != null
@@ -472,10 +480,6 @@ class ChatHistoryService {
               '${CacheConstants.chatHistoryPrefix}${sceneKey}_updated_at',
             ),
             now.toIso8601String(),
-          );
-
-          debugPrint(
-            'Deleted ${messageIds.length} messages from cloud: $sceneKey',
           );
         }
       }
