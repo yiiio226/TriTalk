@@ -4,7 +4,6 @@ platform :android do
   desc "部署到 Google Play 内部测试"
   lane :deploy_internal do
     # 1. 从 Google Play 获取最新的 version code 并递增
-    # 如果没有设置 VERSION_CODE 环境变量，则自动获取
     version_code = ENV["VERSION_CODE"]
     
     if version_code.nil? || version_code.empty?
@@ -24,33 +23,34 @@ platform :android do
       UI.message("自动计算 versionCode: #{version_code}")
     end
 
-    # 获取版本名称 (从环境变量或 pubspec.yaml)
-    version_name = ENV["VERSION_NAME"]
-    if version_name.nil? || version_name.empty?
-      # 从 pubspec.yaml 读取版本号 (fastlane 运行目录是 android/fastlane)
-      pubspec = File.read("../../pubspec.yaml")
-      version_match = pubspec.match(/version:\s*(\d+\.\d+\.\d+)/)
-      version_name = version_match ? version_match[1] : "1.0.0"
-      UI.message("从 pubspec.yaml 读取版本名: #{version_name}")
-    end
+    # 2. 读取并更新 pubspec.yaml 中的版本
+    pubspec_path = File.expand_path("../../pubspec.yaml", __dir__)
+    pubspec_content = File.read(pubspec_path)
+    
+    # 提取版本名称
+    version_match = pubspec_content.match(/version:\s*(\d+\.\d+\.\d+)(?:\+\d+)?/)
+    version_name = version_match ? version_match[1] : "1.0.0"
+    
+    # 更新 pubspec.yaml 中的版本号 (version_name+version_code 格式)
+    new_version = "#{version_name}+#{version_code}"
+    updated_pubspec = pubspec_content.gsub(/version:\s*\d+\.\d+\.\d+(?:\+\d+)?/, "version: #{new_version}")
+    File.write(pubspec_path, updated_pubspec)
+    UI.message("已更新 pubspec.yaml 版本为: #{new_version}")
 
-    # 2. 构建 AAB (Release 模式)
+    # 3. 使用 Flutter 构建 AAB (Release 模式)
     UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    UI.message("🚀 正在构建 AAB...")
+    UI.message("🚀 正在使用 Flutter 构建 AAB...")
     UI.message("   Version Name: #{version_name}")
     UI.message("   Version Code: #{version_code}")
     UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     
-    gradle(
-      task: "bundle",
-      build_type: "Release",
-      properties: {
-        "android.injected.version.name" => version_name,
-        "android.injected.version.code" => version_code
-      }
-    )
+    # Flutter 项目需要使用 flutter build 命令，而不是直接调用 gradle
+    # 这样才能正确编译 Dart 代码并使用 pubspec.yaml 中的版本
+    Dir.chdir(File.expand_path("../..", __dir__)) do
+      sh("flutter build appbundle --release --dart-define=ENV=prod --obfuscate --split-debug-info=build/debug-info/global")
+    end
 
-    # 3. 上传到 Google Play
+    # 4. 上传到 Google Play
     # 使用绝对路径避免相对路径解析问题
     aab_path = File.expand_path('../../build/app/outputs/bundle/release/app-release.aab', __dir__)
     UI.message("AAB 路径: #{aab_path}")
