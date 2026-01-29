@@ -67,7 +67,7 @@ class LoginScreen extends ConsumerWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(25),
             child: Image.asset(
-              'assets/icon/icon.png',
+              'assets/icon/1024.png',
               width: 100,
               height: 100,
               fit: BoxFit.cover,
