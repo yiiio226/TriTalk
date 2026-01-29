@@ -6,6 +6,7 @@ import 'package:frontend/core/widgets/styled_drawer.dart';
 import 'package:frontend/core/widgets/top_toast.dart';
 import '../../../study/presentation/widgets/shadowing_sheet.dart';
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class FeedbackSheet extends StatefulWidget {
   final Message message;
@@ -156,7 +157,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '语法正确！表达很棒！',
+                        context.l10n.feedback_grammarCorrect,
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           color: AppColors.lg800,

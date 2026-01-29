@@ -207,9 +207,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'Tell us about yourself',
-            style: TextStyle(
+          Text(
+            context.l10n.onboarding_tellUsAboutYourself,
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: AppColors.lightTextPrimary,
@@ -307,9 +307,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 40),
-          const Text(
-            'What is your native language?',
-            style: TextStyle(
+          Text(
+            context.l10n.onboarding_nativeLanguageQuestion,
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1A1A1A),
@@ -342,9 +342,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 40),
-          const Text(
-            'What do you want to learn?',
-            style: TextStyle(
+          Text(
+            context.l10n.onboarding_learningLanguageQuestion,
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1A1A1A),

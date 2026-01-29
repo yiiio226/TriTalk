@@ -203,6 +203,10 @@
 	"@chat_text": {
 		"description": "Button label to show text"
 	},
+	"chat_voiceToTextLabel": "Text",
+	"@chat_voiceToTextLabel": {
+		"description": "Button label to convert voice to text"
+	},
 	"chat_shadow": "Shadow",
 	"@chat_shadow": {
 		"description": "Button label for shadowing practice"
@@ -536,5 +540,69 @@
 	"feedback_flatTipDefault": "💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.",
 	"@feedback_flatTipDefault": {
 		"description": "Tip for flat intonation"
+	},
+	"common_retry": "Retry",
+	"@common_retry": {
+		"description": "Button text to retry an action"
+	},
+	"common_azureAi": "Azure AI",
+	"@common_azureAi": {
+		"description": "Label for Azure AI service"
+	},
+	"scenes_configureSession": "Configure your practice session",
+	"@scenes_configureSession": {
+		"description": "Title for session configuration"
+	},
+	"study_pitchContour": "Pitch Contour",
+	"@study_pitchContour": {
+		"description": "Label for pitch contour"
+	},
+	"study_tapCurve": "Tap curve",
+	"@study_tapCurve": {
+		"description": "Instruction to tap curve"
+	},
+	"study_pronunciation": "Pronunciation",
+	"@study_pronunciation": {
+		"description": "Label for pronunciation"
+	},
+	"study_tapWords": "Tap words",
+	"@study_tapWords": {
+		"description": "Instruction to tap words"
+	},
+	"chat_deleteMessagesConfirm": "Are you sure you want to delete selected messages? This action cannot be undone.",
+	"@chat_deleteMessagesConfirm": {
+		"description": "Confirmation message for deleting messages"
+	},
+	"chat_textModeIcon": "Text",
+	"@chat_textModeIcon": {
+		"description": "Icon text for text mode"
+	},
+	"feedback_grammarCorrect": "Grammar is correct! Great expression!",
+	"@feedback_grammarCorrect": {
+		"description": "Feedback message for correct grammar"
+	},
+	"feedback_pronunciationLabel": "Pronunciation:",
+	"@feedback_pronunciationLabel": {
+		"description": "Label for pronunciation section"
+	},
+	"feedback_sentenceLabel": "Sentence:",
+	"@feedback_sentenceLabel": {
+		"description": "Label for sentence section"
+	},
+	"feedback_intonationLabel": "🌊 Intonation:",
+	"@feedback_intonationLabel": {
+		"description": "Label for intonation section"
+	},
+	"onboarding_tellUsAboutYourself": "Tell us about yourself",
+	"@onboarding_tellUsAboutYourself": {
+		"description": "Title for user info section"
+	},
+	"onboarding_nativeLanguageQuestion": "What is your native language?",
+	"@onboarding_nativeLanguageQuestion": {
+		"description": "Question asking for native language"
+	},
+	"onboarding_learningLanguageQuestion": "What do you want to learn?",
+	"@onboarding_learningLanguageQuestion": {
+		"description": "Question asking for learning language"
 	}
 }

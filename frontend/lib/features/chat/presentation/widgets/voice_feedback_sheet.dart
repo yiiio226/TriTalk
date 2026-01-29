@@ -286,8 +286,8 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
       children: [
         Row(
           children: [
-            const Text(
-              'Pronunciation:',
+            Text(
+              context.l10n.feedback_pronunciationLabel,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
@@ -301,8 +301,8 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
                 color: Colors.blue[100],
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text(
-                'Azure AI',
+              child: Text(
+                context.l10n.common_azureAi,
                 style: TextStyle(
                   fontSize: 10,
                   color: Colors.blue,
@@ -506,8 +506,8 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Sentence:',
+          Text(
+            context.l10n.feedback_sentenceLabel,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey,
@@ -526,8 +526,8 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Sentence:',
+        Text(
+          context.l10n.feedback_sentenceLabel,
           style: TextStyle(
             fontSize: 14,
             color: Colors.grey,
@@ -718,9 +718,9 @@ class _VoiceFeedbackSheetState extends ConsumerState<VoiceFeedbackSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '🌊 Intonation (语调):',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          context.l10n.feedback_intonationLabel,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Container(

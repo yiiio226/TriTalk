@@ -161,6 +161,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chat_text => '文本';
 
   @override
+  String get chat_voiceToTextLabel => '文';
+
+  @override
   String get chat_shadow => '跟读';
 
   @override
@@ -405,4 +408,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get feedback_flatTipDefault => '💡 提示：你的声音听起来像机器人。模仿母语者的节奏和旋律。';
+
+  @override
+  String get common_retry => '重试';
+
+  @override
+  String get common_azureAi => 'Azure AI';
+
+  @override
+  String get scenes_configureSession => '配置您的练习会话';
+
+  @override
+  String get study_pitchContour => '音调曲线';
+
+  @override
+  String get study_tapCurve => '点击曲线';
+
+  @override
+  String get study_pronunciation => '发音';
+
+  @override
+  String get study_tapWords => '点击单词';
+
+  @override
+  String get chat_deleteMessagesConfirm => '确定要删除选中的消息吗？此操作无法撤销。';
+
+  @override
+  String get chat_textModeIcon => '文';
+
+  @override
+  String get feedback_grammarCorrect => '语法正确！表达很棒！';
+
+  @override
+  String get feedback_pronunciationLabel => '发音：';
+
+  @override
+  String get feedback_sentenceLabel => '句子：';
+
+  @override
+  String get feedback_intonationLabel => '🌊 语调：';
+
+  @override
+  String get onboarding_tellUsAboutYourself => '介绍一下你自己';
+
+  @override
+  String get onboarding_nativeLanguageQuestion => '你的母语是什么？';
+
+  @override
+  String get onboarding_learningLanguageQuestion => '你想学习什么？';
 }
