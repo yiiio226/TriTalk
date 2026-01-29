@@ -58,6 +58,9 @@ class Env {
   static String get googleOAuthWebClientId =>
       dotenv.env['GOOGLE_OAUTH_WEB_CLIENT_ID'] ?? '';
 
+  static String? get googleOAuthAndroidClientId =>
+      dotenv.env['GOOGLE_OAUTH_ANDROID_CLIENT_ID'] ?? '';
+
   /// Force Cloud TTS flag
   /// When true, Word TTS will skip local cache and local TTS engine,
   /// always using cloud API (GCP Vertex AI) for testing purposes.
