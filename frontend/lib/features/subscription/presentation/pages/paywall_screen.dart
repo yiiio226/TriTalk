@@ -9,6 +9,7 @@ import 'package:frontend/features/subscription/data/services/revenue_cat_service
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
 import 'package:frontend/features/subscription/presentation/widgets/paywall_skeleton_loader.dart';
 import 'package:frontend/features/subscription/presentation/pages/subscription_success_screen.dart';
+import 'package:frontend/features/subscription/presentation/widgets/pulsing_badge.dart';
 
 /// Paywall screen for displaying subscription options
 ///
@@ -21,23 +22,43 @@ class PaywallScreen extends StatefulWidget {
   State<PaywallScreen> createState() => _PaywallScreenState();
 }
 
-class _PaywallScreenState extends State<PaywallScreen> {
+class _PaywallScreenState extends State<PaywallScreen>
+    with TickerProviderStateMixin {
   bool _isLoading = true;
   bool _isPurchasing = false;
   String? _error;
   bool _isYearly = true; // Default to yearly for better value
   late SubscriptionTier _selectedTier;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _selectedTier = SubscriptionTier.pro;
+    
+    // Initialize fade animation for page entrance
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    
     RevenueCatService().addListener(_onRevenueCatUpdate);
     _loadOfferings();
+    
+    // Start entrance animation after a short delay
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _fadeController.forward();
+    });
   }
 
   @override
   void dispose() {
+    _fadeController.dispose();
     RevenueCatService().removeListener(_onRevenueCatUpdate);
     super.dispose();
   }
@@ -204,53 +225,58 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Background Gradient
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topRight,
-                  radius: 1.3,
-                  colors: [AppColors.secondary.withOpacity(0.6), Colors.white],
-                  stops: const [0.0, 0.7],
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Stack(
+          children: [
+            // Background Gradient
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topRight,
+                    radius: 1.3,
+                    colors: [
+                      AppColors.secondary.withOpacity(0.6),
+                      Colors.white,
+                    ],
+                    stops: const [0.0, 0.7],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Scrollable Content
-          Positioned.fill(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                MediaQuery.of(context).padding.top +
-                    60, // Top padding for header
-                24,
-                320, // Increased bottom padding for scrolling space
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  Text(
-                    "Unlock Your Full Potential",
-                    style: AppTypography.headline2.copyWith(
-                      color: AppColors.ln900,
-                      letterSpacing: -0.5,
+            // Scrollable Content
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  MediaQuery.of(context).padding.top +
+                      60, // Top padding for header
+                  24,
+                  320, // Increased bottom padding for scrolling space
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Text(
+                      "Unlock Your Full Potential",
+                      style: AppTypography.headline2.copyWith(
+                        color: AppColors.ln900,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Master language with AI-powered practice",
-                    style: AppTypography.body1.copyWith(
-                      color: AppColors.ln500,
-                      height: 1.5,
+                    const SizedBox(height: 12),
+                    Text(
+                      "Master language with AI-powered practice",
+                      style: AppTypography.body1.copyWith(
+                        color: AppColors.ln500,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
                   // Monthly / Yearly Switch
                   if (!widget.showProOnly) ...[
@@ -389,6 +415,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ),
         ],
       ),
+      ),
     );
   }
 
@@ -429,17 +456,43 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(AppRadius.xl),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          offset: const Offset(0, 8),
+                          blurRadius: 24,
+                          spreadRadius: 0,
+                        ),
+                      ],
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      "Start 7-Day Free Trial",
-                      style: AppTypography.button.copyWith(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Start 7-Day Free Trial",
+                          style: AppTypography.button.copyWith(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          CupertinoIcons.arrow_right,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -517,37 +570,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       if (isYearlyOption) ...[
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.lg100,
-                            borderRadius: BorderRadius.circular(AppRadius.xs),
-                          ),
-                          child: Text(
-                            "SAVE 40%",
-                            style: AppTypography.overline.copyWith(
-                              color: AppColors.lg800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                        PulsingBadge(
+                          text: "SAVE 40%",
+                          backgroundColor: AppColors.lg100,
+                          textColor: AppColors.lg800,
                         ),
                       ],
                     ],
                   ),
-                  if (isSelected && isYearlyOption)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        "Best Value",
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+
                 ],
               ),
             ),
@@ -647,30 +678,37 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(
-          AppRadius.xl,
-        ), // Match SceneCard radius
-        border: Border.all(color: AppColors.ln200),
-        boxShadow: AppShadows.sm, // Match SceneCard shadow
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.9),
+            Colors.white.withOpacity(0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.secondary.withOpacity(0.1),
+            offset: const Offset(0, 8),
+            blurRadius: 32,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Stack(
         children: [
           Positioned(
             right: 0,
             top: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.secondary,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(AppRadius.xl), // Update corner
-                  bottomLeft: Radius.circular(AppRadius.lg),
-                ),
-              ),
-              child: Text(
-                "MOST POPULAR",
-                style: AppTypography.overline.copyWith(color: Colors.white),
+            child: PulsingBadge(
+              text: "MOST POPULAR",
+              backgroundColor: AppColors.secondary,
+              textColor: Colors.white,
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(AppRadius.xl),
+                bottomLeft: Radius.circular(AppRadius.lg),
               ),
             ),
           ),
@@ -705,10 +743,24 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(AppRadius.xl), // Match SceneCard
-        border: Border.all(color: AppColors.ln200),
-        boxShadow: AppShadows.sm, // Match SceneCard
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.9),
+            Colors.white.withOpacity(0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            offset: const Offset(0, 8),
+            blurRadius: 32,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
