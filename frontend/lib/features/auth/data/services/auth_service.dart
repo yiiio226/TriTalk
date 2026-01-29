@@ -203,11 +203,16 @@ class AuthService {
   // Google Login via native Google Sign In
   Future<bool> loginWithGoogle() async {
     try {
-      // Use the GoogleSignIn package for native login
       final GoogleSignIn googleSignIn = GoogleSignIn.instance;
 
+      // iOS needs clientId, Android is handled automatically via package name + SHA-1
+      String? clientId;
+      if (Platform.isIOS) {
+        clientId = Env.googleOAuthIosClientId;
+      }
+
       await googleSignIn.initialize(
-        clientId: Env.googleOAuthIosClientId,
+        clientId: clientId,
         serverClientId: Env.googleOAuthWebClientId,
       );
 

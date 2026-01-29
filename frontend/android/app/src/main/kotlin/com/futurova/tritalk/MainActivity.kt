@@ -1,4 +1,4 @@
-package com.TriSpeak.frontend
+package com.futurova.tritalk
 
 import io.flutter.embedding.android.FlutterActivity
 
