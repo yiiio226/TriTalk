@@ -209,5 +209,13 @@
 	"subscription_featurePrioritySupport": "Priority support",
 	"@subscription_featurePrioritySupport": {
 		"description": "Feature description for priority support"
+	},
+	"chat_listen": "Listen",
+	"@chat_listen": {
+		"description": "Button to listen to TTS audio"
+	},
+	"chat_stop": "Stop",
+	"@chat_stop": {
+		"description": "Button to stop TTS audio"
 	}
 }

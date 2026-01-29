@@ -162,4 +162,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get subscription_featurePrioritySupport => '优先客服支持';
+
+  @override
+  String get chat_listen => '朗读';
+
+  @override
+  String get chat_stop => '停止';
 }

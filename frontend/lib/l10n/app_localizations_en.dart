@@ -171,4 +171,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscription_featurePrioritySupport => 'Priority support';
+
+  @override
+  String get chat_listen => 'Listen';
+
+  @override
+  String get chat_stop => 'Stop';
 }

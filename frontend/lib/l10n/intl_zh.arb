@@ -209,5 +209,13 @@
 	"subscription_featurePrioritySupport": "优先客服支持",
 	"@subscription_featurePrioritySupport": {
 		"description": "Feature description for priority support"
+	},
+	"chat_listen": "朗读",
+	"@chat_listen": {
+		"description": "Button to listen to TTS audio"
+	},
+	"chat_stop": "停止",
+	"@chat_stop": {
+		"description": "Button to stop TTS audio"
 	}
 }
