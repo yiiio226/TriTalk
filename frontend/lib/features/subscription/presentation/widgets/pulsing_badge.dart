@@ -6,6 +6,7 @@ class PulsingBadge extends StatefulWidget {
   final Color backgroundColor;
   final Color textColor;
   final BorderRadius? borderRadius;
+  final bool enableAnimation;
 
   const PulsingBadge({
     super.key,
@@ -13,6 +14,7 @@ class PulsingBadge extends StatefulWidget {
     required this.backgroundColor,
     required this.textColor,
     this.borderRadius,
+    this.enableAnimation = true,
   });
 
   @override
@@ -30,11 +32,28 @@ class _PulsingBadgeState extends State<PulsingBadge>
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    )..repeat(reverse: true);
+    );
+
+    if (widget.enableAnimation) {
+      _controller.repeat(reverse: true);
+    }
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didUpdateWidget(PulsingBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.enableAnimation != oldWidget.enableAnimation) {
+      if (widget.enableAnimation) {
+        _controller.repeat(reverse: true);
+      } else {
+        _controller.stop();
+        _controller.reset();
+      }
+    }
   }
 
   @override

@@ -706,6 +706,7 @@ class _PaywallScreenState extends State<PaywallScreen>
               text: "MOST POPULAR",
               backgroundColor: AppColors.secondary,
               textColor: Colors.white,
+              enableAnimation: false,
               borderRadius: BorderRadius.only(
                 topRight: Radius.circular(AppRadius.xl),
                 bottomLeft: Radius.circular(AppRadius.lg),
