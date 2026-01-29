@@ -69,8 +69,14 @@ class RevenueCatService extends ChangeNotifier {
     if (_customerInfo!.entitlements.active.containsKey('pro')) {
       return SubscriptionTier.pro;
     }
-    return SubscriptionTier
-        .plus; // Logic seems to have been cut in original file, fixing based on context
+
+    // Check for Plus entitlement
+    if (_customerInfo!.entitlements.active.containsKey('plus')) {
+      return SubscriptionTier.plus;
+    }
+
+    // No active entitlements = free tier
+    return SubscriptionTier.free;
   }
 
   /// Simulate a purchase for testing/demo purposes
