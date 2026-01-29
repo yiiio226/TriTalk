@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -234,7 +233,7 @@ class LoginScreen extends ConsumerWidget {
     return SizedBox(
       width: 24,
       height: 24,
-  
+
       child: Center(
         child: Text(
           'G',

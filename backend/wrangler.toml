@@ -19,9 +19,9 @@ GCP_REGION = "us-central1"
 SUPABASE_SCHEMA = "tritalk_schema"
 
 # Scheduled tasks (Cron Triggers)
-# 定时任务 - 每小时清理过期订阅
+# 定时任务 - 每小时清理过期订阅 crons = ["0 * * * *"]
 [triggers]
-crons = ["0 * * * *"]
+crons = ["*/5 * * * *"]
 
 [observability]
 enabled = true
