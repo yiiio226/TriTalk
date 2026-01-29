@@ -408,5 +408,89 @@
 	"chat_conversationDeleted": "Conversation deleted",
 	"@chat_conversationDeleted": {
 		"description": "Message when conversation is deleted"
+	},
+	"analysis_savedGrammarPoint": "Saved Grammar Point",
+	"@analysis_savedGrammarPoint": {
+		"description": "Toast message when grammar point is saved"
+	},
+	"lang_en_US": "English (US)",
+	"@lang_en_US": {
+		"description": "Language name for English (US)"
+	},
+	"lang_en_GB": "English (UK)",
+	"@lang_en_GB": {
+		"description": "Language name for English (UK)"
+	},
+	"lang_zh_CN": "Chinese (Simplified)",
+	"@lang_zh_CN": {
+		"description": "Language name for Chinese (Simplified)"
+	},
+	"lang_ja_JP": "Japanese",
+	"@lang_ja_JP": {
+		"description": "Language name for Japanese"
+	},
+	"lang_ko_KR": "Korean",
+	"@lang_ko_KR": {
+		"description": "Language name for Korean"
+	},
+	"lang_es_ES": "Spanish (Spain)",
+	"@lang_es_ES": {
+		"description": "Language name for Spanish (Spain)"
+	},
+	"lang_es_MX": "Spanish (Mexico)",
+	"@lang_es_MX": {
+		"description": "Language name for Spanish (Mexico)"
+	},
+	"lang_fr_FR": "French",
+	"@lang_fr_FR": {
+		"description": "Language name for French"
+	},
+	"lang_de_DE": "German",
+	"@lang_de_DE": {
+		"description": "Language name for German"
+	},
+	"chat_messagesDeleted": "{count, plural, =1{Deleted 1 message} other{Deleted {count} messages}}",
+	"@chat_messagesDeleted": {
+		"description": "Message when messages are deleted",
+		"placeholders": {
+			"count": {}
+		}
+	},
+	"home_sceneDeleted": "Scene deleted",
+	"@home_sceneDeleted": {
+		"description": "Message when a scene is deleted"
+	},
+	"study_example": "Example: {text}",
+	"@study_example": {
+		"description": "Prefix for example sentence",
+		"placeholders": {
+			"text": {
+				"type": "String"
+			}
+		}
+	},
+	"home_savedToFavorites": "Saved to Favorites",
+	"@home_savedToFavorites": {
+		"description": "Toast message when a scenario is saved to favorites"
+	},
+	"home_clearConversation": "Clear Conversation",
+	"@home_clearConversation": {
+		"description": "Option to clear conversation"
+	},
+	"home_clearConversationContent": "Are you sure you want to clear this conversation and start over?",
+	"@home_clearConversationContent": {
+		"description": "Content for clear conversation dialog"
+	},
+	"home_conversationCleared": "Conversation cleared",
+	"@home_conversationCleared": {
+		"description": "Toast message when conversation is cleared"
+	},
+	"home_clear": "Clear",
+	"@home_clear": {
+		"description": "Button to clear content"
+	},
+	"home_noMessagesToBookmark": "No messages to bookmark",
+	"@home_noMessagesToBookmark": {
+		"description": "Error message when trying to bookmark empty conversation"
 	}
 }

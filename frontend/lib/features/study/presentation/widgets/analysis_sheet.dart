@@ -723,8 +723,8 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                               ? point.explanation.substring(0, 30)
                               : point.explanation);
                     final contentToSave = point.structure.isNotEmpty
-                        ? "${point.explanation}\\n\\n例: ${point.example}"
-                        : "例: ${point.example}";
+                        ? "${point.explanation}\n\n${context.l10n.study_example(point.example)}"
+                        : context.l10n.study_example(point.example);
 
                     if (!isSaved) {
                       VocabService().add(
@@ -738,7 +738,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       });
                       showTopToast(
                         context,
-                        'Saved Grammar Point',
+                        context.l10n.analysis_savedGrammarPoint,
                         isError: false,
                       );
                     }
@@ -766,7 +766,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           if (point.example.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              '例: ${point.example}',
+              context.l10n.study_example(point.example),
               style: TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
@@ -882,7 +882,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
           if (vocab.example.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              '例: ${vocab.example}',
+              context.l10n.study_example(vocab.example),
               style: const TextStyle(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,

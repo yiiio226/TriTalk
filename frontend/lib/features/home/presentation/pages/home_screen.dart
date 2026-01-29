@@ -164,7 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 8),
                       Text(
                         context.l10n.home_chooseScenario(
-                          LanguageConstants.getLabel(
+                          LanguageConstants.getLocalizedLabel(
+                            context,
                             LanguageConstants.getIsoCode(
                               AuthService().currentUser?.targetLanguage,
                             ),
@@ -400,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDragTarget(
                       icon: Icons.refresh,
                       color: Colors.blue,
-                      label: 'Clear',
+                      label: context.l10n.home_clear,
                       onAccept: (scene) =>
                           _showClearConfirmation(context, scene),
                     ),
@@ -408,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDragTarget(
                       icon: Icons.bookmark_border,
                       color: Colors.orange,
-                      label: 'Save',
+                      label: context.l10n.common_save,
                       onAccept: (scene) =>
                           _bookmarkConversation(context, scene),
                     ),
@@ -416,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildDragTarget(
                       icon: Icons.delete_outline,
                       color: Colors.red,
-                      label: 'Delete',
+                      label: context.l10n.chat_delete,
                       onAccept: (scene) =>
                           _showDeleteConfirmation(context, scene),
                     ),
@@ -494,7 +495,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (nonEmptyMessages.isEmpty) {
       if (mounted) {
-        showTopToast(context, "No messages to bookmark", isError: true);
+        showTopToast(
+          context,
+          context.l10n.home_noMessagesToBookmark,
+          isError: true,
+        );
       }
       return;
     }
@@ -516,7 +521,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (mounted) {
-      showTopToast(context, "Saved to Favorites", isError: false);
+      showTopToast(context, context.l10n.home_savedToFavorites, isError: false);
     }
   }
 
@@ -531,14 +536,14 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Clear Conversation',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              context.l10n.home_clearConversation,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Are you sure you want to clear this conversation and start over?',
-              style: TextStyle(fontSize: 16, color: Colors.black87),
+            Text(
+              context.l10n.home_clearConversationContent,
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
             const SizedBox(height: 24),
             Row(
@@ -560,15 +565,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() {});
                       showTopToast(
                         context,
-                        'Conversation cleared',
+                        context.l10n.home_conversationCleared,
                         isError: false,
                       );
                       Navigator.pop(context);
                     }
                   },
-                  child: const Text(
-                    'Clear',
-                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  child: Text(
+                    context.l10n.home_clear,
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
               ],
@@ -621,12 +626,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Delete scene (Standard scenes will be hidden, Custom scenes deleted)
                     await SceneService().deleteScene(scene.id);
                     if (mounted) {
-                      showTopToast(context, 'Scene deleted', isError: false);
+                      showTopToast(
+                        context,
+                        context.l10n.home_sceneDeleted,
+                        isError: false,
+                      );
                     }
                   },
-                  child: const Text(
-                    'Delete',
-                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  child: Text(
+                    context.l10n.chat_delete,
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
               ],

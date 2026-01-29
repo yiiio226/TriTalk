@@ -685,6 +685,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Conversation deleted'**
   String get chat_conversationDeleted;
+
+  /// Toast message when grammar point is saved
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Grammar Point'**
+  String get analysis_savedGrammarPoint;
+
+  /// Language name for English (US)
+  ///
+  /// In en, this message translates to:
+  /// **'English (US)'**
+  String get lang_en_US;
+
+  /// Language name for English (UK)
+  ///
+  /// In en, this message translates to:
+  /// **'English (UK)'**
+  String get lang_en_GB;
+
+  /// Language name for Chinese (Simplified)
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese (Simplified)'**
+  String get lang_zh_CN;
+
+  /// Language name for Japanese
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get lang_ja_JP;
+
+  /// Language name for Korean
+  ///
+  /// In en, this message translates to:
+  /// **'Korean'**
+  String get lang_ko_KR;
+
+  /// Language name for Spanish (Spain)
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish (Spain)'**
+  String get lang_es_ES;
+
+  /// Language name for Spanish (Mexico)
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish (Mexico)'**
+  String get lang_es_MX;
+
+  /// Language name for French
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get lang_fr_FR;
+
+  /// Language name for German
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get lang_de_DE;
+
+  /// Message when messages are deleted
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Deleted 1 message} other{Deleted {count} messages}}'**
+  String chat_messagesDeleted(num count);
+
+  /// Message when a scene is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Scene deleted'**
+  String get home_sceneDeleted;
+
+  /// Prefix for example sentence
+  ///
+  /// In en, this message translates to:
+  /// **'Example: {text}'**
+  String study_example(String text);
+
+  /// Toast message when a scenario is saved to favorites
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Favorites'**
+  String get home_savedToFavorites;
+
+  /// Option to clear conversation
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Conversation'**
+  String get home_clearConversation;
+
+  /// Content for clear conversation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear this conversation and start over?'**
+  String get home_clearConversationContent;
+
+  /// Toast message when conversation is cleared
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation cleared'**
+  String get home_conversationCleared;
+
+  /// Button to clear content
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get home_clear;
+
+  /// Error message when trying to bookmark empty conversation
+  ///
+  /// In en, this message translates to:
+  /// **'No messages to bookmark'**
+  String get home_noMessagesToBookmark;
 }
 
 class _AppLocalizationsDelegate

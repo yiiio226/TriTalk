@@ -463,9 +463,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   const SizedBox(width: 12),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    child: Text(
+                      context.l10n.chat_delete,
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
                     ),
                   ),
                 ],
@@ -483,7 +483,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       if (mounted) {
         showTopToast(
           context,
-          'Deleted $deletedCount message${deletedCount > 1 ? 's' : ''}',
+          context.l10n.chat_messagesDeleted(deletedCount),
           isError: false,
         );
       }

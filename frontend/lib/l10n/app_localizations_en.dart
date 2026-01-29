@@ -323,4 +323,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chat_conversationDeleted => 'Conversation deleted';
+
+  @override
+  String get analysis_savedGrammarPoint => 'Saved Grammar Point';
+
+  @override
+  String get lang_en_US => 'English (US)';
+
+  @override
+  String get lang_en_GB => 'English (UK)';
+
+  @override
+  String get lang_zh_CN => 'Chinese (Simplified)';
+
+  @override
+  String get lang_ja_JP => 'Japanese';
+
+  @override
+  String get lang_ko_KR => 'Korean';
+
+  @override
+  String get lang_es_ES => 'Spanish (Spain)';
+
+  @override
+  String get lang_es_MX => 'Spanish (Mexico)';
+
+  @override
+  String get lang_fr_FR => 'French';
+
+  @override
+  String get lang_de_DE => 'German';
+
+  @override
+  String chat_messagesDeleted(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Deleted $count messages',
+      one: 'Deleted 1 message',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get home_sceneDeleted => 'Scene deleted';
+
+  @override
+  String study_example(String text) {
+    return 'Example: $text';
+  }
+
+  @override
+  String get home_savedToFavorites => 'Saved to Favorites';
+
+  @override
+  String get home_clearConversation => 'Clear Conversation';
+
+  @override
+  String get home_clearConversationContent =>
+      'Are you sure you want to clear this conversation and start over?';
+
+  @override
+  String get home_conversationCleared => 'Conversation cleared';
+
+  @override
+  String get home_clear => 'Clear';
+
+  @override
+  String get home_noMessagesToBookmark => 'No messages to bookmark';
 }

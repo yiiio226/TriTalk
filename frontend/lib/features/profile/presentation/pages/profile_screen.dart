@@ -279,7 +279,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 const SizedBox(width: AppSpacing.md),
                               ],
                               Text(
-                                option.label,
+                                LanguageConstants.getLocalizedLabel(
+                                  context,
+                                  option.code,
+                                ),
                                 style: AppTypography.body1.copyWith(
                                   fontWeight: isSelected
                                       ? FontWeight.bold
@@ -454,7 +457,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildMenuCard(
                     context,
                     title: context.l10n.profile_nativeLanguage,
-                    subtitle: LanguageConstants.getLabel(_nativeLanguage),
+                    subtitle: LanguageConstants.getLocalizedLabel(
+                      context,
+                      _nativeLanguage,
+                    ),
                     icon: Icons.public,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
@@ -469,7 +475,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildMenuCard(
                     context,
                     title: context.l10n.profile_learningLanguage,
-                    subtitle: LanguageConstants.getLabel(_targetLanguage),
+                    subtitle: LanguageConstants.getLocalizedLabel(
+                      context,
+                      _targetLanguage,
+                    ),
                     icon: Icons.school,
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {

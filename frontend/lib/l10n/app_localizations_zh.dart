@@ -311,4 +311,65 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chat_conversationDeleted => '对话已删除';
+
+  @override
+  String get analysis_savedGrammarPoint => '已保存语法点';
+
+  @override
+  String get lang_en_US => '英语 (美国)';
+
+  @override
+  String get lang_en_GB => '英语 (英国)';
+
+  @override
+  String get lang_zh_CN => '简体中文';
+
+  @override
+  String get lang_ja_JP => '日语';
+
+  @override
+  String get lang_ko_KR => '韩语';
+
+  @override
+  String get lang_es_ES => '西班牙语 (西班牙)';
+
+  @override
+  String get lang_es_MX => '西班牙语 (墨西哥)';
+
+  @override
+  String get lang_fr_FR => '法语';
+
+  @override
+  String get lang_de_DE => '德语';
+
+  @override
+  String chat_messagesDeleted(num count) {
+    return '已删除 $count 条消息';
+  }
+
+  @override
+  String get home_sceneDeleted => '场景已删除';
+
+  @override
+  String study_example(String text) {
+    return '例：$text';
+  }
+
+  @override
+  String get home_savedToFavorites => '已保存到收藏';
+
+  @override
+  String get home_clearConversation => '清空对话';
+
+  @override
+  String get home_clearConversationContent => '确定要清空此对话并重新开始吗？';
+
+  @override
+  String get home_conversationCleared => '对话已清空';
+
+  @override
+  String get home_clear => '清空';
+
+  @override
+  String get home_noMessagesToBookmark => '没有可收藏的消息';
 }
