@@ -379,18 +379,31 @@ class _PaywallScreenState extends State<PaywallScreen>
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey[100],
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          CupertinoIcons.xmark,
-                          color: AppColors.ln900,
-                          size: 24,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(
+                                  0.2,
+                                ), // Frosted glass bg
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                CupertinoIcons.xmark,
+                                color: AppColors
+                                    .ln900, // Keep icon dark for visibility
+                                size: 22,
+                              ),
+                            ),
                         ),
                       ),
                     ),
