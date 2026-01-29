@@ -1,0 +1,69 @@
+default_platform(:android)
+
+platform :android do
+  desc "部署到 Google Play 内部测试"
+  lane :deploy_internal do
+    # 1. 从 Google Play 获取最新的 version code 并递增
+    # 如果没有设置 VERSION_CODE 环境变量，则自动获取
+    version_code = ENV["VERSION_CODE"]
+    
+    if version_code.nil? || version_code.empty?
+      # 获取 internal track 上的最新 version codes
+      version_codes = google_play_track_version_codes(
+        track: 'internal',
+        json_key: './pc-api.json'
+      )
+      
+      # 如果有版本，取最大值 +1；否则从 1 开始
+      if version_codes.empty?
+        version_code = "1"
+      else
+        version_code = (version_codes.max + 1).to_s
+      end
+      
+      UI.message("自动计算 versionCode: #{version_code}")
+    end
+
+    # 获取版本名称 (从环境变量或 pubspec.yaml)
+    version_name = ENV["VERSION_NAME"]
+    if version_name.nil? || version_name.empty?
+      # 从 pubspec.yaml 读取版本号 (fastlane 运行目录是 android/fastlane)
+      pubspec = File.read("../../pubspec.yaml")
+      version_match = pubspec.match(/version:\s*(\d+\.\d+\.\d+)/)
+      version_name = version_match ? version_match[1] : "1.0.0"
+      UI.message("从 pubspec.yaml 读取版本名: #{version_name}")
+    end
+
+    # 2. 构建 AAB (Release 模式)
+    UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    UI.message("🚀 正在构建 AAB...")
+    UI.message("   Version Name: #{version_name}")
+    UI.message("   Version Code: #{version_code}")
+    UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      properties: {
+        "android.injected.version.name" => version_name,
+        "android.injected.version.code" => version_code
+      }
+    )
+
+    # 3. 上传到 Google Play
+    # 使用绝对路径避免相对路径解析问题
+    aab_path = File.expand_path('../../build/app/outputs/bundle/release/app-release.aab', __dir__)
+    UI.message("AAB 路径: #{aab_path}")
+    
+    upload_to_play_store(
+      track: 'internal',
+      aab: aab_path,
+      json_key: './pc-api.json',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+    
+    UI.success("✅ 成功上传版本 #{version_name} (#{version_code}) 到 Internal Testing")
+  end
+end

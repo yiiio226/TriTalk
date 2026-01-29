@@ -55,3 +55,7 @@ __pycache__/
 node_modules/
 
 .vscode/
+
+# Ruby/Bundler
+vendor/bundle/
+.bundle/
