@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/auth_provider.dart';
@@ -31,12 +32,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late String _avatarUrl;
   late String _gender;
   late String _nativeLanguage;
+
+  // App version info
+  String _version = '';
+  String _buildNumber = '';
   late String _targetLanguage;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadVersionInfo();
     RevenueCatService().addListener(_onSubscriptionUpdate);
   }
 
@@ -72,6 +78,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _gender = 'male';
         _nativeLanguage = LanguageConstants.defaultNativeLanguageCode;
         _targetLanguage = LanguageConstants.defaultTargetLanguageCode;
+      });
+    }
+  }
+
+  Future<void> _loadVersionInfo() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _version = packageInfo.version;
+        _buildNumber = packageInfo.buildNumber;
       });
     }
   }
@@ -526,6 +542,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         iconColor: AppColors.lightTextSecondary,
                         onTap: _handleLogout,
                       ),
+                      const SizedBox(height: AppSpacing.xl),
+                      // Version Info
+                      if (_version.isNotEmpty)
+                        Center(
+                          child: Text(
+                            'Version $_version ($_buildNumber)',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.lightTextSecondary,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: AppSpacing.lg),
                     ],
                   ),
