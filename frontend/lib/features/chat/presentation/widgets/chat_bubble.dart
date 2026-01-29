@@ -17,6 +17,7 @@ import '../../../../features/study/data/shadowing_history_service.dart';
 import '../../../../core/widgets/top_toast.dart';
 import 'package:frontend/features/subscription/presentation/feature_gate.dart';
 import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class ChatBubble extends StatefulWidget {
   final Message message;
@@ -846,7 +847,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                   ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _isTTSPlaying ? "Stop" : "Listen",
+                                  _isTTSPlaying
+                                      ? context.l10n.chat_stop
+                                      : context.l10n.chat_listen,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,

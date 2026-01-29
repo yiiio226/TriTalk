@@ -403,6 +403,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Priority support'**
   String get subscription_featurePrioritySupport;
+
+  /// Button to listen to TTS audio
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get chat_listen;
+
+  /// Button to stop TTS audio
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get chat_stop;
 }
 
 class _AppLocalizationsDelegate
