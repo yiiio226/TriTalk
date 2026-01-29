@@ -178,9 +178,82 @@ class RevenueCatService extends ChangeNotifier {
   Future<void> _fetchOfferings() async {
     try {
       _offerings = await Purchases.getOfferings();
+      _debugPrintDefaultOffering();
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to fetch offerings: $e');
+    }
+  }
+
+  /// Debug: Pretty print the default offering and its packages
+  void _debugPrintDefaultOffering() {
+    if (!kDebugMode || _offerings?.current == null) return;
+
+    final offering = _offerings!.current!;
+    debugPrint('');
+    debugPrint('═══════════════════════════════════════════════════════════');
+    debugPrint('📦 DEFAULT OFFERING INFO');
+    debugPrint('═══════════════════════════════════════════════════════════');
+    debugPrint('Offering ID: ${offering.identifier}');
+    debugPrint('Server Description: ${offering.serverDescription}');
+    debugPrint('Metadata: ${offering.metadata}');
+    debugPrint('Available Packages: ${offering.availablePackages.length}');
+    debugPrint('───────────────────────────────────────────────────────────');
+
+    for (int i = 0; i < offering.availablePackages.length; i++) {
+      _debugPrintPackage(offering.availablePackages[i], i + 1);
+    }
+
+    debugPrint('');
+    debugPrint('═══════════════════════════════════════════════════════════');
+    debugPrint('');
+  }
+
+  /// Debug: Pretty print a single package
+  void _debugPrintPackage(Package package, int index) {
+    if (!kDebugMode) return;
+
+    final product = package.storeProduct;
+
+    debugPrint('');
+    debugPrint('📋 PACKAGE $index: ${package.identifier}');
+    debugPrint('  ├─ Package Type: ${package.packageType}');
+    debugPrint('  ├─ Offering ID: ${package.offeringIdentifier}');
+    debugPrint('  │');
+    debugPrint('  └─ 🏷️ STORE PRODUCT:');
+    debugPrint('       ├─ Product ID: ${product.identifier}');
+    debugPrint('       ├─ Title: ${product.title}');
+    debugPrint('       ├─ Description: ${product.description}');
+    debugPrint('       ├─ Price: ${product.priceString}');
+    debugPrint('       ├─ Price (raw): ${product.price}');
+    debugPrint('       ├─ Currency Code: ${product.currencyCode}');
+    debugPrint('       ├─ Product Category: ${product.productCategory}');
+
+    if (product.subscriptionPeriod != null) {
+      debugPrint(
+        '       ├─ Subscription Period: ${product.subscriptionPeriod}',
+      );
+    }
+
+    if (product.introductoryPrice != null) {
+      debugPrint(
+        '       ├─ Intro Price: ${product.introductoryPrice?.priceString}',
+      );
+      debugPrint(
+        '       ├─ Intro Period: ${product.introductoryPrice?.period}',
+      );
+      debugPrint(
+        '       ├─ Intro Cycles: ${product.introductoryPrice?.cycles}',
+      );
+    }
+
+    if (product.discounts?.isNotEmpty ?? false) {
+      debugPrint('       └─ Discounts: ${product.discounts!.length}');
+      for (final discount in product.discounts!) {
+        debugPrint(
+          '           └─ ${discount.identifier}: ${discount.priceString}',
+        );
+      }
     }
   }
 
