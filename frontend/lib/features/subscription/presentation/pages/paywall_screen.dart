@@ -282,7 +282,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                   // Monthly / Yearly Switch
                   if (!widget.showProOnly) ...[
                     _buildToggleSwitch(),
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                   ] else ...[
                     // Add some spacing if toggle is hidden
                     const SizedBox(height: 16),
