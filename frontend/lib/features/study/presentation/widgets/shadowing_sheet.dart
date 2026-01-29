@@ -2360,8 +2360,10 @@ class _PaidFeatureBlurGuard extends StatelessWidget {
                       onTap: () {
                         PaywallRoute.show(context, reason: unlockReason);
                       },
-                      splashColor: AppColors.lg500.withValues(alpha: 0.1),
-                      highlightColor: AppColors.lg500.withValues(alpha: 0.05),
+                      splashColor: AppColors.secondary.withValues(alpha: 0.1),
+                      highlightColor: AppColors.secondary.withValues(
+                        alpha: 0.05,
+                      ),
                       child: Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -2371,7 +2373,10 @@ class _PaidFeatureBlurGuard extends StatelessWidget {
                           decoration: BoxDecoration(
                             // Premium Gradient (Purple)
                             gradient: const LinearGradient(
-                              colors: [AppColors.lg500, AppColors.lg400],
+                              colors: [
+                                AppColors.secondary,
+                                AppColors.secondary,
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -2379,7 +2384,9 @@ class _PaidFeatureBlurGuard extends StatelessWidget {
                             // Glowing Shadow
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.lg500.withValues(alpha: 0.4),
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
