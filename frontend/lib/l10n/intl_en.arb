@@ -1,150 +1,111 @@
 {
 	"@@locale": "en",
-	"common_tritalkError": "TriTalk - Error",
-	"@common_tritalkError": {
-		"description": "Source: core/widgets/error_screen.dart:13 (title)"
+	"appTitle": "TriTalk",
+	"@appTitle": {
+		"description": "The title of the application"
+	},
+	"home_greeting": "Hi! Ready to practice?",
+	"@home_greeting": {
+		"description": "Greeting shown on the home screen"
+	},
+	"home_dailyGoal": "Daily Goal",
+	"@home_dailyGoal": {
+		"description": "Label for the daily goal section"
+	},
+	"home_recentScenarios": "Recent Scenarios",
+	"@home_recentScenarios": {
+		"description": "Section title for recent conversation scenarios"
+	},
+	"home_exploreScenarios": "Explore Scenarios",
+	"@home_exploreScenarios": {
+		"description": "Section title to explore new scenarios"
+	},
+	"home_startChat": "Start Chat",
+	"@home_startChat": {
+		"description": "Button text to start a new chat"
 	},
 	"home_cancel": "Cancel",
 	"@home_cancel": {
-		"description": "Source: features/home/presentation/pages/home_screen.dart:541 (Text)"
-	},
-	"scenes_favorites": "Favorites",
-	"@scenes_favorites": {
-		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:28 (Text)"
-	},
-	"scenes_clearConversation": "Clear Conversation",
-	"@scenes_clearConversation": {
-		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:37 (Text)"
-	},
-	"scenes_bookmarkConversation": "Bookmark Conversation",
-	"@scenes_bookmarkConversation": {
-		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:46 (Text)"
-	},
-	"study_savedToNotebook": "Saved to Notebook!",
-	"@study_savedToNotebook": {
-		"description": "Source: features/study/presentation/widgets/save_note_sheet.dart:62 (Text)"
-	},
-	"study_summary": "SUMMARY",
-	"@study_summary": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:335 (title)"
-	},
-	"study_sentenceStructure": "SENTENCE STRUCTURE",
-	"@study_sentenceStructure": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:358 (title)"
-	},
-	"study_grammarPoints": "GRAMMAR POINTS",
-	"@study_grammarPoints": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:367 (title)"
-	},
-	"study_vocabulary": "VOCABULARY",
-	"@study_vocabulary": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:376 (title)"
-	},
-	"study_idiomsSlang": "IDIOMS & SLANG",
-	"@study_idiomsSlang": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:385 (title)"
-	},
-	"study_analysisNotAvailable": "Analysis not available",
-	"@study_analysisNotAvailable": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:576 (Text)"
-	},
-	"chat_delete": "Delete",
-	"@chat_delete": {
-		"description": "Source: features/chat/presentation/pages/chat_screen.dart:807 (Text)"
+		"description": "Cancel button text"
 	},
 	"chat_typeAMessage": "Type a message...",
 	"@chat_typeAMessage": {
-		"description": "Source: features/chat/presentation/pages/chat_screen.dart:977 (hintText)"
+		"description": "Hint text for the message input field"
+	},
+	"chat_pressToSpeak": "Press to speak",
+	"@chat_pressToSpeak": {
+		"description": "Instruction for voice input"
+	},
+	"chat_releaseToSend": "Release to send",
+	"@chat_releaseToSend": {
+		"description": "Instruction for voice input"
 	},
 	"chat_optimizeWithAi": "Optimize with AI",
 	"@chat_optimizeWithAi": {
-		"description": "Source: features/chat/presentation/pages/chat_screen.dart:1012 (tooltip)"
-	},
-	"chat_conversationDeleted": "Conversation deleted",
-	"@chat_conversationDeleted": {
-		"description": "Source: features/chat/presentation/widgets/chat_history_list_widget.dart:96 (Text)"
-	},
-	"chat_analyzingPronunciation": "Analyzing pronunciation...",
-	"@chat_analyzingPronunciation": {
-		"description": "Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:241 (Text)"
+		"description": "Button tooltip for AI text optimization"
 	},
 	"chat_retry": "Retry",
 	"@chat_retry": {
-		"description": "Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:477 (Text)"
+		"description": "Button text to retry a failed action"
 	},
-	"subscription_welcomeToPro": "Welcome to Pro!",
-	"@subscription_welcomeToPro": {
-		"description": "Source: features/subscription/presentation/pages/paywall_screen.dart:87 (Text)"
-	},
-	"subscription_purchasesRestored": "Purchases Restored",
-	"@subscription_purchasesRestored": {
-		"description": "Source: features/subscription/presentation/pages/paywall_screen.dart:115 (Text)"
-	},
-	"profile_nativeLanguage": "Native Language",
-	"@profile_nativeLanguage": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:301 (title)"
-	},
-	"profile_learningLanguage": "Learning Language",
-	"@profile_learningLanguage": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:316 (title)"
-	},
-	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Grammar, Chat History",
-	"@profile_vocabularySentencesChatHistory": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:340 (title)"
-	},
-	"profile_upgradeToPro": "Upgrade to Pro",
-	"@profile_upgradeToPro": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:356 (title)"
-	},
-	"profile_getUnlimitedChatsAnd": "Get unlimited chats and advanced feedback",
-	"@profile_getUnlimitedChatsAnd": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:357 (title)"
-	},
-	"profile_logOut": "Log Out",
-	"@profile_logOut": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:373 (title)"
-	},
-	"onboarding_sessionExpiredPleaseLog": "Session expired. Please log in again.",
-	"@onboarding_sessionExpiredPleaseLog": {
-		"description": "Source: features/onboarding/presentation/pages/onboarding_screen.dart:57 (Text)"
-	},
-	"tritalk": "TriTalk",
-	"@tritalk": {
-		"description": "Source: main.dart:78 (title)"
-	},
-	"profile_appLanguage": "App Language",
-	"@profile_appLanguage": {
-		"description": "Label for app display language setting in profile screen"
-	},
-	"profile_selectAppLanguage": "Select App Language",
-	"@profile_selectAppLanguage": {
-		"description": "Title for app language selection dialog"
+	"chat_delete": "Delete",
+	"@chat_delete": {
+		"description": "Delete action"
 	},
 	"profile_languageSettings": "Language Settings",
 	"@profile_languageSettings": {
-		"description": "Section title for language settings in profile screen"
+		"description": "Section header for language settings in profile"
 	},
-	"common_systemDefault": "System Default",
-	"@common_systemDefault": {
-		"description": "Option label for following system language setting"
+	"profile_appLanguage": "App Language",
+	"@profile_appLanguage": {
+		"description": "Label for app interface language setting"
 	},
-	"home_chooseScenario": "Choose a scenario to practice your {language}",
-	"@home_chooseScenario": {
-		"description": "Subtitle on home screen prompting user to select a practice scenario",
+	"profile_nativeLanguage": "Native Language",
+	"@profile_nativeLanguage": {
+		"description": "Label for user's native language setting"
+	},
+	"profile_learningLanguage": "Learning Language",
+	"@profile_learningLanguage": {
+		"description": "Label for user's target learning language setting"
+	},
+	"profile_upgradeToPro": "Upgrade to Pro",
+	"@profile_upgradeToPro": {
+		"description": "Button text to upgrade subscription"
+	},
+	"profile_logOut": "Log Out",
+	"@profile_logOut": {
+		"description": "Button text to log out"
+	},
+	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Chat History",
+	"@profile_vocabularySentencesChatHistory": {
+		"description": "Subtitle for Favorites, listing categories"
+	},
+	"common_loading": "Loading...",
+	"@common_loading": {
+		"description": "Generic loading text"
+	},
+	"common_error": "Error",
+	"@common_error": {
+		"description": "Generic error title"
+	},
+	"common_success": "Success",
+	"@common_success": {
+		"description": "Generic success title"
+	},
+	"common_save": "Save",
+	"@common_save": {
+		"description": "Generic save button text"
+	},
+	"common_confirm": "Confirm",
+	"@common_confirm": {
+		"description": "Generic confirm button text"
+	},
+	"subscription_currentTier": "Current Plan: {tier}",
+	"@subscription_currentTier": {
+		"description": "Label showing current subscription tier",
 		"placeholders": {
-			"language": {
-				"type": "String",
-				"example": "English (US)"
-			}
+			"tier": {}
 		}
-	},
-	"subscription_upgrade": "Upgrade",
-	"@subscription_upgrade": {
-		"description": "Title for the upgrade/paywall screen"
-	},
-	"subscription_choosePlan": "Choose a Plan",
-	"@subscription_choosePlan": {
-		"description": "Title for subscription plan selection"
 	},
 	"subscription_restore": "Restore Purchases",
 	"@subscription_restore": {
@@ -217,5 +178,235 @@
 	"chat_stop": "Stop",
 	"@chat_stop": {
 		"description": "Button to stop TTS audio"
+	},
+	"chat_perfect": "Perfect",
+	"@chat_perfect": {
+		"description": "Button label for perfect pronunciation"
+	},
+	"chat_feedback": "Feedback",
+	"@chat_feedback": {
+		"description": "Button label for feedback"
+	},
+	"chat_analyzing": "Analyzing...",
+	"@chat_analyzing": {
+		"description": "Status text while analyzing"
+	},
+	"chat_analyze": "Analyze",
+	"@chat_analyze": {
+		"description": "Button label to start analysis"
+	},
+	"chat_hide_text": "Hide Text",
+	"@chat_hide_text": {
+		"description": "Button label to hide text"
+	},
+	"chat_text": "Text",
+	"@chat_text": {
+		"description": "Button label to show text"
+	},
+	"chat_shadow": "Shadow",
+	"@chat_shadow": {
+		"description": "Button label for shadowing practice"
+	},
+	"chat_translate": "Translate",
+	"@chat_translate": {
+		"description": "Button to translate text"
+	},
+	"chat_save": "Save",
+	"@chat_save": {
+		"description": "Button to save content"
+	},
+	"scenes_favorites": "Favorites",
+	"@scenes_favorites": {
+		"description": "Title for favorites screen"
+	},
+	"scenes_clearConversation": "Clear Conversation",
+	"@scenes_clearConversation": {
+		"description": "Option to clear conversation"
+	},
+	"scenes_bookmarkConversation": "Bookmark Conversation",
+	"@scenes_bookmarkConversation": {
+		"description": "Option to bookmark conversation"
+	},
+	"analysis_title": "Sentence Analysis",
+	"@analysis_title": {
+		"description": "Title for analysis sheet"
+	},
+	"analysis_originalSentence": "ORIGINAL SENTENCE",
+	"@analysis_originalSentence": {
+		"description": "Label for original sentence in analysis"
+	},
+	"analysis_savedToVocab": "Saved \"{word}\" to Vocabulary",
+	"@analysis_savedToVocab": {
+		"description": "Toast message when word is saved",
+		"placeholders": {
+			"word": {}
+		}
+	},
+	"analysis_savedIdiom": "Saved Idiom",
+	"@analysis_savedIdiom": {
+		"description": "Toast message when idiom is saved"
+	},
+	"shadowing_title": "Shadowing Practice",
+	"@shadowing_title": {
+		"description": "Title for shadowing practice sheet"
+	},
+	"shadowing_holdToRecord": "Hold to Record",
+	"@shadowing_holdToRecord": {
+		"description": "Instruction to hold button to record"
+	},
+	"shadowing_recordAgain": "Record Again",
+	"@shadowing_recordAgain": {
+		"description": "Instruction to record again"
+	},
+	"shadowing_complete": "Complete",
+	"@shadowing_complete": {
+		"description": "Status label for complete"
+	},
+	"shadowing_notRated": "Not Rated",
+	"@shadowing_notRated": {
+		"description": "Status label for not rated"
+	},
+	"shadowing_myScore": "My Score",
+	"@shadowing_myScore": {
+		"description": "Label for user's score"
+	},
+	"saveNote_title": "Quick Save",
+	"@saveNote_title": {
+		"description": "Title for quick save sheet"
+	},
+	"saveNote_instruction": "Tap words to select specific vocabulary, or save the entire sentence.",
+	"@saveNote_instruction": {
+		"description": "Instruction for saving notes"
+	},
+	"saveNote_saveSentence": "Save Entire Sentence",
+	"@saveNote_saveSentence": {
+		"description": "Button to save entire sentence"
+	},
+	"saveNote_saveSelected": "Save Selected ({count})",
+	"@saveNote_saveSelected": {
+		"description": "Button to save selected words",
+		"placeholders": {
+			"count": {}
+		}
+	},
+	"chat_suggestions": "Suggestions",
+	"@chat_suggestions": {
+		"description": "Title for suggestions sheet"
+	},
+	"chat_suggestionsFailed": "Failed to load suggestions: {error}",
+	"@chat_suggestionsFailed": {
+		"description": "Error message for failed suggestions",
+		"placeholders": {
+			"error": {}
+		}
+	},
+	"chat_deleteConversation": "Delete Conversation",
+	"@chat_deleteConversation": {
+		"description": "Title for delete conversation dialog"
+	},
+	"chat_deleteConversationContent": "Are you sure you want to delete this conversation? This will also remove it from your home screen.",
+	"@chat_deleteConversationContent": {
+		"description": "Content for delete conversation dialog"
+	},
+	"home_createScenario": "Create Scenario",
+	"@home_createScenario": {
+		"description": "Title for create scenario dialog"
+	},
+	"home_createScenarioDescription": "Describe a situation you want to practice. AI will create a roleplay scenario for you.",
+	"@home_createScenarioDescription": {
+		"description": "Description for create scenario dialog"
+	},
+	"home_createScenarioHint": "Example: I need to return a defective product, but the store clerk is being difficult...",
+	"@home_createScenarioHint": {
+		"description": "Hint text for scenario description"
+	},
+	"home_generateScenario": "Generate Scenario",
+	"@home_generateScenario": {
+		"description": "Button to generate scenario"
+	},
+	"profile_selectNative": "Select Native Language",
+	"@profile_selectNative": {
+		"description": "Title for selecting native language"
+	},
+	"profile_selectLearning": "Select Learning Language",
+	"@profile_selectLearning": {
+		"description": "Title for selecting learning language"
+	},
+	"profile_tools": "Tools",
+	"@profile_tools": {
+		"description": "Section header for tools"
+	},
+	"tab_vocabulary": "Vocabulary",
+	"@tab_vocabulary": {
+		"description": "Tab label for vocabulary"
+	},
+	"tab_sentence": "Sentence",
+	"@tab_sentence": {
+		"description": "Tab label for sentence"
+	},
+	"tab_grammar": "Grammar",
+	"@tab_grammar": {
+		"description": "Tab label for grammar"
+	},
+	"tab_chat": "Chat",
+	"@tab_chat": {
+		"description": "Tab label for chat"
+	},
+	"study_noSavedSentences": "No analyzed sentences saved yet",
+	"@study_noSavedSentences": {
+		"description": "Empty state message for saved sentences"
+	},
+	"profile_selectAppLanguage": "Select App Language",
+	"@profile_selectAppLanguage": {
+		"description": "Title for the app language selection dialog"
+	},
+	"profile_systemDefault": "System Default",
+	"@profile_systemDefault": {
+		"description": "Label for system default language option"
+	},
+	"home_chooseScenario": "Choose a scenario to practice {language}",
+	"@home_chooseScenario": {
+		"description": "Subtitle on home screen prompting to choose a scenario",
+		"placeholders": {
+			"language": {
+				"type": "String"
+			}
+		}
+	},
+	"onboarding_sessionExpiredPleaseLog": "Session expired. Please log in again.",
+	"@onboarding_sessionExpiredPleaseLog": {
+		"description": "Error message when session expires"
+	},
+	"study_summary": "Summary",
+	"@study_summary": {
+		"description": "Header for summary section"
+	},
+	"study_sentenceStructure": "Sentence Structure",
+	"@study_sentenceStructure": {
+		"description": "Header for sentence structure section"
+	},
+	"study_grammarPoints": "Grammar Points",
+	"@study_grammarPoints": {
+		"description": "Header for grammar points section"
+	},
+	"study_vocabulary": "Vocabulary",
+	"@study_vocabulary": {
+		"description": "Header for vocabulary section"
+	},
+	"study_idiomsSlang": "Idioms & Slang",
+	"@study_idiomsSlang": {
+		"description": "Header for idioms and slang section"
+	},
+	"study_analysisNotAvailable": "Analysis not available",
+	"@study_analysisNotAvailable": {
+		"description": "Message when analysis is not available"
+	},
+	"study_savedToNotebook": "Saved to Notebook",
+	"@study_savedToNotebook": {
+		"description": "Success message when content is saved"
+	},
+	"chat_conversationDeleted": "Conversation deleted",
+	"@chat_conversationDeleted": {
+		"description": "Message when conversation is deleted"
 	}
 }

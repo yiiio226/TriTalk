@@ -122,7 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Select App Language', // TODO: Use l10n when fully migrated
+              context.l10n.profile_selectAppLanguage,
               style: AppTypography.headline4.copyWith(
                 color: AppColors.lightTextPrimary,
               ),
@@ -176,7 +176,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 const SizedBox(width: AppSpacing.md),
                               ],
                               Text(
-                                option.label,
+                                option.code == 'system'
+                                    ? context.l10n.profile_systemDefault
+                                    : option.label,
                                 style: AppTypography.body1.copyWith(
                                   fontWeight: isSelected
                                       ? FontWeight.bold
@@ -439,7 +441,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       return _buildMenuCard(
                         context,
                         title: context.l10n.profile_appLanguage,
-                        subtitle: localeState.displayLabel,
+                        subtitle: localeState.selectedCode == 'system'
+                            ? context.l10n.profile_systemDefault
+                            : localeState.displayLabel,
                         icon: Icons.language,
                         iconColor: AppColors.lightTextSecondary,
                         onTap: _showAppLanguageDialog,
@@ -455,7 +459,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog(
-                        'Select Native Language',
+                        context.l10n.profile_selectNative,
                         _nativeLanguage,
                         _updateNativeLanguage,
                       );
@@ -470,7 +474,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     iconColor: AppColors.lightTextSecondary,
                     onTap: () {
                       _showLanguageDialog(
-                        'Select Learning Language',
+                        context.l10n.profile_selectLearning,
                         _targetLanguage,
                         _updateTargetLanguage,
                       );
@@ -478,7 +482,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Text(
-                    'Tools',
+                    context.l10n.profile_tools,
                     style: AppTypography.subtitle1.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.lightTextPrimary,
@@ -529,8 +533,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return _buildRefinedSubscriptionCard(context, tier);
     }
   }
-
-
 
   Widget _buildMenuCard(
     BuildContext context, {
@@ -795,7 +797,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final accentGlow = isPro
         ? const Color(0xFFA78BFA).withOpacity(0.5) // Light Purple Glow
         : const Color(0xFF60A5FA).withOpacity(0.5); // Light Blue Glow
-
 
     return Container(
       decoration: BoxDecoration(

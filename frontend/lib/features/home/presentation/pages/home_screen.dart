@@ -591,14 +591,14 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Delete Conversation',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              context.l10n.chat_deleteConversation,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Are you sure you want to delete this conversation? This will also remove it from your home screen.',
-              style: TextStyle(fontSize: 16, color: Colors.black87),
+            Text(
+              context.l10n.chat_deleteConversationContent,
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
             const SizedBox(height: 24),
             Row(

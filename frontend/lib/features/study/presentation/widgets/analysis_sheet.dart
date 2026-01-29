@@ -204,9 +204,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Sentence Analysis',
-                        style: TextStyle(
+                      Text(
+                        context.l10n.analysis_title,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -281,9 +281,9 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'ORIGINAL SENTENCE',
-                                  style: TextStyle(
+                                Text(
+                                  context.l10n.analysis_originalSentence,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.lightTextSecondary,
@@ -855,7 +855,7 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       });
                       showTopToast(
                         context,
-                        'Saved "${vocab.word}" to Vocabulary',
+                        context.l10n.analysis_savedToVocab(vocab.word),
                       );
                     }
                   },
@@ -938,7 +938,11 @@ class _AnalysisSheetState extends State<AnalysisSheet> {
                       setState(() {
                         _savedIdioms.add(idiom.text);
                       });
-                      showTopToast(context, 'Saved Idiom', isError: false);
+                      showTopToast(
+                        context,
+                        context.l10n.analysis_savedIdiom,
+                        isError: false,
+                      );
                     }
                   },
                   child: Padding(

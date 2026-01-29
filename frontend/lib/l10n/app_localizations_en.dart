@@ -9,64 +9,49 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get common_tritalkError => 'TriTalk - Error';
+  String get appTitle => 'TriTalk';
+
+  @override
+  String get home_greeting => 'Hi! Ready to practice?';
+
+  @override
+  String get home_dailyGoal => 'Daily Goal';
+
+  @override
+  String get home_recentScenarios => 'Recent Scenarios';
+
+  @override
+  String get home_exploreScenarios => 'Explore Scenarios';
+
+  @override
+  String get home_startChat => 'Start Chat';
 
   @override
   String get home_cancel => 'Cancel';
 
   @override
-  String get scenes_favorites => 'Favorites';
-
-  @override
-  String get scenes_clearConversation => 'Clear Conversation';
-
-  @override
-  String get scenes_bookmarkConversation => 'Bookmark Conversation';
-
-  @override
-  String get study_savedToNotebook => 'Saved to Notebook!';
-
-  @override
-  String get study_summary => 'SUMMARY';
-
-  @override
-  String get study_sentenceStructure => 'SENTENCE STRUCTURE';
-
-  @override
-  String get study_grammarPoints => 'GRAMMAR POINTS';
-
-  @override
-  String get study_vocabulary => 'VOCABULARY';
-
-  @override
-  String get study_idiomsSlang => 'IDIOMS & SLANG';
-
-  @override
-  String get study_analysisNotAvailable => 'Analysis not available';
-
-  @override
-  String get chat_delete => 'Delete';
-
-  @override
   String get chat_typeAMessage => 'Type a message...';
+
+  @override
+  String get chat_pressToSpeak => 'Press to speak';
+
+  @override
+  String get chat_releaseToSend => 'Release to send';
 
   @override
   String get chat_optimizeWithAi => 'Optimize with AI';
 
   @override
-  String get chat_conversationDeleted => 'Conversation deleted';
-
-  @override
-  String get chat_analyzingPronunciation => 'Analyzing pronunciation...';
-
-  @override
   String get chat_retry => 'Retry';
 
   @override
-  String get subscription_welcomeToPro => 'Welcome to Pro!';
+  String get chat_delete => 'Delete';
 
   @override
-  String get subscription_purchasesRestored => 'Purchases Restored';
+  String get profile_languageSettings => 'Language Settings';
+
+  @override
+  String get profile_appLanguage => 'App Language';
 
   @override
   String get profile_nativeLanguage => 'Native Language';
@@ -75,48 +60,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile_learningLanguage => 'Learning Language';
 
   @override
-  String get profile_vocabularySentencesChatHistory =>
-      'Vocabulary, Sentences, Grammar, Chat History';
-
-  @override
   String get profile_upgradeToPro => 'Upgrade to Pro';
-
-  @override
-  String get profile_getUnlimitedChatsAnd =>
-      'Get unlimited chats and advanced feedback';
 
   @override
   String get profile_logOut => 'Log Out';
 
   @override
-  String get onboarding_sessionExpiredPleaseLog =>
-      'Session expired. Please log in again.';
+  String get profile_vocabularySentencesChatHistory =>
+      'Vocabulary, Sentences, Chat History';
 
   @override
-  String get tritalk => 'TriTalk';
+  String get common_loading => 'Loading...';
 
   @override
-  String get profile_appLanguage => 'App Language';
+  String get common_error => 'Error';
 
   @override
-  String get profile_selectAppLanguage => 'Select App Language';
+  String get common_success => 'Success';
 
   @override
-  String get profile_languageSettings => 'Language Settings';
+  String get common_save => 'Save';
 
   @override
-  String get common_systemDefault => 'System Default';
+  String get common_confirm => 'Confirm';
 
   @override
-  String home_chooseScenario(String language) {
-    return 'Choose a scenario to practice your $language';
+  String subscription_currentTier(Object tier) {
+    return 'Current Plan: $tier';
   }
-
-  @override
-  String get subscription_upgrade => 'Upgrade';
-
-  @override
-  String get subscription_choosePlan => 'Choose a Plan';
 
   @override
   String get subscription_restore => 'Restore Purchases';
@@ -177,4 +148,179 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chat_stop => 'Stop';
+
+  @override
+  String get chat_perfect => 'Perfect';
+
+  @override
+  String get chat_feedback => 'Feedback';
+
+  @override
+  String get chat_analyzing => 'Analyzing...';
+
+  @override
+  String get chat_analyze => 'Analyze';
+
+  @override
+  String get chat_hide_text => 'Hide Text';
+
+  @override
+  String get chat_text => 'Text';
+
+  @override
+  String get chat_shadow => 'Shadow';
+
+  @override
+  String get chat_translate => 'Translate';
+
+  @override
+  String get chat_save => 'Save';
+
+  @override
+  String get scenes_favorites => 'Favorites';
+
+  @override
+  String get scenes_clearConversation => 'Clear Conversation';
+
+  @override
+  String get scenes_bookmarkConversation => 'Bookmark Conversation';
+
+  @override
+  String get analysis_title => 'Sentence Analysis';
+
+  @override
+  String get analysis_originalSentence => 'ORIGINAL SENTENCE';
+
+  @override
+  String analysis_savedToVocab(Object word) {
+    return 'Saved \"$word\" to Vocabulary';
+  }
+
+  @override
+  String get analysis_savedIdiom => 'Saved Idiom';
+
+  @override
+  String get shadowing_title => 'Shadowing Practice';
+
+  @override
+  String get shadowing_holdToRecord => 'Hold to Record';
+
+  @override
+  String get shadowing_recordAgain => 'Record Again';
+
+  @override
+  String get shadowing_complete => 'Complete';
+
+  @override
+  String get shadowing_notRated => 'Not Rated';
+
+  @override
+  String get shadowing_myScore => 'My Score';
+
+  @override
+  String get saveNote_title => 'Quick Save';
+
+  @override
+  String get saveNote_instruction =>
+      'Tap words to select specific vocabulary, or save the entire sentence.';
+
+  @override
+  String get saveNote_saveSentence => 'Save Entire Sentence';
+
+  @override
+  String saveNote_saveSelected(Object count) {
+    return 'Save Selected ($count)';
+  }
+
+  @override
+  String get chat_suggestions => 'Suggestions';
+
+  @override
+  String chat_suggestionsFailed(Object error) {
+    return 'Failed to load suggestions: $error';
+  }
+
+  @override
+  String get chat_deleteConversation => 'Delete Conversation';
+
+  @override
+  String get chat_deleteConversationContent =>
+      'Are you sure you want to delete this conversation? This will also remove it from your home screen.';
+
+  @override
+  String get home_createScenario => 'Create Scenario';
+
+  @override
+  String get home_createScenarioDescription =>
+      'Describe a situation you want to practice. AI will create a roleplay scenario for you.';
+
+  @override
+  String get home_createScenarioHint =>
+      'Example: I need to return a defective product, but the store clerk is being difficult...';
+
+  @override
+  String get home_generateScenario => 'Generate Scenario';
+
+  @override
+  String get profile_selectNative => 'Select Native Language';
+
+  @override
+  String get profile_selectLearning => 'Select Learning Language';
+
+  @override
+  String get profile_tools => 'Tools';
+
+  @override
+  String get tab_vocabulary => 'Vocabulary';
+
+  @override
+  String get tab_sentence => 'Sentence';
+
+  @override
+  String get tab_grammar => 'Grammar';
+
+  @override
+  String get tab_chat => 'Chat';
+
+  @override
+  String get study_noSavedSentences => 'No analyzed sentences saved yet';
+
+  @override
+  String get profile_selectAppLanguage => 'Select App Language';
+
+  @override
+  String get profile_systemDefault => 'System Default';
+
+  @override
+  String home_chooseScenario(String language) {
+    return 'Choose a scenario to practice $language';
+  }
+
+  @override
+  String get onboarding_sessionExpiredPleaseLog =>
+      'Session expired. Please log in again.';
+
+  @override
+  String get study_summary => 'Summary';
+
+  @override
+  String get study_sentenceStructure => 'Sentence Structure';
+
+  @override
+  String get study_grammarPoints => 'Grammar Points';
+
+  @override
+  String get study_vocabulary => 'Vocabulary';
+
+  @override
+  String get study_idiomsSlang => 'Idioms & Slang';
+
+  @override
+  String get study_analysisNotAvailable => 'Analysis not available';
+
+  @override
+  String get study_savedToNotebook => 'Saved to Notebook';
+
+  @override
+  String get chat_conversationDeleted => 'Conversation deleted';
 }

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../data/vocab_service.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/empty_state_widget.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 import 'favorites_skeleton_loader.dart';
 
 class SavedSentenceListWidget extends StatelessWidget {
@@ -29,10 +30,11 @@ class SavedSentenceListWidget extends StatelessWidget {
             .toList();
 
         if (items.isEmpty) {
-          return const Center(
+          return Center(
             child: EmptyStateWidget(
-              message: 'No analyzed sentences saved yet',
-              imagePath: 'assets/empty_state_pear.png',
+              message: context.l10n.study_noSavedSentences,
+              imagePath:
+                  'assets/empty_state_pear.png', // LINT FIX: Removed const
             ),
           );
         }
@@ -50,65 +52,62 @@ class SavedSentenceListWidget extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final int itemIndex = index ~/ 2;
-                    if (index.isEven) {
-                      final item = items[itemIndex];
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightSurface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.lightDivider),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item.phrase, // The sentence
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.lightTextPrimary,
-                                      height: 1.4,
-                                    ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final int itemIndex = index ~/ 2;
+                  if (index.isEven) {
+                    final item = items[itemIndex];
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.lightDivider),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.phrase, // The sentence
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.lightTextPrimary,
+                                    height: 1.4,
                                   ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    color: AppColors.lightTextSecondary,
-                                  ),
-                                  onPressed: () {
-                                    VocabService().remove(item.phrase);
-                                  },
-                                ),
-                              ],
-                            ),
-                            if (item.translation.isNotEmpty &&
-                                item.translation != 'Analyzed Sentence') ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                item.translation, // "AI Message Analysis" or manual
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.lightTextSecondary,
-                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.lightTextSecondary,
+                                ),
+                                onPressed: () {
+                                  VocabService().remove(item.phrase);
+                                },
+                              ),
                             ],
+                          ),
+                          if (item.translation.isNotEmpty &&
+                              item.translation != 'Analyzed Sentence') ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              item.translation, // "AI Message Analysis" or manual
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.lightTextSecondary,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
                           ],
-                        ),
-                      );
-                    }
-                    return const SizedBox(height: 16);
-                  },
-                  childCount: items.length * 2 - 1,
-                ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox(height: 16);
+                }, childCount: items.length * 2 - 1),
               ),
             ),
           ],

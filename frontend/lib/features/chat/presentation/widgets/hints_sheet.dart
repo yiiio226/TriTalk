@@ -87,9 +87,12 @@ class _HintsSheetState extends State<HintsSheet> {
               children: [
                 const Icon(Icons.lightbulb_outline, color: Colors.orange),
                 const SizedBox(width: 8),
-                const Text(
-                  'Suggestions',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Text(
+                  context.l10n.chat_suggestions,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
@@ -125,7 +128,7 @@ class _HintsSheetState extends State<HintsSheet> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            Text('Failed to load suggestions: $_error'),
+            Text(context.l10n.chat_suggestionsFailed(_error!)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {

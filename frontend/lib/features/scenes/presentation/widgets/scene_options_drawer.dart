@@ -62,9 +62,9 @@ class SceneOptionsDrawer extends StatelessWidget {
                 Icons.delete_outline,
                 color: AppColors.lightError,
               ),
-              title: const Text(
-                'Delete Conversation',
-                style: TextStyle(color: AppColors.lightError),
+              title: Text(
+                context.l10n.chat_deleteConversation,
+                style: const TextStyle(color: AppColors.lightError),
               ),
               onTap: () {
                 Navigator.pop(context);

@@ -470,7 +470,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    isPerfect ? "Perfect" : "Feedback",
+                                    isPerfect
+                                        ? context.l10n.chat_perfect
+                                        : context.l10n.chat_feedback,
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -566,7 +568,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                       ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      _showTranscript ? "Hide Text" : "Text",
+                                      _showTranscript
+                                          ? context.l10n.chat_hide_text
+                                          : context.l10n.chat_text,
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
@@ -652,8 +656,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                   Text(
                                     (widget.isSending ||
                                             widget.message.isAnalyzing)
-                                        ? "Analyzing..."
-                                        : "Analyze",
+                                        ? context.l10n.chat_analyzing
+                                        : context.l10n.chat_analyze,
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -745,7 +749,9 @@ class _ChatBubbleState extends State<ChatBubble>
                                       ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      _showTranscript ? "Hide Text" : "Text",
+                                      _showTranscript
+                                          ? context.l10n.chat_hide_text
+                                          : context.l10n.chat_text,
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
@@ -792,8 +798,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                   color: AppColors.lightTextPrimary,
                                 ),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  "Analyze",
+                                Text(
+                                  context.l10n.chat_analyze,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -899,7 +905,7 @@ class _ChatBubbleState extends State<ChatBubble>
                                   ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _isShadowLoading ? "Shadow" : "Shadow",
+                                  context.l10n.chat_shadow,
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -944,8 +950,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                     color: AppColors.lightTextPrimary,
                                   ),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  "Translate",
+                                Text(
+                                  context.l10n.chat_translate,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -991,8 +997,8 @@ class _ChatBubbleState extends State<ChatBubble>
                                   color: AppColors.lightTextPrimary,
                                 ),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  "Save",
+                                Text(
+                                  context.l10n.chat_save,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,

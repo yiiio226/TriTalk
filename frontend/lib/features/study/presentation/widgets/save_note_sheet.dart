@@ -96,8 +96,8 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Quick Save',
+                    Text(
+                      context.l10n.saveNote_title,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -117,9 +117,9 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Tap words to select specific vocabulary, or save the entire sentence.',
-                  style: TextStyle(color: Colors.grey, fontSize: 15),
+                Text(
+                  context.l10n.saveNote_instruction,
+                  style: const TextStyle(color: Colors.grey, fontSize: 15),
                 ),
               ],
             ),
@@ -231,8 +231,10 @@ class _SaveNoteSheetState extends State<SaveNoteSheet> {
                     )
                   : Text(
                       _selectedWordIndices.isEmpty
-                          ? 'Save Entire Sentence'
-                          : 'Save Selected (${_selectedWordIndices.length})',
+                          ? context.l10n.saveNote_saveSentence
+                          : context.l10n.saveNote_saveSelected(
+                              _selectedWordIndices.length,
+                            ),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

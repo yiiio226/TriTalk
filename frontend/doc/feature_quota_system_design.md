@@ -551,7 +551,7 @@ WHERE NOT EXISTS (
 
 ## 7. 配额调整更新 (2026-01-28)
 
-根据最新的 [定价策略](../../pricing_strategy.md)，我们需要更新 Plus 和 Pro 用户的配额配置，并引入 `pitch_analysis` 功能。
+根据最新的 [定价策略](pricing_strategy.md)，我们需要更新 Plus 和 Pro 用户的配额配置，并引入 `pitch_analysis` 功能。
 
 **变更摘要**:
 

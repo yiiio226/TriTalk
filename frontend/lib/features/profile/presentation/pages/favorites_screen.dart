@@ -6,6 +6,7 @@ import '../../../../features/chat/presentation/widgets/chat_history_list_widget.
 import 'package:frontend/core/design/app_design_system.dart';
 import '../../../study/data/vocab_service.dart';
 import '../../../chat/data/chat_history_service.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class UnifiedFavoritesScreen extends StatefulWidget {
   final String? sceneId; // Optional filter
@@ -27,7 +28,7 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
     // Otherwise show all 4 tabs
     final tabCount = widget.sceneId != null ? 3 : 4;
     _tabController = TabController(length: tabCount, vsync: this);
-    
+
     // Trigger data refresh when screen opens
     _refreshData();
   }
@@ -35,7 +36,7 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
   Future<void> _refreshData() async {
     // Refresh vocabulary data (covers Vocabulary, Sentence, Grammar tabs)
     await VocabService().refresh();
-    
+
     // Refresh chat history bookmarks (Chat tab)
     if (widget.sceneId == null) {
       await ChatHistoryService().refreshBookmarks();
@@ -51,9 +52,8 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightSurface, 
-      
-   
+      backgroundColor: AppColors.lightSurface,
+
       body: SafeArea(
         child: Column(
           children: [
@@ -87,7 +87,7 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Favorites',
+                          context.l10n.scenes_favorites,
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -98,7 +98,7 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Tab Bar
                   Container(
                     decoration: BoxDecoration(
@@ -113,7 +113,8 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                         labelColor: AppColors.lightTextPrimary,
                         unselectedLabelColor: AppColors.lightTextSecondary,
                         indicatorColor: AppColors.primary,
-                        dividerColor: Colors.transparent, // Remove default M3 divider
+                        dividerColor:
+                            Colors.transparent, // Remove default M3 divider
                         indicatorWeight: 3,
                         isScrollable: true,
                         tabAlignment: TabAlignment.start,
@@ -128,11 +129,11 @@ class _UnifiedFavoritesScreenState extends State<UnifiedFavoritesScreen>
                           fontWeight: FontWeight.normal,
                         ),
                         tabs: [
-                          const Tab(text: 'Vocabulary'),
-                          const Tab(text: 'Sentence'),
-                          const Tab(text: 'Grammar'),
+                          Tab(text: context.l10n.tab_vocabulary),
+                          Tab(text: context.l10n.tab_sentence),
+                          Tab(text: context.l10n.tab_grammar),
                           if (widget.sceneId == null)
-                            const Tab(text: 'Chat'),
+                            Tab(text: context.l10n.tab_chat),
                         ],
                       ),
                     ),

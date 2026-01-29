@@ -1,221 +1,101 @@
 {
 	"@@locale": "zh",
-	"common_tritalkError": "TriTalk - 错误",
-	"@common_tritalkError": {
-		"description": "Source: core/widgets/error_screen.dart:13 (title)"
-	},
+	"appTitle": "TriTalk",
+	"home_greeting": "嗨！准备好练习了吗？",
+	"home_dailyGoal": "每日目标",
+	"home_recentScenarios": "最近场景",
+	"home_exploreScenarios": "探索场景",
+	"home_startChat": "开始对话",
 	"home_cancel": "取消",
-	"@home_cancel": {
-		"description": "Source: features/home/presentation/pages/home_screen.dart:541 (Text)"
-	},
-	"scenes_favorites": "收藏",
-	"@scenes_favorites": {
-		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:28 (Text)"
-	},
-	"scenes_clearConversation": "清除对话",
-	"@scenes_clearConversation": {
-		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:37 (Text)"
-	},
-	"scenes_bookmarkConversation": "收藏对话",
-	"@scenes_bookmarkConversation": {
-		"description": "Source: features/scenes/presentation/widgets/scene_options_drawer.dart:46 (Text)"
-	},
-	"study_savedToNotebook": "已保存到笔记本！",
-	"@study_savedToNotebook": {
-		"description": "Source: features/study/presentation/widgets/save_note_sheet.dart:62 (Text)"
-	},
-	"study_summary": "总结",
-	"@study_summary": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:335 (title)"
-	},
-	"study_sentenceStructure": "句子结构",
-	"@study_sentenceStructure": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:358 (title)"
-	},
-	"study_grammarPoints": "语法要点",
-	"@study_grammarPoints": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:367 (title)"
-	},
-	"study_vocabulary": "词汇",
-	"@study_vocabulary": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:376 (title)"
-	},
-	"study_idiomsSlang": "习语与俚语",
-	"@study_idiomsSlang": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:385 (title)"
-	},
-	"study_analysisNotAvailable": "暂无分析",
-	"@study_analysisNotAvailable": {
-		"description": "Source: features/study/presentation/widgets/analysis_sheet.dart:576 (Text)"
-	},
-	"chat_delete": "删除",
-	"@chat_delete": {
-		"description": "Source: features/chat/presentation/pages/chat_screen.dart:807 (Text)"
-	},
 	"chat_typeAMessage": "输入消息...",
-	"@chat_typeAMessage": {
-		"description": "Source: features/chat/presentation/pages/chat_screen.dart:977 (hintText)"
-	},
-	"chat_optimizeWithAi": "AI 优化",
-	"@chat_optimizeWithAi": {
-		"description": "Source: features/chat/presentation/pages/chat_screen.dart:1012 (tooltip)"
-	},
-	"chat_conversationDeleted": "对话已删除",
-	"@chat_conversationDeleted": {
-		"description": "Source: features/chat/presentation/widgets/chat_history_list_widget.dart:96 (Text)"
-	},
-	"chat_analyzingPronunciation": "正在分析发音...",
-	"@chat_analyzingPronunciation": {
-		"description": "Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:241 (Text)"
-	},
+	"chat_pressToSpeak": "按住 说话",
+	"chat_releaseToSend": "松开 发送",
+	"chat_optimizeWithAi": "AI 润色",
 	"chat_retry": "重试",
-	"@chat_retry": {
-		"description": "Source: features/chat/presentation/widgets/voice_feedback_sheet.dart:477 (Text)"
-	},
-	"subscription_welcomeToPro": "欢迎成为 Pro会员！",
-	"@subscription_welcomeToPro": {
-		"description": "Source: features/subscription/presentation/pages/paywall_screen.dart:87 (Text)"
-	},
-	"subscription_purchasesRestored": "购买已恢复",
-	"@subscription_purchasesRestored": {
-		"description": "Source: features/subscription/presentation/pages/paywall_screen.dart:115 (Text)"
-	},
-	"profile_nativeLanguage": "母语",
-	"@profile_nativeLanguage": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:301 (title)"
-	},
-	"profile_learningLanguage": "学习语言",
-	"@profile_learningLanguage": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:316 (title)"
-	},
-	"profile_vocabularySentencesChatHistory": "词汇、句子、聊天记录",
-	"@profile_vocabularySentencesChatHistory": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:340 (title)"
-	},
-	"profile_upgradeToPro": "升级到 Pro",
-	"@profile_upgradeToPro": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:356 (title)"
-	},
-	"profile_getUnlimitedChatsAnd": "获取无限对话和高级反馈",
-	"@profile_getUnlimitedChatsAnd": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:357 (title)"
-	},
-	"profile_logOut": "退出登录",
-	"@profile_logOut": {
-		"description": "Source: features/profile/presentation/pages/profile_screen.dart:373 (title)"
-	},
-	"onboarding_sessionExpiredPleaseLog": "会话已过期，请重新登录。",
-	"@onboarding_sessionExpiredPleaseLog": {
-		"description": "Source: features/onboarding/presentation/pages/onboarding_screen.dart:57 (Text)"
-	},
-	"tritalk": "TriTalk",
-	"@tritalk": {
-		"description": "Source: main.dart:78 (title)"
-	},
-	"profile_appLanguage": "应用语言",
-	"@profile_appLanguage": {
-		"description": "Label for app display language setting in profile screen"
-	},
-	"profile_selectAppLanguage": "选择应用语言",
-	"@profile_selectAppLanguage": {
-		"description": "Title for app language selection dialog"
-	},
+	"chat_delete": "删除",
 	"profile_languageSettings": "语言设置",
-	"@profile_languageSettings": {
-		"description": "Section title for language settings in profile screen"
-	},
-	"common_systemDefault": "跟随系统",
-	"@common_systemDefault": {
-		"description": "Option label for following system language setting"
-	},
-	"home_chooseScenario": "选择场景来练习您的{language}",
-	"@home_chooseScenario": {
-		"description": "Subtitle on home screen prompting user to select a practice scenario",
-		"placeholders": {
-			"language": {
-				"type": "String",
-				"example": "English (US)"
-			}
-		}
-	},
-	"subscription_upgrade": "升级",
-	"@subscription_upgrade": {
-		"description": "Title for the upgrade/paywall screen"
-	},
-	"subscription_choosePlan": "选择订阅方案",
-	"@subscription_choosePlan": {
-		"description": "Title for subscription plan selection"
-	},
+	"profile_appLanguage": "应用语言",
+	"profile_nativeLanguage": "母语",
+	"profile_learningLanguage": "学习语言",
+	"profile_upgradeToPro": "升级到 Pro",
+	"profile_logOut": "退出登录",
+	"profile_vocabularySentencesChatHistory": "生词本，句子，聊天记录",
+	"common_loading": "加载中...",
+	"common_error": "错误",
+	"common_success": "成功",
+	"common_save": "保存",
+	"common_confirm": "确认",
+	"subscription_currentTier": "当前方案：{tier}",
 	"subscription_restore": "恢复购买",
-	"@subscription_restore": {
-		"description": "Button text to restore previous purchases"
-	},
-	"subscription_unlockPotential": "解锁全部潜能",
-	"@subscription_unlockPotential": {
-		"description": "Headline on paywall screen"
-	},
-	"subscription_description": "获取无限对话、高级语法分析，以及所有高级场景的访问权限。",
-	"@subscription_description": {
-		"description": "Description text on paywall explaining premium benefits"
-	},
+	"subscription_unlockPotential": "解锁全部潜力",
+	"subscription_description": "获得无限对话、高级语法分析，以及所有高级场景的使用权限。",
 	"subscription_recommended": "热门",
-	"@subscription_recommended": {
-		"description": "Badge text for recommended subscription tier"
-	},
-	"subscription_monthlyPlan": "月付",
-	"@subscription_monthlyPlan": {
-		"description": "Label for monthly subscription plan"
-	},
-	"subscription_yearlyPlan": "年付",
-	"@subscription_yearlyPlan": {
-		"description": "Label for yearly subscription plan"
-	},
+	"subscription_monthlyPlan": "月度方案",
+	"subscription_yearlyPlan": "年度方案",
 	"subscription_purchaseSuccess": "订阅已激活！欢迎！",
-	"@subscription_purchaseSuccess": {
-		"description": "Success message after completing a purchase"
-	},
 	"subscription_purchaseFailed": "购买失败，请重试。",
-	"@subscription_purchaseFailed": {
-		"description": "Error message when purchase fails"
-	},
 	"subscription_noPurchasesToRestore": "未找到之前的购买记录。",
-	"@subscription_noPurchasesToRestore": {
-		"description": "Message when restore finds no previous purchases"
-	},
 	"subscription_restoreFailed": "恢复购买失败，请重试。",
-	"@subscription_restoreFailed": {
-		"description": "Error message when restore fails"
-	},
-	"subscription_noProductsAvailable": "暂无可用产品。",
-	"@subscription_noProductsAvailable": {
-		"description": "Message when no subscription products are available"
-	},
+	"subscription_noProductsAvailable": "暂无可用商品。",
 	"subscription_featureUnlimitedMessages": "无限消息",
-	"@subscription_featureUnlimitedMessages": {
-		"description": "Feature description for unlimited messaging"
-	},
 	"subscription_featureAdvancedFeedback": "高级语法反馈",
-	"@subscription_featureAdvancedFeedback": {
-		"description": "Feature description for advanced feedback"
-	},
 	"subscription_featureAllPlusFeatures": "包含所有 Plus 功能",
-	"@subscription_featureAllPlusFeatures": {
-		"description": "Feature description indicating all Plus features"
-	},
 	"subscription_featurePremiumScenarios": "高级场景",
-	"@subscription_featurePremiumScenarios": {
-		"description": "Feature description for premium scenarios"
-	},
-	"subscription_featurePrioritySupport": "优先客服支持",
-	"@subscription_featurePrioritySupport": {
-		"description": "Feature description for priority support"
-	},
-	"chat_listen": "朗读",
-	"@chat_listen": {
-		"description": "Button to listen to TTS audio"
-	},
+	"subscription_featurePrioritySupport": "优先支持",
+	"chat_listen": "听读",
 	"chat_stop": "停止",
-	"@chat_stop": {
-		"description": "Button to stop TTS audio"
-	}
+	"chat_perfect": "完美",
+	"chat_feedback": "反馈",
+	"chat_analyzing": "分析中...",
+	"chat_analyze": "分析",
+	"chat_hide_text": "隐藏",
+	"chat_text": "文本",
+	"chat_shadow": "跟读",
+	"chat_translate": "翻译",
+	"chat_save": "保存",
+	"scenes_favorites": "收藏",
+	"scenes_clearConversation": "清空对话",
+	"scenes_bookmarkConversation": "收藏对话",
+	"analysis_title": "句子分析",
+	"analysis_originalSentence": "原句",
+	"analysis_savedToVocab": "已保存 \"{word}\" 到生词本",
+	"analysis_savedIdiom": "已保存习语",
+	"shadowing_title": "跟读练习",
+	"shadowing_holdToRecord": "按住录音",
+	"shadowing_recordAgain": "重新录音",
+	"shadowing_complete": "完成",
+	"shadowing_notRated": "未评分",
+	"shadowing_myScore": "我的评分",
+	"saveNote_title": "快速保存",
+	"saveNote_instruction": "点击单词选择特定词汇，或保存整句。",
+	"saveNote_saveSentence": "保存整句",
+	"saveNote_saveSelected": "保存已选 ({count})",
+	"chat_suggestions": "建议",
+	"chat_suggestionsFailed": "加载建议失败：{error}",
+	"chat_deleteConversation": "删除对话",
+	"chat_deleteConversationContent": "确定要删除此对话吗？这也将从主屏幕移除它。",
+	"home_createScenario": "创建场景",
+	"home_createScenarioDescription": "描述您想练习的情境，AI 将为您创建角色扮演场景。",
+	"home_createScenarioHint": "例如：我需要退还某种有缺陷的产品，但店员很刁难...",
+	"home_generateScenario": "生成场景",
+	"profile_selectNative": "选择母语",
+	"profile_selectLearning": "选择学习语言",
+	"profile_tools": "工具",
+	"tab_vocabulary": "词汇",
+	"tab_sentence": "句子",
+	"tab_grammar": "语法",
+	"tab_chat": "对话",
+	"study_noSavedSentences": "暂无已保存的分析句子",
+	"profile_selectAppLanguage": "选择应用语言",
+	"profile_systemDefault": "系统默认",
+	"home_chooseScenario": "选择一个场景开始练习 {language}",
+	"onboarding_sessionExpiredPleaseLog": "会话已过期，请重新登录。",
+	"study_summary": "总结",
+	"study_sentenceStructure": "句子结构",
+	"study_grammarPoints": "语法要点",
+	"study_vocabulary": "词汇",
+	"study_idiomsSlang": "习语与俚语",
+	"study_analysisNotAvailable": "暂无分析",
+	"study_savedToNotebook": "已保存到生词本",
+	"chat_conversationDeleted": "对话已删除"
 }
