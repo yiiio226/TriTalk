@@ -7,7 +7,6 @@ import 'package:frontend/features/chat/domain/models/message.dart';
 import 'package:frontend/features/scenes/domain/models/scene.dart';
 import '../../../../core/data/api/api_service.dart';
 import '../../../../core/data/local/preferences_service.dart';
-import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../state/chat_page_state.dart';
 
@@ -156,13 +155,11 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
   }
 
   /// Send a text message
+  ///
+  /// Note: Access control and usage tracking are handled by FeatureGate
+  /// at the UI layer before this method is called.
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty || state.isSending) return;
-
-    if (!RevenueCatService().canSendMessage()) {
-      state = state.copyWith(error: 'daily_limit_reached');
-      return;
-    }
 
     final userMsgId = _uuid.v4();
     final userMessage = Message(
@@ -185,8 +182,6 @@ class ChatPageNotifier extends StateNotifier<ChatPageState> {
 
     // Sync immediately
     _repository.syncMessages(sceneKey: _sceneId, messages: currentMessages);
-
-    RevenueCatService().incrementMessageCount();
 
     // Add loading placeholder for AI
     final loadingId = 'loading_${DateTime.now().millisecondsSinceEpoch}';

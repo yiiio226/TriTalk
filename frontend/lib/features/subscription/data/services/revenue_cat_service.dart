@@ -88,22 +88,6 @@ class RevenueCatService extends ChangeNotifier {
   /// Whether user has Pro tier
   bool get hasPro => currentTier.hasAccess(SubscriptionTier.pro);
 
-  /// Check if user can send messages (for backward compatibility)
-  ///
-  /// Currently returns true for all users.
-  /// Implement rate limiting logic here if needed.
-  bool canSendMessage() {
-    // TODO: Implement rate limiting for free users if needed
-    return true;
-  }
-
-  /// Increment message count (for backward compatibility)
-  ///
-  /// Currently a no-op. Implement if rate limiting is needed.
-  void incrementMessageCount() {
-    // TODO: Implement if rate limiting is needed
-  }
-
   /// Initialize RevenueCat SDK
   ///
   /// Must be called during app startup after user authentication.
