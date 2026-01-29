@@ -1,0 +1,34 @@
+# dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/1024.png"
+  image_path_android: "assets/icon/512.png"
+
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  # Option 1: Use your logo as foreground with transparent/colored background
+  adaptive_icon_background: "#FFFFFF" # or any color you prefer
+  adaptive_icon_foreground: "assets/icon/512.png"
+
+  # Option 2: If you want to use separate background and foreground images
+  # adaptive_icon_background: "assets/icon/background.png"
+  # adaptive_icon_foreground: "assets/icon/foreground.png"
+
+  # Monochrome icon for themed icons (Android 13+)
+  adaptive_icon_monochrome: "assets/icon/512.png"
+
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  # image_path_ios: "assets/icon/1024.png"
+  remove_alpha_channel_ios: true
+  # image_path_ios_dark_transparent: "assets/icon/icon_dark.png"
+  # image_path_ios_tinted_grayscale: "assets/icon/icon_tinted.png"
+  # desaturate_tinted_to_grayscale_ios: true
+
+  windows:
+    generate: true
+
+  macos:
+    generate: false
+
+  web:
+    generate: false
