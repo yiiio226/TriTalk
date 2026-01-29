@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:frontend/core/design/app_design_system.dart';
+import 'package:frontend/core/env/env.dart';
 import 'package:frontend/core/utils/l10n_ext.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/features/subscription/domain/models/subscription_tier.dart';
@@ -887,28 +888,58 @@ class _PaywallScreenState extends State<PaywallScreen>
   Future<void> _purchasePackage(Package package) async {
     setState(() => _isPurchasing = true);
 
-    // SIMULATION LOGIC: Skip actual payment flow
     // Determine tier from package ID
     final isPlus = package.identifier.contains('plus');
     final tier = isPlus ? SubscriptionTier.plus : SubscriptionTier.pro;
 
-    // Artificial delay to simulate network request
-    await Future.delayed(const Duration(seconds: 2));
+    if (Env.skipVipCheck) {
+      // SIMULATION LOGIC: Skip actual payment flow for testing
+      // Artificial delay to simulate network request
+      await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Update global state via service
-    RevenueCatService().debugSimulatePurchase(tier);
+      // Update global state via service (debug simulation)
+      RevenueCatService().debugSimulatePurchase(tier);
 
-    setState(() => _isPurchasing = false);
+      setState(() => _isPurchasing = false);
 
-    // Navigate to success screen
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SubscriptionSuccessScreen(tier: tier),
-      ),
-    );
+      // Navigate to success screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SubscriptionSuccessScreen(tier: tier),
+        ),
+      );
+    } else {
+      // REAL PURCHASE FLOW: Use RevenueCat SDK
+      final result = await RevenueCatService().purchasePackage(package);
+
+      if (!mounted) return;
+
+      setState(() => _isPurchasing = false);
+
+      switch (result) {
+        case SubscriptionPurchaseResult.success:
+          // Navigate to success screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SubscriptionSuccessScreen(tier: tier),
+            ),
+          );
+          break;
+        case SubscriptionPurchaseResult.cancelled:
+          // User cancelled, do nothing (stay on paywall)
+          break;
+        case SubscriptionPurchaseResult.error:
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Purchase failed. Please try again.')),
+          );
+          break;
+      }
+    }
   }
 
   Future<void> _restorePurchases() async {
