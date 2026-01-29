@@ -262,7 +262,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                     const SizedBox(height: 16),
                     Text(
                       "Unlock Your Full Potential",
-                      style: AppTypography.headline2.copyWith(
+                      style: AppTypography.headline3.copyWith(
                         color: AppColors.ln900,
                         letterSpacing: -0.5,
                       ),
