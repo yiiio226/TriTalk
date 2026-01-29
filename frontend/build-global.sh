@@ -38,6 +38,7 @@ fi
 # Build AAB for Google Play using 'global' flavor
 echo "🚀 Building Tritalk..."
 flutter build appbundle --release \
+  --dart-define=ENV=prod \
   --obfuscate \
   --split-debug-info=build/debug-info/global
 
