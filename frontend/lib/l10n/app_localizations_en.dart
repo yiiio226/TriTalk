@@ -391,4 +391,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get home_noMessagesToBookmark => 'No messages to bookmark';
+
+  @override
+  String get feedback_greatStatus => 'Great intonation! You sound natural.';
+
+  @override
+  String get feedback_greatTipQuestion =>
+      'Your question intonation is spot-on! Keep it up.';
+
+  @override
+  String get feedback_greatTipDefault =>
+      'Your tone matches the native speaker perfectly.';
+
+  @override
+  String get feedback_goodStatus => 'Good start. Try to express more emotion.';
+
+  @override
+  String get feedback_goodTipQuestion =>
+      '💡 Tip: Raise your pitch more at the end of the question.';
+
+  @override
+  String get feedback_goodTipExclamation =>
+      '💡 Tip: Add more energy and emphasis on key words.';
+
+  @override
+  String get feedback_goodTipDefault =>
+      '💡 Tip: Vary your pitch to sound less monotone.';
+
+  @override
+  String get feedback_flatStatus => 'Too flat. Mimic the ups and downs.';
+
+  @override
+  String get feedback_flatTipQuestion =>
+      '💡 Tip: Questions should rise at the end ↗️. Practice with exaggerated pitch.';
+
+  @override
+  String get feedback_flatTipExclamation =>
+      '💡 Tip: Show excitement! Emphasize important words with higher pitch.';
+
+  @override
+  String get feedback_flatTipDefault =>
+      '💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.';
 }

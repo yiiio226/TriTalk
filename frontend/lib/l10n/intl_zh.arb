@@ -116,5 +116,16 @@
 	"home_clearConversationContent": "确定要清空此对话并重新开始吗？",
 	"home_conversationCleared": "对话已清空",
 	"home_clear": "清空",
-	"home_noMessagesToBookmark": "没有可收藏的消息"
+	"home_noMessagesToBookmark": "没有可收藏的消息",
+	"feedback_greatStatus": "语调很棒！听起来很自然。",
+	"feedback_greatTipQuestion": "你的疑问语调非常到位！继续保持。",
+	"feedback_greatTipDefault": "你的语调与母语者完美匹配。",
+	"feedback_goodStatus": "不错的开始，尝试表达更多情感。",
+	"feedback_goodTipQuestion": "💡 提示：在问句结尾处提高音调。",
+	"feedback_goodTipExclamation": "💡 提示：在关键词上增加更多能量和强调。",
+	"feedback_goodTipDefault": "💡 提示：变化你的音调，避免单调。",
+	"feedback_flatStatus": "太平了，模仿语调的起伏。",
+	"feedback_flatTipQuestion": "💡 提示：问句结尾应该上扬 ↗️。尝试夸张一点练习。",
+	"feedback_flatTipExclamation": "💡 提示：表现出兴奋！用更高的音调强调重要的词。",
+	"feedback_flatTipDefault": "💡 提示：你的声音听起来像机器人。模仿母语者的节奏和旋律。"
 }

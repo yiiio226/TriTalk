@@ -492,5 +492,49 @@
 	"home_noMessagesToBookmark": "No messages to bookmark",
 	"@home_noMessagesToBookmark": {
 		"description": "Error message when trying to bookmark empty conversation"
+	},
+	"feedback_greatStatus": "Great intonation! You sound natural.",
+	"@feedback_greatStatus": {
+		"description": "Feedback message for great intonation score"
+	},
+	"feedback_greatTipQuestion": "Your question intonation is spot-on! Keep it up.",
+	"@feedback_greatTipQuestion": {
+		"description": "Tip for great question intonation"
+	},
+	"feedback_greatTipDefault": "Your tone matches the native speaker perfectly.",
+	"@feedback_greatTipDefault": {
+		"description": "Tip for great intonation"
+	},
+	"feedback_goodStatus": "Good start. Try to express more emotion.",
+	"@feedback_goodStatus": {
+		"description": "Feedback message for good intonation score"
+	},
+	"feedback_goodTipQuestion": "💡 Tip: Raise your pitch more at the end of the question.",
+	"@feedback_goodTipQuestion": {
+		"description": "Tip for good question intonation"
+	},
+	"feedback_goodTipExclamation": "💡 Tip: Add more energy and emphasis on key words.",
+	"@feedback_goodTipExclamation": {
+		"description": "Tip for good exclamation intonation"
+	},
+	"feedback_goodTipDefault": "💡 Tip: Vary your pitch to sound less monotone.",
+	"@feedback_goodTipDefault": {
+		"description": "Tip for good intonation"
+	},
+	"feedback_flatStatus": "Too flat. Mimic the ups and downs.",
+	"@feedback_flatStatus": {
+		"description": "Feedback message for flat intonation score"
+	},
+	"feedback_flatTipQuestion": "💡 Tip: Questions should rise at the end ↗️. Practice with exaggerated pitch.",
+	"@feedback_flatTipQuestion": {
+		"description": "Tip for flat question intonation"
+	},
+	"feedback_flatTipExclamation": "💡 Tip: Show excitement! Emphasize important words with higher pitch.",
+	"@feedback_flatTipExclamation": {
+		"description": "Tip for flat exclamation intonation"
+	},
+	"feedback_flatTipDefault": "💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.",
+	"@feedback_flatTipDefault": {
+		"description": "Tip for flat intonation"
 	}
 }
