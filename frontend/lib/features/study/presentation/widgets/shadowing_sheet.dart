@@ -1407,9 +1407,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
-                  'Pitch Contour',
-                  style: TextStyle(
+                Text(
+                  context.l10n.study_pitchContour,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: AppColors.lightTextPrimary,
@@ -1418,10 +1418,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                 const SizedBox(width: 12),
                 Container(width: 1, height: 12, color: AppColors.lightDivider),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   //'Tap curve to play segment',
-                  'Tap curve',
-                  style: TextStyle(
+                  context.l10n.study_tapCurve,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.lightTextSecondary,
                     fontWeight: FontWeight.w400,
@@ -1629,9 +1629,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Pronunciation',
-              style: TextStyle(
+            Text(
+              context.l10n.study_pronunciation,
+              style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: AppColors.lightTextPrimary,
@@ -1640,10 +1640,10 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
             const SizedBox(width: 12),
             Container(width: 1, height: 12, color: AppColors.lightDivider),
             const SizedBox(width: 12),
-            const Text(
+            Text(
               //'Tap words to play pronunciation',
-              'Tap words',
-              style: TextStyle(
+              context.l10n.study_tapWords,
+              style: const TextStyle(
                 fontSize: 12,
                 color: AppColors.lightTextSecondary,
                 fontWeight: FontWeight.w400,

@@ -9,6 +9,7 @@ import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/features/speech/speech.dart';
 import 'package:frontend/features/subscription/presentation/feature_gate.dart';
 import 'package:frontend/features/subscription/domain/models/paid_feature.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class FavoritesSheet extends StatelessWidget {
   final String scenarioId;
@@ -53,9 +54,12 @@ class FavoritesSheet extends StatelessWidget {
             children: [
               const Icon(Icons.bookmark, color: AppColors.primary),
               const SizedBox(width: 8),
-              const Text(
-                'Favorites',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                context.l10n.scenes_favorites,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
               IconButton(

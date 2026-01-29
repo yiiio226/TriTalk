@@ -398,6 +398,12 @@ abstract class AppLocalizations {
   /// **'Text'**
   String get chat_text;
 
+  /// Button label to convert voice to text
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get chat_voiceToTextLabel;
+
   /// Button label for shadowing practice
   ///
   /// In en, this message translates to:
@@ -865,6 +871,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.'**
   String get feedback_flatTipDefault;
+
+  /// Button text to retry an action
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get common_retry;
+
+  /// Label for Azure AI service
+  ///
+  /// In en, this message translates to:
+  /// **'Azure AI'**
+  String get common_azureAi;
+
+  /// Title for session configuration
+  ///
+  /// In en, this message translates to:
+  /// **'Configure your practice session'**
+  String get scenes_configureSession;
+
+  /// Label for pitch contour
+  ///
+  /// In en, this message translates to:
+  /// **'Pitch Contour'**
+  String get study_pitchContour;
+
+  /// Instruction to tap curve
+  ///
+  /// In en, this message translates to:
+  /// **'Tap curve'**
+  String get study_tapCurve;
+
+  /// Label for pronunciation
+  ///
+  /// In en, this message translates to:
+  /// **'Pronunciation'**
+  String get study_pronunciation;
+
+  /// Instruction to tap words
+  ///
+  /// In en, this message translates to:
+  /// **'Tap words'**
+  String get study_tapWords;
+
+  /// Confirmation message for deleting messages
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete selected messages? This action cannot be undone.'**
+  String get chat_deleteMessagesConfirm;
+
+  /// Icon text for text mode
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get chat_textModeIcon;
+
+  /// Feedback message for correct grammar
+  ///
+  /// In en, this message translates to:
+  /// **'Grammar is correct! Great expression!'**
+  String get feedback_grammarCorrect;
+
+  /// Label for pronunciation section
+  ///
+  /// In en, this message translates to:
+  /// **'Pronunciation:'**
+  String get feedback_pronunciationLabel;
+
+  /// Label for sentence section
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence:'**
+  String get feedback_sentenceLabel;
+
+  /// Label for intonation section
+  ///
+  /// In en, this message translates to:
+  /// **'🌊 Intonation:'**
+  String get feedback_intonationLabel;
+
+  /// Title for user info section
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about yourself'**
+  String get onboarding_tellUsAboutYourself;
+
+  /// Question asking for native language
+  ///
+  /// In en, this message translates to:
+  /// **'What is your native language?'**
+  String get onboarding_nativeLanguageQuestion;
+
+  /// Question asking for learning language
+  ///
+  /// In en, this message translates to:
+  /// **'What do you want to learn?'**
+  String get onboarding_learningLanguageQuestion;
 }
 
 class _AppLocalizationsDelegate

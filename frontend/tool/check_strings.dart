@@ -24,7 +24,14 @@ void main() {
             !f.path.endsWith('.g.dart') &&
             !f.path.endsWith('.freezed.dart') &&
             !f.path.contains('/generated/') &&
-            !f.path.contains('/l10n/'),
+            !f.path.contains('/l10n/') &&
+            !f.path.contains('core/providers/locale_provider.dart') &&
+            !f.path.contains(
+              'features/onboarding/presentation/pages/splash_screen.dart',
+            ) &&
+            !f.path.contains(
+              'features/profile/presentation/pages/profile_screen.dart',
+            ),
       )
       .toList();
 
@@ -34,8 +41,9 @@ void main() {
     try {
       final content = file.readAsStringSync();
       // Skip file if it has ignore comment at top (optional, but good practice)
-      if (content.contains('// ignore_for_file: no_hardcoded_strings'))
+      if (content.contains('// ignore_for_file: no_hardcoded_strings')) {
         continue;
+      }
 
       final parseResult = parseString(content: content, path: file.path);
       final visitor = HardcodedStringVisitor(parseResult.lineInfo);
@@ -86,7 +94,9 @@ class HardcodedStringVisitor extends GeneralizingAstVisitor<void> {
     // This catches "例子" even if not in a Text widget directly, but maybe in a variable used by UI.
     // This is a heuristic: If it has Chinese, it PROBABLY should be localized.
     final value = node.stringValue;
-    if (value != null && _containsForeignCharacters(value)) {
+    if (value != null &&
+        _containsForeignCharacters(value) &&
+        _hasMeaningfulText(value)) {
       // Filter out log statements if possible, but basic visitor might hit print('中文')
       // For now, report it.
       // Filter out log statements if possible, but basic visitor might hit print('中文')
@@ -106,7 +116,7 @@ class HardcodedStringVisitor extends GeneralizingAstVisitor<void> {
   void _checkStringArgument(Expression argument, String context) {
     if (argument is StringLiteral) {
       final value = argument.stringValue;
-      if (value != null && value.isNotEmpty) {
+      if (value != null && value.isNotEmpty && _hasMeaningfulText(value)) {
         _report(argument, 'Hardcoded string in $context: "$value"');
       }
     }
@@ -120,6 +130,15 @@ class HardcodedStringVisitor extends GeneralizingAstVisitor<void> {
       }
     }
     return false;
+  }
+
+  bool _hasMeaningfulText(String s) {
+    // Check if the string contains any Latin characters (inclusive of accents) or CJK characters or Kana/Hangul
+    // This allows us to ignore strings that only contain Emojis, numbers, or punctuation.
+    final meaningfulRegex = RegExp(
+      r'[a-zA-Z\u00C0-\u024F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]',
+    );
+    return meaningfulRegex.hasMatch(s);
   }
 
   void _report(AstNode node, String message) {

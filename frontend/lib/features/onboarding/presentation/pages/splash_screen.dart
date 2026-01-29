@@ -28,9 +28,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late AnimationController _fadeController;
   late AnimationController _floatController;
   late AnimationController _rotateController;
-  
+
   late Animation<double> _fadeAnimation;
-  
+
   bool _hasNavigated = false;
   bool _isInitialized = false;
 
@@ -172,7 +172,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.xl),
 
                   // App Name
@@ -183,9 +183,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.sm),
-                  
+
                   // Tagline
                   Text(
                     'Your AI Language Practice Companion',

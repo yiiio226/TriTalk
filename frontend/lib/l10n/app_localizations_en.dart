@@ -168,6 +168,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chat_text => 'Text';
 
   @override
+  String get chat_voiceToTextLabel => 'Text';
+
+  @override
   String get chat_shadow => 'Shadow';
 
   @override
@@ -432,4 +435,55 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get feedback_flatTipDefault =>
       '💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.';
+
+  @override
+  String get common_retry => 'Retry';
+
+  @override
+  String get common_azureAi => 'Azure AI';
+
+  @override
+  String get scenes_configureSession => 'Configure your practice session';
+
+  @override
+  String get study_pitchContour => 'Pitch Contour';
+
+  @override
+  String get study_tapCurve => 'Tap curve';
+
+  @override
+  String get study_pronunciation => 'Pronunciation';
+
+  @override
+  String get study_tapWords => 'Tap words';
+
+  @override
+  String get chat_deleteMessagesConfirm =>
+      'Are you sure you want to delete selected messages? This action cannot be undone.';
+
+  @override
+  String get chat_textModeIcon => 'Text';
+
+  @override
+  String get feedback_grammarCorrect => 'Grammar is correct! Great expression!';
+
+  @override
+  String get feedback_pronunciationLabel => 'Pronunciation:';
+
+  @override
+  String get feedback_sentenceLabel => 'Sentence:';
+
+  @override
+  String get feedback_intonationLabel => '🌊 Intonation:';
+
+  @override
+  String get onboarding_tellUsAboutYourself => 'Tell us about yourself';
+
+  @override
+  String get onboarding_nativeLanguageQuestion =>
+      'What is your native language?';
+
+  @override
+  String get onboarding_learningLanguageQuestion =>
+      'What do you want to learn?';
 }

@@ -38,7 +38,7 @@ class _PaywallScreenState extends State<PaywallScreen>
   void initState() {
     super.initState();
     _selectedTier = SubscriptionTier.pro;
-    
+
     // Initialize fade animation for page entrance
     _fadeController = AnimationController(
       duration: const Duration(
@@ -57,10 +57,10 @@ class _PaywallScreenState extends State<PaywallScreen>
         ).animate(
           CurvedAnimation(parent: _fadeController, curve: Curves.easeOutQuart),
         );
-    
+
     RevenueCatService().addListener(_onRevenueCatUpdate);
     _loadOfferings();
-    
+
     // Start entrance animation after a short delay
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) _fadeController.forward();
@@ -123,7 +123,10 @@ class _PaywallScreenState extends State<PaywallScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("Error loading plans: $_error"),
-              TextButton(onPressed: _loadOfferings, child: const Text("Retry")),
+              TextButton(
+                onPressed: _loadOfferings,
+                child: Text(context.l10n.common_retry),
+              ),
             ],
           ),
         ),
@@ -621,7 +624,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                       ],
                     ],
                   ),
-
                 ],
               ),
             ),
@@ -796,11 +798,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                     _buildFeatureLine("Pitch Contour Analysis"),
                     _buildFeatureLine("Unlimited Custom Scenarios"),
                     _buildFeatureLine("Multi-device Sync"),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
         ),
       ),
     );
@@ -837,22 +839,22 @@ class _PaywallScreenState extends State<PaywallScreen>
             ],
           ),
           child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Plus",
-            style: AppTypography.headline3.copyWith(color: AppColors.ln900),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Plus",
+                style: AppTypography.headline3.copyWith(color: AppColors.ln900),
+              ),
+              const SizedBox(height: 24),
+              _buildFeatureLine("Unlimited Conversations"),
+              _buildFeatureLine("20 Pronunciation Checks / day"),
+              _buildFeatureLine("Unlimited Grammar Analyses"),
+              _buildFeatureLine("100 AI Message Reads / day"),
+              _buildFeatureLine("Pitch Contour Analysis"),
+              _buildFeatureLine("30 Custom Scenarios"),
+              _buildFeatureLine("Multi-device Sync"),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildFeatureLine("Unlimited Conversations"),
-          _buildFeatureLine("20 Pronunciation Checks / day"),
-          _buildFeatureLine("Unlimited Grammar Analyses"),
-          _buildFeatureLine("100 AI Message Reads / day"),
-          _buildFeatureLine("Pitch Contour Analysis"),
-          _buildFeatureLine("30 Custom Scenarios"),
-          _buildFeatureLine("Multi-device Sync"),
-        ],
-      ),
         ),
       ),
     );

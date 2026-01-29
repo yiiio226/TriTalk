@@ -3,6 +3,7 @@ import 'package:frontend/features/scenes/domain/models/scene.dart';
 import 'package:frontend/core/design/app_design_system.dart';
 import 'package:frontend/core/widgets/bouncing_button.dart';
 import '../../../chat/presentation/pages/chat_screen.dart';
+import 'package:frontend/core/utils/l10n_ext.dart';
 
 class ScenarioConfigurationScreen extends StatefulWidget {
   final Scene scene;
@@ -84,9 +85,12 @@ class _ScenarioConfigurationScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Configure your practice session',
-                        style: TextStyle(fontSize: 16, color: AppColors.lightTextSecondary),
+                      Text(
+                        context.l10n.scenes_configureSession,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.lightTextSecondary,
+                        ),
                       ),
                       const SizedBox(height: 24),
 
@@ -94,37 +98,37 @@ class _ScenarioConfigurationScreenState
                       _buildRoleDisplaySection(),
                       const SizedBox(height: 32),
 
-              // Personality Section
-              _buildSectionTitle(
-                'AI Personality',
-                Icons.sentiment_satisfied_outlined,
-                AppColors.lightTextSecondary,
-              ),
-              const SizedBox(height: 16),
-              _buildPersonalityCard(
-                'Gentle',
-                'Patient and encouraging',
-                Icons.sentiment_satisfied,
-                _selectedPersonality == 'Gentle',
-                () => setState(() => _selectedPersonality = 'Gentle'),
-              ),
-              const SizedBox(height: 12),
-              _buildPersonalityCard(
-                'Strict',
-                'Direct and challenging',
-                Icons.flash_on,
-                _selectedPersonality == 'Strict',
-                () => setState(() => _selectedPersonality = 'Strict'),
-              ),
-              const SizedBox(height: 12),
-              _buildPersonalityCard(
-                'Humorous',
-                'Fun and lighthearted',
-                Icons.sentiment_very_satisfied,
-                _selectedPersonality == 'Humorous',
-                () => setState(() => _selectedPersonality = 'Humorous'),
-              ),
-              const SizedBox(height: 24),
+                      // Personality Section
+                      _buildSectionTitle(
+                        'AI Personality',
+                        Icons.sentiment_satisfied_outlined,
+                        AppColors.lightTextSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPersonalityCard(
+                        'Gentle',
+                        'Patient and encouraging',
+                        Icons.sentiment_satisfied,
+                        _selectedPersonality == 'Gentle',
+                        () => setState(() => _selectedPersonality = 'Gentle'),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPersonalityCard(
+                        'Strict',
+                        'Direct and challenging',
+                        Icons.flash_on,
+                        _selectedPersonality == 'Strict',
+                        () => setState(() => _selectedPersonality = 'Strict'),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPersonalityCard(
+                        'Humorous',
+                        'Fun and lighthearted',
+                        Icons.sentiment_very_satisfied,
+                        _selectedPersonality == 'Humorous',
+                        () => setState(() => _selectedPersonality = 'Humorous'),
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -157,7 +161,7 @@ class _ScenarioConfigurationScreenState
                         personality:
                             _selectedPersonality, // Pass selected personality
                       );
-                      
+
                       // Navigate to ChatScreen with updated scene
                       Navigator.pushReplacement(
                         context,
@@ -365,7 +369,12 @@ class _ScenarioConfigurationScreenState
     );
   }
 
-  Widget _buildRoleCard(String label, String role, IconData icon, Color accentColor) {
+  Widget _buildRoleCard(
+    String label,
+    String role,
+    IconData icon,
+    Color accentColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

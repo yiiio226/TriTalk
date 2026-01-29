@@ -445,9 +445,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Are you sure you want to delete selected messages? This action cannot be undone.',
-                style: TextStyle(fontSize: 16, color: Colors.black87),
+              Text(
+                context.l10n.chat_deleteMessagesConfirm,
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
               const SizedBox(height: 24),
               Row(
@@ -795,9 +795,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               padding: EdgeInsets.zero,
               minimumSize: const Size(50, 30),
             ),
-            child: const Text(
-              'Retry',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            child: Text(
+              context.l10n.common_retry,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -915,9 +915,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             color: Colors.grey[100],
           ),
           child: IconButton(
-            icon: const Text(
-              '文',
-              style: TextStyle(
+            icon: Text(
+              context.l10n.chat_voiceToTextLabel,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.lightTextPrimary,
@@ -1230,9 +1230,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Are you sure you want to clear this conversation and start over?',
-              style: TextStyle(fontSize: 16, color: Colors.black87),
+            Text(
+              context.l10n.home_clearConversationContent,
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
             const SizedBox(height: 24),
             Row(
@@ -1260,9 +1260,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       Navigator.pop(context);
                     }
                   },
-                  child: const Text(
-                    'Clear',
-                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  child: Text(
+                    context.l10n.home_clear,
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
               ],
