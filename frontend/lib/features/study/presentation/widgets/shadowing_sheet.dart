@@ -10,8 +10,12 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shimmer/shimmer.dart';
+import 'dart:ui'; // For ImageFilter
 
 import 'package:frontend/core/design/app_design_system.dart';
+
+import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
+import 'package:frontend/features/subscription/presentation/paywall_route.dart';
 
 import 'package:frontend/core/mixins/tts_playback_mixin.dart';
 import 'package:frontend/core/services/streaming_tts_service.dart';
@@ -1207,8 +1211,17 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
       children: [
         _buildScoreCard(feedback),
         const SizedBox(height: 32),
-        _buildAzureWordFeedback(feedback),
-        if (feedback.azureProsodyScore != null) _buildProsodySection(feedback),
+        _PaidFeatureBlurGuard(
+          unlockReason: 'Unlock detailed pronunciation feedback',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildAzureWordFeedback(feedback),
+              if (feedback.azureProsodyScore != null)
+                _buildProsodySection(feedback),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -2290,4 +2303,94 @@ class DragTailPainter extends CustomPainter {
   @override
   bool shouldRepaint(DragTailPainter oldDelegate) =>
       oldDelegate.offset != offset || oldDelegate.color != color;
+}
+
+/// A widget that blurs its child and shows a lock overlay if the user
+/// does not have access to the paid feature (Plus tier).
+class _PaidFeatureBlurGuard extends StatelessWidget {
+  final Widget child;
+  final String unlockReason;
+
+  const _PaidFeatureBlurGuard({
+    required this.child,
+    this.unlockReason = 'Unlock detailed feedback',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: RevenueCatService(),
+      builder: (context, _) {
+        final isPlus = RevenueCatService().hasPlus;
+
+        if (isPlus) {
+          return child;
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                  child: IgnorePointer(child: child),
+                ),
+                Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        PaywallRoute.show(context, reason: unlockReason);
+                      },
+                      splashColor: AppColors.primary.withValues(alpha: 0.1),
+                      highlightColor: AppColors.primary.withValues(alpha: 0.05),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.lock_open_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Unlock',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
