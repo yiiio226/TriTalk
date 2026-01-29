@@ -799,6 +799,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No messages to bookmark'**
   String get home_noMessagesToBookmark;
+
+  /// Feedback message for great intonation score
+  ///
+  /// In en, this message translates to:
+  /// **'Great intonation! You sound natural.'**
+  String get feedback_greatStatus;
+
+  /// Tip for great question intonation
+  ///
+  /// In en, this message translates to:
+  /// **'Your question intonation is spot-on! Keep it up.'**
+  String get feedback_greatTipQuestion;
+
+  /// Tip for great intonation
+  ///
+  /// In en, this message translates to:
+  /// **'Your tone matches the native speaker perfectly.'**
+  String get feedback_greatTipDefault;
+
+  /// Feedback message for good intonation score
+  ///
+  /// In en, this message translates to:
+  /// **'Good start. Try to express more emotion.'**
+  String get feedback_goodStatus;
+
+  /// Tip for good question intonation
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Tip: Raise your pitch more at the end of the question.'**
+  String get feedback_goodTipQuestion;
+
+  /// Tip for good exclamation intonation
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Tip: Add more energy and emphasis on key words.'**
+  String get feedback_goodTipExclamation;
+
+  /// Tip for good intonation
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Tip: Vary your pitch to sound less monotone.'**
+  String get feedback_goodTipDefault;
+
+  /// Feedback message for flat intonation score
+  ///
+  /// In en, this message translates to:
+  /// **'Too flat. Mimic the ups and downs.'**
+  String get feedback_flatStatus;
+
+  /// Tip for flat question intonation
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Tip: Questions should rise at the end ↗️. Practice with exaggerated pitch.'**
+  String get feedback_flatTipQuestion;
+
+  /// Tip for flat exclamation intonation
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Tip: Show excitement! Emphasize important words with higher pitch.'**
+  String get feedback_flatTipExclamation;
+
+  /// Tip for flat intonation
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Tip: Your voice sounds robotic. Copy the rhythm and melody of the native speaker.'**
+  String get feedback_flatTipDefault;
 }
 
 class _AppLocalizationsDelegate

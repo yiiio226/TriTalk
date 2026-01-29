@@ -372,4 +372,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get home_noMessagesToBookmark => '没有可收藏的消息';
+
+  @override
+  String get feedback_greatStatus => '语调很棒！听起来很自然。';
+
+  @override
+  String get feedback_greatTipQuestion => '你的疑问语调非常到位！继续保持。';
+
+  @override
+  String get feedback_greatTipDefault => '你的语调与母语者完美匹配。';
+
+  @override
+  String get feedback_goodStatus => '不错的开始，尝试表达更多情感。';
+
+  @override
+  String get feedback_goodTipQuestion => '💡 提示：在问句结尾处提高音调。';
+
+  @override
+  String get feedback_goodTipExclamation => '💡 提示：在关键词上增加更多能量和强调。';
+
+  @override
+  String get feedback_goodTipDefault => '💡 提示：变化你的音调，避免单调。';
+
+  @override
+  String get feedback_flatStatus => '太平了，模仿语调的起伏。';
+
+  @override
+  String get feedback_flatTipQuestion => '💡 提示：问句结尾应该上扬 ↗️。尝试夸张一点练习。';
+
+  @override
+  String get feedback_flatTipExclamation => '💡 提示：表现出兴奋！用更高的音调强调重要的词。';
+
+  @override
+  String get feedback_flatTipDefault => '💡 提示：你的声音听起来像机器人。模仿母语者的节奏和旋律。';
 }
