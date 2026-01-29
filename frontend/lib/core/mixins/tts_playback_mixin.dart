@@ -162,6 +162,10 @@ mixin TtsPlaybackMixin {
   // ============================================================
 
   /// Setup state change listener for StreamingTtsService
+  ///
+  /// Handles all states including new v2.0 states:
+  /// - [waitingForDownload]: Shown as loading (waiting for in-progress download)
+  /// - [backgroundDownloading]: User perspective is stopped (download continues silently)
   void _setupTtsStateListener(
     StreamingTtsService streamingTts, {
     required void Function(bool loading, bool playing) onStateChange,
@@ -173,6 +177,8 @@ mixin TtsPlaybackMixin {
       switch (state) {
         case StreamingTtsState.loading:
         case StreamingTtsState.buffering:
+        case StreamingTtsState
+            .waitingForDownload: // NEW: waiting for in-progress download
           onStateChange(true, false);
           break;
         case StreamingTtsState.playing:
@@ -180,6 +186,8 @@ mixin TtsPlaybackMixin {
           break;
         case StreamingTtsState.completed:
         case StreamingTtsState.stopped:
+        case StreamingTtsState
+            .backgroundDownloading: // NEW: user stopped, download continues
           onStateChange(false, false);
           break;
         case StreamingTtsState.error:
