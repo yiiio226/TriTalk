@@ -2332,10 +2332,27 @@ class _PaidFeatureBlurGuard extends StatelessWidget {
             return Stack(
               alignment: Alignment.center,
               children: [
+                // 1. The blurred content
                 ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                  child: IgnorePointer(child: child),
+                  imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.6, // Dim the content slightly
+                      child: child,
+                    ),
+                  ),
                 ),
+
+                // 2. White/Surface Overlay for "frosted" look
+                Positioned.fill(
+                  child: Container(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surface.withValues(alpha: 0.4),
+                  ),
+                ),
+
+                // 3. The Premium Unlock Button
                 Positioned.fill(
                   child: Material(
                     color: Colors.transparent,
@@ -2343,40 +2360,47 @@ class _PaidFeatureBlurGuard extends StatelessWidget {
                       onTap: () {
                         PaywallRoute.show(context, reason: unlockReason);
                       },
-                      splashColor: AppColors.primary.withValues(alpha: 0.1),
-                      highlightColor: AppColors.primary.withValues(alpha: 0.05),
+                      splashColor: AppColors.lg500.withValues(alpha: 0.1),
+                      highlightColor: AppColors.lg500.withValues(alpha: 0.05),
                       child: Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
+                            horizontal: 24,
+                            vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(24),
+                            // Premium Gradient (Purple)
+                            gradient: const LinearGradient(
+                              colors: [AppColors.lg500, AppColors.lg400],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            // Glowing Shadow
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                                color: AppColors.lg500.withValues(alpha: 0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
+                            children: const [
+                              Icon(
                                 Icons.lock_open_rounded,
                                 color: Colors.white,
-                                size: 18,
+                                size: 20,
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Unlock',
+                              SizedBox(width: 8),
+                              Text(
+                                'Unlock Premium',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 15,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],
