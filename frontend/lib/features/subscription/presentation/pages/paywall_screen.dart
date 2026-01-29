@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -235,12 +236,12 @@ class _PaywallScreenState extends State<PaywallScreen>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     center: Alignment.topRight,
-                    radius: 1.3,
+                    radius: 1.6,
                     colors: [
                       AppColors.secondary.withOpacity(0.6),
                       Colors.white,
                     ],
-                    stops: const [0.0, 0.7],
+                    stops: const [0.0, 1.2],
                   ),
                 ),
               ),
@@ -261,7 +262,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                     const SizedBox(height: 16),
                     Text(
                       "Unlock Your Full Potential",
-                      style: AppTypography.headline2.copyWith(
+                      style: AppTypography.headline3.copyWith(
                         color: AppColors.ln900,
                         letterSpacing: -0.5,
                       ),
@@ -281,7 +282,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                   // Monthly / Yearly Switch
                   if (!widget.showProOnly) ...[
                     _buildToggleSwitch(),
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                   ] else ...[
                     // Add some spacing if toggle is hidden
                     const SizedBox(height: 16),
@@ -378,18 +379,31 @@ class _PaywallScreenState extends State<PaywallScreen>
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey[100],
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          CupertinoIcons.xmark,
-                          color: AppColors.ln900,
-                          size: 24,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(
+                                  0.2,
+                                ), // Frosted glass bg
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                CupertinoIcons.xmark,
+                                color: AppColors
+                                    .ln900, // Keep icon dark for visibility
+                                size: 22,
+                              ),
+                            ),
                         ),
                       ),
                     ),
@@ -608,47 +622,59 @@ class _PaywallScreenState extends State<PaywallScreen>
   }
 
   Widget _buildToggleSwitch() {
-    return Container(
-      width: 240, // Fixed comfortable width for two options
-      height: 48,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.ln100,
+    return Center(
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Stack(
-        children: [
-          // The Sliding Indicator
-          AnimatedAlign(
-            alignment: _selectedTier == SubscriptionTier.plus
-                ? Alignment.centerLeft
-                : Alignment.centerRight,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            child: Container(
-              width: 116, // (240 - 8) / 2
-              height: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.full),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            width: 240,
+            height: 52, // Slightly simpler height
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1), // Ultra transparent base
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
               ),
             ),
+            child: Stack(
+              children: [
+                // The Sliding Indicator (Glassy visual)
+                AnimatedAlign(
+                  alignment: _selectedTier == SubscriptionTier.plus
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: Container(
+                    width: 116,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8), // Milk glass look
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // The Text Labels
+                Row(
+                  children: [
+                    _buildToggleOption("Plus", SubscriptionTier.plus),
+                    _buildToggleOption("Pro", SubscriptionTier.pro),
+                  ],
+                ),
+              ],
+            ),
           ),
-          // The Text Labels
-          Row(
-            children: [
-              _buildToggleOption("Plus", SubscriptionTier.plus),
-              _buildToggleOption("Pro", SubscriptionTier.pro),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -658,13 +684,13 @@ class _PaywallScreenState extends State<PaywallScreen>
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedTier = tier),
-        behavior: HitTestBehavior.translucent, // Ensure entire area is tappable
+        behavior: HitTestBehavior.translucent,
         child: Container(
           alignment: Alignment.center,
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 200),
             style: AppTypography.button.copyWith(
-              fontSize: 15, // Slightly larger
+              fontSize: 15,
               color: isSelected ? AppColors.ln900 : AppColors.ln500,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
@@ -676,94 +702,112 @@ class _PaywallScreenState extends State<PaywallScreen>
   }
 
   Widget _buildProCard(Package package, Package? monthly, Package? yearly) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.white.withOpacity(0.9),
-            Colors.white.withOpacity(0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondary.withOpacity(0.1),
-            offset: const Offset(0, 8),
-            blurRadius: 32,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            top: 0,
-            child: PulsingBadge(
-              text: "MOST POPULAR",
-              backgroundColor: AppColors.secondary,
-              textColor: Colors.white,
-              enableAnimation: false,
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(AppRadius.xl),
-                bottomLeft: Radius.circular(AppRadius.lg),
-              ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20), // High-quality blur
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(
+                  0.6,
+                ), // More translucent for glass effect
+                Colors.white.withOpacity(0.3),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.secondary.withOpacity(0.15),
+                offset: const Offset(0, 8),
+                blurRadius: 32,
+                spreadRadius: 0,
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Pro",
-                  style: AppTypography.headline3.copyWith(
-                    color: AppColors.ln900,
+          child: Stack(
+            children: [
+              Positioned(
+                right: 0,
+                top: 0,
+                child: PulsingBadge(
+                  text: "MOST POPULAR",
+                  backgroundColor: AppColors.secondary,
+                  textColor: Colors.white,
+                  enableAnimation: false,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.xl),
+                    bottomLeft: Radius.circular(AppRadius.lg),
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildFeatureLine("Unlimited Conversations"),
-                _buildFeatureLine("100 Pronunciation Checks / day"),
-                _buildFeatureLine("Unlimited Grammar Analyses"),
-                _buildFeatureLine("Unlimited AI Message Reads"),
-                _buildFeatureLine("Pitch Contour Analysis"),
-                _buildFeatureLine("Unlimited Custom Scenarios"),
-                _buildFeatureLine("Multi-device Sync"),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Pro",
+                      style: AppTypography.headline3.copyWith(
+                        color: AppColors.ln900,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildFeatureLine("Unlimited Conversations"),
+                    _buildFeatureLine("100 Pronunciation Checks / day"),
+                    _buildFeatureLine("Unlimited Grammar Analyses"),
+                    _buildFeatureLine("Unlimited AI Message Reads"),
+                    _buildFeatureLine("Pitch Contour Analysis"),
+                    _buildFeatureLine("Unlimited Custom Scenarios"),
+                    _buildFeatureLine("Multi-device Sync"),
               ],
             ),
           ),
         ],
       ),
+        ),
+      ),
     );
   }
 
   Widget _buildPlusCard(Package package, Package? monthly, Package? yearly) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.white.withOpacity(0.9),
-            Colors.white.withOpacity(0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
-            offset: const Offset(0, 8),
-            blurRadius: 32,
-            spreadRadius: 0,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.5),
+                Colors.white.withOpacity(0.2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.05),
+                offset: const Offset(0, 8),
+                blurRadius: 24,
+                spreadRadius: 0,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -779,6 +823,8 @@ class _PaywallScreenState extends State<PaywallScreen>
           _buildFeatureLine("30 Custom Scenarios"),
           _buildFeatureLine("Multi-device Sync"),
         ],
+      ),
+        ),
       ),
     );
   }
