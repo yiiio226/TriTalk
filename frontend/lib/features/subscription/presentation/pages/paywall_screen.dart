@@ -32,6 +32,7 @@ class _PaywallScreenState extends State<PaywallScreen>
   late SubscriptionTier _selectedTier;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
@@ -40,13 +41,22 @@ class _PaywallScreenState extends State<PaywallScreen>
     
     // Initialize fade animation for page entrance
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(
+        milliseconds: 1000,
+      ), // Slightly longer for elegance
       vsync: this,
     );
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut,
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOutQuart),
     );
+    _slideAnimation =
+        Tween<Offset>(
+          begin: const Offset(0, 0.15), // Start slightly lower
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(parent: _fadeController, curve: Curves.easeOutQuart),
+        );
     
     RevenueCatService().addListener(_onRevenueCatUpdate);
     _loadOfferings();
@@ -226,12 +236,12 @@ class _PaywallScreenState extends State<PaywallScreen>
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       extendBodyBehindAppBar: true,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Stack(
-          children: [
-            // Background Gradient
-            Positioned.fill(
+      body: Stack(
+        children: [
+          // Background Gradient - Fade Only (Static position)
+          Positioned.fill(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
@@ -246,139 +256,148 @@ class _PaywallScreenState extends State<PaywallScreen>
                 ),
               ),
             ),
+          ),
 
-            // Scrollable Content
-            Positioned.fill(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  MediaQuery.of(context).padding.top +
-                      60, // Top padding for header
-                  24,
-                  320, // Increased bottom padding for scrolling space
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    Text(
-                      "Unlock Your Full Potential",
-                      style: AppTypography.headline3.copyWith(
-                        color: AppColors.ln900,
-                        letterSpacing: -0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Master language with AI-powered practice",
-                      style: AppTypography.body1.copyWith(
-                        color: AppColors.ln500,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-
-                  // Monthly / Yearly Switch
-                  if (!widget.showProOnly) ...[
-                    _buildToggleSwitch(),
-                      const SizedBox(height: 24),
-                  ] else ...[
-                    // Add some spacing if toggle is hidden
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Selected Card
-                  if (_selectedTier == SubscriptionTier.pro &&
-                      activePro != null)
-                    _buildProCard(activePro, proMonthly, proYearly)
-                  else if (_selectedTier == SubscriptionTier.plus &&
-                      activePlus != null)
-                    _buildPlusCard(activePlus, plusMonthly, plusYearly),
-
-                  const SizedBox(height: 32),
-
-                  // Terms
-                  // Restore Purchase
-                  TextButton(
-                    onPressed: _isPurchasing ? null : _restorePurchases,
-                    child: Text(
-                      context.l10n.subscription_restore,
-                      style: AppTypography.body2.copyWith(
-                        color: AppColors.ln500,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+          // Scrollable Content - Slide + Fade
+          Positioned.fill(
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    MediaQuery.of(context).padding.top +
+                        60, // Top padding for header
+                    24,
+                    320, // Increased bottom padding for scrolling space
                   ),
-
-                  // Legal Links
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          // TODO: Navigate to Privacy Policy
-                        },
+                      const SizedBox(height: 16),
+                      Text(
+                        "Unlock Your Full Potential",
+                        style: AppTypography.headline3.copyWith(
+                          color: AppColors.ln900,
+                          letterSpacing: -0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Master language with AI-powered practice",
+                        style: AppTypography.body1.copyWith(
+                          color: AppColors.ln500,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Monthly / Yearly Switch
+                      if (!widget.showProOnly) ...[
+                        _buildToggleSwitch(),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        // Add some spacing if toggle is hidden
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Selected Card
+                      if (_selectedTier == SubscriptionTier.pro &&
+                          activePro != null)
+                        _buildProCard(activePro, proMonthly, proYearly)
+                      else if (_selectedTier == SubscriptionTier.plus &&
+                          activePlus != null)
+                        _buildPlusCard(activePlus, plusMonthly, plusYearly),
+
+                      const SizedBox(height: 32),
+
+                      // Terms
+                      // Restore Purchase
+                      TextButton(
+                        onPressed: _isPurchasing ? null : _restorePurchases,
                         child: Text(
-                          "Privacy Policy",
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.primary,
+                          context.l10n.subscription_restore,
+                          style: AppTypography.body2.copyWith(
+                            color: AppColors.ln500,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          "•",
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.ln400,
+
+                      // Legal Links
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: Navigate to Privacy Policy
+                            },
+                            child: Text(
+                              "Privacy Policy",
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              "•",
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.ln400,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: Navigate to Terms of Service
+                            },
+                            child: Text(
+                              "Terms of Service",
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          // TODO: Navigate to Terms of Service
-                        },
-                        child: Text(
-                          "Terms of Service",
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Recurring billing, cancel anytime.",
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.ln400,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Recurring billing, cancel anytime.",
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.ln400,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
 
-          // Fixed Header
+          // Fixed Header - Fade Only (No Slide, easier to hit close button)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(AppRadius.full),
                           child: BackdropFilter(
@@ -404,21 +423,32 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 size: 22,
                               ),
                             ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          // Sticky Footer
+          // Sticky Footer - Slide + Fade
           Align(
             alignment: Alignment.bottomCenter,
-            child: _buildStickyFooter(
-              _selectedTier == SubscriptionTier.pro ? proMonthly : plusMonthly,
-              _selectedTier == SubscriptionTier.pro ? proYearly : plusYearly,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: _buildStickyFooter(
+                  _selectedTier == SubscriptionTier.pro
+                      ? proMonthly
+                      : plusMonthly,
+                  _selectedTier == SubscriptionTier.pro
+                      ? proYearly
+                      : plusYearly,
+                ),
+              ),
             ),
           ),
 
@@ -428,7 +458,6 @@ class _PaywallScreenState extends State<PaywallScreen>
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
-      ),
       ),
     );
   }
