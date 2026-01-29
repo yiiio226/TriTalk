@@ -322,7 +322,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Column(
           children: [
             const SizedBox(height: AppSpacing.sm),
-            // Custom Header
+            // Custom Header - Fixed at the top
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               child: Row(
@@ -356,176 +356,180 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // Profile Info
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Row(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.secondary,
-                    ),
-                    child: ClipOval(
-                      child: _avatarUrl.startsWith('assets/')
-                          ? Image.asset(_avatarUrl, fit: BoxFit.cover)
-                          : Image.network(
-                              _avatarUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                // Fallback to gender-based avatar
-                                final fallbackPath = _gender == 'female'
-                                    ? 'assets/images/avatars/user_avatar_female.png'
-                                    : 'assets/images/avatars/user_avatar_male.png';
-                                return Image.asset(
-                                  fallbackPath,
-                                  fit: BoxFit.cover,
-                                );
-                              },
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.lg),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _name,
-                          style: AppTypography.headline3.copyWith(
-                            color: AppColors.lightTextPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          _email,
-                          style: AppTypography.body2.copyWith(
-                            color: AppColors.lightTextPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
-              ),
-              child: _buildSubscriptionSection(context),
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // Menu Items
+            // Scrollable Content
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                children: [
-                  Text(
-                    context.l10n.profile_languageSettings,
-                    style: AppTypography.subtitle1.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextPrimary,
-                    ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // App Language Setting
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final localeState = ref.watch(localeProvider);
-                      return _buildMenuCard(
-                        context,
-                        title: context.l10n.profile_appLanguage,
-                        subtitle: localeState.selectedCode == 'system'
-                            ? context.l10n.profile_systemDefault
-                            : localeState.displayLabel,
-                        icon: Icons.language,
-                        iconColor: AppColors.lightTextSecondary,
-                        onTap: _showAppLanguageDialog,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildMenuCard(
-                    context,
-                    title: context.l10n.profile_nativeLanguage,
-                    subtitle: LanguageConstants.getLocalizedLabel(
-                      context,
-                      _nativeLanguage,
-                    ),
-                    icon: Icons.public,
-                    iconColor: AppColors.lightTextSecondary,
-                    onTap: () {
-                      _showLanguageDialog(
-                        context.l10n.profile_selectNative,
-                        _nativeLanguage,
-                        _updateNativeLanguage,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildMenuCard(
-                    context,
-                    title: context.l10n.profile_learningLanguage,
-                    subtitle: LanguageConstants.getLocalizedLabel(
-                      context,
-                      _targetLanguage,
-                    ),
-                    icon: Icons.school,
-                    iconColor: AppColors.lightTextSecondary,
-                    onTap: () {
-                      _showLanguageDialog(
-                        context.l10n.profile_selectLearning,
-                        _targetLanguage,
-                        _updateTargetLanguage,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Text(
-                    context.l10n.profile_tools,
-                    style: AppTypography.subtitle1.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.lightTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildMenuCard(
-                    context,
-                    title: context.l10n.scenes_favorites, // Unified title
-                    subtitle:
-                        context.l10n.profile_vocabularySentencesChatHistory,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Profile Info
+                      Row(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.secondary,
+                            ),
+                            child: ClipOval(
+                              child: _avatarUrl.startsWith('assets/')
+                                  ? Image.asset(_avatarUrl, fit: BoxFit.cover)
+                                  : Image.network(
+                                      _avatarUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        // Fallback to gender-based avatar
+                                        final fallbackPath = _gender == 'female'
+                                            ? 'assets/images/avatars/user_avatar_female.png'
+                                            : 'assets/images/avatars/user_avatar_male.png';
+                                        return Image.asset(
+                                          fallbackPath,
+                                          fit: BoxFit.cover,
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _name,
+                                  style: AppTypography.headline3.copyWith(
+                                    color: AppColors.lightTextPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  _email,
+                                  style: AppTypography.body2.copyWith(
+                                    color: AppColors.lightTextPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
 
-                    icon: Icons.bookmark,
-                    iconColor: AppColors.lightTextSecondary,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const UnifiedFavoritesScreen(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
                         ),
-                      );
-                    },
+                        child: _buildSubscriptionSection(context),
+                      ),
+
+                      const SizedBox(height: AppSpacing.md),
+
+                      Text(
+                        context.l10n.profile_languageSettings,
+                        style: AppTypography.subtitle1.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.lightTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      // App Language Setting
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final localeState = ref.watch(localeProvider);
+                          return _buildMenuCard(
+                            context,
+                            title: context.l10n.profile_appLanguage,
+                            subtitle: localeState.selectedCode == 'system'
+                                ? context.l10n.profile_systemDefault
+                                : localeState.displayLabel,
+                            icon: Icons.language,
+                            iconColor: AppColors.lightTextSecondary,
+                            onTap: _showAppLanguageDialog,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildMenuCard(
+                        context,
+                        title: context.l10n.profile_nativeLanguage,
+                        subtitle: LanguageConstants.getLocalizedLabel(
+                          context,
+                          _nativeLanguage,
+                        ),
+                        icon: Icons.public,
+                        iconColor: AppColors.lightTextSecondary,
+                        onTap: () {
+                          _showLanguageDialog(
+                            context.l10n.profile_selectNative,
+                            _nativeLanguage,
+                            _updateNativeLanguage,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildMenuCard(
+                        context,
+                        title: context.l10n.profile_learningLanguage,
+                        subtitle: LanguageConstants.getLocalizedLabel(
+                          context,
+                          _targetLanguage,
+                        ),
+                        icon: Icons.school,
+                        iconColor: AppColors.lightTextSecondary,
+                        onTap: () {
+                          _showLanguageDialog(
+                            context.l10n.profile_selectLearning,
+                            _targetLanguage,
+                            _updateTargetLanguage,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      Text(
+                        context.l10n.profile_tools,
+                        style: AppTypography.subtitle1.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.lightTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildMenuCard(
+                        context,
+                        title: context.l10n.scenes_favorites, // Unified title
+                        subtitle:
+                            context.l10n.profile_vocabularySentencesChatHistory,
+
+                        icon: Icons.bookmark,
+                        iconColor: AppColors.lightTextSecondary,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const UnifiedFavoritesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      // Logout Button
+                      _buildMenuCard(
+                        context,
+                        title: context.l10n.profile_logOut,
+                        icon: Icons.arrow_circle_right,
+                        iconColor: AppColors.lightTextSecondary,
+                        onTap: _handleLogout,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Logout Button
-                  _buildMenuCard(
-                    context,
-                    title: context.l10n.profile_logOut,
-                    icon: Icons.arrow_circle_right,
-                    iconColor: AppColors.lightTextSecondary,
-                    onTap: _handleLogout,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
+                ),
               ),
             ),
           ],

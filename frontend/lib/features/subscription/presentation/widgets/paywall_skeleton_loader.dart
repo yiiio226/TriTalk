@@ -12,6 +12,7 @@ class PaywallSkeletonLoader extends StatelessWidget {
       body: Shimmer.fromColors(
         baseColor: AppColors.lightSkeletonBase,
         highlightColor: AppColors.lightSkeletonHighlight,
+        period: const Duration(milliseconds: 2000), // Slower animation
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             24,
@@ -163,6 +164,7 @@ class PaywallSkeletonLoader extends StatelessWidget {
             child: Shimmer.fromColors(
               baseColor: AppColors.lightSkeletonBase,
               highlightColor: AppColors.lightSkeletonHighlight,
+              period: const Duration(milliseconds: 2000),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
