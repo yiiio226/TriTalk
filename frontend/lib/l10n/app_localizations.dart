@@ -967,6 +967,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What do you want to learn?'**
   String get onboarding_learningLanguageQuestion;
+
+  /// Button text to delete account
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// Title for delete account confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account?'**
+  String get deleteAccountConfirmationTitle;
+
+  /// Content for delete account confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'This action is permanent and cannot be undone. All your data will be erased and cannot be recovered.'**
+  String get deleteAccountConfirmationContent;
+
+  /// Warning about subscriptions when deleting account
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account does NOT cancel your subscription. Please manage subscriptions in your device settings.'**
+  String get deleteAccountSubscriptionWarning;
+
+  /// Instruction to type DELETE to confirm account deletion
+  ///
+  /// In en, this message translates to:
+  /// **'Type DELETE to confirm'**
+  String get deleteAccountTypeConfirm;
+
+  /// Hint text for delete confirmation input
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteAccountTypeHint;
+
+  /// Delete action button text
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteAction;
+
+  /// Cancel action button text
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelAction;
+
+  /// Loading message while deleting account
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting account...'**
+  String get deleteAccountLoading;
+
+  /// Error message when account deletion fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete account'**
+  String get deleteAccountFailed;
+
+  /// Section header for dangerous operations
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get profile_dangerZone;
 }
 
 class _AppLocalizationsDelegate

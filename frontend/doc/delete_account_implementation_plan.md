@@ -4,7 +4,7 @@
 
 在 Profile 界面增加删除账号功能，确保点击后删除后端 User、Supabase Auth User 及所有关联数据。
 
-## 2. 数据库变更 (关键步骤)
+## 2. 数据库变更 (关键步骤) （已完成）
 
 目前 `profiles` 表的外键引用缺少 `ON DELETE CASCADE`，这会导致删除 Auth 用户时失败。
 
@@ -30,7 +30,7 @@ ADD CONSTRAINT profiles_id_fkey
 
 ---
 
-## 3. 后端开发 (Backend)
+## 3. 后端开发 (Backend) （已完成）
 
 > **规范提示**: 本接口应遵循 [OpenAPI 后端指南](../backend/docs/openapi_backend.md)，使用 zod 定义 Schema 以便自动生成文档。
 
@@ -49,7 +49,7 @@ export const DeleteAccountResponseSchema = z.object({
 });
 ```
 
-### 3.2 实现接口 (`server.ts`)
+### 3.2 实现接口 (`server.ts`) （已完成）
 
 **新增接口**:
 
@@ -116,7 +116,7 @@ app.openapi(deleteAccountRoute, async (c) => {
 
 目标文件: `frontend/lib/features/profile/presentation/pages/profile_screen.dart`
 
-### 4.1 Localization (l10n)
+### 4.1 Localization (l10n) （已完成）
 
 需在 `intl_en.arb` (及其他语言文件) 中添加:
 
@@ -133,7 +133,7 @@ app.openapi(deleteAccountRoute, async (c) => {
 "deleteAccountFailed": "Failed to delete account"
 ```
 
-### 4.2 UI 修改
+### 4.2 UI 修改 （未完成）
 
 在 Profile 界面底部新增 **"Danger Zone"** 分组，将删除账号按钮与其他菜单分开，突出危险操作的视觉警示。
 
@@ -350,7 +350,7 @@ Future<void> _handleDeleteAccount() async {
 
 ---
 
-## 6. l10n 完整清单
+## 6. l10n 完整清单 （已完成）
 
 以下是需要添加到各语言 `.arb` 文件的完整 key 列表：
 

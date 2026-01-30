@@ -486,4 +486,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get onboarding_learningLanguageQuestion =>
       'What do you want to learn?';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountConfirmationTitle => 'Delete Account?';
+
+  @override
+  String get deleteAccountConfirmationContent =>
+      'This action is permanent and cannot be undone. All your data will be erased and cannot be recovered.';
+
+  @override
+  String get deleteAccountSubscriptionWarning =>
+      'Deleting your account does NOT cancel your subscription. Please manage subscriptions in your device settings.';
+
+  @override
+  String get deleteAccountTypeConfirm => 'Type DELETE to confirm';
+
+  @override
+  String get deleteAccountTypeHint => 'DELETE';
+
+  @override
+  String get deleteAction => 'Delete';
+
+  @override
+  String get cancelAction => 'Cancel';
+
+  @override
+  String get deleteAccountLoading => 'Deleting account...';
+
+  @override
+  String get deleteAccountFailed => 'Failed to delete account';
+
+  @override
+  String get profile_dangerZone => 'Danger Zone';
 }

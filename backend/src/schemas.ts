@@ -389,3 +389,14 @@ export const AdminDeleteScenesResponseSchema = z.object({
   success: z.boolean(),
   deleted_count: z.number(),
 });
+
+// --- Delete Account Schemas ---
+
+// Request: Empty Body (账号删除不需要请求体)
+export const DeleteAccountRequestSchema = z.object({});
+
+// Response
+export const DeleteAccountResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string().openapi({ example: "Account permanently deleted" }),
+});

@@ -456,4 +456,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get onboarding_learningLanguageQuestion => '你想学习什么？';
+
+  @override
+  String get deleteAccount => '删除账号';
+
+  @override
+  String get deleteAccountConfirmationTitle => '确认删除账号？';
+
+  @override
+  String get deleteAccountConfirmationContent => '此操作不可撤销。您的所有数据将被永久删除且无法恢复。';
+
+  @override
+  String get deleteAccountSubscriptionWarning => '删除账号不会取消您的订阅。请在设备设置中管理订阅。';
+
+  @override
+  String get deleteAccountTypeConfirm => '输入 DELETE 以确认';
+
+  @override
+  String get deleteAccountTypeHint => 'DELETE';
+
+  @override
+  String get deleteAction => '删除';
+
+  @override
+  String get cancelAction => '取消';
+
+  @override
+  String get deleteAccountLoading => '正在删除账号...';
+
+  @override
+  String get deleteAccountFailed => '删除账号失败';
+
+  @override
+  String get profile_dangerZone => '危险操作';
 }
