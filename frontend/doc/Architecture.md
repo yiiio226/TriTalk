@@ -39,6 +39,7 @@ graph TD
     Core --> CoreDesign[design/]
     Core --> CoreEnv[env/]
     Core --> CoreInit[initializer/]
+    Core --> CoreServices[services/]
     Core --> CoreUtils[utils/]
     Core --> CoreWidgets[widgets/]
 
@@ -63,6 +64,7 @@ graph TD
 - **`design/`**: 应用程序主题, 颜色, 排版和资产。
 - **`env/`**: 环境配置 (例如 Dev vs. Prod)。
 - **`initializer/`**: 应用程序启动逻辑 (Supabase 初始化, 特定服务预热)。
+- **`services/`**: 全局后台服务 (例如 FCM 推送通知, SoLoud TTS 引擎)。
 - **`utils/`**: 辅助函数和扩展。
 - **`widgets/`**: 可重用的基础设施 UI 组件 (例如加载器, Toasts, 通用按钮)。
 
