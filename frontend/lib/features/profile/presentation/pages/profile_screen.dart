@@ -14,6 +14,9 @@ import 'package:frontend/features/subscription/domain/models/subscription_tier.d
 import '../../../subscription/presentation/pages/paywall_screen.dart';
 import '../../../onboarding/presentation/pages/splash_screen.dart'; // For logout navigation
 import 'package:frontend/core/utils/l10n_ext.dart';
+import 'package:frontend/core/data/api/client_provider.dart';
+import 'package:frontend/core/services/fcm_service.dart';
+import 'package:frontend/core/widgets/top_toast.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -109,6 +112,312 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         MaterialPageRoute(builder: (context) => const SplashScreen()),
         (Route<dynamic> route) => false,
       );
+    }
+  }
+
+  // ============================================================================
+  // Delete Account Methods
+  // ============================================================================
+
+  /// 处理删除账号 - 双重确认后调用 API
+  Future<void> _handleDeleteAccount() async {
+    // Step 1: 显示警告确认对话框
+    final firstConfirm = await _showDeleteWarningDialog();
+    if (firstConfirm != true) return;
+
+    // Step 2: 要求输入 "DELETE" 进行二次确认，并执行删除
+    final success = await _showDeleteTypeConfirmDialog();
+
+    // Step 3: 如果删除成功，则执行登出跳转
+    if (success == true) {
+      _handleLogout();
+    }
+  }
+
+  /// 显示删除账号警告对话框（包含订阅提醒）
+  Future<bool?> _showDeleteWarningDialog() {
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.lightSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (dialogContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.lightDivider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              Text(
+                context.l10n.deleteAccountConfirmationTitle,
+                style: AppTypography.headline4.copyWith(
+                  color: AppColors.lightError,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                context.l10n.deleteAccountConfirmationContent,
+                style: AppTypography.body1.copyWith(
+                  color: AppColors.lightTextPrimary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _buildSubscriptionWarningBanner(),
+              const SizedBox(height: AppSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: AppColors.ln200),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: Text(
+                        context.l10n.cancelAction,
+                        style: TextStyle(color: AppColors.lightTextPrimary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.lightError,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: Text(
+                        context.l10n.deleteAction,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 显示输入 DELETE 确认对话框
+  Future<bool?> _showDeleteTypeConfirmDialog() {
+    final confirmController = TextEditingController();
+
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.lightSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (dialogContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(dialogContext).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.lightDivider,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                Text(
+                  context.l10n.deleteAccountConfirmationTitle,
+                  style: AppTypography.headline4.copyWith(
+                    color: AppColors.lightError,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  context.l10n.deleteAccountTypeConfirm,
+                  style: AppTypography.body1.copyWith(
+                    color: AppColors.lightTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: confirmController,
+                  decoration: InputDecoration(
+                    hintText: context.l10n.deleteAccountTypeHint,
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: AppColors.ln200),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        child: Text(
+                          context.l10n.cancelAction,
+                          style: TextStyle(color: AppColors.lightTextPrimary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final isMatch =
+                              confirmController.text.trim().toUpperCase() ==
+                              'DELETE';
+                          if (!isMatch) return;
+
+                          // 关闭键盘，确保 Toast 可见
+                          FocusManager.instance.primaryFocus?.unfocus();
+
+                          // 执行删除，成功才关闭弹窗
+                          final success = await _performDeletion();
+                          if (success && dialogContext.mounted) {
+                            Navigator.pop(dialogContext, true);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.lightError,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        child: Text(
+                          context.l10n.deleteAction,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 执行账号删除操作 API 调用
+  Future<bool> _performDeletion() async {
+    if (!mounted) return false;
+
+    showTopToast(context, context.l10n.deleteAccountLoading);
+
+    try {
+      // 尝试注销 FCM Token（失败不阻塞）
+      await _tryDeregisterFcmToken();
+
+      // 调用 API 删除账号
+      final response = await ClientProvider.client.userAccountDelete();
+
+      if (!response.isSuccessful) {
+        throw Exception(
+          'Failed to delete account: ${response.statusCode} ${response.error}',
+        );
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Delete account error: $e');
+      if (mounted) {
+        showTopToast(context, context.l10n.deleteAccountFailed, isError: true);
+      }
+      return false;
+    }
+  }
+
+  /// 构建订阅警告横幅
+  Widget _buildSubscriptionWarningBanner() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.lightWarning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.lightWarning),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.lightWarning,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              context.l10n.deleteAccountSubscriptionWarning,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.lightWarning,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 显示加载对话框
+
+  /// 尝试注销 FCM Token
+  Future<void> _tryDeregisterFcmToken() async {
+    try {
+      await FcmService.instance.unregisterToken();
+    } catch (_) {
+      debugPrint('FCM deregister failed, continuing with account deletion');
     }
   }
 
@@ -541,6 +850,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.arrow_circle_right,
                         iconColor: AppColors.lightTextSecondary,
                         onTap: _handleLogout,
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Danger Zone Section
+                      Text(
+                        context.l10n.profile_dangerZone,
+                        style: AppTypography.subtitle1.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.lightError,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Delete Account Button
+                      _buildMenuCard(
+                        context,
+                        title: context.l10n.deleteAccount,
+                        icon: Icons.delete_forever_rounded,
+                        iconColor: AppColors.lightError,
+                        onTap: _handleDeleteAccount,
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       // Version Info

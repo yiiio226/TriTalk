@@ -219,6 +219,42 @@ Map<String, dynamic> _$ShadowingUpsertPut$RequestBodyToJson(
   'segments': instance.segments?.map((e) => e.toJson()).toList(),
 };
 
+AdminStandardScenesPost$RequestBody
+_$AdminStandardScenesPost$RequestBodyFromJson(Map<String, dynamic> json) =>
+    AdminStandardScenesPost$RequestBody(
+      scenes: (json['scenes'] as List<dynamic>)
+          .map(
+            (e) => AdminStandardScenesPost$RequestBody$Scenes$Item.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+    );
+
+Map<String, dynamic> _$AdminStandardScenesPost$RequestBodyToJson(
+  AdminStandardScenesPost$RequestBody instance,
+) => <String, dynamic>{
+  'scenes': instance.scenes.map((e) => e.toJson()).toList(),
+};
+
+AdminPushTestPost$RequestBody _$AdminPushTestPost$RequestBodyFromJson(
+  Map<String, dynamic> json,
+) => AdminPushTestPost$RequestBody(
+  userId: json['user_id'] as String,
+  title: json['title'] as String?,
+  body: json['body'] as String?,
+  data: json['data'] as Map<String, dynamic>?,
+);
+
+Map<String, dynamic> _$AdminPushTestPost$RequestBodyToJson(
+  AdminPushTestPost$RequestBody instance,
+) => <String, dynamic>{
+  'user_id': instance.userId,
+  'title': instance.title,
+  'body': instance.body,
+  'data': instance.data,
+};
+
 HealthGet$Response _$HealthGet$ResponseFromJson(Map<String, dynamic> json) =>
     HealthGet$Response(status: json['status'] as String);
 
@@ -393,6 +429,112 @@ Map<String, dynamic> _$ShadowingGetGet$ResponseToJson(
   'data': instance.data?.toJson(),
 };
 
+UserAccountDelete$Response _$UserAccountDelete$ResponseFromJson(
+  Map<String, dynamic> json,
+) => UserAccountDelete$Response(
+  success: json['success'] as bool,
+  message: json['message'] as String,
+);
+
+Map<String, dynamic> _$UserAccountDelete$ResponseToJson(
+  UserAccountDelete$Response instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'message': instance.message,
+};
+
+AdminStandardScenesGet$Response _$AdminStandardScenesGet$ResponseFromJson(
+  Map<String, dynamic> json,
+) => AdminStandardScenesGet$Response(
+  success: json['success'] as bool,
+  count: (json['count'] as num).toDouble(),
+  scenes: (json['scenes'] as List<dynamic>)
+      .map(
+        (e) => AdminStandardScenesGet$Response$Scenes$Item.fromJson(
+          e as Map<String, dynamic>,
+        ),
+      )
+      .toList(),
+);
+
+Map<String, dynamic> _$AdminStandardScenesGet$ResponseToJson(
+  AdminStandardScenesGet$Response instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'count': instance.count,
+  'scenes': instance.scenes.map((e) => e.toJson()).toList(),
+};
+
+AdminStandardScenesPost$Response _$AdminStandardScenesPost$ResponseFromJson(
+  Map<String, dynamic> json,
+) => AdminStandardScenesPost$Response(
+  success: json['success'] as bool,
+  createdCount: (json['created_count'] as num).toDouble(),
+  scenes: (json['scenes'] as List<dynamic>)
+      .map(
+        (e) => AdminStandardScenesPost$Response$Scenes$Item.fromJson(
+          e as Map<String, dynamic>,
+        ),
+      )
+      .toList(),
+);
+
+Map<String, dynamic> _$AdminStandardScenesPost$ResponseToJson(
+  AdminStandardScenesPost$Response instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'created_count': instance.createdCount,
+  'scenes': instance.scenes.map((e) => e.toJson()).toList(),
+};
+
+AdminStandardScenesIdDelete$Response
+_$AdminStandardScenesIdDelete$ResponseFromJson(Map<String, dynamic> json) =>
+    AdminStandardScenesIdDelete$Response(
+      success: json['success'] as bool,
+      deletedCount: (json['deleted_count'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$AdminStandardScenesIdDelete$ResponseToJson(
+  AdminStandardScenesIdDelete$Response instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'deleted_count': instance.deletedCount,
+};
+
+AdminPushTestPost$Response _$AdminPushTestPost$ResponseFromJson(
+  Map<String, dynamic> json,
+) => AdminPushTestPost$Response(
+  success: json['success'] as bool,
+  sent: (json['sent'] as num).toDouble(),
+  failed: (json['failed'] as num).toDouble(),
+  message: json['message'] as String,
+);
+
+Map<String, dynamic> _$AdminPushTestPost$ResponseToJson(
+  AdminPushTestPost$Response instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'sent': instance.sent,
+  'failed': instance.failed,
+  'message': instance.message,
+};
+
+AdminPushStatusGet$Response _$AdminPushStatusGet$ResponseFromJson(
+  Map<String, dynamic> json,
+) => AdminPushStatusGet$Response(
+  configured: json['configured'] as bool,
+  projectId: json['project_id'] as String?,
+  clientEmail: json['client_email'] as String?,
+);
+
+Map<String, dynamic> _$AdminPushStatusGet$ResponseToJson(
+  AdminPushStatusGet$Response instance,
+) => <String, dynamic>{
+  'configured': instance.configured,
+  'project_id': instance.projectId,
+  'client_email': instance.clientEmail,
+};
+
 ChatSendPost$RequestBody$History$Item
 _$ChatSendPost$RequestBody$History$ItemFromJson(Map<String, dynamic> json) =>
     ChatSendPost$RequestBody$History$Item(
@@ -480,6 +622,47 @@ Map<String, dynamic> _$ShadowingUpsertPut$RequestBody$Segments$ItemToJson(
   'score': instance.score,
   'has_error': instance.hasError,
   'word_count': instance.wordCount,
+};
+
+AdminStandardScenesPost$RequestBody$Scenes$Item
+_$AdminStandardScenesPost$RequestBody$Scenes$ItemFromJson(
+  Map<String, dynamic> json,
+) => AdminStandardScenesPost$RequestBody$Scenes$Item(
+  id: json['id'] as String?,
+  title: json['title'] as String,
+  description: json['description'] as String,
+  aiRole: json['ai_role'] as String,
+  userRole: json['user_role'] as String,
+  initialMessage: json['initial_message'] as String,
+  goal: json['goal'] as String,
+  emoji: json['emoji'] as String?,
+  category: json['category'] as String,
+  difficulty: adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyFromJson(
+    json['difficulty'],
+  ),
+  iconPath: json['icon_path'] as String?,
+  color: (json['color'] as num).toDouble(),
+  targetLanguage: json['target_language'] as String?,
+);
+
+Map<String, dynamic> _$AdminStandardScenesPost$RequestBody$Scenes$ItemToJson(
+  AdminStandardScenesPost$RequestBody$Scenes$Item instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'title': instance.title,
+  'description': instance.description,
+  'ai_role': instance.aiRole,
+  'user_role': instance.userRole,
+  'initial_message': instance.initialMessage,
+  'goal': instance.goal,
+  'emoji': instance.emoji,
+  'category': instance.category,
+  'difficulty': adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyToJson(
+    instance.difficulty,
+  ),
+  'icon_path': instance.iconPath,
+  'color': instance.color,
+  'target_language': instance.targetLanguage,
 };
 
 ChatSendPost$Response$ReviewFeedback
@@ -578,6 +761,61 @@ Map<String, dynamic> _$ShadowingGetGet$Response$DataToJson(
   'segments': instance.segments.map((e) => e.toJson()).toList(),
   'practiced_at': instance.practicedAt,
 };
+
+AdminStandardScenesGet$Response$Scenes$Item
+_$AdminStandardScenesGet$Response$Scenes$ItemFromJson(
+  Map<String, dynamic> json,
+) => AdminStandardScenesGet$Response$Scenes$Item(
+  id: json['id'] as String,
+  title: json['title'] as String,
+  description: json['description'] as String,
+  aiRole: json['ai_role'] as String,
+  userRole: json['user_role'] as String,
+  initialMessage: json['initial_message'] as String,
+  goal: json['goal'] as String,
+  emoji: json['emoji'] as String?,
+  category: json['category'] as String,
+  difficulty: adminStandardScenesGet$Response$Scenes$ItemDifficultyFromJson(
+    json['difficulty'],
+  ),
+  iconPath: json['icon_path'] as String?,
+  color: (json['color'] as num).toDouble(),
+  targetLanguage: json['target_language'] as String?,
+  createdAt: json['created_at'] as String?,
+);
+
+Map<String, dynamic> _$AdminStandardScenesGet$Response$Scenes$ItemToJson(
+  AdminStandardScenesGet$Response$Scenes$Item instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'title': instance.title,
+  'description': instance.description,
+  'ai_role': instance.aiRole,
+  'user_role': instance.userRole,
+  'initial_message': instance.initialMessage,
+  'goal': instance.goal,
+  'emoji': instance.emoji,
+  'category': instance.category,
+  'difficulty': adminStandardScenesGet$Response$Scenes$ItemDifficultyToJson(
+    instance.difficulty,
+  ),
+  'icon_path': instance.iconPath,
+  'color': instance.color,
+  'target_language': instance.targetLanguage,
+  'created_at': instance.createdAt,
+};
+
+AdminStandardScenesPost$Response$Scenes$Item
+_$AdminStandardScenesPost$Response$Scenes$ItemFromJson(
+  Map<String, dynamic> json,
+) => AdminStandardScenesPost$Response$Scenes$Item(
+  id: json['id'] as String,
+  title: json['title'] as String,
+);
+
+Map<String, dynamic> _$AdminStandardScenesPost$Response$Scenes$ItemToJson(
+  AdminStandardScenesPost$Response$Scenes$Item instance,
+) => <String, dynamic>{'id': instance.id, 'title': instance.title};
 
 ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$Item
 _$ShadowingUpsertPut$RequestBody$WordFeedback$Item$Phonemes$ItemFromJson(

@@ -133,7 +133,7 @@ app.openapi(deleteAccountRoute, async (c) => {
 "deleteAccountFailed": "Failed to delete account"
 ```
 
-### 4.2 UI 修改 （未完成）
+### 4.2 UI 修改 （已完成）
 
 在 Profile 界面底部新增 **"Danger Zone"** 分组，将删除账号按钮与其他菜单分开，突出危险操作的视觉警示。
 
@@ -162,7 +162,7 @@ _buildMenuCard(
 ),
 ```
 
-### 4.3 逻辑实现
+### 4.3 逻辑实现 （已完成）
 
 ```dart
 Future<void> _handleDeleteAccount() async {

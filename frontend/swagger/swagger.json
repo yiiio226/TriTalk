@@ -1398,6 +1398,677 @@
           }
         }
       }
+    },
+    "/user/account": {
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Account deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Account permanently deleted"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/standard-scenes": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "List of all standard scenes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "number"
+                    },
+                    "scenes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "title": {
+                            "type": "string",
+                            "example": "Order Coffee"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "Order a coffee at a cafe"
+                          },
+                          "ai_role": {
+                            "type": "string",
+                            "example": "Barista"
+                          },
+                          "user_role": {
+                            "type": "string",
+                            "example": "Customer"
+                          },
+                          "initial_message": {
+                            "type": "string",
+                            "example": "Hi! What can I get for you today?"
+                          },
+                          "goal": {
+                            "type": "string",
+                            "example": "Order a coffee"
+                          },
+                          "emoji": {
+                            "type": "string",
+                            "default": "🎭",
+                            "example": "☕"
+                          },
+                          "category": {
+                            "type": "string",
+                            "example": "Daily Life"
+                          },
+                          "difficulty": {
+                            "type": "string",
+                            "enum": [
+                              "Easy",
+                              "Medium",
+                              "Hard"
+                            ],
+                            "example": "Easy"
+                          },
+                          "icon_path": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "example": "assets/images/scenes/coffee_3d.png"
+                          },
+                          "color": {
+                            "type": "number",
+                            "example": 4292932337
+                          },
+                          "target_language": {
+                            "type": "string",
+                            "default": "en-US",
+                            "example": "en-US"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "description",
+                          "ai_role",
+                          "user_role",
+                          "initial_message",
+                          "goal",
+                          "category",
+                          "difficulty",
+                          "color"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "count",
+                    "scenes"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scenes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+                        },
+                        "title": {
+                          "type": "string",
+                          "example": "Order Coffee"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Order a coffee at a cafe"
+                        },
+                        "ai_role": {
+                          "type": "string",
+                          "example": "Barista"
+                        },
+                        "user_role": {
+                          "type": "string",
+                          "example": "Customer"
+                        },
+                        "initial_message": {
+                          "type": "string",
+                          "example": "Hi! What can I get for you today?"
+                        },
+                        "goal": {
+                          "type": "string",
+                          "example": "Order a coffee"
+                        },
+                        "emoji": {
+                          "type": "string",
+                          "default": "🎭",
+                          "example": "☕"
+                        },
+                        "category": {
+                          "type": "string",
+                          "example": "Daily Life"
+                        },
+                        "difficulty": {
+                          "type": "string",
+                          "enum": [
+                            "Easy",
+                            "Medium",
+                            "Hard"
+                          ],
+                          "example": "Easy"
+                        },
+                        "icon_path": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "example": "assets/images/scenes/coffee_3d.png"
+                        },
+                        "color": {
+                          "type": "number",
+                          "example": 4292932337
+                        },
+                        "target_language": {
+                          "type": "string",
+                          "default": "en-US",
+                          "example": "en-US"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "description",
+                        "ai_role",
+                        "user_role",
+                        "initial_message",
+                        "goal",
+                        "category",
+                        "difficulty",
+                        "color"
+                      ]
+                    },
+                    "minItems": 1,
+                    "description": "Array of scenes to create. At least one scene is required."
+                  }
+                },
+                "required": [
+                  "scenes"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scenes created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "created_count": {
+                      "type": "number",
+                      "example": 3
+                    },
+                    "scenes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "created_count",
+                    "scenes"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/standard-scenes/:id": {
+      "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scene deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "deleted_count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "deleted_count"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scene not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/push/test": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Target user UUID"
+                  },
+                  "title": {
+                    "type": "string",
+                    "default": "TriTalk Test",
+                    "description": "Notification title"
+                  },
+                  "body": {
+                    "type": "string",
+                    "default": "This is a test notification 🔔",
+                    "description": "Notification body"
+                  },
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Optional custom data payload"
+                  }
+                },
+                "required": [
+                  "user_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Push notification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "sent": {
+                      "type": "number",
+                      "description": "Number of devices notified"
+                    },
+                    "failed": {
+                      "type": "number",
+                      "description": "Number of invalid tokens cleaned up"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "sent",
+                    "failed",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (FCM not configured)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "debug_error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/push/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "FCM configuration status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "configured": {
+                      "type": "boolean"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "client_email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "configured"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "webhooks": {}

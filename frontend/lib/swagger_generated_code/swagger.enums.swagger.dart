@@ -37,6 +37,22 @@ enum ShadowingGetGetSourceType {
   const ShadowingGetGetSourceType(this.value);
 }
 
+enum AdminStandardScenesGet$Response$Scenes$ItemDifficulty {
+  @JsonValue(null)
+  swaggerGeneratedUnknown(null),
+
+  @JsonValue('Easy')
+  easy('Easy'),
+  @JsonValue('Medium')
+  medium('Medium'),
+  @JsonValue('Hard')
+  hard('Hard');
+
+  final String? value;
+
+  const AdminStandardScenesGet$Response$Scenes$ItemDifficulty(this.value);
+}
+
 enum ShadowingUpsertPut$RequestBodySourceType {
   @JsonValue(null)
   swaggerGeneratedUnknown(null),
@@ -69,4 +85,20 @@ enum ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel {
   final String? value;
 
   const ShadowingUpsertPut$RequestBody$WordFeedback$ItemLevel(this.value);
+}
+
+enum AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty {
+  @JsonValue(null)
+  swaggerGeneratedUnknown(null),
+
+  @JsonValue('Easy')
+  easy('Easy'),
+  @JsonValue('Medium')
+  medium('Medium'),
+  @JsonValue('Hard')
+  hard('Hard');
+
+  final String? value;
+
+  const AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty(this.value);
 }

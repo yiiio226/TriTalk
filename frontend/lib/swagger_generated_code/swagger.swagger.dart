@@ -431,6 +431,177 @@ abstract class Swagger extends ChopperService {
       deprecated: false,
     ),
   });
+
+  ///
+  Future<chopper.Response<UserAccountDelete$Response>> userAccountDelete() {
+    generatedMapping.putIfAbsent(
+      UserAccountDelete$Response,
+      () => UserAccountDelete$Response.fromJsonFactory,
+    );
+
+    return _userAccountDelete();
+  }
+
+  ///
+  @DELETE(path: '/user/account')
+  Future<chopper.Response<UserAccountDelete$Response>> _userAccountDelete({
+    @chopper.Tag()
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  });
+
+  ///
+  Future<chopper.Response<AdminStandardScenesGet$Response>>
+  adminStandardScenesGet() {
+    generatedMapping.putIfAbsent(
+      AdminStandardScenesGet$Response,
+      () => AdminStandardScenesGet$Response.fromJsonFactory,
+    );
+
+    return _adminStandardScenesGet();
+  }
+
+  ///
+  @GET(path: '/admin/standard-scenes')
+  Future<chopper.Response<AdminStandardScenesGet$Response>>
+  _adminStandardScenesGet({
+    @chopper.Tag()
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  });
+
+  ///
+  Future<chopper.Response<AdminStandardScenesPost$Response>>
+  adminStandardScenesPost({
+    required AdminStandardScenesPost$RequestBody? body,
+  }) {
+    generatedMapping.putIfAbsent(
+      AdminStandardScenesPost$Response,
+      () => AdminStandardScenesPost$Response.fromJsonFactory,
+    );
+
+    return _adminStandardScenesPost(body: body);
+  }
+
+  ///
+  @POST(path: '/admin/standard-scenes', optionalBody: true)
+  Future<chopper.Response<AdminStandardScenesPost$Response>>
+  _adminStandardScenesPost({
+    @Body() required AdminStandardScenesPost$RequestBody? body,
+    @chopper.Tag()
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  });
+
+  ///
+  ///@param id
+  Future<chopper.Response<AdminStandardScenesIdDelete$Response>>
+  adminStandardScenesIdDelete({required String? id}) {
+    generatedMapping.putIfAbsent(
+      AdminStandardScenesIdDelete$Response,
+      () => AdminStandardScenesIdDelete$Response.fromJsonFactory,
+    );
+
+    return _adminStandardScenesIdDelete(id: id);
+  }
+
+  ///
+  ///@param id
+  @DELETE(path: '/admin/standard-scenes/:id')
+  Future<chopper.Response<AdminStandardScenesIdDelete$Response>>
+  _adminStandardScenesIdDelete({
+    @Path('id') required String? id,
+    @chopper.Tag()
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  });
+
+  ///
+  Future<chopper.Response<AdminPushTestPost$Response>> adminPushTestPost({
+    required AdminPushTestPost$RequestBody? body,
+  }) {
+    generatedMapping.putIfAbsent(
+      AdminPushTestPost$Response,
+      () => AdminPushTestPost$Response.fromJsonFactory,
+    );
+
+    return _adminPushTestPost(body: body);
+  }
+
+  ///
+  @POST(path: '/admin/push/test', optionalBody: true)
+  Future<chopper.Response<AdminPushTestPost$Response>> _adminPushTestPost({
+    @Body() required AdminPushTestPost$RequestBody? body,
+    @chopper.Tag()
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  });
+
+  ///
+  Future<chopper.Response<AdminPushStatusGet$Response>> adminPushStatusGet() {
+    generatedMapping.putIfAbsent(
+      AdminPushStatusGet$Response,
+      () => AdminPushStatusGet$Response.fromJsonFactory,
+    );
+
+    return _adminPushStatusGet();
+  }
+
+  ///
+  @GET(path: '/admin/push/status')
+  Future<chopper.Response<AdminPushStatusGet$Response>> _adminPushStatusGet({
+    @chopper.Tag()
+    SwaggerMetaData swaggerMetaData = const SwaggerMetaData(
+      description: '',
+      summary: '',
+      operationId: '',
+      consumes: [],
+      produces: [],
+      security: [],
+      tags: [],
+      deprecated: false,
+    ),
+  });
 }
 
 typedef $JsonFactory<T> = T Function(Map<String, dynamic> json);
