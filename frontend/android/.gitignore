@@ -16,6 +16,9 @@ key.properties
 # Google Play Credentials
 pc-api.json
 
+# Google firebase credentials
+firebase-api.json
+
 # Ruby/Bundler
 vendor/
 .bundle/

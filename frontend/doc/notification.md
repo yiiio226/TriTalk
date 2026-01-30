@@ -472,21 +472,29 @@ CREATE POLICY "Users can delete own tokens"
 
 ##### 10.1 环境变量配置
 
-在 `wrangler.toml` 中添加（如果尚未配置）：
+> ⚠️ **重要**：Firebase 和 GCP TTS 使用**不同的账号**，需要分别配置凭证。
 
-```toml
-[vars]
-GCP_PROJECT_ID = "your-firebase-project-id"
+在 `.dev.vars` (本地) 和 Cloudflare Dashboard (生产) 中添加：
 
-# GCP_SERVICE_ACCOUNT_KEY 已在 GCP TTS 中配置，FCM 复用同一凭证
+```bash
+# Firebase 凭证 (与 GCP TTS 独立)
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
+
+**获取凭证步骤**：
+
+1. 进入 [Firebase Console](https://console.firebase.google.com/) → 项目设置 → 服务账号
+2. 点击「生成新的私钥」下载 JSON 文件
+3. 从 JSON 中提取 `project_id`、`client_email`、`private_key`
 
 ##### 10.2 FCM 推送服务实现
 
 ```typescript
 // src/services/fcm.ts - 适配 Cloudflare Workers 的 FCM 服务
 
-import { getGcpAccessToken } from "./auth/gcp-auth";
+import { getGCPAccessToken } from "../auth/gcp-auth"; // 复用认证逻辑
 import { createSupabaseClient } from "./supabase";
 
 interface PushNotification {
@@ -522,10 +530,12 @@ export async function sendPushToUser(
     return { sent: 0, failed: 0 };
   }
 
-  // 2. 获取 GCP Access Token (复用 GCP TTS 的认证逻辑)
-  const accessToken = await getGcpAccessToken(env, [
+  // 2. 获取 Firebase Access Token (使用独立的 Firebase 凭证)
+  const accessToken = await getGCPAccessToken(
+    env.FIREBASE_CLIENT_EMAIL,
+    env.FIREBASE_PRIVATE_KEY,
     "https://www.googleapis.com/auth/firebase.messaging",
-  ]);
+  );
 
   // 3. 并发发送到所有设备 (FCM HTTP v1 不支持批量，但可并发)
   const results = await Promise.allSettled(
@@ -567,7 +577,7 @@ async function sendSinglePush(
   token: string,
   notification: PushNotification,
 ): Promise<void> {
-  const projectId = env.GCP_PROJECT_ID;
+  const projectId = env.FIREBASE_PROJECT_ID;
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
   const response = await fetch(url, {
