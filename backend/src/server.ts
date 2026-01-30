@@ -198,6 +198,7 @@ app.use("/tts/*", authMiddleware);
 app.use("/speech/*", authMiddleware);
 app.use("/shadowing/*", authMiddleware);
 app.use("/subscription/*", authMiddleware);
+app.use("/user/*", authMiddleware);
 
 // Admin routes - protected by API key
 app.use("/admin/*", adminMiddleware);
