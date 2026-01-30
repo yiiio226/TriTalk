@@ -310,6 +310,7 @@ Future<void> _waitForScenesGenerated({
 | ---- | -------------------------------------------------------- | ----------------------------------------- |
 | 1    | `20260130000025_add_translations_to_standard_scenes.sql` | 添加 `translations` JSONB 字段 + 填充翻译 |
 | 2    | `20260130000026_migrate_scene_trigger_to_profiles.sql`   | 删除旧触发器，创建新触发器（含 Guard 3）  |
+| 3    | `20260130000028_pure_translation_mode.sql`               | 场景内容完全多语言化 + 移除冗余列         |
 
 ### 3.2 Migration 1: 添加 translations 字段 + 填充翻译数据（已完成 ✅）
 
@@ -460,7 +461,9 @@ CREATE TRIGGER on_auth_user_created_scenes
 
 ---
 
-## 7. 场景内容多语言化 (Initial Message)
+## 7. 场景内容多语言化 (Initial Message) - 已完成 ✅
+
+> **实现文件**: `20260130000028_pure_translation_mode.sql`
 
 ### 7.1 问题背景
 
@@ -534,10 +537,14 @@ SELECT
     s.title
   ),
   ...
+FROM standard_scenes s;
+```
 
 ---
 
-## 8. 架构升级：Pure Translation 模式 (移除冗余列)
+## 8. 架构升级：Pure Translation 模式 (移除冗余列) - 已完成 ✅
+
+> **实现文件**: `20260130000028_pure_translation_mode.sql`
 
 为了保持数据源的唯一性 (Single Source of Truth)，我们决定进一步优化：从 `standard_scenes` 表中移除 `title`, `description`, `initial_message`, `goal` 等冗余的文本字段，完全依赖 `translations` JSON 字段。
 
