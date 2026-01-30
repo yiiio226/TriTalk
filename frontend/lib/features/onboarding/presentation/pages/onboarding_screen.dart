@@ -65,6 +65,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         return;
       }
 
+      debugPrint(
+        '\n\n\n\n [OnboardingScreen] Completing onboarding with Native: $_selectedNativeLang, Target: $_selectedTargetLang',
+      );
       // Step 1: Update User Profile (triggers database scene generation)
       await UserService().updateUserProfile(
         gender: _selectedGender,
