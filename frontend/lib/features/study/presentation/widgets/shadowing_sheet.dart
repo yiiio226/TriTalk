@@ -94,6 +94,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
   double _dragOffset = 0; // Horizontal offset during drag
   String? _dragAction; // 'cancel' or 'complete' based on drag direction
   static const double _dragThreshold = 90; // Threshold to trigger action
+  bool _isLongPressActive = false; // Track if user is still holding the button
 
   // TTS state for "Listen" button (updated by TtsPlaybackMixin callbacks)
   bool _isTTSLoading = false;
@@ -436,38 +437,53 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
 
   Future<void> _startRecording() async {
     try {
-      if (await _audioRecorder.hasPermission()) {
-        // Trigger haptic feedback
-        HapticFeedback.mediumImpact();
+      final hasPermission = await _audioRecorder.hasPermission();
 
-        // Delete previous recording before starting a new one
-        await _deleteCurrentRecording();
-
-        // Save to Documents directory with message-ID-based name for persistence
-        final directory = await getApplicationDocumentsDirectory();
-        final shadowDir = Directory('${directory.path}/shadowing');
-        if (!await shadowDir.exists()) {
-          await shadowDir.create(recursive: true);
+      // Check if permission was denied
+      if (!hasPermission) {
+        if (mounted && _isLongPressActive) {
+          // User is still holding but permission denied - show feedback
+          showTopToast(context, 'Microphone permission denied', isError: true);
         }
-        final path = '${shadowDir.path}/shadow_${widget.messageId}.wav';
-
-        // Use WAV format with PCM encoding for better transcription accuracy
-        await _audioRecorder.start(
-          const RecordConfig(
-            encoder: AudioEncoder.wav,
-            sampleRate: 16000, // 16kHz is optimal for speech recognition
-            numChannels: 1, // Mono audio
-          ),
-          path: path,
-        );
-
-        setState(() {
-          _isRecording = true;
-          _feedback = null;
-          _currentRecordingPath = null;
-          _recordingStartTime = DateTime.now(); // Record start time
-        });
+        return;
       }
+
+      // Check if user released the button during permission dialog
+      if (!_isLongPressActive) {
+        // User let go (e.g., to tap permission dialog), abort recording
+        return;
+      }
+
+      // Trigger haptic feedback
+      HapticFeedback.mediumImpact();
+
+      // Delete previous recording before starting a new one
+      await _deleteCurrentRecording();
+
+      // Save to Documents directory with message-ID-based name for persistence
+      final directory = await getApplicationDocumentsDirectory();
+      final shadowDir = Directory('${directory.path}/shadowing');
+      if (!await shadowDir.exists()) {
+        await shadowDir.create(recursive: true);
+      }
+      final path = '${shadowDir.path}/shadow_${widget.messageId}.wav';
+
+      // Use WAV format with PCM encoding for better transcription accuracy
+      await _audioRecorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000, // 16kHz is optimal for speech recognition
+          numChannels: 1, // Mono audio
+        ),
+        path: path,
+      );
+
+      setState(() {
+        _isRecording = true;
+        _feedback = null;
+        _currentRecordingPath = null;
+        _recordingStartTime = DateTime.now(); // Record start time
+      });
     } catch (e) {
       if (mounted) {
         showTopToast(context, 'Could not start recording: $e', isError: true);
@@ -1126,6 +1142,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                       offset: Offset(_dragOffset, 0),
                       child: GestureDetector(
                         onLongPressStart: (_) {
+                          _isLongPressActive = true;
                           _startRecording();
                         },
                         onLongPressMoveUpdate: (details) {
@@ -1146,6 +1163,7 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                           });
                         },
                         onLongPressEnd: (_) {
+                          _isLongPressActive = false;
                           if (!_isRecording) return;
 
                           if (_dragAction == 'cancel') {
@@ -1155,6 +1173,9 @@ class _ShadowingSheetState extends ConsumerState<ShadowingSheet>
                           } else {
                             _stopRecording();
                           }
+                        },
+                        onLongPressCancel: () {
+                          _isLongPressActive = false;
                         },
                         child: Container(
                           width: 72,
