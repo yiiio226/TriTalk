@@ -117,4 +117,4 @@ CREATE TRIGGER on_profile_language_updated
 -- ============================================
 -- Existing users already have scenes from the old trigger.
 -- New users will get scenes when they complete Onboarding and set target_lang.
--- If an existing user updates their target_lang, new scenes will be generated.
+-- existing users who already have custom_scenarios will NOT receive new scenes when updating target_lang.
