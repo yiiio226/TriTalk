@@ -25,7 +25,7 @@
 
 ### 2.1 数据库层改造 (Database)
 
-#### A. 添加 `translations` JSONB 字段
+#### A. 添加 `translations` JSONB 字段 （已完成）
 
 在 `standard_scenes` 表中添加多语言翻译字段：
 
