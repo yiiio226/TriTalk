@@ -59,3 +59,4 @@ node_modules/
 # Ruby/Bundler
 vendor/bundle/
 .bundle/
+frontend/assets/env/.env.local

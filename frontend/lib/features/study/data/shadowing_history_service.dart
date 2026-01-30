@@ -120,7 +120,7 @@ class ShadowingHistoryService {
   Future<ShadowingPractice?> getLatestPractice(
     String sourceType,
     String sourceId, {
-    bool fetchFromCloud = false,
+    bool fetchFromCloud = true,
   }) async {
     // Try local cache first
     final cached = await _cacheService.get(sourceType, sourceId);
