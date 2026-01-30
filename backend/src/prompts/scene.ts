@@ -4,7 +4,7 @@
 export function buildSceneGeneratePrompt(
   description: string,
   tone: string | undefined,
-  targetLanguage: string = "English"
+  targetLanguage: string = "English",
 ): string {
   return `Act as a creative educational scenario designer.
     User Request: "${description}"

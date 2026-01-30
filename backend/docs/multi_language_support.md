@@ -457,3 +457,158 @@ CREATE TRIGGER on_auth_user_created_scenes
 3. 系统找到所有 `target_language = 'en-US'` 的标准场景
 4. 系统读取场景的 `translations -> 'zh-CN'` 中文翻译
 5. 用户的首页出现卡片："**点咖啡** - 在咖啡店点单" (对话内容为英文)，而不是 "**Order Coffee**"
+
+---
+
+## 7. 场景内容多语言化 (Initial Message)
+
+### 7.1 问题背景
+
+目前的方案中，General Standard Scenes (如 "Order Coffee") 默认是英语内容。即使我们翻译了标题（Metadata），场景的第一条消息 (`initial_message`) 仍然是英语。
+如果用户选择学习 "西班牙语"，系统可能会复用 "Order Coffee" 这个英语标准场景作为通用模板，此时 UI 标题虽然根据 `native_lang` 显示为中文，但 AI 发出的第一句话 `initial_message` 仍然是英文 ("Hi! What can I get for you today?")。这对于学习非英语语言的用户来说是不正确的。
+
+### 7.2 解决方案：分离 UI 语言与内容语言
+
+我们需要明确区分 `translations` 字段中数据的用途：
+
+1.  **UI/元数据 (Metadata)**: `title`, `description`, `goal`
+    - **用途**: 展示给用户看，解释场景内容
+    - **匹配语言**: 用户的 **母语 (Native Language)**
+2.  **内容数据 (Content)**: `initial_message`
+    - **用途**: 作为对话的开始，AI 说出的第一句话
+    - **匹配语言**: 用户的 **学习语言 (Target Language)**
+
+### 7.3 数据结构调整 (`translations`)
+
+`translations` JSON 需扩充，在同一结构中包含不同用途的翻译片段。
+
+**示例 JSON** (Standard Scene: "Order Coffee", ID: ...):
+
+```json
+{
+  "zh-CN": {
+    "title": "点咖啡", // 元数据: 用于 native_lang=zh-CN 的用户
+    "description": "在咖啡店点单",
+    "goal": "成功点一杯咖啡",
+    "initial_message": "你好！今天要喝点什么？" // 内容: 用于 target_lang=zh-CN 的用户
+  },
+  "es-ES": {
+    "title": "Pedir café", // 元数据: 用于 native_lang=es-ES 的用户
+    "initial_message": "¡Hola! ¿Qué le pongo hoy?" // 内容: 用于 target_lang=es-ES 的用户
+  },
+  "fr-FR": {
+    "title": "Commander un café",
+    "initial_message": "Bonjour ! Que puis-je vous servir ?" // 内容: 用于 target_lang=fr-FR 的用户
+  }
+}
+```
+
+### 7.4 数据库逻辑调整 (`handle_user_scene_generation`)
+
+一定要使用新的 sql migration file, 不能修改之前的 sql 文件。
+
+在生成场景时，字段取值逻辑需要分流。`initial_message` 必须优先匹配 `target_lang`，而其他字段优先匹配 `native_lang`。
+
+````sql
+INSERT INTO custom_scenarios (
+  ...
+  initial_message, -- 内容字段
+  title,           -- UI 字段
+  ...
+)
+SELECT
+  ...
+  -- 1. Content: 使用 target_lang 查找 (AI 说的话)
+  -- 场景: 用户学西语(target=es-ES)，母语中文(native=zh-CN)。
+  -- 逻辑: 查 es-ES 的 initial_message。如果找不到，回退到标准场景默认值(英文)。
+  COALESCE(
+    s.translations -> NEW.target_lang ->> 'initial_message',
+    s.initial_message -- 降级: 默认英语
+  ),
+
+  -- 2. Metadata: 使用 native_lang 查找 (用户看的标题)
+  -- 逻辑: 查 zh-CN 的 title。如果找不到，查 en-US，最后回退原文。
+  COALESCE(
+    s.translations -> NEW.native_lang ->> 'title',
+    s.translations -> 'en-US' ->> 'title',
+    s.title
+  ),
+  ...
+
+---
+
+## 8. 架构升级：Pure Translation 模式 (移除冗余列)
+
+为了保持数据源的唯一性 (Single Source of Truth)，我们决定进一步优化：从 `standard_scenes` 表中移除 `title`, `description`, `initial_message`, `goal` 等冗余的文本字段，完全依赖 `translations` JSON 字段。
+
+这意味着 `en-US` (英语) 不再特殊地存储在列中，而是作为 `translations` JSON 中的一个普通语言 Key 存在。
+
+### 8.1 数据库 Schema 变更
+
+`standard_scenes` 表将执行 Schema 清理：
+
+```sql
+-- 移除文本列
+ALTER TABLE standard_scenes
+  DROP COLUMN title,
+  DROP COLUMN description,
+  DROP COLUMN initial_message,
+  DROP COLUMN goal,
+  DROP COLUMN ai_role,   -- 角色名也应该本地化，建议一并放入 translations
+  DROP COLUMN user_role; -- 同上
+
+-- 确保 translations 非空且包含数据
+ALTER TABLE standard_scenes
+  ALTER COLUMN translations SET NOT NULL;
+````
+
+**新的数据要求**：
+`translations` 字段**必须**包含默认语言（通常是 `en-US`）的完整数据，作为所有查找的最终 Fallback。
+
+### 8.2 调整后的生成逻辑 (`handle_user_scene_generation`)
+
+由于列已不存在，所有字段获取都必须指明具体的 JSON 路径，并以 `en-US` 作为兜底。
+
+```sql
+INSERT INTO custom_scenarios (
+  ...
+  initial_message, title, description, goal, ...
+)
+SELECT
+  ...
+  -- 1. Initial Message (Content)
+  -- 优先取 target_lang (即使是中文场景，若用户学英文，也要英文开场白)
+  -- Fallback: en-US
+  COALESCE(
+    s.translations -> NEW.target_lang ->> 'initial_message',
+    s.translations -> 'en-US' ->> 'initial_message'
+  ),
+
+  -- 2. Title (Metadata)
+  -- 优先取 native_lang (用户能看懂的语言)
+  -- Fallback: en-US
+  COALESCE(
+    s.translations -> NEW.native_lang ->> 'title',
+    s.translations -> 'en-US' ->> 'title'
+  ),
+
+  -- 3. Description (Metadata)
+  COALESCE(
+    s.translations -> NEW.native_lang ->> 'description',
+    s.translations -> 'en-US' ->> 'description'
+  ),
+
+  -- 4. Goal (Metadata)
+  COALESCE(
+    s.translations -> NEW.native_lang ->> 'goal',
+    s.translations -> 'en-US' ->> 'goal'
+  ),
+  ...
+FROM standard_scenes s;
+```
+
+### 8.3 方案优势
+
+1.  **消除数据不一致风险**：避免了 `title` 列和 `translations['en-US']['title']` 可能内容不同步的问题。
+2.  **逻辑统一**：所有语言（包括英文）都统一从 JSON 获取，代码逻辑更简洁，不需要判断是取列还是取 JSON。
+3.  **更灵活的 Schema**：未来如果要增加新的文本字段（如 "Review Prompt"），只需改 JSON 结构，不用改表结构。
