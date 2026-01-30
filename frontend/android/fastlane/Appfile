@@ -1,0 +1,2 @@
+json_key_file("./pc-api.json") # Path to the json secret file
+package_name("com.futurova.tritalk") # Application Bundle Identifier

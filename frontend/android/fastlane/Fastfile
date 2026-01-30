@@ -1,0 +1,72 @@
+default_platform(:android)
+
+platform :android do
+  desc "部署到 Google Play 内部测试"
+  lane :deploy_internal do
+    # 1. 从 Google Play 获取最新的 version code 并递增
+    version_code = ENV["VERSION_CODE"]
+    
+    if version_code.nil? || version_code.empty?
+      # 获取 internal track 上的最新 version codes
+      version_codes = google_play_track_version_codes(
+        track: 'internal',
+        json_key: './pc-api.json'
+      )
+      
+      # 如果有版本，取最大值 +1；否则从 1 开始
+      if version_codes.empty?
+        version_code = "1"
+      else
+        version_code = (version_codes.max + 1).to_s
+      end
+      
+      UI.message("自动计算 versionCode: #{version_code}")
+    end
+
+    # 2. 读取并更新 pubspec.yaml 中的版本
+    pubspec_path = File.expand_path("../../pubspec.yaml", __dir__)
+    pubspec_content = File.read(pubspec_path)
+    
+    # 提取版本名称
+    version_match = pubspec_content.match(/version:\s*(\d+\.\d+\.\d+)(?:\+\d+)?/)
+    version_name = version_match ? version_match[1] : "1.0.0"
+    
+    # 更新 pubspec.yaml 中的版本号 (version_name+version_code 格式)
+    new_version = "#{version_name}+#{version_code}"
+    updated_pubspec = pubspec_content.gsub(/version:\s*\d+\.\d+\.\d+(?:\+\d+)?/, "version: #{new_version}")
+    File.write(pubspec_path, updated_pubspec)
+    UI.message("已更新 pubspec.yaml 版本为: #{new_version}")
+
+    # 3. 使用 Flutter 构建 AAB (Release 模式)
+    UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    UI.message("🚀 正在使用 Flutter 构建 AAB...")
+    UI.message("   Version Name: #{version_name}")
+    UI.message("   Version Code: #{version_code}")
+    UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    # Flutter 项目需要使用 flutter build 命令，而不是直接调用 gradle
+    # 这样才能正确编译 Dart 代码并使用 pubspec.yaml 中的版本
+    Dir.chdir(File.expand_path("../..", __dir__)) do
+      sh("flutter build appbundle --release --dart-define=ENV=prod --obfuscate --split-debug-info=build/debug-info/global")
+    end
+
+    # 4. 上传到 Google Play
+    # 使用绝对路径避免相对路径解析问题
+    aab_path = File.expand_path('../../build/app/outputs/bundle/release/app-release.aab', __dir__)
+    UI.message("AAB 路径: #{aab_path}")
+    
+    upload_to_play_store(
+      track: 'internal',
+      aab: aab_path,
+      # 必须设置为 draft，因为应用目前在 Google Play Console 中处于草稿(Draft)状态
+      # 非草稿状态的应用不能通过 API 创建非草稿版本的发布
+      release_status: 'draft',
+      json_key: './pc-api.json',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+    
+    UI.success("✅ 成功上传版本 #{version_name} (#{version_code}) 到 Internal Testing")
+  end
+end

@@ -12,3 +12,10 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Google Play Credentials
+pc-api.json
+
+# Ruby/Bundler
+vendor/
+.bundle/
