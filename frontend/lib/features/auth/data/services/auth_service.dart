@@ -328,6 +328,20 @@ class AuthService {
       }
     }
 
+    // Clear local user profile cache
+    // This is critical for account deletion to work correctly
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cached_user_profile');
+      if (kDebugMode) {
+        debugPrint('AuthService: Local user profile cache cleared');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('AuthService: Error clearing local profile cache: $e');
+      }
+    }
+
     await Supabase.instance.client.auth.signOut();
     _currentUser = null;
     _profileExistsInDatabase = false;
