@@ -1,18 +1,19 @@
 -- Migration: Add translations JSONB field to standard_scenes and seed data
 -- Combines adding the column and populating it with initial translations for all supported languages
--- Supported Languages: en-US, en-GB, zh-CN, ja-JP, ko-KR, es-ES, es-MX, fr-FR, de-DE
+-- Supported Languages: en-US (fallback), en-GB, zh-CN, ja-JP, ko-KR, es-ES, es-MX, fr-FR, de-DE
 
 -- 1. Add translations column
 ALTER TABLE standard_scenes 
   ADD COLUMN IF NOT EXISTS translations JSONB DEFAULT '{}';
 
 COMMENT ON COLUMN standard_scenes.translations IS 
-  'Localized content for title/description/goal. Supported: en-GB, zh-CN, ja-JP, ko-KR, es-ES, es-MX, fr-FR, de-DE';
+  'Localized content for title/description/goal. Supported: en-US (fallback), en-GB, zh-CN, ja-JP, ko-KR, es-ES, es-MX, fr-FR, de-DE';
 
 -- 2. Seed translations for existing 13 standard scenes
 
 -- 1. Order Coffee
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Order Coffee", "description": "Order a coffee", "goal": "Order a coffee"},
   "en-GB": {"title": "Order Coffee", "description": "Order a coffee", "goal": "Order a coffee"},
   "zh-CN": {"title": "点咖啡", "description": "在咖啡店点一杯咖啡", "goal": "成功点一杯咖啡"},
   "ja-JP": {"title": "コーヒーを注文する", "description": "カフェでコーヒーを注文する", "goal": "コーヒーを注文する"},
@@ -25,6 +26,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 2. Check-in at Immigration
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Immigration Check", "description": "Answer questions and pass through immigration", "goal": "Successfully pass immigration"},
   "en-GB": {"title": "Immigration Check", "description": "Answer questions and pass through immigration", "goal": "Successfully pass immigration"},
   "zh-CN": {"title": "入境检查", "description": "回答问题并通过入境检查", "goal": "回答问题并通过入境检查"},
   "ja-JP": {"title": "入国審査", "description": "質問に答えて入国審査を通過する", "goal": "質問に答えて入国審査を通過する"},
@@ -37,6 +39,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 3. Lost Wallet
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Lost Wallet", "description": "Ask for help finding your wallet", "goal": "Ask for help finding your wallet"},
   "en-GB": {"title": "Lost Wallet", "description": "Ask for help finding your wallet", "goal": "Ask for help finding your wallet"},
   "zh-CN": {"title": "丢了钱包", "description": "寻求帮助找回钱包", "goal": "寻求帮助找回钱包"},
   "ja-JP": {"title": "財布をなくした", "description": "財布を見つけるために助けを求める", "goal": "財布を見つけるために助けを求める"},
@@ -49,6 +52,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 4. Taking a Taxi
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Taking a Taxi", "description": "Give directions to the driver", "goal": "Reach your destination"},
   "en-GB": {"title": "Taking a Taxi", "description": "Give directions to the driver", "goal": "Reach your destination"},
   "zh-CN": {"title": "乘坐出租车", "description": "给司机指路", "goal": "到达目的地"},
   "ja-JP": {"title": "タクシーに乗る", "description": "運転手に行き先を告げる", "goal": "目的地に到着する"},
@@ -61,6 +65,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 5. Supermarket Shopping
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Supermarket Shopping", "description": "Ask where to find items", "goal": "Find all items on your list"},
   "en-GB": {"title": "Supermarket Shopping", "description": "Ask where to find items", "goal": "Find all items on your list"},
   "zh-CN": {"title": "超市购物", "description": "询问商品位置", "goal": "找到清单上的所有商品"},
   "ja-JP": {"title": "スーパーで買い物", "description": "商品の場所を尋ねる", "goal": "リストにある商品をすべて見つける"},
@@ -73,6 +78,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 6. Asking for Directions
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Asking for Directions", "description": "Ask a local for directions", "goal": "Find the way to your destination"},
   "en-GB": {"title": "Asking for Directions", "description": "Ask a local for directions", "goal": "Find the way to your destination"},
   "zh-CN": {"title": "问路", "description": "向当地人问路", "goal": "找到去目的地的路"},
   "ja-JP": {"title": "道を尋ねる", "description": "地元の人に道を尋ねる", "goal": "目的地への行き方を見つける"},
@@ -85,6 +91,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 7. First Meeting
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "First Meeting", "description": "Introduce yourself to a new friend", "goal": "Get to know each other"},
   "en-GB": {"title": "First Meeting", "description": "Introduce yourself to a new friend", "goal": "Get to know each other"},
   "zh-CN": {"title": "初次见面", "description": "向新朋友介绍自己", "goal": "互相了解"},
   "ja-JP": {"title": "初対面", "description": "新しい友達に自己紹介する", "goal": "お互いを知る"},
@@ -97,6 +104,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 8. Hotel Check-in
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Hotel Check-in", "description": "Check in to your hotel room", "goal": "Successfully check in"},
   "en-GB": {"title": "Hotel Check-in", "description": "Check in to your hotel room", "goal": "Successfully check in"},
   "zh-CN": {"title": "酒店入住", "description": "办理酒店入住手续", "goal": "成功办理入住"},
   "ja-JP": {"title": "ホテルのチェックイン", "description": "ホテルの部屋にチェックインする", "goal": "チェックインを完了する"},
@@ -109,6 +117,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 9. Restaurant Ordering
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Restaurant Ordering", "description": "Order food at a restaurant", "goal": "Order your meal"},
   "en-GB": {"title": "Restaurant Ordering", "description": "Order food at a restaurant", "goal": "Order your meal"},
   "zh-CN": {"title": "餐厅点餐", "description": "在餐厅点菜", "goal": "点餐"},
   "ja-JP": {"title": "レストランで注文", "description": "レストランで食事を注文する", "goal": "食事を注文する"},
@@ -121,6 +130,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 10. Job Interview
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Job Interview", "description": "Answer interview questions", "goal": "Impress the interviewer"},
   "en-GB": {"title": "Job Interview", "description": "Answer interview questions", "goal": "Impress the interviewer"},
   "zh-CN": {"title": "求职面试", "description": "回答面试问题", "goal": "给面试官留下好印象"},
   "ja-JP": {"title": "就職面接", "description": "面接の質問に答える", "goal": "面接官に好印象を与える"},
@@ -133,6 +143,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 11. Business Meeting
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Business Meeting", "description": "Discuss a project with colleagues", "goal": "Coordinate the project next steps"},
   "en-GB": {"title": "Business Meeting", "description": "Discuss a project with colleagues", "goal": "Coordinate the project next steps"},
   "zh-CN": {"title": "商务会议", "description": "与同事讨论项目", "goal": "协调项目后续步骤"},
   "ja-JP": {"title": "ビジネス会議", "description": "同僚とプロジェクトについて話し合う", "goal": "プロジェクトの次のステップを調整する"},
@@ -145,6 +156,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 12. Movie Discussion
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Movie Discussion", "description": "Talk about a movie you saw", "goal": "Share opinions about the movie"},
   "en-GB": {"title": "Movie Discussion", "description": "Talk about a movie you saw", "goal": "Share opinions about the movie"},
   "zh-CN": {"title": "电影讨论", "description": "谈论你看过的一部电影", "goal": "分享对电影的看法"},
   "ja-JP": {"title": "映画の話", "description": "見た映画について話す", "goal": "映画の感想を共有する"},
@@ -157,6 +169,7 @@ UPDATE standard_scenes SET translations = '{
 
 -- 13. Seeing a Doctor
 UPDATE standard_scenes SET translations = '{
+  "en-US": {"title": "Seeing a Doctor", "description": "Describe your symptoms to a doctor", "goal": "Explain your symptoms and get advice"},
   "en-GB": {"title": "Seeing a Doctor", "description": "Describe your symptoms to a doctor", "goal": "Explain your symptoms and get advice"},
   "zh-CN": {"title": "看医生", "description": "向医生描述症状", "goal": "解释症状并获取建议"},
   "ja-JP": {"title": "医者にかかる", "description": "医者に症状を説明する", "goal": "症状を説明してアドバイスをもらう"},
