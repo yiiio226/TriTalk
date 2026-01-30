@@ -470,16 +470,20 @@ CREATE TRIGGER on_auth_user_created_scenes
 目前的方案中，General Standard Scenes (如 "Order Coffee") 默认是英语内容。即使我们翻译了标题（Metadata），场景的第一条消息 (`initial_message`) 仍然是英语。
 如果用户选择学习 "西班牙语"，系统可能会复用 "Order Coffee" 这个英语标准场景作为通用模板，此时 UI 标题虽然根据 `native_lang` 显示为中文，但 AI 发出的第一句话 `initial_message` 仍然是英文 ("Hi! What can I get for you today?")。这对于学习非英语语言的用户来说是不正确的。
 
-### 7.2 解决方案：分离 UI 语言与内容语言
+### 7.2 解决方案：统一使用 target_lang (学习语言)
 
-我们需要明确区分 `translations` 字段中数据的用途：
+为了提供完全沉浸式的学习体验，我们决定 **所有字段都使用 `target_lang`**：
 
-1.  **UI/元数据 (Metadata)**: `title`, `description`, `goal`
-    - **用途**: 展示给用户看，解释场景内容
-    - **匹配语言**: 用户的 **母语 (Native Language)**
-2.  **内容数据 (Content)**: `initial_message`
-    - **用途**: 作为对话的开始，AI 说出的第一句话
-    - **匹配语言**: 用户的 **学习语言 (Target Language)**
+| 字段              | 语言来源      | 用途          |
+| ----------------- | ------------- | ------------- |
+| `title`           | `target_lang` | 场景标题      |
+| `description`     | `target_lang` | 场景描述      |
+| `goal`            | `target_lang` | 学习目标      |
+| `initial_message` | `target_lang` | AI 的第一句话 |
+| `ai_role`         | `target_lang` | AI 角色名称   |
+| `user_role`       | `target_lang` | 用户角色名称  |
+
+**设计理念**：用户学什么语言，整个场景就用什么语言显示。这样可以最大化语言沉浸感。
 
 ### 7.3 数据结构调整 (`translations`)
 
