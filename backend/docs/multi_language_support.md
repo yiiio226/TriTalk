@@ -56,7 +56,7 @@ ALTER TABLE standard_scenes ADD COLUMN IF NOT EXISTS translations JSONB DEFAULT 
 }
 ```
 
-#### B. 移除旧触发器
+#### B. 移除旧触发器（已完成）
 
 不再在用户创建时立即生成场景，因为此时我们还不知道用户想学什么。
 
@@ -65,12 +65,12 @@ DROP TRIGGER IF EXISTS on_auth_user_created_scenes ON auth.users;
 DROP FUNCTION IF EXISTS handle_new_user_scenes();
 ```
 
-#### C. 创建新触发器 (监听 `profiles`)
+#### C. 创建新触发器 (监听 `profiles`)（已完成）
 
-我们在 `profiles` 表上创建一个新的触发器。当用户的 `target_lang` 被设置或更新时，执行场景实例化逻辑。
+我们在 `profiles` 表上创建一个新的触发器。**仅在 Onboarding 完成时**（首次设置 `target_lang`）执行场景实例化逻辑。
 
 - **监听事件**：`AFTER INSERT OR UPDATE OF target_lang` ON `profiles`
-- **触发条件**：在函数内部判断，避免 PostgreSQL `WHEN` 子句对 INSERT 操作引用 `OLD` 的语法限制。
+- **触发条件**：函数内部判断用户是否已有场景，**已有场景则跳过**（即 Profile 页面修改语言不会重新生成）
 
 ```sql
 CREATE TRIGGER on_profile_language_updated
@@ -79,9 +79,9 @@ CREATE TRIGGER on_profile_language_updated
   EXECUTE FUNCTION handle_user_scene_generation();
 ```
 
-### 2.2 函数逻辑升级 (`handle_user_scene_generation`)
+### 2.2 函数逻辑升级 (`handle_user_scene_generation`)（已完成）
 
-该数据库函数将承担核心逻辑：智能筛选与多语言适配。
+该数据库函数将承担核心逻辑：**仅在 Onboarding 时生成场景**，之后的语言修改不会触发重新生成。
 
 #### A. 完整函数实现
 
@@ -96,6 +96,12 @@ BEGIN
 
   -- Guard 2: UPDATE 时，只有 target_lang 真正变化才继续
   IF TG_OP = 'UPDATE' AND OLD.target_lang IS NOT DISTINCT FROM NEW.target_lang THEN
+    RETURN NEW;
+  END IF;
+
+  -- Guard 3: 如果用户已有场景，跳过（仅 Onboarding 时生成）
+  -- 这确保 Profile 页面修改语言不会重新生成场景
+  IF EXISTS (SELECT 1 FROM custom_scenarios WHERE user_id = NEW.id LIMIT 1) THEN
     RETURN NEW;
   END IF;
 
@@ -167,8 +173,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 #### B. 逻辑流程说明
 
 1. **Guard 条件**：
-   - 如果 `target_lang` 为空，直接返回（用户未完成 Onboarding）
-   - 如果是 UPDATE 且语言未变化，跳过（防止无关更新触发）
+   - Guard 1: 如果 `target_lang` 为空，直接返回（用户未完成 Onboarding）
+   - Guard 2: 如果是 UPDATE 且语言未变化，跳过（防止无关更新触发）
+   - **Guard 3: 如果用户已有场景，跳过**（确保仅 Onboarding 时生成，Profile 页面修改语言不触发）
 
 2. **场景筛选与降级**：
    - 优先选择 `target_language = NEW.target_lang` 的场景
@@ -181,7 +188,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 4. **去重处理**：
    - 使用 `ON CONFLICT DO NOTHING` 防止重复生成
 
-### 2.3 前端配合 (Frontend)
+### 2.3 前端配合 (Frontend)（已完成 ✅）
 
 #### ⚠️ 重要修复：使用 ISO Code 而非 Label
 
@@ -219,6 +226,77 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 3. Supabase 更新 `profiles` 表中的语言字段
 4. **数据库触发器自动捕获此更新**，并在后台从 `standard_scenes` 实例化适合该用户的场景
 5. 前端在跳转到主页 (`HomeScreen`) 后，查询场景列表即可看到新生成的个性化数据
+
+#### ⚠️ 时序注意事项：确保场景加载完成
+
+由于数据库触发器是在 `AFTER UPDATE` 时异步执行的，前端需要确保在跳转到 `HomeScreen` 前场景已生成。
+
+**推荐方案：轮询查询确认**
+
+```dart
+Future<void> _completeOnboarding() async {
+  setState(() => _isSaving = true);
+
+  try {
+    // Step 1: 更新用户 Profile，触发数据库触发器
+    await UserService().updateUserProfile(
+      gender: _selectedGender,
+      nativeLanguage: _selectedNativeLang,
+      targetLanguage: _selectedTargetLang,
+      avatarUrl: avatarPath,
+    );
+
+    // Step 2: 轮询等待场景生成完成（最多等待 3 秒）
+    await _waitForScenesGenerated();
+
+    // Step 3: 刷新场景缓存
+    await SceneService().refreshScenes();
+
+    // Step 4: 导航到首页
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    }
+  } catch (e) {
+    // 错误处理...
+  }
+}
+
+/// 轮询查询 custom_scenarios 表，确认场景已生成
+Future<void> _waitForScenesGenerated({
+  int maxAttempts = 6,
+  Duration interval = const Duration(milliseconds: 500),
+}) async {
+  final supabase = Supabase.instance.client;
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) return;
+
+  for (int i = 0; i < maxAttempts; i++) {
+    final response = await supabase
+        .from('custom_scenarios')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1);
+
+    if (response.isNotEmpty) {
+      debugPrint('✅ Scenes generated after ${(i + 1) * 500}ms');
+      return; // 场景已存在，退出轮询
+    }
+
+    await Future.delayed(interval);
+  }
+
+  debugPrint('⚠️ Scenes not found after max attempts, proceeding anyway');
+}
+```
+
+**关键点**：
+
+- 使用轮询而非固定延迟，响应更快
+- 最多等待 3 秒（6 次 × 500ms）
+- 即使超时也继续导航（首页会自动刷新）
 
 ---
 
