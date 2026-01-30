@@ -664,7 +664,7 @@ console.log(`推送完成: ${result.sent} 成功, ${result.failed} 失效`);
 **检查 FCM 配置状态：**
 
 ```bash
-curl -X GET "https://your-backend.workers.dev/admin/push/status" \
+curl -X GET "https://tritalk-backend.tristart226.workers.dev/admin/push/status" \
   -H "X-Admin-Key: your-admin-api-key"
 ```
 
@@ -681,7 +681,7 @@ curl -X GET "https://your-backend.workers.dev/admin/push/status" \
 **发送测试推送：**
 
 ```bash
-curl -X POST "https://your-backend.workers.dev/admin/push/test" \
+curl -X POST "https://tritalk-backend.tristart226.workers.dev/admin/push/test" \
   -H "X-Admin-Key: your-admin-api-key" \
   -H "Content-Type: application/json" \
   -d '{
