@@ -122,7 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// 处理删除账号 - 双重确认后调用 API
   Future<void> _handleDeleteAccount() async {
     // Step 1: 显示警告确认对话框
-    final firstConfirm = await _showDeleteWarningDialog();
+    final firstConfirm = await _showDeleteWarning();
     if (firstConfirm != true) return;
 
     // Step 2: 要求输入 "DELETE" 进行二次确认，并执行删除
@@ -135,7 +135,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   /// 显示删除账号警告对话框（包含订阅提醒）
-  Future<bool?> _showDeleteWarningDialog() {
+  Future<bool?> _showDeleteWarning() {
     return showModalBottomSheet<bool>(
       context: context,
       backgroundColor: AppColors.lightSurface,
