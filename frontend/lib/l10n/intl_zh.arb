@@ -144,5 +144,16 @@
 	"feedback_intonationLabel": "🌊 语调：",
 	"onboarding_tellUsAboutYourself": "介绍一下你自己",
 	"onboarding_nativeLanguageQuestion": "你的母语是什么？",
-	"onboarding_learningLanguageQuestion": "你想学习什么？"
+	"onboarding_learningLanguageQuestion": "你想学习什么？",
+	"deleteAccount": "删除账号",
+	"deleteAccountConfirmationTitle": "确认删除账号？",
+	"deleteAccountConfirmationContent": "此操作不可撤销。您的所有数据将被永久删除且无法恢复。",
+	"deleteAccountSubscriptionWarning": "删除账号不会取消您的订阅。请在设备设置中管理订阅。",
+	"deleteAccountTypeConfirm": "输入 DELETE 以确认",
+	"deleteAccountTypeHint": "DELETE",
+	"deleteAction": "删除",
+	"cancelAction": "取消",
+	"deleteAccountLoading": "正在删除账号...",
+	"deleteAccountFailed": "删除账号失败",
+	"profile_dangerZone": "危险操作"
 }

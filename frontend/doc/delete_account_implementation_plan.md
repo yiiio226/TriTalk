@@ -1,127 +1,387 @@
 # 账号删除功能实施方案 (Delete Account Implementation Plan)
 
-## 1. 目标与概述
+## 1. 目标
 
-在前端设置页面增加“删除账号”功能。当用户确认删除时，系统将：
+在 Profile 界面增加删除账号功能，确保点击后删除后端 User、Supabase Auth User 及所有关联数据。
 
-1.  **后端执行**: 彻底删除 Supabase 认证系统中的用户身份 (`auth.users`)。
-2.  **数据清理**: 自动清理数据库中与该用户关联的所有业务数据（利用数据库外键的 `ON DELETE CASCADE` 机制）。
-3.  **前端动作**: 执行登出清理操作，并返回登录页。
+## 2. 数据库变更 (关键步骤) （已完成）
+
+目前 `profiles` 表的外键引用缺少 `ON DELETE CASCADE`，这会导致删除 Auth 用户时失败。
+
+**需新建 Migration 文件**: `backend/supabase/migrations/20260130000023_fix_profiles_cascade.sql`
+
+```sql
+-- 修改 profiles 表的外键，添加级联删除
+--
+-- 设计说明：profiles 表不需要 DELETE RLS 策略，原因如下：
+-- 1. 账号删除通过 Supabase Auth Admin API 执行，会自动触发 ON DELETE CASCADE
+-- 2. 普通用户不应该有直接删除 profiles 记录的权限
+-- 3. Admin 操作使用 service_role key 绕过 RLS
+
+ALTER TABLE profiles
+DROP CONSTRAINT profiles_id_fkey;
+
+ALTER TABLE profiles
+ADD CONSTRAINT profiles_id_fkey
+    FOREIGN KEY (id)
+    REFERENCES auth.users(id)
+    ON DELETE CASCADE;
+```
 
 ---
 
-## 2. 核心架构设计
+## 3. 后端开发 (Backend) （已完成）
 
-由于 Supabase 的客户端 SDK (Client Side) 出于安全考虑，默认**不支持**用户直接删除自身账号 (`deleteUser` 需要 Admin 权限)。因此，必须采用 **后端 API 驱动** 的模式。
+> **规范提示**: 本接口应遵循 [OpenAPI 后端指南](../backend/docs/openapi_backend.md)，使用 zod 定义 Schema 以便自动生成文档。
 
-### 交互流程
+目标文件: `backend/src/server.ts` 及 `backend/src/schemas.ts`
 
-1.  **前端 (Client)**: 弹出红色警示框确认，用户确认后发送 DELETE 请求到后端。
-2.  **后端 (Backend)**: 接收请求 -> 验证 Token -> 获取 User ID。
-3.  **后端 (Admin)**: 使用 `Service Role Key` 初始化 Supabase Admin 客户端，调用 `auth.admin.deleteUser(userId)`。
-4.  **数据库 (Postgres)**: 触发 `ON DELETE CASCADE`，自动级联删除引用该 User ID 的所有行（Profile, Chat History, Scenarios 等）。
+### 3.1 定义 Schema (`schemas.ts`)
 
----
+```typescript
+// Request: Empty Body (或者包含 reason)
+export const DeleteAccountRequestSchema = z.object({});
 
-## 3. 详细实施步骤
+// Response
+export const DeleteAccountResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+```
 
-### 3.1 数据库层面 (Database)
-
-**状态**: ✅ 无需修改
-已确认核心业务表均配置了级联删除 (`ON DELETE CASCADE`)，包括但不限于：
-
-- `profiles` (用户信息)
-- `chat_history` (聊天记录)
-- `custom_scenarios` (自定义场景)
-- `vocabulary` (生词本)
-- `bookmarked_conversations` (收藏对话)
-- `user_scene_order` (场景排序)
-- `user_subscriptions` (订阅记录)
-
-### 3.2 后端开发 (Backend)
-
-**目标文件**: `backend/src/server.ts`
+### 3.2 实现接口 (`server.ts`) （已完成）
 
 **新增接口**:
 
 - **Method**: `DELETE`
-- **Path**: `/common/account` (或 `/user/account`)
-- **Middleware**: `authMiddleware` (必须验证用户身份)
+- **Path**: `/user/account`
+- **Auth**: `authMiddleware`
 
-**伪代码逻辑**:
+**代码实现**:
 
 ```typescript
-app.delete("/common/account", authMiddleware, async (c) => {
-  const user = c.get("user");
-  const env = c.env;
+const deleteAccountRoute = createRoute({
+  method: "delete",
+  path: "/user/account",
+  responses: {
+    200: {
+      content: { "application/json": { schema: DeleteAccountResponseSchema } },
+      description: "Account deleted successfully",
+    },
+    401: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Unauthorized - Invalid or expired token",
+    },
+    404: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "User not found",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
 
-  // 1. 初始化 Admin Client
+app.openapi(deleteAccountRoute, async (c) => {
+  const user = c.get("user");
+  const env = c.env as Env;
+
+  // 初始化 Admin Client (需确保 Env 中配置了 SUPABASE_SERVICE_ROLE_KEY)
   const supabaseAdmin = createSupabaseAdminClient(env);
 
-  // 2. 删除用户 (这也将触发数据库级联删除)
+  // 删除 Auth 用户 -> 触发 DB 级联删除
   const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 
   if (error) {
-    throw error;
+    if (error.message.includes("not found")) {
+      return c.json({ error: "User not found" }, 404);
+    }
+    throw error; // Global error handler will catch this
   }
 
-  return c.json({ success: true, message: "Account deleted" });
+  return c.json({ success: true, message: "Account permanently deleted" }, 200);
 });
 ```
 
-### 3.3 前端开发 (Frontend)
+---
 
-#### A. 服务层 (`UserService`)
+## 4. 前端开发 (Frontend)
 
-**目标文件**: `frontend/lib/features/profile/data/services/user_service.dart`
+> **规范提示**:
+>
+> 1.  严格遵循 [OpenAPI 前端指南](../frontend/openapi_frontend.md)，如已集成生成器，请使用生成的 Client 调用接口。
+> 2.  严格遵循 Design System (使用 `AppColors`, `AppTypography` 等)。
+> 3.  **必须使用 i18n**，禁止 Hardcode 字符串。
 
-**新增方法**:
+目标文件: `frontend/lib/features/profile/presentation/pages/profile_screen.dart`
+
+### 4.1 Localization (l10n) （已完成）
+
+需在 `intl_en.arb` (及其他语言文件) 中添加:
+
+```json
+"deleteAccount": "Delete Account",
+"deleteAccountConfirmationTitle": "Delete Account?",
+"deleteAccountConfirmationContent": "This action is permanent and cannot be undone. All your data will be erased and cannot be recovered.",
+"deleteAccountSubscriptionWarning": "Deleting your account does NOT cancel your subscription. Please manage subscriptions in your device settings.",
+"deleteAccountTypeConfirm": "Type DELETE to confirm",
+"deleteAccountTypeHint": "DELETE",
+"deleteAction": "Delete",
+"cancelAction": "Cancel",
+"deleteAccountLoading": "Deleting account...",
+"deleteAccountFailed": "Failed to delete account"
+```
+
+### 4.2 UI 修改 （未完成）
+
+在 Profile 界面底部新增 **"Danger Zone"** 分组，将删除账号按钮与其他菜单分开，突出危险操作的视觉警示。
 
 ```dart
-Future<void> deleteAccount() async {
-  // 调用后端 API: DELETE /common/account
-  final response = await http.delete(
-    Uri.parse('${Env.apiBaseUrl}/common/account'),
-    headers: _authService.getAuthHeaders(),
+// 在 Logout 按钮之后，Version Info 之前添加
+
+const SizedBox(height: AppSpacing.xl),
+
+// Danger Zone Section
+Text(
+  context.l10n.profile_dangerZone, // 需添加 i18n: "Danger Zone"
+  style: AppTypography.subtitle1.copyWith(
+    fontWeight: FontWeight.bold,
+    color: AppColors.error,
+  ),
+),
+const SizedBox(height: AppSpacing.md),
+
+// Delete Account Button
+_buildMenuCard(
+  context,
+  title: context.l10n.deleteAccount,
+  icon: Icons.delete_forever_rounded,
+  iconColor: AppColors.error,
+  onTap: _handleDeleteAccount,
+),
+```
+
+### 4.3 逻辑实现
+
+```dart
+Future<void> _handleDeleteAccount() async {
+  // 1. 第一步确认弹窗：显示警告信息（包含订阅提醒）
+  final firstConfirm = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(context.l10n.deleteAccountConfirmationTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l10n.deleteAccountConfirmationContent),
+          const SizedBox(height: AppSpacing.md),
+          // 订阅警告 (使用 i18n)
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: AppColors.warning),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    context.l10n.deleteAccountSubscriptionWarning,
+                    style: AppTypography.caption.copyWith(color: AppColors.warning),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(
+            context.l10n.cancelAction,
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(
+            context.l10n.deleteAction,
+            style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    ),
   );
 
-  if (response.statusCode != 200) {
-    throw Exception('Failed to delete account');
+  if (firstConfirm != true) return;
+
+  // 2. 第二步确认：要求用户输入 "DELETE" 进行二次确认
+  final TextEditingController confirmController = TextEditingController();
+  final secondConfirm = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(context.l10n.deleteAccountConfirmationTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(context.l10n.deleteAccountTypeConfirm),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: confirmController,
+            decoration: InputDecoration(
+              hintText: context.l10n.deleteAccountTypeHint,
+              border: const OutlineInputBorder(),
+            ),
+            autofocus: true,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: Text(context.l10n.cancelAction),
+        ),
+        TextButton(
+          onPressed: () {
+            if (confirmController.text.trim().toUpperCase() == 'DELETE') {
+              Navigator.pop(dialogContext, true);
+            }
+          },
+          child: Text(
+            context.l10n.deleteAction,
+            style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (secondConfirm != true) return;
+
+  try {
+    // 3. Show Loading (使用统一的 Loading 组件)
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: AppSpacing.md),
+                Text(context.l10n.deleteAccountLoading),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // 4. 先注销 FCM Token (可选，如果失败不阻塞删除流程)
+    try {
+      await FcmService.instance.deregisterToken();
+    } catch (_) {
+      // FCM 注销失败不阻塞账号删除
+      debugPrint('FCM deregister failed, continuing with account deletion');
+    }
+
+    // 5. Call API
+    // 推荐方式: 使用生成的 Swagger Client
+    // await ClientProvider.client.userAccountDelete();
+
+    // 替代方式 (如果 Client 未生成):
+    // await _userService.deleteAccount();
+
+    if (!mounted) return;
+    Navigator.pop(context); // Close Loading
+
+    // 6. Local Logout & Navigate
+    ref.read(authProvider.notifier).logout();
+
+  } catch (e) {
+    if (!mounted) return;
+    Navigator.pop(context); // Close Loading on Error
+
+    // 错误处理：不暴露技术细节给用户
+    debugPrint('Delete account error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.l10n.deleteAccountFailed),
+        backgroundColor: AppColors.error,
+      ),
+    );
   }
 }
 ```
 
-#### B. 界面交互 (`ProfileScreen`)
+---
 
-**目标文件**: `frontend/lib/features/profile/presentation/pages/profile_screen.dart`
+## 5. 风险提示与兜底
 
-**UI 变更**:
-在 "Log Out" 按钮下方添加 "Delete Account" 按钮。
+1.  **订阅 (Subscriptions)**:
+    - 删除账号**不会**取消 App Store / Google Play 的自动续费。
+    - **已在 UI 弹窗中通过 i18n 明确告知用户** (`deleteAccountSubscriptionWarning`)。
 
-**交互逻辑**:
+2.  **性能 (Performance)**:
+    - 由于所有关联表 (`chat_history`, `vocabulary` 等) 均已在 `user_id` 上建立了索引，级联删除通常是瞬间完成的。
+    - 即便数据量较大，Postgres 的级联删除也比手动分步删除更高效且事务安全。
 
-1.  点击 "Delete Account"。
-2.  弹出 `AlertDialog`:
-    - **Title**: "Delete Account?"
-    - **Content**: "This action is permanent and cannot be undone. All your data including chat history and custom scenes will be lost."
-    - **Actions**: Cancel / **Delete (Red)**
-3.  确认后的处理:
-    - 显示全屏 Loading 或具体的 HUD。
-    - 调用 `await _userService.deleteAccount()`。
-    - 成功后，调用 `ref.read(authProvider.notifier).logout()` 清除本地状态。
-    - 导航至 `SplashScreen`。
+3.  **文件存储 (Storage)**:
+    - 本方案暂不包含 R2/Storage 文件的物理删除。
+
+4.  **FCM Token**:
+    - 删除账号前会尝试注销 FCM Token，即使失败也不会阻塞删除流程。
+    - `user_fcm_tokens` 表已配置 `ON DELETE CASCADE`，会自动清理。
 
 ---
 
-## 4. 注意事项与风险提示
+## 6. l10n 完整清单 （已完成）
 
-1.  **订阅 (Subscriptions)**:
-    - 删除 App 账号**不会**取消 Apple App Store 或 Google Play 的自动续费订阅。
-    - **必须**在 UI 上提示用户："Deleting your account does not cancel your subscription. Please manage your subscriptions in the App Store/Play Store settings."
+以下是需要添加到各语言 `.arb` 文件的完整 key 列表：
 
-2.  **存储 (Storage)**:
-    - 如果用户有上传头像到 R2 或 Supabase Storage，当前的数据库级联删除不会自动删除物理文件。
-    - **决策**: 鉴于头像文件较小，暂时不处理。未来可通过 Supabase Edge Function 监听 `auth.users` 删除事件来清理文件。
+### `intl_en.arb`
 
-3.  **RevenueCat**:
-    - RevenueCat 侧的 Customer Info 将保留，但会因为 App User ID 失效而变成匿名/孤立数据。不影响新用户注册。
+```json
+"deleteAccount": "Delete Account",
+"deleteAccountConfirmationTitle": "Delete Account?",
+"deleteAccountConfirmationContent": "This action is permanent and cannot be undone. All your data will be erased and cannot be recovered.",
+"deleteAccountSubscriptionWarning": "Deleting your account does NOT cancel your subscription. Please manage subscriptions in your device settings.",
+"deleteAccountTypeConfirm": "Type DELETE to confirm",
+"deleteAccountTypeHint": "DELETE",
+"deleteAction": "Delete",
+"cancelAction": "Cancel",
+"deleteAccountLoading": "Deleting account...",
+"deleteAccountFailed": "Failed to delete account",
+"profile_dangerZone": "Danger Zone"
+```
+
+### `intl_zh.arb`
+
+```json
+"deleteAccount": "删除账号",
+"deleteAccountConfirmationTitle": "确认删除账号？",
+"deleteAccountConfirmationContent": "此操作不可撤销。您的所有数据将被永久删除且无法恢复。",
+"deleteAccountSubscriptionWarning": "删除账号不会取消您的订阅。请在设备设置中管理订阅。",
+"deleteAccountTypeConfirm": "输入 DELETE 以确认",
+"deleteAccountTypeHint": "DELETE",
+"deleteAction": "删除",
+"cancelAction": "取消",
+"deleteAccountLoading": "正在删除账号...",
+"deleteAccountFailed": "删除账号失败",
+"profile_dangerZone": "危险操作"
+```

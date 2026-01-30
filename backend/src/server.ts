@@ -87,6 +87,8 @@ import {
   AdminCreateScenesResponseSchema,
   AdminListScenesResponseSchema,
   AdminDeleteScenesResponseSchema,
+  // User account schemas
+  DeleteAccountResponseSchema,
 } from "./schemas";
 
 // Initialize OpenAPIHono app
@@ -1831,6 +1833,58 @@ app.get("/subscription/status", async (c) => {
       200,
     );
   }
+});
+
+// ============================================
+// User Account Management
+// ============================================
+
+// DELETE /user/account - Permanently delete user account
+const deleteAccountRoute = createRoute({
+  method: "delete",
+  path: "/user/account",
+  responses: {
+    200: {
+      content: { "application/json": { schema: DeleteAccountResponseSchema } },
+      description: "Account deleted successfully",
+    },
+    401: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Unauthorized - Invalid or expired token",
+    },
+    404: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "User not found",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+
+app.openapi(deleteAccountRoute, async (c) => {
+  const user = c.get("user");
+  const env = c.env;
+
+  console.log(`[Delete Account] User ${user.id} requested account deletion`);
+
+  // 初始化 Admin Client (需确保 Env 中配置了 SUPABASE_SERVICE_ROLE_KEY)
+  const supabaseAdmin = createSupabaseAdminClient(env);
+
+  // 删除 Auth 用户 -> 触发 DB 级联删除
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+
+  if (error) {
+    console.error(`[Delete Account] Failed to delete user ${user.id}:`, error);
+    if (error.message.includes("not found")) {
+      return c.json({ error: "User not found" }, 404);
+    }
+    throw error; // Global error handler will catch this
+  }
+
+  console.log(`[Delete Account] Successfully deleted user ${user.id}`);
+  return c.json({ success: true, message: "Account permanently deleted" }, 200);
 });
 
 // API Docs

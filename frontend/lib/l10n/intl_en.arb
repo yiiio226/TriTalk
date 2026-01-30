@@ -604,5 +604,49 @@
 	"onboarding_learningLanguageQuestion": "What do you want to learn?",
 	"@onboarding_learningLanguageQuestion": {
 		"description": "Question asking for learning language"
+	},
+	"deleteAccount": "Delete Account",
+	"@deleteAccount": {
+		"description": "Button text to delete account"
+	},
+	"deleteAccountConfirmationTitle": "Delete Account?",
+	"@deleteAccountConfirmationTitle": {
+		"description": "Title for delete account confirmation dialog"
+	},
+	"deleteAccountConfirmationContent": "This action is permanent and cannot be undone. All your data will be erased and cannot be recovered.",
+	"@deleteAccountConfirmationContent": {
+		"description": "Content for delete account confirmation dialog"
+	},
+	"deleteAccountSubscriptionWarning": "Deleting your account does NOT cancel your subscription. Please manage subscriptions in your device settings.",
+	"@deleteAccountSubscriptionWarning": {
+		"description": "Warning about subscriptions when deleting account"
+	},
+	"deleteAccountTypeConfirm": "Type DELETE to confirm",
+	"@deleteAccountTypeConfirm": {
+		"description": "Instruction to type DELETE to confirm account deletion"
+	},
+	"deleteAccountTypeHint": "DELETE",
+	"@deleteAccountTypeHint": {
+		"description": "Hint text for delete confirmation input"
+	},
+	"deleteAction": "Delete",
+	"@deleteAction": {
+		"description": "Delete action button text"
+	},
+	"cancelAction": "Cancel",
+	"@cancelAction": {
+		"description": "Cancel action button text"
+	},
+	"deleteAccountLoading": "Deleting account...",
+	"@deleteAccountLoading": {
+		"description": "Loading message while deleting account"
+	},
+	"deleteAccountFailed": "Failed to delete account",
+	"@deleteAccountFailed": {
+		"description": "Error message when account deletion fails"
+	},
+	"profile_dangerZone": "Danger Zone",
+	"@profile_dangerZone": {
+		"description": "Section header for dangerous operations"
 	}
 }
