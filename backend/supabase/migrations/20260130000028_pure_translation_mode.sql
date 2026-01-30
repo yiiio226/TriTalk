@@ -2,9 +2,9 @@
 -- Purpose: 
 --   1. Add initial_message, ai_role, user_role translations to all languages in translations JSONB
 --   2. Remove redundant text columns from standard_scenes (title, description, initial_message, goal, ai_role, user_role)
---   3. Update scene generation trigger to:
---      - Use target_lang for initial_message (Content: AI says this)
---      - Use native_lang for title, description, goal (Metadata: User sees this)
+--   3. Update scene generation trigger to use target_lang for ALL fields
+--      (title, description, goal, initial_message, ai_role, user_role)
+--      This provides a fully immersive learning experience in the target language
 -- Reference: docs/multi_language_support.md Sections 7 & 8
 
 -- ============================================
@@ -187,9 +187,9 @@ UPDATE standard_scenes SET translations = '{
 -- Step 2: Update scene generation trigger with correct localization logic
 -- ============================================
 -- Key changes:
--- 1. initial_message, ai_role, user_role: Use target_lang (Content - AI says this)
--- 2. title, description, goal: Use native_lang (Metadata - User sees this)
--- 3. All text now comes from translations JSON only (no column fallback)
+-- ALL fields (title, description, goal, initial_message, ai_role, user_role) 
+-- now use target_lang (the language user is learning)
+-- This provides a fully immersive experience in the target language
 
 CREATE OR REPLACE FUNCTION handle_user_scene_generation()
 RETURNS TRIGGER AS $$
@@ -210,9 +210,9 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Insert scenes with proper localization:
-  -- - Content (initial_message, ai_role, user_role): Use target_lang (language user is learning)
-  -- - Metadata (title, description, goal): Use native_lang (language user understands)
+  -- Insert scenes with full target_lang localization:
+  -- ALL fields use target_lang (the language user is learning)
+  -- Fallback to en-US if target_lang translation is not available
   INSERT INTO custom_scenarios (
     user_id, title, description, ai_role, user_role, initial_message,
     goal, emoji, category, difficulty, icon_path, color,
@@ -220,35 +220,34 @@ BEGIN
   )
   SELECT
     NEW.id,
-    -- 1. Title (Metadata): Use native_lang -> fallback en-US
+    -- 1. Title: Use target_lang -> fallback en-US
     COALESCE(
-      s.translations -> NEW.native_lang ->> 'title',
+      s.translations -> NEW.target_lang ->> 'title',
       s.translations -> 'en-US' ->> 'title'
     ),
-    -- 2. Description (Metadata): Use native_lang -> fallback en-US
+    -- 2. Description: Use target_lang -> fallback en-US
     COALESCE(
-      s.translations -> NEW.native_lang ->> 'description',
+      s.translations -> NEW.target_lang ->> 'description',
       s.translations -> 'en-US' ->> 'description'
     ),
-    -- 3. AI Role (Content): Use target_lang -> fallback en-US
+    -- 3. AI Role: Use target_lang -> fallback en-US
     COALESCE(
       s.translations -> NEW.target_lang ->> 'ai_role',
       s.translations -> 'en-US' ->> 'ai_role'
     ),
-    -- 4. User Role (Content): Use target_lang -> fallback en-US
+    -- 4. User Role: Use target_lang -> fallback en-US
     COALESCE(
       s.translations -> NEW.target_lang ->> 'user_role',
       s.translations -> 'en-US' ->> 'user_role'
     ),
-    -- 5. Initial Message (Content): Use target_lang -> fallback en-US
-    -- This is the AI's first message - must be in the language user is learning
+    -- 5. Initial Message: Use target_lang -> fallback en-US
     COALESCE(
       s.translations -> NEW.target_lang ->> 'initial_message',
       s.translations -> 'en-US' ->> 'initial_message'
     ),
-    -- 6. Goal (Metadata): Use native_lang -> fallback en-US
+    -- 6. Goal: Use target_lang -> fallback en-US
     COALESCE(
-      s.translations -> NEW.native_lang ->> 'goal',
+      s.translations -> NEW.target_lang ->> 'goal',
       s.translations -> 'en-US' ->> 'goal'
     ),
     s.emoji,
