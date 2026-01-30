@@ -11,10 +11,14 @@ OPENROUTER_CHAT_MODEL = "google/gemini-3-flash-preview"
 OPENROUTER_TRANSCRIBE_MODEL = "google/gemini-2.5-flash-lite"
 
 AZURE_SPEECH_REGION = "westus2"
-
+## following are gcp for echoread so we can use $25000 credit
 GCP_PROJECT_ID = "zinc-epigram-476407-u9"
 GCP_CLIENT_EMAIL = "openrouter-bot@zinc-epigram-476407-u9.iam.gserviceaccount.com"
 GCP_REGION = "us-central1"
+
+## following are Firebase which used echoread226@gmail.com
+FIREBASE_PROJECT_ID = "tritalk-a2783"
+FIREBASE_CLIENT_EMAIL = "firebase-adminsdk-fbsvc@tritalk-a2783.iam.gserviceaccount.com"
 ## TODO(cyb): change this to public in main
 SUPABASE_SCHEMA = "tritalk_schema"
 

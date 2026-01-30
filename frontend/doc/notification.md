@@ -14,6 +14,10 @@
   - 已在 `build.gradle.kts` 中成功应用 `google-services` 插件。
   - 已在 `AndroidManifest.xml` 中验证 `INTERNET` 权限。
   - `minSdkVersion`：检查了 `build.gradle.kts`，它使用的是 `flutter.minSdkVersion`。标准的 Flutter 设置通常是兼容的，但如果出现问题，我们将监控是否需要 version 21+。
+- **后端实现**：✅ **已完成**
+  - 数据库迁移：`backend/supabase/migrations/20260130000021_create_user_fcm_tokens.sql`
+  - FCM 服务：`backend/src/services/fcm.ts`
+  - 环境变量：已在 `types.ts` 和 `wrangler.toml` 中配置
 
 ## 剩余步骤
 
@@ -423,12 +427,14 @@ Future<void> signOut() async {
 }
 ```
 
-#### 9. 数据库表结构 (多设备支持)
+#### 9. 数据库表结构 (多设备支持) ✅ 已完成
+
+> **迁移文件**：`backend/supabase/migrations/20260130000021_create_user_fcm_tokens.sql`
 
 > **设计说明**：以 `fcm_token` 为主键，支持同一用户多台设备同时接收推送。
 
 ```sql
--- migrations/xxx_create_user_fcm_tokens.sql
+-- migrations/20260130000021_create_user_fcm_tokens.sql
 CREATE TABLE user_fcm_tokens (
   -- 每条记录代表一个 App 安装实例
   -- FCM Token 唯一标识设备，作为主键
@@ -465,12 +471,18 @@ CREATE POLICY "Users can delete own tokens"
 -- 普通用户不需要 SELECT 自己的 Token
 ```
 
-#### 10. 后端推送逻辑 (Cloudflare Workers 适配)
+#### 10. 后端推送逻辑 (Cloudflare Workers 适配) ✅ 已完成
+
+> **实现文件**：
+>
+> - 服务代码：`backend/src/services/fcm.ts`
+> - 类型定义：`backend/src/types.ts` (Env 接口)
+> - 服务导出：`backend/src/services/index.ts`
 
 > **架构说明**：`firebase-admin` SDK 依赖 Node.js 原生 API（如 `fs`、`child_process`），**无法在 Cloudflare Workers 运行**。  
 > 我们使用 **FCM HTTP v1 API** 直接发送请求，并复用现有的 `gcp-auth.ts` 认证逻辑。
 
-##### 10.1 环境变量配置
+##### 10.1 环境变量配置 (已完成)
 
 > ⚠️ **重要**：Firebase 和 GCP TTS 使用**不同的账号**，需要分别配置凭证。
 
@@ -637,6 +649,54 @@ const result = await sendPushToUser(env, targetUserId, {
 
 console.log(`推送完成: ${result.sent} 成功, ${result.failed} 失效`);
 ```
+
+##### 10.4 Admin API 测试端点 ✅ 已完成
+
+提供两个 Admin 端点用于测试和监控 FCM 推送：
+
+**检查 FCM 配置状态：**
+
+```bash
+curl -X GET "https://your-backend.workers.dev/admin/push/status" \
+  -H "X-Admin-Key: your-admin-api-key"
+```
+
+响应示例：
+
+```json
+{
+  "configured": true,
+  "project_id": "tritalk-a2783",
+  "client_email": "firebase-adminsdk-xxx@tritalk-a2783.iam.gserviceaccount.com"
+}
+```
+
+**发送测试推送：**
+
+```bash
+curl -X POST "https://your-backend.workers.dev/admin/push/test" \
+  -H "X-Admin-Key: your-admin-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "用户UUID",
+    "title": "TriTalk 测试",
+    "body": "这是一条测试推送 🔔",
+    "data": {"type": "test"}
+  }'
+```
+
+响应示例：
+
+```json
+{
+  "success": true,
+  "sent": 2,
+  "failed": 0,
+  "message": "Successfully sent to 2 device(s)"
+}
+```
+
+> **注意**：需要先在 Cloudflare Dashboard 配置 `ADMIN_API_KEY` 环境变量。
 
 #### 9. 依赖更新
 
