@@ -14,6 +14,8 @@ import 'package:frontend/features/subscription/domain/models/subscription_tier.d
 import '../../../subscription/presentation/pages/paywall_screen.dart';
 import '../../../onboarding/presentation/pages/splash_screen.dart'; // For logout navigation
 import 'package:frontend/core/utils/l10n_ext.dart';
+import 'package:frontend/core/data/api/client_provider.dart';
+import 'package:frontend/core/services/fcm_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -110,6 +112,223 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         (Route<dynamic> route) => false,
       );
     }
+  }
+
+  // ============================================================================
+  // Delete Account Methods
+  // ============================================================================
+
+  /// 处理删除账号 - 双重确认后调用 API
+  Future<void> _handleDeleteAccount() async {
+    // Step 1: 显示警告确认对话框
+    final firstConfirm = await _showDeleteWarningDialog();
+    if (firstConfirm != true) return;
+
+    // Step 2: 要求输入 "DELETE" 进行二次确认
+    final secondConfirm = await _showDeleteTypeConfirmDialog();
+    if (secondConfirm != true) return;
+
+    // Step 3: 执行删除操作
+    await _executeAccountDeletion();
+  }
+
+  /// 显示删除账号警告对话框（包含订阅提醒）
+  Future<bool?> _showDeleteWarningDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.deleteAccountConfirmationTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(context.l10n.deleteAccountConfirmationContent),
+            const SizedBox(height: AppSpacing.md),
+            _buildSubscriptionWarningBanner(),
+          ],
+        ),
+        actions: [
+          _buildCancelButton(dialogContext),
+          _buildDeleteButton(dialogContext),
+        ],
+      ),
+    );
+  }
+
+  /// 显示输入 DELETE 确认对话框
+  Future<bool?> _showDeleteTypeConfirmDialog() {
+    final confirmController = TextEditingController();
+
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.deleteAccountConfirmationTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(context.l10n.deleteAccountTypeConfirm),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: confirmController,
+              decoration: InputDecoration(
+                hintText: context.l10n.deleteAccountTypeHint,
+                border: const OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(context.l10n.cancelAction),
+          ),
+          TextButton(
+            onPressed: () {
+              final isValid =
+                  confirmController.text.trim().toUpperCase() == 'DELETE';
+              if (isValid) Navigator.pop(dialogContext, true);
+            },
+            child: Text(
+              context.l10n.deleteAction,
+              style: TextStyle(
+                color: AppColors.lightError,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 执行账号删除操作
+  Future<void> _executeAccountDeletion() async {
+    if (!mounted) return;
+
+    _showLoadingDialog();
+
+    try {
+      // 尝试注销 FCM Token（失败不阻塞）
+      await _tryDeregisterFcmToken();
+
+      // 调用 API 删除账号
+      await ClientProvider.client.userAccountDelete();
+
+      if (!mounted) return;
+      Navigator.pop(context); // 关闭 Loading
+
+      // 本地登出
+      ref.read(authProvider.notifier).logout();
+    } catch (e) {
+      _handleDeletionError(e);
+    }
+  }
+
+  /// 构建订阅警告横幅
+  Widget _buildSubscriptionWarningBanner() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.lightWarning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.lightWarning),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.lightWarning,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              context.l10n.deleteAccountSubscriptionWarning,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.lightWarning,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建取消按钮
+  Widget _buildCancelButton(BuildContext dialogContext) {
+    return TextButton(
+      onPressed: () => Navigator.pop(dialogContext, false),
+      child: Text(
+        context.l10n.cancelAction,
+        style: TextStyle(color: AppColors.lightTextSecondary),
+      ),
+    );
+  }
+
+  /// 构建删除按钮
+  Widget _buildDeleteButton(BuildContext dialogContext) {
+    return TextButton(
+      onPressed: () => Navigator.pop(dialogContext, true),
+      child: Text(
+        context.l10n.deleteAction,
+        style: TextStyle(
+          color: AppColors.lightError,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  /// 显示加载对话框
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: AppSpacing.md),
+                Text(context.l10n.deleteAccountLoading),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 尝试注销 FCM Token
+  Future<void> _tryDeregisterFcmToken() async {
+    try {
+      await FcmService.instance.unregisterToken();
+    } catch (_) {
+      debugPrint('FCM deregister failed, continuing with account deletion');
+    }
+  }
+
+  /// 处理删除错误
+  void _handleDeletionError(Object error) {
+    if (!mounted) return;
+    Navigator.pop(context); // 关闭 Loading
+
+    debugPrint('Delete account error: $error');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.l10n.deleteAccountFailed),
+        backgroundColor: AppColors.lightError,
+      ),
+    );
   }
 
   /// 显示 App 语言选择对话框
@@ -541,6 +760,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.arrow_circle_right,
                         iconColor: AppColors.lightTextSecondary,
                         onTap: _handleLogout,
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Danger Zone Section
+                      Text(
+                        context.l10n.profile_dangerZone,
+                        style: AppTypography.subtitle1.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.lightError,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Delete Account Button
+                      _buildMenuCard(
+                        context,
+                        title: context.l10n.deleteAccount,
+                        icon: Icons.delete_forever_rounded,
+                        iconColor: AppColors.lightError,
+                        onTap: _handleDeleteAccount,
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       // Version Info

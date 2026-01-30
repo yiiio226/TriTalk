@@ -930,6 +930,131 @@ extension $ShadowingUpsertPut$RequestBodyExtension
 }
 
 @JsonSerializable(explicitToJson: true)
+class AdminStandardScenesPost$RequestBody {
+  const AdminStandardScenesPost$RequestBody({required this.scenes});
+
+  factory AdminStandardScenesPost$RequestBody.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AdminStandardScenesPost$RequestBodyFromJson(json);
+
+  static const toJsonFactory = _$AdminStandardScenesPost$RequestBodyToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesPost$RequestBodyToJson(this);
+
+  @JsonKey(name: 'scenes')
+  final List<AdminStandardScenesPost$RequestBody$Scenes$Item> scenes;
+  static const fromJsonFactory = _$AdminStandardScenesPost$RequestBodyFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesPost$RequestBody &&
+            (identical(other.scenes, scenes) ||
+                const DeepCollectionEquality().equals(other.scenes, scenes)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(scenes) ^ runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesPost$RequestBodyExtension
+    on AdminStandardScenesPost$RequestBody {
+  AdminStandardScenesPost$RequestBody copyWith({
+    List<AdminStandardScenesPost$RequestBody$Scenes$Item>? scenes,
+  }) {
+    return AdminStandardScenesPost$RequestBody(scenes: scenes ?? this.scenes);
+  }
+
+  AdminStandardScenesPost$RequestBody copyWithWrapped({
+    Wrapped<List<AdminStandardScenesPost$RequestBody$Scenes$Item>>? scenes,
+  }) {
+    return AdminStandardScenesPost$RequestBody(
+      scenes: (scenes != null ? scenes.value : this.scenes),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminPushTestPost$RequestBody {
+  const AdminPushTestPost$RequestBody({
+    required this.userId,
+    this.title,
+    this.body,
+    this.data,
+  });
+
+  factory AdminPushTestPost$RequestBody.fromJson(Map<String, dynamic> json) =>
+      _$AdminPushTestPost$RequestBodyFromJson(json);
+
+  static const toJsonFactory = _$AdminPushTestPost$RequestBodyToJson;
+  Map<String, dynamic> toJson() => _$AdminPushTestPost$RequestBodyToJson(this);
+
+  @JsonKey(name: 'user_id')
+  final String userId;
+  @JsonKey(name: 'title')
+  final String? title;
+  @JsonKey(name: 'body')
+  final String? body;
+  @JsonKey(name: 'data')
+  final Map<String, dynamic>? data;
+  static const fromJsonFactory = _$AdminPushTestPost$RequestBodyFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminPushTestPost$RequestBody &&
+            (identical(other.userId, userId) ||
+                const DeepCollectionEquality().equals(other.userId, userId)) &&
+            (identical(other.title, title) ||
+                const DeepCollectionEquality().equals(other.title, title)) &&
+            (identical(other.body, body) ||
+                const DeepCollectionEquality().equals(other.body, body)) &&
+            (identical(other.data, data) ||
+                const DeepCollectionEquality().equals(other.data, data)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(userId) ^
+      const DeepCollectionEquality().hash(title) ^
+      const DeepCollectionEquality().hash(body) ^
+      const DeepCollectionEquality().hash(data) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminPushTestPost$RequestBodyExtension
+    on AdminPushTestPost$RequestBody {
+  AdminPushTestPost$RequestBody copyWith({
+    String? userId,
+    String? title,
+    String? body,
+    Map<String, dynamic>? data,
+  }) {
+    return AdminPushTestPost$RequestBody(
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      data: data ?? this.data,
+    );
+  }
+
+  AdminPushTestPost$RequestBody copyWithWrapped({
+    Wrapped<String>? userId,
+    Wrapped<String?>? title,
+    Wrapped<String?>? body,
+    Wrapped<Map<String, dynamic>?>? data,
+  }) {
+    return AdminPushTestPost$RequestBody(
+      userId: (userId != null ? userId.value : this.userId),
+      title: (title != null ? title.value : this.title),
+      body: (body != null ? body.value : this.body),
+      data: (data != null ? data.value : this.data),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
 class HealthGet$Response {
   const HealthGet$Response({required this.status});
 
@@ -1687,6 +1812,443 @@ extension $ShadowingGetGet$ResponseExtension on ShadowingGetGet$Response {
 }
 
 @JsonSerializable(explicitToJson: true)
+class UserAccountDelete$Response {
+  const UserAccountDelete$Response({
+    required this.success,
+    required this.message,
+  });
+
+  factory UserAccountDelete$Response.fromJson(Map<String, dynamic> json) =>
+      _$UserAccountDelete$ResponseFromJson(json);
+
+  static const toJsonFactory = _$UserAccountDelete$ResponseToJson;
+  Map<String, dynamic> toJson() => _$UserAccountDelete$ResponseToJson(this);
+
+  @JsonKey(name: 'success')
+  final bool success;
+  @JsonKey(name: 'message')
+  final String message;
+  static const fromJsonFactory = _$UserAccountDelete$ResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is UserAccountDelete$Response &&
+            (identical(other.success, success) ||
+                const DeepCollectionEquality().equals(
+                  other.success,
+                  success,
+                )) &&
+            (identical(other.message, message) ||
+                const DeepCollectionEquality().equals(other.message, message)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(success) ^
+      const DeepCollectionEquality().hash(message) ^
+      runtimeType.hashCode;
+}
+
+extension $UserAccountDelete$ResponseExtension on UserAccountDelete$Response {
+  UserAccountDelete$Response copyWith({bool? success, String? message}) {
+    return UserAccountDelete$Response(
+      success: success ?? this.success,
+      message: message ?? this.message,
+    );
+  }
+
+  UserAccountDelete$Response copyWithWrapped({
+    Wrapped<bool>? success,
+    Wrapped<String>? message,
+  }) {
+    return UserAccountDelete$Response(
+      success: (success != null ? success.value : this.success),
+      message: (message != null ? message.value : this.message),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminStandardScenesGet$Response {
+  const AdminStandardScenesGet$Response({
+    required this.success,
+    required this.count,
+    required this.scenes,
+  });
+
+  factory AdminStandardScenesGet$Response.fromJson(Map<String, dynamic> json) =>
+      _$AdminStandardScenesGet$ResponseFromJson(json);
+
+  static const toJsonFactory = _$AdminStandardScenesGet$ResponseToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesGet$ResponseToJson(this);
+
+  @JsonKey(name: 'success')
+  final bool success;
+  @JsonKey(name: 'count')
+  final double count;
+  @JsonKey(name: 'scenes')
+  final List<AdminStandardScenesGet$Response$Scenes$Item> scenes;
+  static const fromJsonFactory = _$AdminStandardScenesGet$ResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesGet$Response &&
+            (identical(other.success, success) ||
+                const DeepCollectionEquality().equals(
+                  other.success,
+                  success,
+                )) &&
+            (identical(other.count, count) ||
+                const DeepCollectionEquality().equals(other.count, count)) &&
+            (identical(other.scenes, scenes) ||
+                const DeepCollectionEquality().equals(other.scenes, scenes)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(success) ^
+      const DeepCollectionEquality().hash(count) ^
+      const DeepCollectionEquality().hash(scenes) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesGet$ResponseExtension
+    on AdminStandardScenesGet$Response {
+  AdminStandardScenesGet$Response copyWith({
+    bool? success,
+    double? count,
+    List<AdminStandardScenesGet$Response$Scenes$Item>? scenes,
+  }) {
+    return AdminStandardScenesGet$Response(
+      success: success ?? this.success,
+      count: count ?? this.count,
+      scenes: scenes ?? this.scenes,
+    );
+  }
+
+  AdminStandardScenesGet$Response copyWithWrapped({
+    Wrapped<bool>? success,
+    Wrapped<double>? count,
+    Wrapped<List<AdminStandardScenesGet$Response$Scenes$Item>>? scenes,
+  }) {
+    return AdminStandardScenesGet$Response(
+      success: (success != null ? success.value : this.success),
+      count: (count != null ? count.value : this.count),
+      scenes: (scenes != null ? scenes.value : this.scenes),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminStandardScenesPost$Response {
+  const AdminStandardScenesPost$Response({
+    required this.success,
+    required this.createdCount,
+    required this.scenes,
+  });
+
+  factory AdminStandardScenesPost$Response.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AdminStandardScenesPost$ResponseFromJson(json);
+
+  static const toJsonFactory = _$AdminStandardScenesPost$ResponseToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesPost$ResponseToJson(this);
+
+  @JsonKey(name: 'success')
+  final bool success;
+  @JsonKey(name: 'created_count')
+  final double createdCount;
+  @JsonKey(name: 'scenes')
+  final List<AdminStandardScenesPost$Response$Scenes$Item> scenes;
+  static const fromJsonFactory = _$AdminStandardScenesPost$ResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesPost$Response &&
+            (identical(other.success, success) ||
+                const DeepCollectionEquality().equals(
+                  other.success,
+                  success,
+                )) &&
+            (identical(other.createdCount, createdCount) ||
+                const DeepCollectionEquality().equals(
+                  other.createdCount,
+                  createdCount,
+                )) &&
+            (identical(other.scenes, scenes) ||
+                const DeepCollectionEquality().equals(other.scenes, scenes)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(success) ^
+      const DeepCollectionEquality().hash(createdCount) ^
+      const DeepCollectionEquality().hash(scenes) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesPost$ResponseExtension
+    on AdminStandardScenesPost$Response {
+  AdminStandardScenesPost$Response copyWith({
+    bool? success,
+    double? createdCount,
+    List<AdminStandardScenesPost$Response$Scenes$Item>? scenes,
+  }) {
+    return AdminStandardScenesPost$Response(
+      success: success ?? this.success,
+      createdCount: createdCount ?? this.createdCount,
+      scenes: scenes ?? this.scenes,
+    );
+  }
+
+  AdminStandardScenesPost$Response copyWithWrapped({
+    Wrapped<bool>? success,
+    Wrapped<double>? createdCount,
+    Wrapped<List<AdminStandardScenesPost$Response$Scenes$Item>>? scenes,
+  }) {
+    return AdminStandardScenesPost$Response(
+      success: (success != null ? success.value : this.success),
+      createdCount: (createdCount != null
+          ? createdCount.value
+          : this.createdCount),
+      scenes: (scenes != null ? scenes.value : this.scenes),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminStandardScenesIdDelete$Response {
+  const AdminStandardScenesIdDelete$Response({
+    required this.success,
+    required this.deletedCount,
+  });
+
+  factory AdminStandardScenesIdDelete$Response.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AdminStandardScenesIdDelete$ResponseFromJson(json);
+
+  static const toJsonFactory = _$AdminStandardScenesIdDelete$ResponseToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesIdDelete$ResponseToJson(this);
+
+  @JsonKey(name: 'success')
+  final bool success;
+  @JsonKey(name: 'deleted_count')
+  final double deletedCount;
+  static const fromJsonFactory = _$AdminStandardScenesIdDelete$ResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesIdDelete$Response &&
+            (identical(other.success, success) ||
+                const DeepCollectionEquality().equals(
+                  other.success,
+                  success,
+                )) &&
+            (identical(other.deletedCount, deletedCount) ||
+                const DeepCollectionEquality().equals(
+                  other.deletedCount,
+                  deletedCount,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(success) ^
+      const DeepCollectionEquality().hash(deletedCount) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesIdDelete$ResponseExtension
+    on AdminStandardScenesIdDelete$Response {
+  AdminStandardScenesIdDelete$Response copyWith({
+    bool? success,
+    double? deletedCount,
+  }) {
+    return AdminStandardScenesIdDelete$Response(
+      success: success ?? this.success,
+      deletedCount: deletedCount ?? this.deletedCount,
+    );
+  }
+
+  AdminStandardScenesIdDelete$Response copyWithWrapped({
+    Wrapped<bool>? success,
+    Wrapped<double>? deletedCount,
+  }) {
+    return AdminStandardScenesIdDelete$Response(
+      success: (success != null ? success.value : this.success),
+      deletedCount: (deletedCount != null
+          ? deletedCount.value
+          : this.deletedCount),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminPushTestPost$Response {
+  const AdminPushTestPost$Response({
+    required this.success,
+    required this.sent,
+    required this.failed,
+    required this.message,
+  });
+
+  factory AdminPushTestPost$Response.fromJson(Map<String, dynamic> json) =>
+      _$AdminPushTestPost$ResponseFromJson(json);
+
+  static const toJsonFactory = _$AdminPushTestPost$ResponseToJson;
+  Map<String, dynamic> toJson() => _$AdminPushTestPost$ResponseToJson(this);
+
+  @JsonKey(name: 'success')
+  final bool success;
+  @JsonKey(name: 'sent')
+  final double sent;
+  @JsonKey(name: 'failed')
+  final double failed;
+  @JsonKey(name: 'message')
+  final String message;
+  static const fromJsonFactory = _$AdminPushTestPost$ResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminPushTestPost$Response &&
+            (identical(other.success, success) ||
+                const DeepCollectionEquality().equals(
+                  other.success,
+                  success,
+                )) &&
+            (identical(other.sent, sent) ||
+                const DeepCollectionEquality().equals(other.sent, sent)) &&
+            (identical(other.failed, failed) ||
+                const DeepCollectionEquality().equals(other.failed, failed)) &&
+            (identical(other.message, message) ||
+                const DeepCollectionEquality().equals(other.message, message)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(success) ^
+      const DeepCollectionEquality().hash(sent) ^
+      const DeepCollectionEquality().hash(failed) ^
+      const DeepCollectionEquality().hash(message) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminPushTestPost$ResponseExtension on AdminPushTestPost$Response {
+  AdminPushTestPost$Response copyWith({
+    bool? success,
+    double? sent,
+    double? failed,
+    String? message,
+  }) {
+    return AdminPushTestPost$Response(
+      success: success ?? this.success,
+      sent: sent ?? this.sent,
+      failed: failed ?? this.failed,
+      message: message ?? this.message,
+    );
+  }
+
+  AdminPushTestPost$Response copyWithWrapped({
+    Wrapped<bool>? success,
+    Wrapped<double>? sent,
+    Wrapped<double>? failed,
+    Wrapped<String>? message,
+  }) {
+    return AdminPushTestPost$Response(
+      success: (success != null ? success.value : this.success),
+      sent: (sent != null ? sent.value : this.sent),
+      failed: (failed != null ? failed.value : this.failed),
+      message: (message != null ? message.value : this.message),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminPushStatusGet$Response {
+  const AdminPushStatusGet$Response({
+    required this.configured,
+    this.projectId,
+    this.clientEmail,
+  });
+
+  factory AdminPushStatusGet$Response.fromJson(Map<String, dynamic> json) =>
+      _$AdminPushStatusGet$ResponseFromJson(json);
+
+  static const toJsonFactory = _$AdminPushStatusGet$ResponseToJson;
+  Map<String, dynamic> toJson() => _$AdminPushStatusGet$ResponseToJson(this);
+
+  @JsonKey(name: 'configured')
+  final bool configured;
+  @JsonKey(name: 'project_id')
+  final String? projectId;
+  @JsonKey(name: 'client_email')
+  final String? clientEmail;
+  static const fromJsonFactory = _$AdminPushStatusGet$ResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminPushStatusGet$Response &&
+            (identical(other.configured, configured) ||
+                const DeepCollectionEquality().equals(
+                  other.configured,
+                  configured,
+                )) &&
+            (identical(other.projectId, projectId) ||
+                const DeepCollectionEquality().equals(
+                  other.projectId,
+                  projectId,
+                )) &&
+            (identical(other.clientEmail, clientEmail) ||
+                const DeepCollectionEquality().equals(
+                  other.clientEmail,
+                  clientEmail,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(configured) ^
+      const DeepCollectionEquality().hash(projectId) ^
+      const DeepCollectionEquality().hash(clientEmail) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminPushStatusGet$ResponseExtension on AdminPushStatusGet$Response {
+  AdminPushStatusGet$Response copyWith({
+    bool? configured,
+    String? projectId,
+    String? clientEmail,
+  }) {
+    return AdminPushStatusGet$Response(
+      configured: configured ?? this.configured,
+      projectId: projectId ?? this.projectId,
+      clientEmail: clientEmail ?? this.clientEmail,
+    );
+  }
+
+  AdminPushStatusGet$Response copyWithWrapped({
+    Wrapped<bool>? configured,
+    Wrapped<String?>? projectId,
+    Wrapped<String?>? clientEmail,
+  }) {
+    return AdminPushStatusGet$Response(
+      configured: (configured != null ? configured.value : this.configured),
+      projectId: (projectId != null ? projectId.value : this.projectId),
+      clientEmail: (clientEmail != null ? clientEmail.value : this.clientEmail),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
 class ChatSendPost$RequestBody$History$Item {
   const ChatSendPost$RequestBody$History$Item({
     required this.role,
@@ -2092,6 +2654,210 @@ extension $ShadowingUpsertPut$RequestBody$Segments$ItemExtension
       score: (score != null ? score.value : this.score),
       hasError: (hasError != null ? hasError.value : this.hasError),
       wordCount: (wordCount != null ? wordCount.value : this.wordCount),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminStandardScenesPost$RequestBody$Scenes$Item {
+  const AdminStandardScenesPost$RequestBody$Scenes$Item({
+    this.id,
+    required this.title,
+    required this.description,
+    required this.aiRole,
+    required this.userRole,
+    required this.initialMessage,
+    required this.goal,
+    this.emoji,
+    required this.category,
+    required this.difficulty,
+    this.iconPath,
+    required this.color,
+    this.targetLanguage,
+  });
+
+  factory AdminStandardScenesPost$RequestBody$Scenes$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AdminStandardScenesPost$RequestBody$Scenes$ItemFromJson(json);
+
+  static const toJsonFactory =
+      _$AdminStandardScenesPost$RequestBody$Scenes$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesPost$RequestBody$Scenes$ItemToJson(this);
+
+  @JsonKey(name: 'id')
+  final String? id;
+  @JsonKey(name: 'title')
+  final String title;
+  @JsonKey(name: 'description')
+  final String description;
+  @JsonKey(name: 'ai_role')
+  final String aiRole;
+  @JsonKey(name: 'user_role')
+  final String userRole;
+  @JsonKey(name: 'initial_message')
+  final String initialMessage;
+  @JsonKey(name: 'goal')
+  final String goal;
+  @JsonKey(name: 'emoji')
+  final String? emoji;
+  @JsonKey(name: 'category')
+  final String category;
+  @JsonKey(
+    name: 'difficulty',
+    toJson: adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyToJson,
+    fromJson: adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyFromJson,
+  )
+  final enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+  difficulty;
+  @JsonKey(name: 'icon_path')
+  final String? iconPath;
+  @JsonKey(name: 'color')
+  final double color;
+  @JsonKey(name: 'target_language')
+  final String? targetLanguage;
+  static const fromJsonFactory =
+      _$AdminStandardScenesPost$RequestBody$Scenes$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesPost$RequestBody$Scenes$Item &&
+            (identical(other.id, id) ||
+                const DeepCollectionEquality().equals(other.id, id)) &&
+            (identical(other.title, title) ||
+                const DeepCollectionEquality().equals(other.title, title)) &&
+            (identical(other.description, description) ||
+                const DeepCollectionEquality().equals(
+                  other.description,
+                  description,
+                )) &&
+            (identical(other.aiRole, aiRole) ||
+                const DeepCollectionEquality().equals(other.aiRole, aiRole)) &&
+            (identical(other.userRole, userRole) ||
+                const DeepCollectionEquality().equals(
+                  other.userRole,
+                  userRole,
+                )) &&
+            (identical(other.initialMessage, initialMessage) ||
+                const DeepCollectionEquality().equals(
+                  other.initialMessage,
+                  initialMessage,
+                )) &&
+            (identical(other.goal, goal) ||
+                const DeepCollectionEquality().equals(other.goal, goal)) &&
+            (identical(other.emoji, emoji) ||
+                const DeepCollectionEquality().equals(other.emoji, emoji)) &&
+            (identical(other.category, category) ||
+                const DeepCollectionEquality().equals(
+                  other.category,
+                  category,
+                )) &&
+            (identical(other.difficulty, difficulty) ||
+                const DeepCollectionEquality().equals(
+                  other.difficulty,
+                  difficulty,
+                )) &&
+            (identical(other.iconPath, iconPath) ||
+                const DeepCollectionEquality().equals(
+                  other.iconPath,
+                  iconPath,
+                )) &&
+            (identical(other.color, color) ||
+                const DeepCollectionEquality().equals(other.color, color)) &&
+            (identical(other.targetLanguage, targetLanguage) ||
+                const DeepCollectionEquality().equals(
+                  other.targetLanguage,
+                  targetLanguage,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(id) ^
+      const DeepCollectionEquality().hash(title) ^
+      const DeepCollectionEquality().hash(description) ^
+      const DeepCollectionEquality().hash(aiRole) ^
+      const DeepCollectionEquality().hash(userRole) ^
+      const DeepCollectionEquality().hash(initialMessage) ^
+      const DeepCollectionEquality().hash(goal) ^
+      const DeepCollectionEquality().hash(emoji) ^
+      const DeepCollectionEquality().hash(category) ^
+      const DeepCollectionEquality().hash(difficulty) ^
+      const DeepCollectionEquality().hash(iconPath) ^
+      const DeepCollectionEquality().hash(color) ^
+      const DeepCollectionEquality().hash(targetLanguage) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesPost$RequestBody$Scenes$ItemExtension
+    on AdminStandardScenesPost$RequestBody$Scenes$Item {
+  AdminStandardScenesPost$RequestBody$Scenes$Item copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? aiRole,
+    String? userRole,
+    String? initialMessage,
+    String? goal,
+    String? emoji,
+    String? category,
+    enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty? difficulty,
+    String? iconPath,
+    double? color,
+    String? targetLanguage,
+  }) {
+    return AdminStandardScenesPost$RequestBody$Scenes$Item(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      aiRole: aiRole ?? this.aiRole,
+      userRole: userRole ?? this.userRole,
+      initialMessage: initialMessage ?? this.initialMessage,
+      goal: goal ?? this.goal,
+      emoji: emoji ?? this.emoji,
+      category: category ?? this.category,
+      difficulty: difficulty ?? this.difficulty,
+      iconPath: iconPath ?? this.iconPath,
+      color: color ?? this.color,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
+    );
+  }
+
+  AdminStandardScenesPost$RequestBody$Scenes$Item copyWithWrapped({
+    Wrapped<String?>? id,
+    Wrapped<String>? title,
+    Wrapped<String>? description,
+    Wrapped<String>? aiRole,
+    Wrapped<String>? userRole,
+    Wrapped<String>? initialMessage,
+    Wrapped<String>? goal,
+    Wrapped<String?>? emoji,
+    Wrapped<String>? category,
+    Wrapped<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>?
+    difficulty,
+    Wrapped<String?>? iconPath,
+    Wrapped<double>? color,
+    Wrapped<String?>? targetLanguage,
+  }) {
+    return AdminStandardScenesPost$RequestBody$Scenes$Item(
+      id: (id != null ? id.value : this.id),
+      title: (title != null ? title.value : this.title),
+      description: (description != null ? description.value : this.description),
+      aiRole: (aiRole != null ? aiRole.value : this.aiRole),
+      userRole: (userRole != null ? userRole.value : this.userRole),
+      initialMessage: (initialMessage != null
+          ? initialMessage.value
+          : this.initialMessage),
+      goal: (goal != null ? goal.value : this.goal),
+      emoji: (emoji != null ? emoji.value : this.emoji),
+      category: (category != null ? category.value : this.category),
+      difficulty: (difficulty != null ? difficulty.value : this.difficulty),
+      iconPath: (iconPath != null ? iconPath.value : this.iconPath),
+      color: (color != null ? color.value : this.color),
+      targetLanguage: (targetLanguage != null
+          ? targetLanguage.value
+          : this.targetLanguage),
     );
   }
 }
@@ -2581,6 +3347,285 @@ extension $ShadowingGetGet$Response$DataExtension
           : this.feedbackText),
       segments: (segments != null ? segments.value : this.segments),
       practicedAt: (practicedAt != null ? practicedAt.value : this.practicedAt),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminStandardScenesGet$Response$Scenes$Item {
+  const AdminStandardScenesGet$Response$Scenes$Item({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.aiRole,
+    required this.userRole,
+    required this.initialMessage,
+    required this.goal,
+    this.emoji,
+    required this.category,
+    required this.difficulty,
+    this.iconPath,
+    required this.color,
+    this.targetLanguage,
+    this.createdAt,
+  });
+
+  factory AdminStandardScenesGet$Response$Scenes$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AdminStandardScenesGet$Response$Scenes$ItemFromJson(json);
+
+  static const toJsonFactory =
+      _$AdminStandardScenesGet$Response$Scenes$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesGet$Response$Scenes$ItemToJson(this);
+
+  @JsonKey(name: 'id')
+  final String id;
+  @JsonKey(name: 'title')
+  final String title;
+  @JsonKey(name: 'description')
+  final String description;
+  @JsonKey(name: 'ai_role')
+  final String aiRole;
+  @JsonKey(name: 'user_role')
+  final String userRole;
+  @JsonKey(name: 'initial_message')
+  final String initialMessage;
+  @JsonKey(name: 'goal')
+  final String goal;
+  @JsonKey(name: 'emoji')
+  final String? emoji;
+  @JsonKey(name: 'category')
+  final String category;
+  @JsonKey(
+    name: 'difficulty',
+    toJson: adminStandardScenesGet$Response$Scenes$ItemDifficultyToJson,
+    fromJson: adminStandardScenesGet$Response$Scenes$ItemDifficultyFromJson,
+  )
+  final enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty difficulty;
+  @JsonKey(name: 'icon_path')
+  final String? iconPath;
+  @JsonKey(name: 'color')
+  final double color;
+  @JsonKey(name: 'target_language')
+  final String? targetLanguage;
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+  static const fromJsonFactory =
+      _$AdminStandardScenesGet$Response$Scenes$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesGet$Response$Scenes$Item &&
+            (identical(other.id, id) ||
+                const DeepCollectionEquality().equals(other.id, id)) &&
+            (identical(other.title, title) ||
+                const DeepCollectionEquality().equals(other.title, title)) &&
+            (identical(other.description, description) ||
+                const DeepCollectionEquality().equals(
+                  other.description,
+                  description,
+                )) &&
+            (identical(other.aiRole, aiRole) ||
+                const DeepCollectionEquality().equals(other.aiRole, aiRole)) &&
+            (identical(other.userRole, userRole) ||
+                const DeepCollectionEquality().equals(
+                  other.userRole,
+                  userRole,
+                )) &&
+            (identical(other.initialMessage, initialMessage) ||
+                const DeepCollectionEquality().equals(
+                  other.initialMessage,
+                  initialMessage,
+                )) &&
+            (identical(other.goal, goal) ||
+                const DeepCollectionEquality().equals(other.goal, goal)) &&
+            (identical(other.emoji, emoji) ||
+                const DeepCollectionEquality().equals(other.emoji, emoji)) &&
+            (identical(other.category, category) ||
+                const DeepCollectionEquality().equals(
+                  other.category,
+                  category,
+                )) &&
+            (identical(other.difficulty, difficulty) ||
+                const DeepCollectionEquality().equals(
+                  other.difficulty,
+                  difficulty,
+                )) &&
+            (identical(other.iconPath, iconPath) ||
+                const DeepCollectionEquality().equals(
+                  other.iconPath,
+                  iconPath,
+                )) &&
+            (identical(other.color, color) ||
+                const DeepCollectionEquality().equals(other.color, color)) &&
+            (identical(other.targetLanguage, targetLanguage) ||
+                const DeepCollectionEquality().equals(
+                  other.targetLanguage,
+                  targetLanguage,
+                )) &&
+            (identical(other.createdAt, createdAt) ||
+                const DeepCollectionEquality().equals(
+                  other.createdAt,
+                  createdAt,
+                )));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(id) ^
+      const DeepCollectionEquality().hash(title) ^
+      const DeepCollectionEquality().hash(description) ^
+      const DeepCollectionEquality().hash(aiRole) ^
+      const DeepCollectionEquality().hash(userRole) ^
+      const DeepCollectionEquality().hash(initialMessage) ^
+      const DeepCollectionEquality().hash(goal) ^
+      const DeepCollectionEquality().hash(emoji) ^
+      const DeepCollectionEquality().hash(category) ^
+      const DeepCollectionEquality().hash(difficulty) ^
+      const DeepCollectionEquality().hash(iconPath) ^
+      const DeepCollectionEquality().hash(color) ^
+      const DeepCollectionEquality().hash(targetLanguage) ^
+      const DeepCollectionEquality().hash(createdAt) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesGet$Response$Scenes$ItemExtension
+    on AdminStandardScenesGet$Response$Scenes$Item {
+  AdminStandardScenesGet$Response$Scenes$Item copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? aiRole,
+    String? userRole,
+    String? initialMessage,
+    String? goal,
+    String? emoji,
+    String? category,
+    enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty? difficulty,
+    String? iconPath,
+    double? color,
+    String? targetLanguage,
+    String? createdAt,
+  }) {
+    return AdminStandardScenesGet$Response$Scenes$Item(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      aiRole: aiRole ?? this.aiRole,
+      userRole: userRole ?? this.userRole,
+      initialMessage: initialMessage ?? this.initialMessage,
+      goal: goal ?? this.goal,
+      emoji: emoji ?? this.emoji,
+      category: category ?? this.category,
+      difficulty: difficulty ?? this.difficulty,
+      iconPath: iconPath ?? this.iconPath,
+      color: color ?? this.color,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  AdminStandardScenesGet$Response$Scenes$Item copyWithWrapped({
+    Wrapped<String>? id,
+    Wrapped<String>? title,
+    Wrapped<String>? description,
+    Wrapped<String>? aiRole,
+    Wrapped<String>? userRole,
+    Wrapped<String>? initialMessage,
+    Wrapped<String>? goal,
+    Wrapped<String?>? emoji,
+    Wrapped<String>? category,
+    Wrapped<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>?
+    difficulty,
+    Wrapped<String?>? iconPath,
+    Wrapped<double>? color,
+    Wrapped<String?>? targetLanguage,
+    Wrapped<String?>? createdAt,
+  }) {
+    return AdminStandardScenesGet$Response$Scenes$Item(
+      id: (id != null ? id.value : this.id),
+      title: (title != null ? title.value : this.title),
+      description: (description != null ? description.value : this.description),
+      aiRole: (aiRole != null ? aiRole.value : this.aiRole),
+      userRole: (userRole != null ? userRole.value : this.userRole),
+      initialMessage: (initialMessage != null
+          ? initialMessage.value
+          : this.initialMessage),
+      goal: (goal != null ? goal.value : this.goal),
+      emoji: (emoji != null ? emoji.value : this.emoji),
+      category: (category != null ? category.value : this.category),
+      difficulty: (difficulty != null ? difficulty.value : this.difficulty),
+      iconPath: (iconPath != null ? iconPath.value : this.iconPath),
+      color: (color != null ? color.value : this.color),
+      targetLanguage: (targetLanguage != null
+          ? targetLanguage.value
+          : this.targetLanguage),
+      createdAt: (createdAt != null ? createdAt.value : this.createdAt),
+    );
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class AdminStandardScenesPost$Response$Scenes$Item {
+  const AdminStandardScenesPost$Response$Scenes$Item({
+    required this.id,
+    required this.title,
+  });
+
+  factory AdminStandardScenesPost$Response$Scenes$Item.fromJson(
+    Map<String, dynamic> json,
+  ) => _$AdminStandardScenesPost$Response$Scenes$ItemFromJson(json);
+
+  static const toJsonFactory =
+      _$AdminStandardScenesPost$Response$Scenes$ItemToJson;
+  Map<String, dynamic> toJson() =>
+      _$AdminStandardScenesPost$Response$Scenes$ItemToJson(this);
+
+  @JsonKey(name: 'id')
+  final String id;
+  @JsonKey(name: 'title')
+  final String title;
+  static const fromJsonFactory =
+      _$AdminStandardScenesPost$Response$Scenes$ItemFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is AdminStandardScenesPost$Response$Scenes$Item &&
+            (identical(other.id, id) ||
+                const DeepCollectionEquality().equals(other.id, id)) &&
+            (identical(other.title, title) ||
+                const DeepCollectionEquality().equals(other.title, title)));
+  }
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(id) ^
+      const DeepCollectionEquality().hash(title) ^
+      runtimeType.hashCode;
+}
+
+extension $AdminStandardScenesPost$Response$Scenes$ItemExtension
+    on AdminStandardScenesPost$Response$Scenes$Item {
+  AdminStandardScenesPost$Response$Scenes$Item copyWith({
+    String? id,
+    String? title,
+  }) {
+    return AdminStandardScenesPost$Response$Scenes$Item(
+      id: id ?? this.id,
+      title: title ?? this.title,
+    );
+  }
+
+  AdminStandardScenesPost$Response$Scenes$Item copyWithWrapped({
+    Wrapped<String>? id,
+    Wrapped<String>? title,
+  }) {
+    return AdminStandardScenesPost$Response$Scenes$Item(
+      id: (id != null ? id.value : this.id),
+      title: (title != null ? title.value : this.title),
     );
   }
 }
@@ -3194,6 +4239,115 @@ shadowingGetGetSourceTypeNullableListFromJson(
       .toList();
 }
 
+String? adminStandardScenesGet$Response$Scenes$ItemDifficultyNullableToJson(
+  enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty?
+  adminStandardScenesGet$Response$Scenes$ItemDifficulty,
+) {
+  return adminStandardScenesGet$Response$Scenes$ItemDifficulty?.value;
+}
+
+String? adminStandardScenesGet$Response$Scenes$ItemDifficultyToJson(
+  enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty
+  adminStandardScenesGet$Response$Scenes$ItemDifficulty,
+) {
+  return adminStandardScenesGet$Response$Scenes$ItemDifficulty.value;
+}
+
+enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty
+adminStandardScenesGet$Response$Scenes$ItemDifficultyFromJson(
+  Object? adminStandardScenesGet$Response$Scenes$ItemDifficulty, [
+  enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty? defaultValue,
+]) {
+  return enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty.values
+          .firstWhereOrNull(
+            (e) =>
+                e.value ==
+                adminStandardScenesGet$Response$Scenes$ItemDifficulty,
+          ) ??
+      defaultValue ??
+      enums
+          .AdminStandardScenesGet$Response$Scenes$ItemDifficulty
+          .swaggerGeneratedUnknown;
+}
+
+enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty?
+adminStandardScenesGet$Response$Scenes$ItemDifficultyNullableFromJson(
+  Object? adminStandardScenesGet$Response$Scenes$ItemDifficulty, [
+  enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty? defaultValue,
+]) {
+  if (adminStandardScenesGet$Response$Scenes$ItemDifficulty == null) {
+    return null;
+  }
+  return enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty.values
+          .firstWhereOrNull(
+            (e) =>
+                e.value ==
+                adminStandardScenesGet$Response$Scenes$ItemDifficulty,
+          ) ??
+      defaultValue;
+}
+
+String adminStandardScenesGet$Response$Scenes$ItemDifficultyExplodedListToJson(
+  List<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>?
+  adminStandardScenesGet$Response$Scenes$ItemDifficulty,
+) {
+  return adminStandardScenesGet$Response$Scenes$ItemDifficulty
+          ?.map((e) => e.value!)
+          .join(',') ??
+      '';
+}
+
+List<String> adminStandardScenesGet$Response$Scenes$ItemDifficultyListToJson(
+  List<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>?
+  adminStandardScenesGet$Response$Scenes$ItemDifficulty,
+) {
+  if (adminStandardScenesGet$Response$Scenes$ItemDifficulty == null) {
+    return [];
+  }
+
+  return adminStandardScenesGet$Response$Scenes$ItemDifficulty
+      .map((e) => e.value!)
+      .toList();
+}
+
+List<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>
+adminStandardScenesGet$Response$Scenes$ItemDifficultyListFromJson(
+  List? adminStandardScenesGet$Response$Scenes$ItemDifficulty, [
+  List<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>?
+  defaultValue,
+]) {
+  if (adminStandardScenesGet$Response$Scenes$ItemDifficulty == null) {
+    return defaultValue ?? [];
+  }
+
+  return adminStandardScenesGet$Response$Scenes$ItemDifficulty
+      .map(
+        (e) => adminStandardScenesGet$Response$Scenes$ItemDifficultyFromJson(
+          e.toString(),
+        ),
+      )
+      .toList();
+}
+
+List<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>?
+adminStandardScenesGet$Response$Scenes$ItemDifficultyNullableListFromJson(
+  List? adminStandardScenesGet$Response$Scenes$ItemDifficulty, [
+  List<enums.AdminStandardScenesGet$Response$Scenes$ItemDifficulty>?
+  defaultValue,
+]) {
+  if (adminStandardScenesGet$Response$Scenes$ItemDifficulty == null) {
+    return defaultValue;
+  }
+
+  return adminStandardScenesGet$Response$Scenes$ItemDifficulty
+      .map(
+        (e) => adminStandardScenesGet$Response$Scenes$ItemDifficultyFromJson(
+          e.toString(),
+        ),
+      )
+      .toList();
+}
+
 String? shadowingUpsertPut$RequestBodySourceTypeNullableToJson(
   enums.ShadowingUpsertPut$RequestBodySourceType?
   shadowingUpsertPut$RequestBodySourceType,
@@ -3392,6 +4546,119 @@ shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelNullableListFromJson(
         (e) => shadowingUpsertPut$RequestBody$WordFeedback$ItemLevelFromJson(
           e.toString(),
         ),
+      )
+      .toList();
+}
+
+String? adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyNullableToJson(
+  enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty?
+  adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty,
+) {
+  return adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty?.value;
+}
+
+String? adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyToJson(
+  enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+  adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty,
+) {
+  return adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty.value;
+}
+
+enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyFromJson(
+  Object? adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty, [
+  enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty? defaultValue,
+]) {
+  return enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty.values
+          .firstWhereOrNull(
+            (e) =>
+                e.value ==
+                adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty,
+          ) ??
+      defaultValue ??
+      enums
+          .AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+          .swaggerGeneratedUnknown;
+}
+
+enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty?
+adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyNullableFromJson(
+  Object? adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty, [
+  enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty? defaultValue,
+]) {
+  if (adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty == null) {
+    return null;
+  }
+  return enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty.values
+          .firstWhereOrNull(
+            (e) =>
+                e.value ==
+                adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty,
+          ) ??
+      defaultValue;
+}
+
+String
+adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyExplodedListToJson(
+  List<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>?
+  adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty,
+) {
+  return adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+          ?.map((e) => e.value!)
+          .join(',') ??
+      '';
+}
+
+List<String>
+adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyListToJson(
+  List<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>?
+  adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty,
+) {
+  if (adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty == null) {
+    return [];
+  }
+
+  return adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+      .map((e) => e.value!)
+      .toList();
+}
+
+List<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>
+adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyListFromJson(
+  List? adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty, [
+  List<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>?
+  defaultValue,
+]) {
+  if (adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty == null) {
+    return defaultValue ?? [];
+  }
+
+  return adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+      .map(
+        (e) =>
+            adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyFromJson(
+              e.toString(),
+            ),
+      )
+      .toList();
+}
+
+List<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>?
+adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyNullableListFromJson(
+  List? adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty, [
+  List<enums.AdminStandardScenesPost$RequestBody$Scenes$ItemDifficulty>?
+  defaultValue,
+]) {
+  if (adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty == null) {
+    return defaultValue;
+  }
+
+  return adminStandardScenesPost$RequestBody$Scenes$ItemDifficulty
+      .map(
+        (e) =>
+            adminStandardScenesPost$RequestBody$Scenes$ItemDifficultyFromJson(
+              e.toString(),
+            ),
       )
       .toList();
 }
