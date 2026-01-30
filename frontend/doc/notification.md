@@ -1,15 +1,15 @@
-# Android 通知实现指南 (状态：进行中)
+# Android 通知实现指南 (状态：已完成)
 
 ## ✅ 已完成工作总结
 
-我们已经成功完成了基础搭建和配置阶段。
+我们已经成功完成了所有实现阶段。
 
 - **Firebase 项目**：已创建并连接。
 - **配置**：
   - 已执行 `flutterfire configure`。
   - 已生成 `android/app/google-services.json`。
   - 已生成 `lib/firebase_options.dart`。
-- **依赖**：已在 `pubspec.yaml` 中添加 `firebase_core` 和 `firebase_messaging`（已验证）。
+- **依赖**：已在 `pubspec.yaml` 中添加 `firebase_core`、`firebase_messaging` 和 `flutter_local_notifications`（已验证）。
 - **Android 设置**：
   - 已在 `build.gradle.kts` 中成功应用 `google-services` 插件。
   - 已在 `AndroidManifest.xml` 中验证 `INTERNET` 权限。
@@ -18,8 +18,15 @@
   - 数据库迁移：`backend/supabase/migrations/20260130000021_create_user_fcm_tokens.sql`
   - FCM 服务：`backend/src/services/fcm.ts`
   - 环境变量：已在 `types.ts` 和 `wrangler.toml` 中配置
+- **Flutter 实现**：✅ **已完成**
+  - 后台处理器：`lib/core/services/fcm_background_handler.dart`
+  - FCM 服务：`lib/core/services/fcm_service.dart`
+  - Firebase 初始化：在 `main.dart` 中添加
+  - FCM 服务初始化：在 `AppBootstrap` 中添加
+  - 登录后 Token 同步：在 `AuthProvider` 的 `loginWithGoogle/Apple` 中添加
+  - 登出时 Token 注销：在 `AuthProvider` 的 `logout` 中添加
 
-## 剩余步骤
+## 剩余步骤：验证与测试
 
 ### 第 4 阶段：Flutter 代码实现
 
@@ -698,7 +705,7 @@ curl -X POST "https://your-backend.workers.dev/admin/push/test" \
 
 > **注意**：需要先在 Cloudflare Dashboard 配置 `ADMIN_API_KEY` 环境变量。
 
-#### 9. 依赖更新
+#### 9. 依赖更新 (已完成)
 
 确保 `pubspec.yaml` 包含：
 
