@@ -13,6 +13,7 @@ import {
   parseJSON,
   sanitizeText,
 } from "./utils";
+import { getLanguageNameFromCode } from "./utils/language";
 
 // Services
 import {
@@ -257,14 +258,16 @@ app.openapi(chatSendRoute, async (c) => {
     const body = c.req.valid("json");
     const env = c.env as Env;
 
+    const nativeLang = getLanguageNameFromCode(body.native_language);
+    const targetLang = getLanguageNameFromCode(body.target_language);
+
     console.log("[/chat/send] Request received:", {
+      nativeLang: nativeLang,
+      targetLang: targetLang,
       message: body.message?.substring(0, 50),
       historyLength: body.history?.length || 0,
       sceneContext: body.scene_context?.substring(0, 30),
     });
-
-    const nativeLang = body.native_language || "Chinese (Simplified)";
-    const targetLang = body.target_language || "English";
 
     // Check if this is the initial message (empty history + simple greeting)
     const isInitialMessage =
@@ -489,12 +492,17 @@ app.post("/chat/send-voice", async (c) => {
     const audioFile = formData.get("audio");
     sceneContext = (formData.get("scene_context") as string) || "";
     const historyStr = (formData.get("history") as string) || "[]";
-    nativeLang =
-      (formData.get("native_language") as string) || "Chinese (Simplified)";
-    targetLang = (formData.get("target_language") as string) || "English";
+    nativeLang = getLanguageNameFromCode(
+      formData.get("native_language") as string,
+    );
+    targetLang = getLanguageNameFromCode(
+      formData.get("target_language") as string,
+    );
 
     console.log("[/chat/send-voice] Parsed form data:", {
       hasAudio: !!audioFile,
+      nativeLang: nativeLang,
+      targetLang: targetLang,
       sceneContext: sceneContext?.substring(0, 30),
       historyLength: historyStr?.length,
     });
@@ -729,10 +737,14 @@ app.openapi(hintRoute, async (c) => {
   try {
     const body = c.req.valid("json");
     const env = c.env as Env;
-    const targetLang = body.target_language || "English";
+    const targetLang = getLanguageNameFromCode(body.target_language);
 
     const hintPrompt = buildHintPrompt(body.scene_context, targetLang);
     const messages = [{ role: "system", content: hintPrompt }];
+    console.log("[/chat/hint] Request received:", {
+      targetLang: targetLang,
+      sceneContext: body.scene_context?.substring(0, 30),
+    });
 
     if (body.history && body.history.length > 0) {
       messages.push(...body.history.slice(-5));
@@ -776,8 +788,11 @@ app.post("/chat/analyze", async (c) => {
   try {
     const body = (await c.req.json()) as any;
     const env = c.env as Env;
-    const nativeLang = body.native_language || "Chinese (Simplified)";
-
+    const nativeLang = getLanguageNameFromCode(body.native_language);
+    console.log("[/chat/analyze] Request received:", {
+      nativeLang: nativeLang,
+      message: body.message?.substring(0, 30),
+    });
     const analyzePrompt = buildAnalyzePrompt(body.message, nativeLang);
     const messages = [{ role: "user", content: analyzePrompt }];
 
@@ -864,13 +879,12 @@ app.openapi(sceneGenerateRoute, async (c) => {
     body = c.req.valid("json");
     const env = c.env as Env;
     const { description, tone, target_language } = body;
-    const targetLang = target_language || "English";
+    const targetLang = getLanguageNameFromCode(target_language);
 
     console.log("[/scene/generate] Request received:", {
       description: description?.substring(0, 50),
       tone,
-      target_language,
-      targetLang,
+      targetLang: targetLang,
     });
 
     const prompt = buildSceneGeneratePrompt(description, tone, targetLang);
@@ -993,8 +1007,13 @@ app.openapi(translateRoute, async (c) => {
   try {
     const body = c.req.valid("json");
     const env = c.env as Env;
-    const prompt = buildTranslatePrompt(body.text, body.target_language);
+    const targetLang = getLanguageNameFromCode(body.target_language);
+    const prompt = buildTranslatePrompt(body.text, targetLang);
     const messages = [{ role: "user", content: prompt }];
+    console.log("[/common/translate] Request received:", {
+      text: body.text?.substring(0, 30),
+      targetLang: targetLang,
+    });
     const content = await callOpenRouter(
       env.OPENROUTER_API_KEY,
       env.OPENROUTER_CHAT_MODEL,
@@ -1110,13 +1129,18 @@ app.openapi(optimizeRoute, async (c) => {
   try {
     const body = c.req.valid("json");
     const env = c.env as Env;
-    const targetLang = body.target_language || "English";
+    const targetLang = getLanguageNameFromCode(body.target_language);
     const prompt = buildOptimizePrompt(
       body.scene_context,
       body.message,
       targetLang,
     );
     const messages = [{ role: "system", content: prompt }];
+    console.log("[/chat/optimize] Request received:", {
+      sceneContext: body.scene_context?.substring(0, 30),
+      targetLang: targetLang,
+      message: body.message?.substring(0, 30),
+    });
     if (body.history && body.history.length > 0) {
       messages.push(...body.history.slice(-5));
     }
