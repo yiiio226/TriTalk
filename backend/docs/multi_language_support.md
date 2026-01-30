@@ -227,11 +227,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 4. **数据库触发器自动捕获此更新**，并在后台从 `standard_scenes` 实例化适合该用户的场景
 5. 前端在跳转到主页 (`HomeScreen`) 后，查询场景列表即可看到新生成的个性化数据
 
-#### ⚠️ 时序注意事项：确保场景加载完成
+#### ⚠️ 时序注意事项：确保场景加载完成（已完成 ✅）
 
 由于数据库触发器是在 `AFTER UPDATE` 时异步执行的，前端需要确保在跳转到 `HomeScreen` 前场景已生成。
 
-**推荐方案：轮询查询确认**
+**推荐方案：轮询查询确认**（已在 `onboarding_screen.dart` 中实现）
 
 ```dart
 Future<void> _completeOnboarding() async {
@@ -302,53 +302,42 @@ Future<void> _waitForScenesGenerated({
 
 ## 3. 实施步骤
 
-### 3.1 Migration 文件清单
+### 3.1 Migration 文件清单（已完成 ✅）
 
-为实现上述方案，需要创建以下 Migration 文件：
+为实现上述方案，已创建以下 Migration 文件：
 
-| 序号 | 文件名                                                   | 目的                           |
-| ---- | -------------------------------------------------------- | ------------------------------ |
-| 1    | `20260130100000_add_translations_to_standard_scenes.sql` | 添加 `translations` JSONB 字段 |
-| 2    | `20260130100001_seed_scene_translations.sql`             | 填充中文/日文/韩文翻译数据     |
-| 3    | `20260130100002_migrate_scene_trigger_to_profiles.sql`   | 删除旧触发器，创建新触发器     |
+| 序号 | 文件名                                                   | 目的                                      |
+| ---- | -------------------------------------------------------- | ----------------------------------------- |
+| 1    | `20260130000025_add_translations_to_standard_scenes.sql` | 添加 `translations` JSONB 字段 + 填充翻译 |
+| 2    | `20260130000026_migrate_scene_trigger_to_profiles.sql`   | 删除旧触发器，创建新触发器（含 Guard 3）  |
 
-### 3.2 Migration 1: 添加 translations 字段
+### 3.2 Migration 1: 添加 translations 字段 + 填充翻译数据（已完成 ✅）
+
+此 migration 文件合并了添加字段和填充数据两个步骤。详见 `20260130000025_add_translations_to_standard_scenes.sql`。
+
+**关键内容摘要**：
 
 ```sql
--- Migration: Add translations JSONB field to standard_scenes
--- File: 20260130100000_add_translations_to_standard_scenes.sql
-
+-- 1. 添加 translations 字段
 ALTER TABLE standard_scenes
   ADD COLUMN IF NOT EXISTS translations JSONB DEFAULT '{}';
 
-COMMENT ON COLUMN standard_scenes.translations IS
-  'Localized content for title/description/goal. Structure: {"zh-CN": {"title": "...", "description": "...", "goal": "..."}}';
-```
-
-### 3.3 Migration 2: 填充翻译数据
-
-```sql
--- Migration: Seed translations for standard scenes
--- File: 20260130100001_seed_scene_translations.sql
-
+-- 2. 填充所有 13 个标准场景的翻译数据
+-- 支持语言: en-GB, zh-CN, ja-JP, ko-KR, es-ES, es-MX, fr-FR, de-DE
 UPDATE standard_scenes SET translations = '{
-  "zh-CN": {"title": "点咖啡", "description": "点一杯咖啡", "goal": "点一杯咖啡"},
-  "ja-JP": {"title": "コーヒーを注文する", "description": "コーヒーを注文する", "goal": "コーヒーを注文する"}
+  "zh-CN": {"title": "点咖啡", "description": "在咖啡店点一杯咖啡", "goal": "成功点一杯咖啡"},
+  "ja-JP": {"title": "コーヒーを注文する", ...},
+  ...
 }'::jsonb WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
-UPDATE standard_scenes SET translations = '{
-  "zh-CN": {"title": "入境检查", "description": "回答问题并通过入境检查", "goal": "回答问题并通过入境检查"},
-  "ja-JP": {"title": "入国審査", "description": "質問に答えて入国審査を通過する", "goal": "質問に答えて入国審査を通過する"}
-}'::jsonb WHERE id = 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a12';
-
--- ... 其余场景翻译（完整版在实施时补充）
+-- ... 其余 12 个场景
 ```
 
-### 3.4 Migration 3: 迁移触发器
+### 3.3 Migration 2: 迁移触发器（已完成 ✅）
 
 ```sql
 -- Migration: Migrate scene generation trigger from auth.users to profiles
--- File: 20260130100002_migrate_scene_trigger_to_profiles.sql
+-- File: 20260130000026_migrate_scene_trigger_to_profiles.sql
 
 -- Step 1: Remove old trigger and function
 DROP TRIGGER IF EXISTS on_auth_user_created_scenes ON auth.users;
@@ -365,6 +354,12 @@ BEGIN
 
   -- Guard 2: On UPDATE, only proceed if target_lang actually changed
   IF TG_OP = 'UPDATE' AND OLD.target_lang IS NOT DISTINCT FROM NEW.target_lang THEN
+    RETURN NEW;
+  END IF;
+
+  -- Guard 3: If user already has scenes, skip (only generate during Onboarding)
+  -- This ensures Profile page language changes do NOT regenerate scenes
+  IF EXISTS (SELECT 1 FROM custom_scenarios WHERE user_id = NEW.id LIMIT 1) THEN
     RETURN NEW;
   END IF;
 
