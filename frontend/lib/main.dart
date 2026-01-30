@@ -1,9 +1,13 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
 
 import 'core/initializer/app_initializer.dart';
+import 'core/services/fcm_background_handler.dart';
+import 'firebase_options.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/services/app_lifecycle_audio_manager.dart';
 import 'features/onboarding/presentation/pages/splash_screen.dart';
@@ -31,6 +35,14 @@ void main() async {
   Object? initError;
 
   try {
+    // [FCM] Firebase 必须在 AppBootstrap 之前初始化
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // [FCM] 注册后台处理器 (必须在 runApp 之前)
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     // Bootstrap app before creating ProviderScope
     // This initializes Supabase and SharedPreferences
     await AppBootstrap.initialize();

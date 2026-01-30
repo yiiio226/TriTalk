@@ -5,6 +5,7 @@ import 'package:frontend/features/auth/domain/models/user.dart';
 import 'package:frontend/features/auth/data/services/auth_service.dart';
 import 'package:frontend/features/subscription/data/services/revenue_cat_service.dart';
 import 'package:frontend/core/data/language_constants.dart';
+import 'package:frontend/core/services/fcm_service.dart';
 import '../data/local/storage_key_service.dart';
 import 'auth_state.dart';
 
@@ -99,6 +100,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Migrate old data if needed
         await StorageKeyService().migrateOldDataIfNeeded();
 
+        // [FCM] 请求通知权限并同步 Token
+        // 不阻塞登录流程，后台执行
+        FcmService.instance
+            .requestPermissionAndSyncToken()
+            .then((_) {
+              if (kDebugMode) {
+                debugPrint('AuthNotifier: FCM token synced after Google login');
+              }
+            })
+            .catchError((e) {
+              if (kDebugMode) {
+                debugPrint('AuthNotifier: FCM sync failed (non-fatal): $e');
+              }
+            });
+
         return true;
       } else {
         state = state.copyWith(
@@ -147,6 +163,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Migrate old data if needed
         await StorageKeyService().migrateOldDataIfNeeded();
 
+        // [FCM] 请求通知权限并同步 Token
+        // 不阻塞登录流程，后台执行
+        FcmService.instance
+            .requestPermissionAndSyncToken()
+            .then((_) {
+              if (kDebugMode) {
+                debugPrint('AuthNotifier: FCM token synced after Apple login');
+              }
+            })
+            .catchError((e) {
+              if (kDebugMode) {
+                debugPrint('AuthNotifier: FCM sync failed (non-fatal): $e');
+              }
+            });
+
         return true;
       } else {
         state = state.copyWith(
@@ -172,6 +203,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(loadingType: AuthLoadingType.general);
 
     try {
+      // [关键] 先注销 FCM Token，再执行 Supabase 登出
+      // 顺序很重要：登出后无法再访问 user_fcm_tokens 表
+      await FcmService.instance.unregisterToken();
+
       await _authService.logout();
       await RevenueCatService().logout();
 

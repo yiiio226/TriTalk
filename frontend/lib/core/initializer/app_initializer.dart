@@ -7,6 +7,7 @@ import 'package:frontend/core/env/env.dart';
 import '../data/local/preferences_service.dart';
 import '../auth/auth_provider.dart';
 import '../services/streaming_tts_service.dart';
+import '../services/fcm_service.dart';
 import '../cache/cache_initializer.dart';
 import 'package:frontend/features/subscription/presentation/feature_gate.dart';
 
@@ -164,6 +165,20 @@ class AppBootstrap {
       // Non-fatal: app can still work without streaming TTS
       if (kDebugMode) {
         debugPrint('AppBootstrap: ⚠️ SoLoud init failed (non-fatal): $e');
+      }
+    }
+
+    // Initialize FCM Service (non-blocking)
+    // 权限请求会在用户登录后单独触发
+    try {
+      await FcmService.instance.initialize();
+      if (kDebugMode) {
+        debugPrint('AppBootstrap: FCM service initialized');
+      }
+    } catch (e) {
+      // Non-fatal: app can still work without push notifications
+      if (kDebugMode) {
+        debugPrint('AppBootstrap: ⚠️ FCM init failed (non-fatal): $e');
       }
     }
 
