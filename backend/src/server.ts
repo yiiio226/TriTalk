@@ -36,6 +36,9 @@ import {
   // Subscription services
   handleRevenueCatWebhook,
   getUserSubscription,
+  // FCM Push Notification services
+  isFCMConfigured,
+  sendPushToUser,
 } from "./services";
 
 import { createClient } from "@supabase/supabase-js";
@@ -476,14 +479,15 @@ app.post("/chat/send-voice", async (c) => {
   let nativeLang: string = "";
   let targetLang: string = "";
   let env: Env;
-  
+
   try {
     const formData = await c.req.formData();
     env = c.env as Env;
     const audioFile = formData.get("audio");
     sceneContext = (formData.get("scene_context") as string) || "";
     const historyStr = (formData.get("history") as string) || "[]";
-    nativeLang = (formData.get("native_language") as string) || "Chinese (Simplified)";
+    nativeLang =
+      (formData.get("native_language") as string) || "Chinese (Simplified)";
     targetLang = (formData.get("target_language") as string) || "English";
 
     console.log("[/chat/send-voice] Parsed form data:", {
@@ -616,13 +620,21 @@ app.post("/chat/send-voice", async (c) => {
             // Build feedback object from analysis data
             const feedback = {
               is_perfect: analysisData.is_perfect || false,
-              corrected_text: sanitizeText(analysisData.corrected_text || transcript),
-              native_expression: sanitizeText(analysisData.native_expression || ""),
+              corrected_text: sanitizeText(
+                analysisData.corrected_text || transcript,
+              ),
+              native_expression: sanitizeText(
+                analysisData.native_expression || "",
+              ),
               explanation: sanitizeText(
-                analysisData.grammar_explanation || analysisData.explanation || "",
+                analysisData.grammar_explanation ||
+                  analysisData.explanation ||
+                  "",
               ),
               grammar_explanation: sanitizeText(
-                analysisData.grammar_explanation || analysisData.explanation || "",
+                analysisData.grammar_explanation ||
+                  analysisData.explanation ||
+                  "",
               ),
               native_expression_reason: sanitizeText(
                 analysisData.native_expression_reason || "",
@@ -653,7 +665,7 @@ app.post("/chat/send-voice", async (c) => {
             }
           } catch (e) {
             console.error("[Send Voice] Failed to parse response:", e);
-              await stream.writeln(
+            await stream.writeln(
               JSON.stringify({
                 type: "error",
                 error: "Failed to parse AI response",
@@ -2021,6 +2033,143 @@ app.openapi(adminDeleteSceneRoute, async (c) => {
     logError(error, { route: "/admin/standard-scenes/:id", method: "DELETE" });
     return c.json({ error: `Failed to delete scene: ${String(error)}` }, 500);
   }
+});
+
+// ============================================
+// Admin Routes - Push Notification Testing
+// ============================================
+
+// POST /admin/push/test - Send test push notification
+const adminTestPushRoute = createRoute({
+  method: "post",
+  path: "/admin/push/test",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            user_id: z.string().uuid().describe("Target user UUID"),
+            title: z
+              .string()
+              .default("TriTalk Test")
+              .describe("Notification title"),
+            body: z
+              .string()
+              .default("This is a test notification 🔔")
+              .describe("Notification body"),
+            data: z
+              .record(z.string(), z.string())
+              .optional()
+              .describe("Optional custom data payload"),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            success: z.boolean(),
+            sent: z.number().describe("Number of devices notified"),
+            failed: z.number().describe("Number of invalid tokens cleaned up"),
+            message: z.string(),
+          }),
+        },
+      },
+      description: "Push notification result",
+    },
+    400: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Bad request (FCM not configured)",
+    },
+    500: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Server error",
+    },
+  },
+});
+
+app.openapi(adminTestPushRoute, async (c) => {
+  try {
+    const env = c.env;
+    const body = c.req.valid("json");
+
+    // Check if FCM is configured
+    if (!isFCMConfigured(env)) {
+      return c.json(
+        {
+          error: "FCM not configured",
+          details:
+            "Missing FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, or FIREBASE_PRIVATE_KEY",
+        },
+        400,
+      );
+    }
+
+    console.log(`[Admin Push Test] Sending to user: ${body.user_id}`);
+
+    const result = await sendPushToUser(env, body.user_id, {
+      title: body.title,
+      body: body.body,
+      data: body.data as Record<string, string> | undefined,
+    });
+
+    console.log(
+      `[Admin Push Test] Result: ${result.sent} sent, ${result.failed} failed`,
+    );
+
+    return c.json(
+      {
+        success: result.sent > 0,
+        sent: result.sent,
+        failed: result.failed,
+        message:
+          result.sent > 0
+            ? `Successfully sent to ${result.sent} device(s)`
+            : "No devices found for this user (user may not have registered for push notifications)",
+      },
+      200,
+    );
+  } catch (error) {
+    logError(error, { route: "/admin/push/test", method: "POST" });
+    return c.json({ error: `Failed to send push: ${String(error)}` }, 500);
+  }
+});
+
+// GET /admin/push/status - Check FCM configuration status
+const adminPushStatusRoute = createRoute({
+  method: "get",
+  path: "/admin/push/status",
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            configured: z.boolean(),
+            project_id: z.string().optional(),
+            client_email: z.string().optional(),
+          }),
+        },
+      },
+      description: "FCM configuration status",
+    },
+  },
+});
+
+app.openapi(adminPushStatusRoute, async (c) => {
+  const env = c.env;
+  const configured = isFCMConfigured(env);
+
+  return c.json(
+    {
+      configured,
+      project_id: configured ? env.FIREBASE_PROJECT_ID : undefined,
+      client_email: configured ? env.FIREBASE_CLIENT_EMAIL : undefined,
+    },
+    200,
+  );
 });
 
 // ============================================

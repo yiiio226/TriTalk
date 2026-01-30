@@ -128,6 +128,12 @@ export interface Env {
 
   // Admin API Key for protected admin endpoints
   ADMIN_API_KEY?: string;
+
+  // Firebase Cloud Messaging credentials for push notifications
+  // Note: These are separate from GCP TTS credentials (different service account)
+  FIREBASE_PROJECT_ID?: string;
+  FIREBASE_CLIENT_EMAIL?: string;
+  FIREBASE_PRIVATE_KEY?: string;
 }
 
 export interface PolishRequest {
