@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "906718736283",
+    "project_id": "tritalk-a2783",
+    "storage_bucket": "tritalk-a2783.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906718736283:android:b38bed5f1064369ea5bb3e",
+        "android_client_info": {
+          "package_name": "com.futurova.tritalk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ3LqsDsq6J0QcWMLgoWAey0vjWnlMRd0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
