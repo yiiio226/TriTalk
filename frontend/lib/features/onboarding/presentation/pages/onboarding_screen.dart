@@ -21,8 +21,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
   String _selectedGender = 'male';
-  String _selectedNativeLang = 'Chinese (Simplified)';
-  String _selectedTargetLang = 'English';
+  String _selectedNativeLang = 'zh-CN'; // ISO Code for proper DB storage
+  String _selectedTargetLang = 'en-US'; // ISO Code for proper DB storage
 
   bool _isSaving = false;
 
