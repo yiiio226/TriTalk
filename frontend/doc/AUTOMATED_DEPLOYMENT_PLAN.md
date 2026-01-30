@@ -58,9 +58,16 @@ frontend/
 
 ## 4. 配置详情
 
-### 4.1 Android 配置 (`android/fastlane/Fastfile`)
+### 4.1 Android 配置 (`android/fastlane/Fastfile`) - [已验证]
 
-此任务（Lane）将构建 App Bundle (AAB) 并上传到 **内部测试 (Internal Testing)** 轨道。
+此任务（Lane）会自动处理版本号、构建 App Bundle (AAB) 并上传到 **内部测试 (Internal Testing)** 轨道。
+
+**核心逻辑：**
+
+1.  **自动版本管理**：检测 Google Play 上最新的 Version Code 并自动 +1。
+2.  **更新 pubspec.yaml**：将新版本号写入 `pubspec.yaml`，确保 Flutter 构建包含正确元数据。
+3.  **Flutter 构建**：使用 `flutter build appbundle` (而非 Gradle) 进行构建，包含 `--obfuscate` 和 `--split-debug-info` 以用于生产环境。
+4.  **上传发布**：将生成的 AAB 上传至 Google Play Console。
 
 ```ruby
 default_platform(:android)
@@ -68,31 +75,72 @@ default_platform(:android)
 platform :android do
   desc "部署到 Google Play 内部测试"
   lane :deploy_internal do
-    # 1. 构建 AAB (Release 模式)
-    # 注意：可以复用您现有的 Flutter 构建命令，或直接通过 Fastlane 驱动 Gradle
-    gradle(
-      task: "bundle",
-      build_type: "Release",
-      flavor: "Global", # 如果使用了 flavor
-      properties: {
-        "android.injected.version.name" => ENV["VERSION_NAME"],
-        "android.injected.version.code" => ENV["VERSION_CODE"]
-      }
-    )
+    # 1. 从 Google Play 获取最新的 version code 并递增
+    version_code = ENV["VERSION_CODE"]
 
-    # 2. 上传到 Google Play
+    if version_code.nil? || version_code.empty?
+      # 获取 internal track 上的最新 version codes
+      version_codes = google_play_track_version_codes(
+        track: 'internal',
+        json_key: './pc-api.json'
+      )
+
+      # 如果有版本，取最大值 +1；否则从 1 开始
+      if version_codes.empty?
+        version_code = "1"
+      else
+        version_code = (version_codes.max + 1).to_s
+      end
+
+      UI.message("自动计算 versionCode: #{version_code}")
+    end
+
+    # 2. 读取并更新 pubspec.yaml 中的版本
+    pubspec_path = File.expand_path("../../pubspec.yaml", __dir__)
+    pubspec_content = File.read(pubspec_path)
+
+    # 提取版本名称
+    version_match = pubspec_content.match(/version:\s*(\d+\.\d+\.\d+)(?:\+\d+)?/)
+    version_name = version_match ? version_match[1] : "1.0.0"
+
+    # 更新 pubspec.yaml 中的版本号 (version_name+version_code 格式)
+    new_version = "#{version_name}+#{version_code}"
+    updated_pubspec = pubspec_content.gsub(/version:\s*\d+\.\d+\.\d+(?:\+\d+)?/, "version: #{new_version}")
+    File.write(pubspec_path, updated_pubspec)
+    UI.message("已更新 pubspec.yaml 版本为: #{new_version}")
+
+    # 3. 使用 Flutter 构建 AAB (Release 模式)
+    UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    UI.message("🚀 正在使用 Flutter 构建 AAB...")
+    UI.message("   Version Name: #{version_name}")
+    UI.message("   Version Code: #{version_code}")
+    UI.message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+    # Flutter 项目需要使用 flutter build 命令，而不是直接调用 gradle
+    # --obfuscate --split-debug-info: 用于混淆和分离调试符号，便于 Crashlytics 分析
+    Dir.chdir(File.expand_path("../..", __dir__)) do
+      sh("flutter build appbundle --release --dart-define=ENV=prod --obfuscate --split-debug-info=build/debug-info/global")
+    end
+
+    # 4. 上传到 Google Play
+    aab_path = File.expand_path('../../build/app/outputs/bundle/release/app-release.aab', __dir__)
+    UI.message("AAB 路径: #{aab_path}")
+
     upload_to_play_store(
       track: 'internal',
+      aab: aab_path,
       json_key: './pc-api.json',
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true
     )
+
+    UI.success("✅ 成功上传版本 #{version_name} (#{version_code}) 到 Internal Testing")
   end
 end
 ```
 
-### 4.2 iOS 配置 (`ios/fastlane/Fastfile`)
+### 4.2 iOS 配置 (`ios/fastlane/Fastfile`) - [待实现]
 
 此任务将构建 IPA 文件并上传到 **TestFlight**。
 
@@ -161,21 +209,15 @@ echo "✅ 所有平台部署任务已成功完成！"
 
 ## 6. 实施步骤
 
-1.  **安装 Fastlane**: 执行 `brew install fastlane`。
-2.  **初始化 Android**:
-    ```bash
-    cd android
-    fastlane init
-    ```
-    (按照提示操作，输入包名并提供 JSON 密钥文件路径)。
-3.  **初始化 iOS**:
-    ```bash
-    cd ios
-    fastlane init
-    ```
-    (选择 "TestFlight" 选项)。
-4.  **填入配置**: 将本文档第 4 节中的代码复制到生成的 `Fastfile` 中。
-5.  **测试**: 分别在 `android/` 和 `ios/` 目录下运行 `fastlane deploy_internal` 和 `fastlane deploy_testflight` 进行验证。
+1.  **安装 Fastlane**: 执行 `brew install fastlane` (已完成)。
+2.  **Android 实施 (已完成)**:
+    - Initialize: `cd android && fastlane init`
+    - Configuration: 已配置自动版本号管理、Flutter 构建命令及混淆参数。
+    - Verification: 可运行 `cd android && bundle exec fastlane android deploy_internal` 进行部署。
+3.  **iOS 实施 (待办)**:
+    - Initialize: `cd ios && fastlane init`
+    - Configuration: 需配置证书、Profile 及 TestFlight 上传逻辑。
+4.  **测试**: 分别在 `android/` 和 `ios/` 目录下运行 `fastlane deploy_internal` 和 `fastlane deploy_testflight` 进行验证。
 
 ## 7. 版本号同步（高级）
 
