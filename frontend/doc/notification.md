@@ -465,46 +465,177 @@ CREATE POLICY "Users can delete own tokens"
 -- 普通用户不需要 SELECT 自己的 Token
 ```
 
-#### 10. 后端推送逻辑 (参考)
+#### 10. 后端推送逻辑 (Cloudflare Workers 适配)
 
-当需要向用户推送消息时，后端查询该用户的所有 Token：
+> **架构说明**：`firebase-admin` SDK 依赖 Node.js 原生 API（如 `fs`、`child_process`），**无法在 Cloudflare Workers 运行**。  
+> 我们使用 **FCM HTTP v1 API** 直接发送请求，并复用现有的 `gcp-auth.ts` 认证逻辑。
+
+##### 10.1 环境变量配置
+
+> ⚠️ **重要**：Firebase 和 GCP TTS 使用**不同的账号**，需要分别配置凭证。
+
+在 `.dev.vars` (本地) 和 Cloudflare Dashboard (生产) 中添加：
+
+```bash
+# Firebase 凭证 (与 GCP TTS 独立)
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+**获取凭证步骤**：
+
+1. 进入 [Firebase Console](https://console.firebase.google.com/) → 项目设置 → 服务账号
+2. 点击「生成新的私钥」下载 JSON 文件
+3. 从 JSON 中提取 `project_id`、`client_email`、`private_key`
+
+##### 10.2 FCM 推送服务实现
 
 ```typescript
-// 示例：Node.js / Edge Function
-async function sendPushToUser(
+// src/services/fcm.ts - 适配 Cloudflare Workers 的 FCM 服务
+
+import { getGCPAccessToken } from "../auth/gcp-auth"; // 复用认证逻辑
+import { createSupabaseClient } from "./supabase";
+
+interface PushNotification {
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}
+
+interface SendResult {
+  sent: number;
+  failed: number;
+}
+
+/**
+ * 向指定用户的所有设备发送推送通知
+ *
+ * [多设备支持] 查询 user_fcm_tokens 表获取用户的所有设备 Token
+ */
+export async function sendPushToUser(
+  env: Env,
   userId: string,
-  notification: { title: string; body: string },
-) {
+  notification: PushNotification,
+): Promise<SendResult> {
+  const supabase = createSupabaseClient(env);
+
   // 1. 查询用户的所有设备 Token
-  const { data: tokens } = await supabase
+  const { data: tokens, error } = await supabase
     .from("user_fcm_tokens")
     .select("fcm_token")
     .eq("user_id", userId);
 
-  if (!tokens?.length) return;
+  if (error || !tokens?.length) {
+    return { sent: 0, failed: 0 };
+  }
 
-  // 2. 向所有设备发送推送 (Fan-out)
-  const message = {
-    notification: { title: notification.title, body: notification.body },
-    tokens: tokens.map((t) => t.fcm_token), // FCM 支持批量发送
-  };
+  // 2. 获取 Firebase Access Token (使用独立的 Firebase 凭证)
+  const accessToken = await getGCPAccessToken(
+    env.FIREBASE_CLIENT_EMAIL,
+    env.FIREBASE_PRIVATE_KEY,
+    "https://www.googleapis.com/auth/firebase.messaging",
+  );
 
-  const response = await admin.messaging().sendEachForMulticast(message);
+  // 3. 并发发送到所有设备 (FCM HTTP v1 不支持批量，但可并发)
+  const results = await Promise.allSettled(
+    tokens.map((t) =>
+      sendSinglePush(env, accessToken, t.fcm_token, notification),
+    ),
+  );
 
-  // 3. 清理失效的 Token
-  response.responses.forEach((resp, idx) => {
-    if (
-      !resp.success &&
-      resp.error?.code === "messaging/registration-token-not-registered"
-    ) {
-      // 用户已卸载 App，删除该 Token
-      supabase
-        .from("user_fcm_tokens")
-        .delete()
-        .eq("fcm_token", tokens[idx].fcm_token);
+  // 4. 收集失效的 Token 并清理
+  const invalidTokens: string[] = [];
+  results.forEach((result, idx) => {
+    if (result.status === "rejected" && isUnregisteredError(result.reason)) {
+      invalidTokens.push(tokens[idx].fcm_token);
     }
   });
+
+  if (invalidTokens.length > 0) {
+    // 批量删除失效 Token
+    await supabase
+      .from("user_fcm_tokens")
+      .delete()
+      .in("fcm_token", invalidTokens);
+  }
+
+  return {
+    sent: results.filter((r) => r.status === "fulfilled").length,
+    failed: invalidTokens.length,
+  };
 }
+
+/**
+ * 使用 FCM HTTP v1 API 发送单条推送
+ *
+ * @see https://firebase.google.com/docs/cloud-messaging/send-message#send-messages-to-specific-devices
+ */
+async function sendSinglePush(
+  env: Env,
+  accessToken: string,
+  token: string,
+  notification: PushNotification,
+): Promise<void> {
+  const projectId = env.FIREBASE_PROJECT_ID;
+  const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: {
+        token,
+        notification: {
+          title: notification.title,
+          body: notification.body,
+        },
+        data: notification.data,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw error;
+  }
+}
+
+/**
+ * 检查是否为 Token 失效错误
+ *
+ * FCM HTTP v1 API 返回的错误格式与 Admin SDK 不同
+ */
+function isUnregisteredError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+
+  const fcmError = error as {
+    error?: { details?: Array<{ errorCode?: string }> };
+  };
+  return (
+    fcmError.error?.details?.some((d) => d.errorCode === "UNREGISTERED") ??
+    false
+  );
+}
+```
+
+##### 10.3 使用示例
+
+```typescript
+// 在需要发送推送的地方调用
+import { sendPushToUser } from "../services/fcm";
+
+// 例如：新消息到达时通知用户
+const result = await sendPushToUser(env, targetUserId, {
+  title: "TriTalk",
+  body: "您有新的消息",
+  data: { type: "new_message", conversationId: "..." },
+});
+
+console.log(`推送完成: ${result.sent} 成功, ${result.failed} 失效`);
 ```
 
 #### 9. 依赖更新
