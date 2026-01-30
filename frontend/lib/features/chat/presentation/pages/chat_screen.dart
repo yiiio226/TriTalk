@@ -228,13 +228,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       context,
       feature: PaidFeature.voiceInput,
     );
-    if (!granted) return;
+    if (!granted || !mounted) return;
 
     final hasPermission = await _audioRecorder.hasPermission();
     if (!hasPermission) {
       final status = await Permission.microphone.request();
-      if (!status.isGranted) return;
+      if (!status.isGranted) {
+        if (mounted) {
+          showTopToast(context, 'Microphone permission denied', isError: true);
+        }
+        return;
+      }
     }
+
+    // Check if user navigated away during permission dialog
+    if (!mounted) return;
 
     final directory = await getApplicationDocumentsDirectory();
     final path =
@@ -250,6 +258,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       ),
       path: path,
     );
+
+    // Final mounted check before updating UI state
+    if (!mounted) return;
 
     _notifier.setRecording(true);
     _startRecordingTimer();
