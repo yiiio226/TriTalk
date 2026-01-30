@@ -205,7 +205,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       // [关键] 先注销 FCM Token，再执行 Supabase 登出
       // 顺序很重要：登出后无法再访问 user_fcm_tokens 表
-      await FcmService.instance.unregisterToken();
+      // FCM 注销失败不应该阻止 logout 流程
+      try {
+        await FcmService.instance.unregisterToken();
+      } catch (fcmError) {
+        if (kDebugMode) {
+          debugPrint(
+            'AuthNotifier: FCM unregister failed (non-fatal): $fcmError',
+          );
+        }
+      }
 
       await _authService.logout();
       await RevenueCatService().logout();
