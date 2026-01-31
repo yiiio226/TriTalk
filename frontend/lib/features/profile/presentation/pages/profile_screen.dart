@@ -763,7 +763,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                       _buildStatisticsSection(context),
 
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: AppSpacing.xl),
 
                       Text(
                         // TODO: Add 'Statistics' and labels to l10n
