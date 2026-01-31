@@ -928,9 +928,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.chat_bubble_rounded,
                 value: _chatsCount,
                 label: context.l10n.profile_statsChats,
-                // Blue theme for Chats
-                iconColor: const Color(0xFF2563EB),
-                iconBgColor: const Color(0xFFEFF6FF), // Light Blue
+                iconColor: AppColors.secondary,
+                iconBgColor: AppColors.secondary.withValues(alpha: 0.1),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -940,9 +939,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.timer_rounded,
                 value: _studyMins,
                 label: context.l10n.profile_statsMins,
-                // Red/Rose theme for Minutes
-                iconColor: const Color(0xFFE11D48),
-                iconBgColor: const Color(0xFFFFF1F2), // Light Rose
+                iconColor: AppColors.secondary,
+                iconBgColor: AppColors.secondary.withValues(alpha: 0.1),
               ),
             ),
           ],
