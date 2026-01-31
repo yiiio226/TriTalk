@@ -1,1 +1,36 @@
-{}
+{
+  "de": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ],
+
+  "en_GB": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ],
+
+  "es": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ],
+
+  "es_MX": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ],
+
+  "fr": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ],
+
+  "ja": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ],
+
+  "ko": [
+    "profile_statsChats",
+    "profile_statsMins"
+  ]
+}

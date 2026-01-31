@@ -19,6 +19,8 @@
 	"profile_learningLanguage": "学习语言",
 	"profile_upgradeToPro": "升级到 Pro",
 	"profile_logOut": "退出登录",
+	"profile_statsChats": "已对话次数",
+	"profile_statsMins": "学习时长",
 	"profile_vocabularySentencesChatHistory": "生词本，句子，聊天记录",
 	"common_loading": "加载中...",
 	"common_error": "错误",

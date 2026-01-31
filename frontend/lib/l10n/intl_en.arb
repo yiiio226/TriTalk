@@ -76,6 +76,8 @@
 	"@profile_logOut": {
 		"description": "Button text to log out"
 	},
+	"profile_statsChats": "Chats",
+	"profile_statsMins": "Mins",
 	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Chat History",
 	"@profile_vocabularySentencesChatHistory": {
 		"description": "Subtitle for Favorites, listing categories"

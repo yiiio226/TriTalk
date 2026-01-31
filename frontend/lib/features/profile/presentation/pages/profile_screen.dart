@@ -927,7 +927,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 context,
                 icon: Icons.chat_bubble_rounded,
                 value: _chatsCount,
-                label: 'Chats',
+                label: context.l10n.profile_statsChats,
                 // Blue theme for Chats
                 iconColor: const Color(0xFF2563EB),
                 iconBgColor: const Color(0xFFEFF6FF), // Light Blue
@@ -939,7 +939,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 context,
                 icon: Icons.timer_rounded,
                 value: _studyMins,
-                label: 'Mins',
+                label: context.l10n.profile_statsMins,
                 // Red/Rose theme for Minutes
                 iconColor: const Color(0xFFE11D48),
                 iconBgColor: const Color(0xFFFFF1F2), // Light Rose

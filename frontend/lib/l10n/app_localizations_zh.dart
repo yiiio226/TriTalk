@@ -66,6 +66,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profile_logOut => '退出登录';
 
   @override
+  String get profile_statsChats => '已对话次数';
+
+  @override
+  String get profile_statsMins => '学习时长';
+
+  @override
   String get profile_vocabularySentencesChatHistory => '生词本，句子，聊天记录';
 
   @override
