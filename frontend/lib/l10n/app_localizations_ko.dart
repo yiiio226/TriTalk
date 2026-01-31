@@ -66,6 +66,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profile_logOut => '로그아웃';
 
   @override
+  String get profile_preferences => 'Preferences';
+
+  @override
+  String get profile_notifications => 'Notifications';
+
+  @override
   String get profile_statsChats => 'Chats';
 
   @override

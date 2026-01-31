@@ -66,6 +66,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profile_logOut => 'Cerrar Sesión';
 
   @override
+  String get profile_preferences => 'Preferences';
+
+  @override
+  String get profile_notifications => 'Notifications';
+
+  @override
   String get profile_statsChats => 'Chats';
 
   @override

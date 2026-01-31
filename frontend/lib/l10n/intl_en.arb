@@ -76,6 +76,14 @@
 	"@profile_logOut": {
 		"description": "Button text to log out"
 	},
+	"profile_preferences": "Preferences",
+	"@profile_preferences": {
+		"description": "Label for user preferences"
+	},
+	"profile_notifications": "Notifications",
+	"@profile_notifications": {
+		"description": "Label for notification settings"
+	},
 	"profile_statsChats": "Chats",
 	"profile_statsMins": "Mins",
 	"profile_vocabularySentencesChatHistory": "Vocabulary, Sentences, Chat History",
