@@ -66,6 +66,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profile_logOut => 'ログアウト';
 
   @override
+  String get profile_statsChats => 'Chats';
+
+  @override
+  String get profile_statsMins => 'Mins';
+
+  @override
   String get profile_vocabularySentencesChatHistory => '単語、文、履歴';
 
   @override

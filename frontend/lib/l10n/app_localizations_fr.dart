@@ -66,6 +66,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profile_logOut => 'Déconnexion';
 
   @override
+  String get profile_statsChats => 'Chats';
+
+  @override
+  String get profile_statsMins => 'Mins';
+
+  @override
   String get profile_vocabularySentencesChatHistory =>
       'Vocabulaire, Phrases, Historique';
 

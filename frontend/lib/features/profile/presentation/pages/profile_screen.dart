@@ -41,6 +41,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String _buildNumber = '';
   late String _targetLanguage;
 
+  // Statistics
+  final String _chatsCount = '24';
+  final String _studyMins = '750';
+
   @override
   void initState() {
     super.initState();
@@ -755,7 +759,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                       const SizedBox(height: AppSpacing.md),
 
+                      const SizedBox(height: AppSpacing.md),
+
+                      _buildStatisticsSection(context),
+
+                      const SizedBox(height: AppSpacing.xl),
+
                       Text(
+                        // TODO: Add 'Statistics' and labels to l10n
                         context.l10n.profile_languageSettings,
                         style: AppTypography.subtitle1.copyWith(
                           fontWeight: FontWeight.bold,
@@ -890,6 +901,111 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatisticsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          child: Text(
+            'Statistics',
+            style: AppTypography.subtitle1.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.lightTextPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                context,
+                icon: Icons.chat_bubble_rounded,
+                value: _chatsCount,
+                label: context.l10n.profile_statsChats,
+                iconColor: AppColors.secondary,
+                iconBgColor: AppColors.secondary.withValues(alpha: 0.1),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _buildStatCard(
+                context,
+                icon: Icons.timer_rounded,
+                value: _studyMins,
+                label: context.l10n.profile_statsMins,
+                iconColor: AppColors.secondary,
+                iconBgColor: AppColors.secondary.withValues(alpha: 0.1),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color iconColor,
+    required Color iconBgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 22, color: iconColor),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            value,
+            style: AppTypography.headline3.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.lightTextPrimary,
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: AppTypography.body2.copyWith(
+              color: AppColors.lightTextSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

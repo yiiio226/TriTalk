@@ -224,6 +224,18 @@ abstract class AppLocalizations {
   /// **'Log Out'**
   String get profile_logOut;
 
+  /// No description provided for @profile_statsChats.
+  ///
+  /// In en, this message translates to:
+  /// **'Chats'**
+  String get profile_statsChats;
+
+  /// No description provided for @profile_statsMins.
+  ///
+  /// In en, this message translates to:
+  /// **'Mins'**
+  String get profile_statsMins;
+
   /// Subtitle for Favorites, listing categories
   ///
   /// In en, this message translates to:
