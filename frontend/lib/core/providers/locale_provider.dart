@@ -27,6 +27,11 @@ class AppLanguages {
     AppLanguageOption(code: 'system', label: 'System Default', flag: '🌐'),
     AppLanguageOption(code: 'en', label: 'English', flag: '🇺🇸'),
     AppLanguageOption(code: 'zh', label: '中文', flag: '🇨🇳'),
+    AppLanguageOption(code: 'ja', label: '日本語', flag: '🇯🇵'),
+    AppLanguageOption(code: 'ko', label: '한국어', flag: '🇰🇷'),
+    AppLanguageOption(code: 'es', label: 'Español', flag: '🇪🇸'),
+    AppLanguageOption(code: 'fr', label: 'Français', flag: '🇫🇷'),
+    AppLanguageOption(code: 'de', label: 'Deutsch', flag: '🇩🇪'),
   ];
 
   /// 根据语言代码获取显示标签
