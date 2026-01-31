@@ -44,6 +44,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // Statistics
   final String _chatsCount = '24';
   final String _studyMins = '750';
+  bool _notificationsEnabled = true;
 
   @override
   void initState() {
@@ -826,6 +827,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           );
                         },
                       ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      Text(
+                        context.l10n.profile_preferences,
+                        style: AppTypography.subtitle1.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.lightTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildSwitchCard(
+                        context,
+                        title: context.l10n.profile_notifications,
+                        icon: Icons.notifications_rounded,
+                        value: _notificationsEnabled,
+                        onChanged: (value) {
+                          setState(() => _notificationsEnabled = value);
+                        },
+                      ),
+
                       const SizedBox(height: AppSpacing.xl),
                       Text(
                         context.l10n.profile_tools,
@@ -1529,6 +1551,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.lightTextSecondary,
+                size: 24, // Consistent size with MenuCard
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTypography.subtitle2.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.lightTextPrimary,
+                ),
+              ),
+            ),
+            Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeColor: AppColors.primary,
             ),
           ],
         ),

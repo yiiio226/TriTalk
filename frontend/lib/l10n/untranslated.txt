@@ -1,36 +1,55 @@
 {
   "de": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
   ],
 
   "en_GB": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
   ],
 
   "es": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
   ],
 
   "es_MX": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
   ],
 
   "fr": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
   ],
 
   "ja": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
   ],
 
   "ko": [
+    "profile_preferences",
+    "profile_notifications",
     "profile_statsChats",
     "profile_statsMins"
+  ],
+
+  "zh": [
+    "profile_preferences",
+    "profile_notifications"
   ]
 }

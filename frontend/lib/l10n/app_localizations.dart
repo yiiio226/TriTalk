@@ -224,6 +224,18 @@ abstract class AppLocalizations {
   /// **'Log Out'**
   String get profile_logOut;
 
+  /// Label for user preferences
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get profile_preferences;
+
+  /// Label for notification settings
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get profile_notifications;
+
   /// No description provided for @profile_statsChats.
   ///
   /// In en, this message translates to:
